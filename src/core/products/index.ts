@@ -59,3 +59,17 @@ export function concentrationOf(product: Product): number {
   }
   return product.strength / product.volumeMl;
 }
+
+/**
+ * Obsah účinné látky v jedné lahvičce nebo ampuli.
+ *
+ * DLP zapisuje sílu dvěma způsoby: buď jako celkový obsah („80MG/2ML“),
+ * nebo jako koncentraci („1MG/ML“). V druhém případě je skutečný obsah
+ * až v balení — Asicord 1 mg/ml v desetimililitrové lahvičce je 10 mg,
+ * ne 1 mg. Bez tohohle rozlišení vycházejí u perfuzorů nesmyslná ředění.
+ */
+export function vialContentMg(product: Product): number {
+  if (product.volumeMl === undefined) return product.strength;
+  const vialMl = product.packUnitVolumeMl ?? product.volumeMl;
+  return concentrationOf(product) * vialMl;
+}

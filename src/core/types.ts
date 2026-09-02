@@ -71,13 +71,21 @@ export type AnswerSpec = {
 export type Template = {
   id: string;
   category: Category;
-  source: Source;
+  /**
+   * Zdroje faktických údajů. Šablona jich může mít víc — přípravek,
+   * dávkovací rozmezí a specifikace prostředku pocházejí odjinud.
+   */
+  source: Source | readonly Source[];
   /**
    * Šablona s nedohledaným údajem. Generátor ji do produkčního setu
    * nezařadí, dokud se příznak neodstraní.
    */
   needsReview?: boolean;
-  answer: AnswerSpec;
+  /**
+   * Tolerance často závisí na výsledku — u objemu ji určuje velikost
+   * stříkačky, do které se vejde. Proto smí být i funkcí.
+   */
+  answer: AnswerSpec | ((vars: Vars, solution: Solution) => AnswerSpec);
   /** Vylosuje zadání pro danou obtížnost. */
   generate(rng: Rng, difficulty: Difficulty): Vars;
   /** Spočítá výsledek a rozepíše postup. Musí být čistá funkce vstupů. */

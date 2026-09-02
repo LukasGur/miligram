@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { PRODUCTS, concentrationOf, pickProduct, selectProducts } from "../products";
+import { PRODUCTS, concentrationOf, pickProduct, selectProducts, vialContentMg } from "../products";
 import { createRng } from "../random";
 
 /**
@@ -61,6 +61,32 @@ describe("fond přípravků", () => {
 
   it("prázdný výběr je chyba šablony, ne tichý průchod", () => {
     expect(() => pickProduct(createRng(1), { kind: "tablet", minStrength: 1e9 })).toThrow(/Fond neobsahuje/);
+  });
+
+  it("obsah lahvičky vychází z balení, ne ze zápisu síly", () => {
+    /**
+     * DLP zapisuje sílu buď jako celkový obsah, nebo jako koncentraci.
+     * Referenční hodnoty jsou dopočítané z reálných balení v DLP:
+     * Asicord 1 mg/ml v lahvičce 10 ml je 10 mg účinné látky, ne 1 mg.
+     */
+    const byName = (name: string) => PRODUCTS.find((p) => p.name.startsWith(name));
+
+    const asicord = byName("ASICORD");
+    expect(asicord && vialContentMg(asicord)).toBe(10);
+
+    const tensamin = byName("TENSAMIN");
+    expect(tensamin && vialContentMg(tensamin)).toBe(200);
+
+    const noradrenalin = byName("NORADRENALIN LÉČIVA");
+    expect(noradrenalin && vialContentMg(noradrenalin)).toBe(1);
+
+    const dexdor = byName("DEXDOR");
+    expect(dexdor && vialContentMg(dexdor)).toBeCloseTo(0.2, 10);
+  });
+
+  it("u tablet je obsah rovnou síla", () => {
+    const tablet = selectProducts({ kind: "tablet" })[0];
+    expect(vialContentMg(tablet)).toBe(tablet.strength);
   });
 
   it("koncentrace se počítá jen tam, kde je objem", () => {
