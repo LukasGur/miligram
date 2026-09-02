@@ -46,6 +46,40 @@ Vzorce nejsou majetkem žádného přípravku a citují se přímo na původní 
 | Cockcroft–Gaultův vzorec | Cockcroft DW, Gault MH. *Prediction of creatinine clearance from serum creatinine.* Nephron 1976;16(1):31–41 |
 | Calvertův vzorec | Calvert AH et al. *Carboplatin dosage: prospective evaluation of a simple formula based on renal function.* J Clin Oncol 1989;7(11):1748–56 — uvedený rovněž v SPC přípravku Carboplatin Accord |
 
+### 5. Specifikace zdravotnických prostředků
+
+Kapkový faktor, přesnost stříkačky a krok pumpy nejsou vlastnosti léku,
+takže v SPC ani v DLP nejsou. Pocházejí z norem a z podkladů výrobců.
+
+| Údaj | Zdroj |
+|---|---|
+| Kapkové faktory 10, 15, 20 a 60 gtt/ml | B. Braun Medical Inc., *Gravity Flow Rate Drip Chart*, dokument IV109 3/20 — <https://www.ismp.org/sites/default/files/attachments/2020-04/BBraun-flow-rate-drip-chart-04-03-2020.pdf> |
+| Tolerance odměřeného objemu stříkačkou | ČSN EN ISO 7886-1, *Sterilní injekční stříkačky pro jedno použití* — <https://www.iso.org/standard/14835.html> |
+| Krok nastavení a přesnost průtoku pumpy | B. Braun Perfusor Space, technické údaje; přesnost ±2 % podle IEC/EN 60601-2-24 — <https://www.bbraun.com/en/products/b/perfusor-space.html> |
+
+Poznámka k tomu, co je doložené a co ne: **normy popisují přesnost
+prostředku, ne požadovanou přesnost výpočtu.** Rozhodnutí odvodit z nich
+toleranci odpovědi je návrhové — nemá smysl vymáhat po uživateli víc
+přesnosti, než kolik jí umí doručit stříkačka nebo pumpa. Čísla jsou
+doložená, ta úvaha je naše. Viz `src/core/tolerances.ts`.
+
+Kapkový graf výrobce zároveň slouží jako referenční sada pro testy vzorce
+(`src/core/__tests__/devices.test.ts`). Při přesné polovině zaokrouhluje
+výrobce dolů (250 ml/h při 15 gtt/ml uvádí jako 62, ačkoli přesná hodnota
+je 62,5), zatímco 18,75 uvádí jako 19. To je jeho volba pro remízu, ne
+norma; aplikace proto u kapek přijímá zaokrouhlení oběma směry.
+
+### 6. Fond přípravků
+
+`src/core/products/pool.generated.ts` obsahuje 614 registrovaných balení
+vybraných z DLP. Generuje ho `scripts/sukl/build-pool.mjs`.
+
+Dělba odpovědnosti: **faktické údaje** (síla, koncentrace, balení) pocházejí
+z DLP a jsou dohledatelné podle kódu SÚKL. **Výběr účinných látek** je
+kurátorské rozhodnutí a žije zvlášť v `scripts/sukl/latky-vyber.json`;
+každý název se ověřuje proti číselníku ATC ze SÚKL a při neshodě build
+skončí chybou, takže se do fondu nedostane vymyšlená látka.
+
 ## Co se nepoužívá
 
 Blogy, kvízové weby, studentská fóra, výstupy jazykových modelů, neověřená PDF.
@@ -108,9 +142,8 @@ Kód SÚKL jednoznačně identifikuje konkrétní registrované balení.
 
 Tyto nesmí do produkčního setu, dokud nebudou podložené (`needsReview: true`):
 
-- **F2, F3 — kapkové faktory 20 a 60 gtt/ml.** Není to vlastnost léku, ale
-  infuzního setu. Potřebuje odkaz na návod k použití konkrétního setu
-  (např. B. Braun Intrafix) nebo na lékovou referenční příručku.
+- ~~F2, F3 — kapkové faktory~~ **doloženo** dokumentem B. Braun IV109 3/20,
+  viz oddíl 5. Výrobce uvádí čtyři faktory: 10, 15, 20 a 60 gtt/ml.
 - **I3 — korekční faktor a poměr inzulin/sacharidy.** Pravidla 100 a 500
   nejsou v SPC inzulinů; jde o klinickou praxi. Potřebuje doporučený postup
   odborné společnosti nebo BNF.
