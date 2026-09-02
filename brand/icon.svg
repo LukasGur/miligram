@@ -1,0 +1,14 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1024 1024" width="1024" height="1024">
+  <!--
+    Miligram — značka.
+    Tableta se zářezem. Zářez je natočený, aby značka nebyla jen kruh:
+    v malé velikosti je to jediný detail, který nese identitu.
+    Kruh má průměr 52 % plátna, takže se vejde do bezpečné zóny
+    maskovatelné ikony (80 %) bez druhé varianty souboru.
+  -->
+  <rect width="1024" height="1024" fill="#3730D9"/>
+  <g transform="rotate(24 512 512)">
+    <circle cx="512" cy="512" r="266" fill="#FFFFFF"/>
+    <rect x="479" y="246" width="66" height="532" fill="#3730D9"/>
+  </g>
+</svg>

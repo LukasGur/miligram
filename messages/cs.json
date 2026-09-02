@@ -1,0 +1,66 @@
+{
+  "app": {
+    "name": "Miligram",
+    "tagline": "Trénink výpočtů dávkování"
+  },
+  "common": {
+    "close": "Zavřít",
+    "back": "Zpět",
+    "notNow": "Teď ne",
+    "settings": "Nastavení",
+    "done": "Hotovo"
+  },
+  "disclaimer": {
+    "title": "Studijní nástroj",
+    "lead": "Miligram slouží výhradně ke studiu a procvičování výpočtů.",
+    "body": "Nepoužívej výsledky z aplikace pro výpočet dávek skutečným pacientům. V klinické praxi vždy vycházej z SPC přípravku, standardu pracoviště a kontroly druhou osobou.",
+    "note": "Zadání příkladů jsou učební konstrukce. Nejsou to klinická doporučení, i když pracují s reálnými silami a koncentracemi.",
+    "confirm": "Beru na vědomí",
+    "linkLabel": "Podmínky použití",
+    "confirmedOn": "Potvrzeno {date}"
+  },
+  "install": {
+    "iosTitle": "Přidej na plochu",
+    "iosBody": "Pak poběží na celou obrazovku a bez internetu.",
+    "iosStepShare": "Sdílet",
+    "iosStepAdd": "Přidat na plochu",
+    "androidTitle": "Nainstalovat Miligram",
+    "androidBody": "Aplikace se přidá na plochu a funguje bez internetu.",
+    "androidAction": "Nainstalovat",
+    "dismiss": "Teď ne",
+    "installed": "Nainstalováno na ploše",
+    "notInstalled": "Běží v prohlížeči",
+    "openInSafari": "Otevři tuhle adresu v Safari — jiné prohlížeče na iOS přidání na plochu nenabízejí."
+  },
+  "network": {
+    "offline": "Offline — aplikace funguje dál",
+    "backOnline": "Připojení obnoveno"
+  },
+  "home": {
+    "lessonTitle": "Denní lekce",
+    "lessonMeta": "{count} příkladů · {minutes} minut",
+    "start": "Začít lekci",
+    "streak": "Série",
+    "streakUnit": "{days, plural, =0 {dní} one {den} few {dny} other {dní}}",
+    "pills": "Prášky",
+    "xp": "XP",
+    "buildNoticeTitle": "Kostra aplikace",
+    "buildNoticeBody": "Hotová je zatím fáze 1: instalace na plochu, offline provoz a základ rozhraní. Banka příkladů a výpočetní jádro přijdou ve fázi 2."
+  },
+  "settings": {
+    "title": "Nastavení",
+    "language": "Jazyk",
+    "languageHint": "Změna se projeví okamžitě.",
+    "install": "Instalace",
+    "legal": "Právní informace",
+    "about": "O aplikaci",
+    "version": "Verze {version}",
+    "showDisclaimer": "Zobrazit podmínky použití",
+    "storage": "Data",
+    "storageHint": "Všechno zůstává v tomhle zařízení. Nic se nikam neodesílá."
+  },
+  "locale": {
+    "cs": "Čeština",
+    "sk": "Slovenčina"
+  }
+}

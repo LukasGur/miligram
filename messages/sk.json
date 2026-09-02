@@ -1,0 +1,66 @@
+{
+  "app": {
+    "name": "Miligram",
+    "tagline": "Tréning výpočtov dávkovania"
+  },
+  "common": {
+    "close": "Zavrieť",
+    "back": "Späť",
+    "notNow": "Teraz nie",
+    "settings": "Nastavenia",
+    "done": "Hotovo"
+  },
+  "disclaimer": {
+    "title": "Študijný nástroj",
+    "lead": "Miligram slúži výhradne na štúdium a precvičovanie výpočtov.",
+    "body": "Nepoužívaj výsledky z aplikácie na výpočet dávok skutočným pacientom. V klinickej praxi vždy vychádzaj zo SPC prípravku, štandardu pracoviska a kontroly druhou osobou.",
+    "note": "Zadania príkladov sú učebné konštrukcie. Nie sú to klinické odporúčania, aj keď pracujú s reálnymi silami a koncentráciami.",
+    "confirm": "Beriem na vedomie",
+    "linkLabel": "Podmienky použitia",
+    "confirmedOn": "Potvrdené {date}"
+  },
+  "install": {
+    "iosTitle": "Pridaj na plochu",
+    "iosBody": "Potom pobeží na celú obrazovku a bez internetu.",
+    "iosStepShare": "Zdieľať",
+    "iosStepAdd": "Pridať na plochu",
+    "androidTitle": "Nainštalovať Miligram",
+    "androidBody": "Aplikácia sa pridá na plochu a funguje bez internetu.",
+    "androidAction": "Nainštalovať",
+    "dismiss": "Teraz nie",
+    "installed": "Nainštalované na ploche",
+    "notInstalled": "Beží v prehliadači",
+    "openInSafari": "Otvor túto adresu v Safari — iné prehliadače na iOS pridanie na plochu neponúkajú."
+  },
+  "network": {
+    "offline": "Offline — aplikácia funguje ďalej",
+    "backOnline": "Pripojenie obnovené"
+  },
+  "home": {
+    "lessonTitle": "Denná lekcia",
+    "lessonMeta": "{count} príkladov · {minutes} minút",
+    "start": "Začať lekciu",
+    "streak": "Séria",
+    "streakUnit": "{days, plural, =0 {dní} one {deň} few {dni} other {dní}}",
+    "pills": "Prášky",
+    "xp": "XP",
+    "buildNoticeTitle": "Kostra aplikácie",
+    "buildNoticeBody": "Hotová je zatiaľ fáza 1: inštalácia na plochu, offline prevádzka a základ rozhrania. Banka príkladov a výpočtové jadro prídu vo fáze 2."
+  },
+  "settings": {
+    "title": "Nastavenia",
+    "language": "Jazyk",
+    "languageHint": "Zmena sa prejaví okamžite.",
+    "install": "Inštalácia",
+    "legal": "Právne informácie",
+    "about": "O aplikácii",
+    "version": "Verzia {version}",
+    "showDisclaimer": "Zobraziť podmienky použitia",
+    "storage": "Dáta",
+    "storageHint": "Všetko zostáva v tomto zariadení. Nič sa nikam neodosiela."
+  },
+  "locale": {
+    "cs": "Čeština",
+    "sk": "Slovenčina"
+  }
+}
