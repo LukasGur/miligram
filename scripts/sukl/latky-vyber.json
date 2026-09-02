@@ -1,0 +1,151 @@
+{
+  "_": [
+    "Kurátorský výběr účinných látek pro fond příkladů.",
+    "",
+    "Názvy odpovídají číselníku ATC ze SÚKL (dlp_atc.csv) — nejsou psané z paměti,",
+    "vybírají se z hodnot, které v číselníku skutečně jsou. Faktické údaje",
+    "o přípravcích (síla, koncentrace, balení) pocházejí z DLP; z tohoto souboru",
+    "pochází jen rozhodnutí, které látky do trénovacího fondu patří.",
+    "",
+    "Kritérium výběru: látka, se kterou se student medicíny v ČR nebo SR reálně",
+    "setká při výpočtu dávky. Vyřazené jsou monoklonální protilátky a konjugáty,",
+    "u kterých se dávka nepočítá u lůžka, a přípravky vázané na úzce specializovaná",
+    "centra."
+  ],
+
+  "injekce": {
+    "_popis": "Ampule a koncentráty — objem z dávky, ředění, kontinuální infuze.",
+    "analgezie a anestezie": [
+      "PARACETAMOL", "MORFIN", "FENTANYL", "SUFENTANIL", "ALFENTANIL", "PIRITRAMID",
+      "TRAMADOL", "PETHIDIN", "NALBUFIN", "KETAMIN", "PROPOFOL", "ETOMIDÁT",
+      "MIDAZOLAM", "DIAZEPAM", "LORAZEPAM", "LIDOKAIN", "BUPIVAKAIN",
+      "LEVOBUPIVAKAIN", "MEPIVAKAIN", "DEXMEDETOMIDIN"
+    ],
+    "myorelaxancia a antidota": [
+      "ROKURONIUM-BROMID", "ATRAKURIUM", "CISATRAKURIUM", "SUXAMETHONIUM",
+      "MIVAKURIUM-CHLORID", "PIPEKURONIUM-BROMID", "SUGAMMADEX", "NALOXON",
+      "FLUMAZENIL", "PROTAMIN"
+    ],
+    "kardiovaskulární": [
+      "EPINEFRIN", "NOREPINEFRIN", "DOBUTAMIN", "DOPAMIN", "AMIODARON", "ADENOSIN",
+      "ESMOLOL", "METOPROLOL", "PROPAFENON", "MILRINON", "LEVOSIMENDAN",
+      "GLYCEROL-TRINITRÁT", "ISOSORBID-DINITRÁT", "VASOPRESSIN (ARGIPRESSIN)",
+      "TERLIPRESSIN", "EFEDRIN", "LANDIOLOL"
+    ],
+    "diuretika a elektrolyty": [
+      "FUROSEMID", "TORASEMID", "CHLORID DRASELNÝ", "CHLORID SODNÝ",
+      "HYDROGENUHLIČITAN SODNÝ", "SÍRAN HOŘEČNATÝ", "FOSFOREČNAN SODNÝ",
+      "KALCIUM-FOLINÁT"
+    ],
+    "antiinfektiva": [
+      "GENTAMICIN", "AMIKACIN", "CIPROFLOXACIN", "KLINDAMYCIN", "ACIKLOVIR",
+      "AMFOTERICIN B"
+    ],
+    "antikoagulancia": [
+      "HEPARIN", "NADROPARIN", "BEMIPARIN", "FONDAPARINUX", "ALTEPLASA"
+    ],
+    "kortikosteroidy": ["DEXAMETHASON", "METHYLPREDNISOLON", "TRIAMCINOLON"],
+    "antiemetika": ["ONDANSETRON", "GRANISETRON"],
+    "neurologie": [
+      "LEVETIRACETAM", "LAKOSAMID", "FENYTOIN", "FENOBARBITAL",
+      "KYSELINA VALPROOVÁ", "BRIVARACETAM", "KLONAZEPAM", "BAKLOFEN"
+    ],
+    "psychiatrie": [
+      "HALOPERIDOL", "TIAPRID", "ARIPIPRAZOL", "FLUFENAZIN", "FLUPENTIXOL",
+      "ZUKLOPENTHIXOL"
+    ],
+    "endokrinologie": [
+      "LIDSKÝ INSULIN", "INSULIN ASPART", "INSULIN LISPRO", "INSULIN GLARGIN",
+      "INSULIN DETEMIR", "INSULIN GLULISIN", "INSULIN DEGLUDEK", "OKTREOTID",
+      "DESMOPRESSIN", "OXYTOCIN", "KARBETOCIN", "TERBUTALIN", "AMINOFYLIN"
+    ],
+    "nesteroidní antiflogistika": [
+      "DIKLOFENAK", "IBUPROFEN", "DEXKETOPROFEN", "SODNÁ SŮL METAMIZOLU"
+    ],
+    "onkologie": [
+      "KARBOPLATINA", "CISPLATINA", "OXALIPLATINA", "PAKLITAXEL", "DOCETAXEL",
+      "DOXORUBICIN", "EPIRUBICIN", "CYKLOFOSFAMID", "METHOTREXÁT", "FLUORURACIL",
+      "GEMCITABIN", "CYTARABIN", "ETOPOSID", "IRINOTEKAN", "TOPOTEKAN",
+      "VINKRISTIN", "VINBLASTIN", "VINORELBIN", "PEMETREXED", "BENDAMUSTIN", "MESNA"
+    ]
+  },
+
+  "prasky": {
+    "_popis": "Lyofilizáty k rekonstituci — objem rozpouštědla a výsledná koncentrace.",
+    "antibiotika": [
+      "AMPICILIN", "BENZYLPENICILIN", "PROKAIN-BENZYLPENICILIN", "OXACILIN",
+      "FLUKLOXACILIN", "CEFAZOLIN", "CEFUROXIM", "CEFOTAXIM", "CEFTRIAXON",
+      "CEFTAZIDIM", "CEFEPIM", "MEROPENEM", "ERTAPENEM", "VANKOMYCIN",
+      "DAPTOMYCIN", "KLARITHROMYCIN", "AZITHROMYCIN", "CHLORAMFENIKOL", "TIGECYKLIN"
+    ],
+    "antimykotika a antivirotika": [
+      "KASPOFUNGIN", "MIKAFUNGIN", "ANIDULAFUNGIN", "VORIKONAZOL", "ISAVUKONAZOL",
+      "ACIKLOVIR", "GANCIKLOVIR", "REMDESIVIR"
+    ],
+    "ostatní": [
+      "HYDROKORTISON", "OMEPRAZOL", "PANTOPRAZOL", "ESOMEPRAZOL", "THIOPENTAL",
+      "REMIFENTANIL", "SUXAMETHONIUM", "DANTROLEN", "DEFEROXAMIN",
+      "HYDROXOKOBALAMIN", "APREPITANT", "PAREKOXIB", "OLANZAPIN", "ESMOLOL",
+      "LANDIOLOL", "SOMATOSTATIN", "ALPROSTADIL", "EPOPROSTENOL", "TENEKTEPLASA"
+    ],
+    "onkologie": [
+      "CYKLOFOSFAMID", "IFOSFAMID", "BLEOMYCIN", "DAKARBAZIN", "IDARUBICIN",
+      "MITOMYCIN", "PEMETREXED", "TOPOTEKAN", "DECITABIN", "THIOTEPA", "TREOSULFAN"
+    ]
+  },
+
+  "peroralniTekute": {
+    "_popis": "Suspenze, sirupy a kapky — pediatrické dávkování a objem na podání.",
+    "antiinfektiva": [
+      "AMOXICILIN", "AZITHROMYCIN", "KLARITHROMYCIN", "CEFIXIM", "CEFUROXIM",
+      "OSELTAMIVIR", "VALGANCIKLOVIR", "VORIKONAZOL", "POSAKONAZOL", "ZIDOVUDIN",
+      "LAMIVUDIN", "ABAKAVIR", "ENTEKAVIR"
+    ],
+    "analgetika": [
+      "PARACETAMOL", "IBUPROFEN", "TRAMADOL", "MORFIN", "TAPENTADOL",
+      "SODNÁ SŮL METAMIZOLU"
+    ],
+    "kardiologie a interna": [
+      "DIGOXIN", "PROPRANOLOL", "SPIRONOLAKTON", "OMEPRAZOL", "GLIBENKLAMID",
+      "SITAGLIPTIN", "DEFERIPRON", "RIVAROXABAN"
+    ],
+    "neurologie a psychiatrie": [
+      "LEVETIRACETAM", "KYSELINA VALPROOVÁ", "LAMOTRIGIN", "KLONAZEPAM",
+      "BRIVARACETAM", "ESLIKARBAZEPIN", "PREGABALIN", "PERAMPANEL", "RISPERIDON",
+      "KVETIAPIN", "HALOPERIDOL", "ARIPIPRAZOL", "TIAPRID"
+    ],
+    "onkologie": ["MERKAPTOPURIN", "HYDROXYKARBAMID"]
+  },
+
+  "infuzniVaky": {
+    "_popis": "Hotové vaky — rychlost infuze, kapky za minutu, doba dokapání.",
+    "roztoky": [
+      "ELEKTROLYTY", "ELEKTROLYTY SE SACHARIDY", "CUKRY", "MANNITOL",
+      "HYDROGENUHLIČITAN SODNÝ", "TUKOVÉ EMULZE"
+    ],
+    "antiinfektiva": [
+      "METRONIDAZOL", "CIPROFLOXACIN", "LEVOFLOXACIN", "MOXIFLOXACIN", "LINEZOLID",
+      "FLUKONAZOL", "GENTAMICIN", "AMIKACIN", "TOBRAMYCIN"
+    ],
+    "intenzivní péče": [
+      "AMIODARON", "DOBUTAMIN", "DOPAMIN", "NOREPINEFRIN", "GLYCEROL-TRINITRÁT",
+      "NIMODIPIN", "PROPOFOL", "DEXMEDETOMIDIN", "ROPIVAKAIN"
+    ],
+    "ostatní": [
+      "PARACETAMOL", "ONDANSETRON", "LEVETIRACETAM", "KALCIUM-FOLINÁT",
+      "DOXORUBICIN", "EPIRUBICIN", "FLUORURACIL", "CYTARABIN"
+    ]
+  },
+
+  "tabletyAtcSkupiny": {
+    "_popis": [
+      "Tablety a tobolky se nevybírají po látkách, ale po ATC skupinách:",
+      "výpočet u nich stojí na síle tablety, ne na identitě molekuly,",
+      "a úplný výčet by byl seznam poloviny lékopisu."
+    ],
+    "skupiny": [
+      "A10B", "B01A", "C01A", "C03C", "C03D", "C07A", "C08C", "H02A", "J01C",
+      "J01D", "J01F", "J01M", "J02A", "M01A", "N02A", "N02B", "N03A", "N05A", "N05B"
+    ]
+  }
+}

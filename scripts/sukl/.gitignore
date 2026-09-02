@@ -2,3 +2,4 @@ data/
 spc/
 spc_index.json
 .venv/
+pool-report.json
