@@ -17,6 +17,19 @@ export, offline-first. Podrobnosti k příkazům a struktuře jsou v README.md.
 - **Sahatelné cíle ≥ 44 px**, primární akce ve spodní třetině obrazovky.
 - Generovaný `src/lib/splashScreens.ts` se needituje ručně.
 
+## Ekonomika: dvě veličiny, ne jedna
+
+- **Prášky** — měna. Utrácejí se za nápovědy, ochranu série a opravy.
+- **XP** — skóre. Nedá se utratit, slouží k řazení týdenní ligy
+  a žebříčku přátel (celkové i týdenní XP).
+
+Důvod pro rozdělení: kdyby se liga řadila podle prášků, každá vzatá
+nápověda by uživatele srazila v žebříčku a lidé by se vysvětlením
+vyhýbali. XP drží záznam odvedené práce nezávisle na útratě.
+
+Zisk XP: **10 za správný příklad, +20 za bezchybnou lekci.**
+Zisk prášků a útrata podle briefu (sekce 6).
+
 ## Fáze
 
 1. ✅ Základ — PWA, manifest, service worker, iOS onboarding, tokeny, i18n
