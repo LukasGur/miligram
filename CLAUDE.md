@@ -16,6 +16,8 @@ export, offline-first. Podrobnosti k příkazům a struktuře jsou v README.md.
 - **Tabulární číslice** všude, kde se hodnota mění (`.num`, `data-numeric`).
 - **Sahatelné cíle ≥ 44 px**, primární akce ve spodní třetině obrazovky.
 - Generovaný `src/lib/splashScreens.ts` se needituje ručně.
+- Údaje se ověřují nástroji v `scripts/sukl/` — ne z paměti. Postup je
+  v `scripts/sukl/README.md`, výsledky v `docs/zdroje.md`.
 
 ## Ekonomika: dvě veličiny, ne jedna
 
@@ -33,7 +35,8 @@ Zisk prášků a útrata podle briefu (sekce 6).
 ## Fáze
 
 1. ✅ Základ — PWA, manifest, service worker, iOS onboarding, tokeny, i18n
-2. Výpočetní jádro — šablony, generátor, unit testy (Vitest)
+2. Výpočetní jádro — hotové `src/core` (jednotky, vzorce, tolerance,
+   generátor, 59 testů); šablony čekají na schválení seznamu
 3. Design systém — klávesnice, obrazovka příkladu, moment vyhodnocení
 4. Gamifikace lokálně — Dexie, prášky, série, XP, nápovědy, odbytek
 5. Účet a sociální vrstva — Supabase, sync, přátelé, ligy, souboje
