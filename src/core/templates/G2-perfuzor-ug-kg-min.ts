@@ -4,7 +4,7 @@ import { concentrationOf, selectProducts, vialContentMg } from "../products";
 import * as tolerances from "../tolerances";
 import type { Solution, Vars } from "../types";
 import { frac, step, tex, unit } from "./helpers";
-import { register } from "./registry";
+import { register, SUKL_DLP } from "./registry";
 
 /** Objemy stříkaček do lineárního dávkovače. */
 const SYRINGE_VOLUMES_ML = [20, 50] as const;
@@ -18,14 +18,7 @@ const SYRINGE_VOLUMES_ML = [20, 50] as const;
 export const G2 = register({
   id: "G2",
   category: "vazoaktivni",
-  source: [
-    {
-      citation: "SÚKL, Databáze léčivých přípravků, vydání 27. 8. 2026 — koncentrace ampule.",
-      url: "https://opendata.sukl.cz/?q=katalog/databaze-lecivych-pripravku-dlp",
-      verifiedAt: "2026-09-02",
-    },
-    PUMP_SOURCE,
-  ],
+  source: [SUKL_DLP, PUMP_SOURCE],
 
   generate(rng, difficulty) {
     const weightKg = rng.step(50, 95, 5);
@@ -114,5 +107,5 @@ export const G2 = register({
     };
   },
 
-  answer: { unit: "ml", tolerance: tolerances.pumpRate(), decimals: 2 },
+  answer: { unit: "mlPerHour", tolerance: tolerances.pumpRate(), decimals: 2 },
 });

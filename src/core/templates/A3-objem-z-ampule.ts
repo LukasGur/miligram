@@ -4,7 +4,7 @@ import { syringeFor } from "../devices";
 import * as tolerances from "../tolerances";
 import type { Solution, Vars } from "../types";
 import { frac, step, tex, unit } from "./helpers";
-import { register } from "./registry";
+import { ISO_7886, register, SUKL_DLP } from "./registry";
 
 /**
  * A3 — objem z ampule.
@@ -16,18 +16,7 @@ import { register } from "./registry";
 export const A3 = register({
   id: "A3",
   category: "zaklad",
-  source: [
-    {
-      citation: "SÚKL, Databáze léčivých přípravků, vydání 27. 8. 2026 — síla a balení přípravku.",
-      url: "https://opendata.sukl.cz/?q=katalog/databaze-lecivych-pripravku-dlp",
-      verifiedAt: "2026-09-02",
-    },
-    {
-      citation: "ČSN EN ISO 7886-1 — tolerance odměřeného objemu stříkačkou.",
-      url: "https://www.iso.org/standard/14835.html",
-      verifiedAt: "2026-09-03",
-    },
-  ],
+  source: [SUKL_DLP, ISO_7886],
 
   generate(rng, difficulty) {
     const product = pickProduct(rng, {

@@ -1,4 +1,4 @@
-import type { Tolerance } from "./answer";
+import { evaluateAnswer, type Tolerance } from "./answer";
 import { PUMP_FLOW_ACCURACY, syringeToleranceMl } from "./devices";
 
 /**
@@ -39,4 +39,21 @@ export function countable(): Tolerance {
  */
 export function intermediate(): Tolerance {
   return { kind: "relative", value: 0.01 };
+}
+
+/**
+ * Nejmenší počet desetinných míst, na kterém zaokrouhlený výsledek ještě
+ * projde vlastní tolerancí.
+ *
+ * Bez tohohle vzniká tichá past: šablona zobrazí dvě desetinná místa,
+ * uživatel je poctivě opíše a odpověď mu neprojde, protože zaokrouhlení
+ * samo o sobě přesáhlo toleranci. Pojistka platí pro každou šablonu,
+ * takže se ta chyba nemůže vrátit s další.
+ */
+export function decimalsFor(value: number, tolerance: Tolerance, max = 4): number {
+  for (let decimals = 0; decimals <= max; decimals += 1) {
+    const rounded = Number(value.toFixed(decimals));
+    if (evaluateAnswer(rounded, value, tolerance).correct) return decimals;
+  }
+  return max;
 }

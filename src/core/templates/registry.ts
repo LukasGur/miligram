@@ -1,5 +1,23 @@
-import type { Difficulty, Exercise, Template } from "../types";
+import type { Difficulty, Exercise, Source, Template } from "../types";
 import { createRng } from "../random";
+
+/**
+ * Zdroje, které sdílí většina šablon. Konkrétní SPC si každá šablona
+ * uvádí sama — tady je jen to, co platí plošně.
+ */
+export const SUKL_DLP: Source = {
+  citation:
+    "SÚKL, Databáze léčivých přípravků, vydání 27. 8. 2026 — název, síla, " +
+    "léková forma a velikost balení registrovaných přípravků.",
+  url: "https://opendata.sukl.cz/?q=katalog/databaze-lecivych-pripravku-dlp",
+  verifiedAt: "2026-09-02",
+};
+
+export const ISO_7886: Source = {
+  citation: "ČSN EN ISO 7886-1 — tolerance objemu odměřeného injekční stříkačkou.",
+  url: "https://www.iso.org/standard/14835.html",
+  verifiedAt: "2026-09-03",
+};
 
 const templates = new Map<string, Template>();
 

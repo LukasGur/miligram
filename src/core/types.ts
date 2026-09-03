@@ -1,6 +1,5 @@
 import type { Tolerance } from "./answer";
 import type { Rng } from "./random";
-import type { Unit } from "./units";
 
 export const CATEGORIES = [
   "zaklad",
@@ -61,8 +60,22 @@ export type Solution = {
   roundingNoteKey?: string;
 };
 
+/**
+ * Jednotka, která se u pole odpovědi zobrazuje jako pevný sufix.
+ * Je to klíč do překladů, ne fyzikální jednotka — počet tablet ani cyklů
+ * do soustavy SI nepatří, ale jako sufix se chová stejně.
+ */
+export const ANSWER_UNITS = [
+  "mg", "g", "ug", "ml", "l", "mmol", "mEq", "IU",
+  "min", "h", "den",
+  "mlPerHour", "dropsPerMinute", "ugPerKgMin", "ugPerMin", "mgPerMl", "mmolPerL",
+  "tablet", "ampoule", "vial", "pack", "cycle",
+  "m2", "percent",
+] as const;
+export type AnswerUnit = (typeof ANSWER_UNITS)[number];
+
 export type AnswerSpec = {
-  unit: Unit;
+  unit: AnswerUnit;
   tolerance: Tolerance;
   /** Na kolik desetinných míst se výsledek zobrazuje. */
   decimals: number;

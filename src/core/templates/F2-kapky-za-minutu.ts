@@ -4,7 +4,7 @@ import { pickProduct } from "../products";
 import * as tolerances from "../tolerances";
 import type { Solution, Vars } from "../types";
 import { frac, step, tex, unit } from "./helpers";
-import { register } from "./registry";
+import { register, SUKL_DLP } from "./registry";
 
 /**
  * F2 — kapky za minutu.
@@ -15,14 +15,7 @@ import { register } from "./registry";
 export const F2 = register({
   id: "F2",
   category: "infuze",
-  source: [
-    {
-      citation: "SÚKL, Databáze léčivých přípravků, vydání 27. 8. 2026 — objem vaku.",
-      url: "https://opendata.sukl.cz/?q=katalog/databaze-lecivych-pripravku-dlp",
-      verifiedAt: "2026-09-02",
-    },
-    DROP_FACTOR_SOURCE,
-  ],
+  source: [SUKL_DLP, DROP_FACTOR_SOURCE],
 
   generate(rng, difficulty) {
     const product = pickProduct(rng, { kind: "infusionBag", minVolumeMl: 1 });
@@ -75,5 +68,5 @@ export const F2 = register({
     };
   },
 
-  answer: { unit: "min", tolerance: tolerances.drops(), decimals: 0 },
+  answer: { unit: "dropsPerMinute", tolerance: tolerances.drops(), decimals: 0 },
 });
