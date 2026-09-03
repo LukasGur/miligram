@@ -53,7 +53,7 @@ export const A1 = register({
       value: count,
       steps: [
         given(q(doseMg, "mg", 3), `${tex(strengthMg)}${unit("mg")}\\text{/tbl}`),
-        formula(`n = ${frac("\\text{dávka}", "\\text{síla tablety}")}`),
+        formula(`n = ${frac("\\text{@dose}", "\\text{@tabletStrength}")}`),
         substitute(`n = ${frac(q(doseMg, "mg", 3), q(strengthMg, "mg"))}`),
         result(count, "tbl", 2),
       ],

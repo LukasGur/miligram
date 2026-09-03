@@ -82,11 +82,11 @@ export const B4 = register({
       steps: [
         given(q(weightKg, "kg", 0), q(perKg, "mg/kg", 1), `${q(strengthMg, "mg", 0)} / ${q(syringeMl, "ml", 1)}`),
         intermediate("davkaVMg", {
-          formula: `m = D_{\\text{kg}} \\times m_{\\text{tělesná}}`,
+          formula: `m = D_{\\text{kg}} \\times m_{\\text{@body}}`,
           substituted: `m = ${q(perKg, "", 1)} \\times ${q(weightKg, "kg", 0)}`,
           result: q(doseMg, "mg", 1),
         }),
-        formula(`V = ${frac("m", "\\text{síla}")} \\times V_{\\text{stříkačka}}`),
+        formula(`V = ${frac("m", "\\text{@strength}")} \\times V_{\\text{@syringe}}`),
         substitute(`V = ${frac(q(doseMg, "mg", 1), q(strengthMg, "mg", 0))} \\times ${q(syringeMl, "ml", 1)}`),
         result(volumeMl, "ml", 2),
       ],

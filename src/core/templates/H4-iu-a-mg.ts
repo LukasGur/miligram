@@ -65,7 +65,7 @@ export const H4 = register({
         steps: [
           given(q(givenIU, "IU", 0)),
           ratioStep,
-          formula(`m = ${frac("\\text{aktivita}", "\\text{IU na mg}")}`),
+          formula(`m = ${frac("\\text{@activity}", "\\text{@iuPerMg}")}`),
           substitute(`m = ${frac(q(givenIU, "IU", 0), `${tex(iuPerMg, 2)}\\ \\mathrm{IU/mg}`)}`),
           result(mg, "mg", 2),
         ],
@@ -80,7 +80,7 @@ export const H4 = register({
       steps: [
         given(q(givenMg, "mg", 2)),
         ratioStep,
-        formula("\\text{aktivita} = m \\times \\text{IU na mg}"),
+        formula("\\text{@activity} = m \\times \\text{@iuPerMg}"),
         substitute(`${tex(givenMg, 2)} \\times ${tex(iuPerMg, 2)}`, q(iu, "IU", 0)),
         result(iu, "IU", 0),
       ],

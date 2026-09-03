@@ -35,7 +35,7 @@ export const F5 = register({
       value: rate,
       steps: [
         given(q(dropsPerMin, "gtt/min", 0), `${dropFactor}${" "}\\mathrm{gtt/ml}`),
-        formula(`v = ${frac("\\text{gtt/min} \\times 60", "\\text{kapkový faktor}")}`),
+        formula(`v = ${frac("\\text{gtt/min} \\times 60", "\\text{@dropFactor}")}`),
         substitute(`v = ${frac(`${q(dropsPerMin, "", 0)} \\times 60`, String(dropFactor))}`),
         result(rate, "ml/h", 1),
       ],

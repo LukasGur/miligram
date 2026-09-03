@@ -54,7 +54,7 @@ export const G3 = register({
           substituted: `c = ${frac(q(totalMg, "mg", 1), q(syringeMl, "ml", 0))}`,
           result: q(concentration, "mg/ml", 4),
         }),
-        formula(`D = ${frac("v \\times c \\times 1000", "m_{\\text{tělesná}} \\times 60")}`),
+        formula(`D = ${frac("v \\times c \\times 1000", "m_{\\text{@body}} \\times 60")}`),
         substitute(
           `D = ${frac(
             `${q(rate, "", 1)} \\times ${q(concentration, "", 4)} \\times 1000`,

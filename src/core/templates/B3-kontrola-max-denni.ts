@@ -58,18 +58,18 @@ export const B3 = register({
     return {
       value: remainingMg,
       steps: [
-        given(q(weightKg, "kg", 1), q(limitPerKg, "mg/kg/den", 0), `${dosesGiven} \\times ${q(perDoseMg, "mg", 1)}`),
+        given(q(weightKg, "kg", 1), q(limitPerKg, "mg/kg/@day", 0), `${dosesGiven} \\times ${q(perDoseMg, "mg", 1)}`),
         intermediate("denniStrop", {
-          formula: `m_{\\max} = D_{\\max} \\times m_{\\text{tělesná}}`,
+          formula: `m_{\\max} = D_{\\max} \\times m_{\\text{@body}}`,
           substituted: `m_{\\max} = ${q(limitPerKg, "", 0)} \\times ${q(weightKg, "kg", 1)}`,
           result: q(maxDailyMg, "mg", 1),
         }),
         intermediate("jizPodano", {
-          substituted: `m_{\\text{podáno}} = ${dosesGiven} \\times ${q(perDoseMg, "mg", 1)}`,
+          substituted: `m_{\\text{@given}} = ${dosesGiven} \\times ${q(perDoseMg, "mg", 1)}`,
           result: q(givenMg, "mg", 1),
         }),
-        formula(`m_{\\text{zbývá}} = m_{\\max} - m_{\\text{podáno}}`),
-        substitute(`m_{\\text{zbývá}} = ${q(maxDailyMg, "mg", 1)} - ${q(givenMg, "mg", 1)}`),
+        formula(`m_{\\text{@remaining}} = m_{\\max} - m_{\\text{@given}}`),
+        substitute(`m_{\\text{@remaining}} = ${q(maxDailyMg, "mg", 1)} - ${q(givenMg, "mg", 1)}`),
         result(remainingMg, "mg", 1),
       ],
       roundingNoteKey: "zaokrouhleniMezivysledek",

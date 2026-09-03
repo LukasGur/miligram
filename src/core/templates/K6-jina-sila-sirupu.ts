@@ -76,7 +76,7 @@ export const K6 = register({
           substituted: `${tex(prescribedMl, 1)} \\times ${tex(fromConcentration, 0)}`,
           result: q(doseMg, "mg", 1),
         }),
-        formula(`V = ${frac("\\text{dávka}", "\\text{nová koncentrace}")}`),
+        formula(`V = ${frac("\\text{@dose}", "\\text{@newConcentration}")}`),
         substitute(`V = ${frac(q(doseMg, "mg", 1), q(toConcentration, "mg/ml", 0))}`),
         result(volumeMl, "ml", 1),
       ],

@@ -50,15 +50,15 @@ export const A7 = register({
     return {
       value: packs,
       steps: [
-        given(`${q(perDose, "tbl", 1)} \\times ${timesPerDay}\\text{/den}`, `${days}\\text{ dní}`, `${packCount}\\text{ tbl/bal.}`),
+        given(`${q(perDose, "tbl", 1)} \\times ${timesPerDay}\\text{/@day}`, `${days}\\text{ @days}`, `${packCount}\\text{ tbl/@packShort}`),
         intermediate("celkovaSpotreba", {
-          formula: `n_{\\text{tbl}} = \\text{dávka} \\times \\text{frekvence} \\times \\text{dny}`,
+          formula: `n_{\\text{tbl}} = \\text{@dose} \\times \\text{@frequency} \\times \\text{@days}`,
           substituted: `n_{\\text{tbl}} = ${q(perDose, "", 1)} \\times ${timesPerDay} \\times ${days}`,
           result: q(totalTablets, "tbl", 1),
         }),
-        formula(`n_{\\text{bal.}} = \\left\\lceil ${frac("n_{\\text{tbl}}", "\\text{obsah balení}")} \\right\\rceil`),
-        substitute(`n_{\\text{bal.}} = \\left\\lceil ${frac(q(totalTablets, "", 1), String(packCount))} \\right\\rceil`),
-        result(packs, "bal.", 0),
+        formula(`n_{\\text{@packShort}} = \\left\\lceil ${frac("n_{\\text{tbl}}", "\\text{@packContent}")} \\right\\rceil`),
+        substitute(`n_{\\text{@packShort}} = \\left\\lceil ${frac(q(totalTablets, "", 1), String(packCount))} \\right\\rceil`),
+        result(packs, "@packShort", 0),
       ],
       roundingNoteKey: "zaokrouhleniBaleni",
     };

@@ -47,13 +47,13 @@ export const E5 = register({
     return {
       value: vials,
       steps: [
-        given(q(doseMg, "mg", 1), `${q(vialMg, "mg", 0)}\\text{/lahvička}`),
-        formula(`n = \\left\\lceil ${frac("\\text{dávka}", "\\text{obsah lahvičky}")} \\right\\rceil`),
+        given(q(doseMg, "mg", 1), `${q(vialMg, "mg", 0)}\\text{/@vial}`),
+        formula(`n = \\left\\lceil ${frac("\\text{@dose}", "\\text{@vialContent}")} \\right\\rceil`),
         substitute(`n = \\left\\lceil ${frac(q(doseMg, "mg", 1), q(vialMg, "mg", 0))} \\right\\rceil`),
         intermediate("zaokrouhleniNahoru", {
           result: `\\left\\lceil ${q(exact, "", 2)} \\right\\rceil = ${vials}`,
         }),
-        result(vials, "lahv.", 0),
+        result(vials, "@vialShort", 0),
       ],
       roundingNoteKey: "zaokrouhleniLahvicky",
     };

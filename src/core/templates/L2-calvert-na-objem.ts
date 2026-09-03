@@ -66,7 +66,7 @@ export const L2 = register({
     if (Number(vars.fromCreatinine) === 1) {
       steps.push(
         given(
-          `${tex(Number(vars.ageYears), 0)}\\ \\text{let}`,
+          `${tex(Number(vars.ageYears), 0)}\\ \\text{@years}`,
           q(Number(vars.weightKg), "kg", 0),
           `${tex(Number(vars.creatinineUmolPerL), 0)}\\ \\mathrm{\\mu mol/l}`,
         ),

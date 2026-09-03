@@ -52,13 +52,13 @@ export const G6 = register({
     return {
       value: diluentMl,
       steps: [
-        given(`${ampoules} \\times ${q(ampouleMl, "ml", 1)}`, `V_{\\text{celkem}} = ${q(syringeMl, "ml", 0)}`),
+        given(`${ampoules} \\times ${q(ampouleMl, "ml", 1)}`, `V_{\\text{@total}} = ${q(syringeMl, "ml", 0)}`),
         intermediate("objemLeciva", {
-          substituted: `V_{\\text{léčivo}} = ${ampoules} \\times ${q(ampouleMl, "ml", 1)}`,
+          substituted: `V_{\\text{@drug}} = ${ampoules} \\times ${q(ampouleMl, "ml", 1)}`,
           result: q(drugMl, "ml", 1),
         }),
-        formula(`V_{\\text{ředidlo}} = V_{\\text{celkem}} - V_{\\text{léčivo}}`),
-        substitute(`V_{\\text{ředidlo}} = ${q(syringeMl, "ml", 0)} - ${q(drugMl, "ml", 1)}`),
+        formula(`V_{\\text{@diluentShort}} = V_{\\text{@total}} - V_{\\text{@drug}}`),
+        substitute(`V_{\\text{@diluentShort}} = ${q(syringeMl, "ml", 0)} - ${q(drugMl, "ml", 1)}`),
         result(diluentMl, "ml", 1),
       ],
       roundingNoteKey: "zaokrouhleniStrikacka",

@@ -48,13 +48,13 @@ export const J1 = register({
     const crCl = creatinineClearance({ ageYears, weightKg, creatinineUmolPerL, female });
 
     const steps = [
-      given(`${tex(ageYears, 0)}\\ \\text{let}`, q(weightKg, "kg", 0), `${tex(creatinineUmolPerL, 0)}\\ \\mathrm{\\mu mol/l}`),
+      given(`${tex(ageYears, 0)}\\ \\text{@years}`, q(weightKg, "kg", 0), `${tex(creatinineUmolPerL, 0)}\\ \\mathrm{\\mu mol/l}`),
       intermediate("prevodKreatininu", {
         formula: `1\\ \\mathrm{mg/dl} = 88{,}4\\ \\mathrm{\\mu mol/l}`,
         substituted: `${frac(tex(creatinineUmolPerL, 0), "88{,}4")}`,
         result: `${tex(creatinineMgPerDl, 3)}\\ \\mathrm{mg/dl}`,
       }),
-      formula(`CrCl = ${frac("(140 - \\text{věk}) \\times m", "72 \\times S_{kr}")}`),
+      formula(`CrCl = ${frac("(140 - \\text{@age}) \\times m", "72 \\times S_{kr}")}`),
       substitute(
         `CrCl = ${frac(`(140 - ${tex(ageYears, 0)}) \\times ${tex(weightKg, 0)}`, `72 \\times ${tex(creatinineMgPerDl, 3)}`)}`,
       ),

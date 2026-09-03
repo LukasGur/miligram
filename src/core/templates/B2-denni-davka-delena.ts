@@ -62,18 +62,18 @@ export const B2 = register({
     return {
       value: volumeMl,
       steps: [
-        given(q(weightKg, "kg", 1), q(perKgPerDay, "mg/kg/den", 0), `${dosesPerDay}\\times\\text{ denně}`),
+        given(q(weightKg, "kg", 1), q(perKgPerDay, "mg/kg/@day", 0), `${dosesPerDay}\\times\\text{ @daily}`),
         intermediate("denniDavka", {
-          formula: `m_{\\text{den}} = D_{\\text{kg/den}} \\times m_{\\text{tělesná}}`,
-          substituted: `m_{\\text{den}} = ${q(perKgPerDay, "", 0)} \\times ${q(weightKg, "kg", 1)}`,
+          formula: `m_{\\text{@day}} = D_{\\text{kg/@day}} \\times m_{\\text{@body}}`,
+          substituted: `m_{\\text{@day}} = ${q(perKgPerDay, "", 0)} \\times ${q(weightKg, "kg", 1)}`,
           result: q(dailyMg, "mg", 1),
         }),
         intermediate("dilciDavka", {
-          formula: `m_{\\text{dávka}} = ${frac("m_{\\text{den}}", "n_{\\text{podání}}")}`,
-          substituted: `m_{\\text{dávka}} = ${frac(q(dailyMg, "mg", 1), String(dosesPerDay))}`,
+          formula: `m_{\\text{@dose}} = ${frac("m_{\\text{@day}}", "n_{\\text{@administration}}")}`,
+          substituted: `m_{\\text{@dose}} = ${frac(q(dailyMg, "mg", 1), String(dosesPerDay))}`,
           result: q(perDoseMg, "mg", 1),
         }),
-        formula(`V = ${frac("m_{\\text{dávka}}", "\\text{síla}")} \\times V_{\\text{ref}}`),
+        formula(`V = ${frac("m_{\\text{@dose}}", "\\text{@strength}")} \\times V_{\\text{ref}}`),
         substitute(`V = ${frac(q(perDoseMg, "mg", 1), q(strengthMg, "mg", 0))} \\times ${q(referenceMl, "ml", 0)}`),
         result(volumeMl, "ml", 1),
       ],

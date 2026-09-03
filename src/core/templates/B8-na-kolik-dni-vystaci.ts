@@ -71,18 +71,18 @@ export const B8 = register({
     return {
       value: days,
       steps: [
-        given(q(weightKg, "kg", 1), q(perKgPerDay, "mg/kg/den", 0), `${dosesPerDay}\\times\\text{ denně}`, q(bottleMl, "ml", 0)),
+        given(q(weightKg, "kg", 1), q(perKgPerDay, "mg/kg/@day", 0), `${dosesPerDay}\\times\\text{ @daily}`, q(bottleMl, "ml", 0)),
         intermediate("dilciDavka", {
-          substituted: `m_{\\text{dávka}} = ${frac(`${q(perKgPerDay, "", 0)} \\times ${q(weightKg, "kg", 1)}`, String(dosesPerDay))}`,
+          substituted: `m_{\\text{@dose}} = ${frac(`${q(perKgPerDay, "", 0)} \\times ${q(weightKg, "kg", 1)}`, String(dosesPerDay))}`,
           result: q(perDoseMg, "mg", 1),
         }),
         intermediate("objemNaDen", {
-          substituted: `V_{\\text{den}} = ${frac(q(perDoseMg, "mg", 1), q(strengthMg, "mg", 0))} \\times ${q(referenceMl, "ml", 0)} \\times ${dosesPerDay}`,
+          substituted: `V_{\\text{@day}} = ${frac(q(perDoseMg, "mg", 1), q(strengthMg, "mg", 0))} \\times ${q(referenceMl, "ml", 0)} \\times ${dosesPerDay}`,
           result: q(dailyMl, "ml", 2),
         }),
-        formula(`n_{\\text{dní}} = \\left\\lfloor ${frac("V_{\\text{lahvička}}", "V_{\\text{den}}")} \\right\\rfloor`),
-        substitute(`n_{\\text{dní}} = \\left\\lfloor ${frac(q(bottleMl, "ml", 0), q(dailyMl, "ml", 2))} \\right\\rfloor`),
-        result(days, "dnů", 0),
+        formula(`n_{\\text{@days}} = \\left\\lfloor ${frac("V_{\\text{@vial}}", "V_{\\text{@day}}")} \\right\\rfloor`),
+        substitute(`n_{\\text{@days}} = \\left\\lfloor ${frac(q(bottleMl, "ml", 0), q(dailyMl, "ml", 2))} \\right\\rfloor`),
+        result(days, "@days", 0),
       ],
       roundingNoteKey: "zaokrouhleniDolu",
     };

@@ -52,7 +52,7 @@ export const A2 = register({
       value: volumeMl,
       steps: [
         given(q(doseMg, "mg", 3), `${q(strengthMg, "mg")} / ${q(referenceMl, "ml", 0)}`),
-        formula(`V = ${frac("\\text{dávka}", "\\text{síla}")} \\times V_{\\text{ref}}`),
+        formula(`V = ${frac("\\text{@dose}", "\\text{@strength}")} \\times V_{\\text{ref}}`),
         substitute(`V = ${frac(q(doseMg, "mg", 3), q(strengthMg, "mg"))} \\times ${q(referenceMl, "ml", 0)}`),
         result(volumeMl, "ml", 1),
       ],

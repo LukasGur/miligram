@@ -58,12 +58,12 @@ export const B7 = register({
       steps: [
         given(q(weightKg, "kg", 1), `${timesPerDay} \\times ${q(perDoseMg, "mg", 1)}`),
         intermediate("denniDavka", {
-          substituted: `m_{\\text{den}} = ${timesPerDay} \\times ${q(perDoseMg, "mg", 1)}`,
+          substituted: `m_{\\text{@day}} = ${timesPerDay} \\times ${q(perDoseMg, "mg", 1)}`,
           result: q(dailyMg, "mg", 1),
         }),
-        formula(`D_{\\text{kg/den}} = \\dfrac{m_{\\text{den}}}{m_{\\text{tělesná}}}`),
-        substitute(`D_{\\text{kg/den}} = \\dfrac{${q(dailyMg, "mg", 1)}}{${q(weightKg, "kg", 1)}}`),
-        result(dailyPerKg, "mg/kg/den", 1),
+        formula(`D_{\\text{kg/@day}} = \\dfrac{m_{\\text{@day}}}{m_{\\text{@body}}}`),
+        substitute(`D_{\\text{kg/@day}} = \\dfrac{${q(dailyMg, "mg", 1)}}{${q(weightKg, "kg", 1)}}`),
+        result(dailyPerKg, "mg/kg/@day", 1),
       ],
       roundingNoteKey: "zaokrouhleniMezivysledek",
     };
@@ -71,6 +71,6 @@ export const B7 = register({
 
   answer(_vars, solution) {
     const tolerance = tolerances.intermediate();
-    return { unit: "mg", tolerance, decimals: tolerances.decimalsFor(solution.value, tolerance) };
+    return { unit: "mgPerKgDen", tolerance, decimals: tolerances.decimalsFor(solution.value, tolerance) };
   },
 });

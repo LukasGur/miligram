@@ -5,6 +5,8 @@ import { DisclaimerGate } from "@/components/DisclaimerGate";
 import { ServiceWorkerRegistrar } from "@/components/ServiceWorkerRegistrar";
 import { IosStandaloneTags } from "@/components/IosStandaloneTags";
 import "./globals.css";
+// Generováno skriptem `pnpm katex` — jen woff2, aby precache nenabobtnala.
+import "./katex.css";
 
 /**
  * IBM Plex má poctivě kreslený latin-ext — háčky a kroužky (ě, ř, ů, ľ, ĺ, ŕ)

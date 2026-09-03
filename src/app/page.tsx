@@ -1,22 +1,37 @@
 "use client";
 
 import { useState } from "react";
+import dynamic from "next/dynamic";
 import { useFormatter, useTranslations } from "next-intl";
+import { newLessonId, LESSON_LENGTH } from "@/core/lesson";
 import { InstallBanner } from "@/components/InstallBanner";
 import { NetworkStatus } from "@/components/NetworkStatus";
 import { SettingsSheet } from "@/components/SettingsSheet";
 import { Wordmark } from "@/components/Wordmark";
 import { SettingsIcon } from "@/components/icons";
 
-/** Délka lekce je pevná napříč aplikací; ve fázi 4 se z ní počítá ekonomika. */
-const LESSON_LENGTH = 7;
 const LESSON_MINUTES = "4–6";
+
+/**
+ * Lekce se načítá až při spuštění. Je v ní KaTeX, všech 72 šablon i fond
+ * přípravků — dohromady největší kus aplikace, který úvodní obrazovka
+ * k ničemu nepotřebuje.
+ */
+const LessonView = dynamic(
+  () => import("@/components/exercise/LessonView").then((module) => module.LessonView),
+  { ssr: false },
+);
 
 export default function HomePage() {
   const t = useTranslations("home");
   const tCommon = useTranslations("common");
   const format = useFormatter();
   const [settingsOpen, setSettingsOpen] = useState(false);
+  const [lessonId, setLessonId] = useState<string | null>(null);
+
+  if (lessonId !== null) {
+    return <LessonView lessonId={lessonId} onExit={() => setLessonId(null)} />;
+  }
 
   return (
     <div className="bg-paper flex h-dvh flex-col overflow-hidden">
@@ -65,8 +80,8 @@ export default function HomePage() {
         >
           <button
             type="button"
-            disabled
-            className="bg-accent active:bg-accent-press min-h-14 w-full rounded-control text-body font-semibold text-white disabled:opacity-40"
+            onClick={() => setLessonId(newLessonId())}
+            className="bg-accent active:bg-accent-press min-h-14 w-full rounded-control text-body font-semibold text-white transition-colors duration-75"
           >
             {t("start")}
           </button>

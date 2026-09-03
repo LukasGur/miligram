@@ -57,7 +57,7 @@ export const F2 = register({
           result: `${tex(bagMl, 0)}${unit("ml")} \;/\; ${tex(minutes, 0)}${unit("min")} \;/\; ${tex(dropFactor, 0)}${unit("gtt/ml")}`,
         }),
         step("vzorec", {
-          formula: `\\text{gtt/min} = ${frac("V \\times \\text{kapkový faktor}", "t")}`,
+          formula: `\\text{gtt/min} = ${frac("V \\times \\text{@dropFactor}", "t")}`,
         }),
         step("dosazeni", {
           substituted: `\\text{gtt/min} = ${frac(`${tex(bagMl, 0)} \\times ${tex(dropFactor, 0)}`, `${tex(minutes, 0)}`)}`,

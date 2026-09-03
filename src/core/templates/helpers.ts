@@ -1,8 +1,15 @@
 import type { SolutionStep } from "../types";
 
-/** Číslo pro sazbu do vzorce. Desetinná čárka patří až do vrstvy zobrazení. */
+/**
+ * Číslo pro sazbu do vzorce.
+ *
+ * Desetinná čárka se zapisuje jako `{,}`. Holá čárka je v matematické sazbě
+ * oddělovač a KaTeX za ni dá mezeru, takže by z „1,5 ml“ vzniklo „1, 5 ml“.
+ * Čárku má čeština i slovenština, jiný jazyk aplikace nemá — kdyby přibyl,
+ * musí se oddělovač protáhnout až sem z vrstvy zobrazení.
+ */
 export function tex(value: number, decimals = 2): string {
-  return String(Number(value.toFixed(decimals)));
+  return String(Number(value.toFixed(decimals))).replace(".", "{,}");
 }
 
 /** Zlomek v KaTeXu. Zlomky mají vypadat jako zlomky, ne jako lomítko. */
@@ -10,9 +17,21 @@ export function frac(numerator: string, denominator: string): string {
   return `\\dfrac{${numerator}}{${denominator}}`;
 }
 
-/** Jednotka sazená vzpřímeně — kurzíva by z „mg“ udělala součin m×g. */
+/**
+ * Jednotka sazená vzpřímeně — kurzíva by z „mg“ udělala součin m×g.
+ *
+ * Znak µ se cestou nahradí příkazem `\mu`. Symbol mikro (U+00B5) totiž
+ * v matematické sazbě není písmeno, které by KaTeX znal, a v přísném režimu
+ * ho odmítne; v benevolentním by ho vysázel fallbackem z jiného řezu.
+ */
 export function unit(symbol: string): string {
-  return `\\,\\mathrm{${symbol}}`;
+  const body = symbol.replaceAll("\u00b5", "\\mu ");
+  /**
+   * Slovní jednotky nesou token pro překlad (`@days`) a sázejí se textovým
+   * režimem. `\mathrm` je režim matematický a diakritiku v něm KaTeX odmítá —
+   * „dnů“ by v něm skončilo chybou nebo fallbackem z jiného řezu.
+   */
+  return symbol.includes("@") ? `\\,\\text{${body}}` : `\\,\\mathrm{${body}}`;
 }
 
 /** Číslo s jednotkou, jak se sází do vzorce. */
@@ -32,9 +51,15 @@ export function step(textKey: string, parts: Omit<SolutionStep, "textKey"> = {})
    rozjela by se a uživatel by přišel o to, že řešení vypadá pořád stejně.
    ---------------------------------------------------------------------- */
 
-/** Přehled zadaných hodnot. */
+/**
+ * Přehled zadaných hodnot.
+ *
+ * Oddělovačem je čárka a za ní tlustá mezera `\;`. V JavaScriptu se musí
+ * zpětné lomítko zdvojit — jinak z něj zbude holý středník a v sazbě se
+ * objeví „0,5 %,; 100 ml“.
+ */
 export function given(...parts: string[]): SolutionStep {
-  return step("zadani", { result: parts.join(",\; ") });
+  return step("zadani", { result: parts.join(",\\; ") });
 }
 
 /** Vzorec bez dosazení — krok, kde se vysvětluje, proč zrovna tenhle. */

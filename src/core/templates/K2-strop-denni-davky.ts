@@ -55,7 +55,7 @@ export const K2 = register({
     return {
       value: volumeMl,
       steps: [
-        given(q(weightKg, "kg", 1), `${tex(maxDailyPerKg, 1)}\\ \\mathrm{mg/kg/den}`, `${tex(dosesPerDay, 0)}\\times\\ \\text{denně}`),
+        given(q(weightKg, "kg", 1), `${tex(maxDailyPerKg, 1)}\\ \\mathrm{mg/kg/den}`, `${tex(dosesPerDay, 0)}\\times\\ \\text{@daily}`),
         intermediate("maximalniDenniDavka", {
           substituted: `${tex(maxDailyPerKg, 1)} \\times ${tex(weightKg, 1)}`,
           result: q(maxDailyMg, "mg", 1),
@@ -64,7 +64,7 @@ export const K2 = register({
           substituted: `${frac(q(maxDailyMg, "mg", 1), tex(dosesPerDay, 0))}`,
           result: q(maxSingleMg, "mg", 1),
         }),
-        formula(`V_{\\max} = ${frac("\\text{strop dílčí dávky}", "\\text{koncentrace}")}`),
+        formula(`V_{\\max} = ${frac("\\text{@doseCap}", "\\text{@concentration}")}`),
         substitute(`V_{\\max} = ${frac(q(maxSingleMg, "mg", 1), q(concentration, "mg/ml", 1))}`),
         result(volumeMl, "ml", 1),
       ],

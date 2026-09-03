@@ -52,18 +52,18 @@ export const F6 = register({
     return {
       value: remainingMinutes,
       steps: [
-        given(q(bagMl, "ml", 0), q(rate, "ml/h", 0), `${q(elapsed, "min", 0)}\\text{ uplynulo}`),
+        given(q(bagMl, "ml", 0), q(rate, "ml/h", 0), `${q(elapsed, "min", 0)}\\text{ @elapsed}`),
         intermediate("podanyObjem", {
-          formula: `V_{\\text{podáno}} = \\dfrac{v \\times t}{60}`,
-          substituted: `V_{\\text{podáno}} = \\dfrac{${q(rate, "", 0)} \\times ${q(elapsed, "", 0)}}{60}`,
+          formula: `V_{\\text{@given}} = \\dfrac{v \\times t}{60}`,
+          substituted: `V_{\\text{@given}} = \\dfrac{${q(rate, "", 0)} \\times ${q(elapsed, "", 0)}}{60}`,
           result: q(infusedMl, "ml", 1),
         }),
         intermediate("zbyvajiciObjem", {
-          substituted: `V_{\\text{zbývá}} = ${q(bagMl, "ml", 0)} - ${q(infusedMl, "ml", 1)}`,
+          substituted: `V_{\\text{@remaining}} = ${q(bagMl, "ml", 0)} - ${q(infusedMl, "ml", 1)}`,
           result: q(remainingMl, "ml", 1),
         }),
-        formula(`t_{\\text{zbývá}} = \\dfrac{V_{\\text{zbývá}}}{v} \\times 60`),
-        substitute(`t_{\\text{zbývá}} = \\dfrac{${q(remainingMl, "ml", 1)}}{${q(rate, "ml/h", 0)}} \\times 60`),
+        formula(`t_{\\text{@remaining}} = \\dfrac{V_{\\text{@remaining}}}{v} \\times 60`),
+        substitute(`t_{\\text{@remaining}} = \\dfrac{${q(remainingMl, "ml", 1)}}{${q(rate, "ml/h", 0)}} \\times 60`),
         result(remainingMinutes, "min", 0),
       ],
       roundingNoteKey: "zaokrouhleniCas",

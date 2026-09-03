@@ -60,16 +60,16 @@ export const L4 = register({
       steps: [
         given(
           `${tex(alreadyGiven, 0)}\\ \\mathrm{mg/m^2}`,
-          `${tex(dosePerCycle, 0)}\\ \\mathrm{mg/m^2}\\text{/cyklus}`,
+          `${tex(dosePerCycle, 0)}\\ \\mathrm{mg/m^2}\\text{/@cycle}`,
           `${tex(limit, 0)}\\ \\mathrm{mg/m^2}`,
         ),
         intermediate("zbyvaDoLimitu", {
           substituted: `${tex(limit, 0)} - ${tex(alreadyGiven, 0)}`,
           result: `${tex(remaining, 0)}\\ \\mathrm{mg/m^2}`,
         }),
-        formula(`n = \\left\\lfloor ${frac("\\text{zbývá}", "\\text{dávka na cyklus}")} \\right\\rfloor`),
+        formula(`n = \\left\\lfloor ${frac("\\text{@remaining}", "\\text{@dosePerCycle}")} \\right\\rfloor`),
         substitute(`n = \\left\\lfloor ${frac(tex(remaining, 0), tex(dosePerCycle, 0))} \\right\\rfloor`),
-        result(cycles, "\\text{cyklů}", 0),
+        result(cycles, "\\text{@cycles}", 0),
       ],
       roundingNoteKey: "zaokrouhleniDolu",
     };

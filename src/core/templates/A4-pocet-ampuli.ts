@@ -49,7 +49,7 @@ export const A4 = register({
       value: count,
       steps: [
         given(q(doseMg, "mg", 3), `${q(ampouleMg, "mg", 3)}\\text{/amp}`),
-        formula(`n = \\left\\lceil ${frac("\\text{dávka}", "\\text{obsah ampule}")} \\right\\rceil`),
+        formula(`n = \\left\\lceil ${frac("\\text{@dose}", "\\text{@ampouleContent}")} \\right\\rceil`),
         substitute(`n = \\left\\lceil ${frac(q(doseMg, "mg", 3), q(ampouleMg, "mg", 3))} \\right\\rceil`),
         intermediate("zaokrouhleniNahoru", { result: `\\left\\lceil ${q(exact, "", 2)} \\right\\rceil = ${count}` }),
         result(count, "amp", 0),

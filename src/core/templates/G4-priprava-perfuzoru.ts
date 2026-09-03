@@ -59,7 +59,7 @@ export const G4 = register({
           substituted: `m = ${q(target, "mg/ml", 3)} \\times ${q(syringeMl, "ml", 0)}`,
           result: q(totalMg, "mg", 2),
         }),
-        formula(`n = ${frac("m", "m_{\\text{ampule}}")}`),
+        formula(`n = ${frac("m", "m_{\\text{@ampoule}}")}`),
         substitute(`n = ${frac(q(totalMg, "mg", 2), q(ampouleMg, "mg", 2))}`),
         result(ampoules, "amp", 0),
       ],

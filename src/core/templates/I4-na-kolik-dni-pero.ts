@@ -56,14 +56,14 @@ export const I4 = register({
     return {
       value: days,
       steps: [
-        given(q(cartridgeMl, "ml", 1), `${q(perMl, "IU", 0)}\\text{/ml}`, `${q(dailyIU, "IU", 0)}\\text{/den}`),
+        given(q(cartridgeMl, "ml", 1), `${q(perMl, "IU", 0)}\\text{/ml}`, `${q(dailyIU, "IU", 0)}\\text{/@day}`),
         intermediate("obsahVlozky", {
           substituted: `${q(cartridgeMl, "ml", 1)} \\times ${q(perMl, "IU", 0)}\\text{/ml}`,
           result: q(contentIU, "IU", 0),
         }),
-        formula(`n = \\left\\lfloor ${frac("\\text{obsah}", "\\text{denní dávka}")} \\right\\rfloor`),
+        formula(`n = \\left\\lfloor ${frac("\\text{@content}", "\\text{@dailyDose}")} \\right\\rfloor`),
         substitute(`n = \\left\\lfloor ${frac(q(contentIU, "IU", 0), q(dailyIU, "IU", 0))} \\right\\rfloor`),
-        result(days, "\\text{dní}", 0),
+        result(days, "\\text{@days}", 0),
       ],
       roundingNoteKey: "zaokrouhleniDolu",
     };

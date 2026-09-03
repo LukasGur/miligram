@@ -55,7 +55,7 @@ export const A5 = register({
           substituted: `${q(doseUg, "µg", 1)} = ${frac(q(doseUg, "", 1), "1000")}${" "}\\mathrm{mg}`,
           result: q(doseMg, "mg", 4),
         }),
-        formula(`n = ${frac("\\text{dávka}", "\\text{síla tablety}")}`),
+        formula(`n = ${frac("\\text{@dose}", "\\text{@tabletStrength}")}`),
         substitute(`n = ${frac(q(doseMg, "mg", 4), q(strengthMg, "mg", 3))}`),
         result(count, "tbl", 2),
       ],

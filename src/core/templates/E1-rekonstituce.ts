@@ -58,15 +58,15 @@ export const E1 = register({
       value: volumeMl,
       steps: [
         step("zadani", {
-          result: `${tex(vialMg, 0)}${unit("mg")} + ${tex(diluentMl, 0)}${unit("ml")},\; \\text{dávka } ${tex(doseMg, 3)}${unit("mg")}`,
+          result: `${tex(vialMg, 0)}${unit("mg")} + ${tex(diluentMl, 0)}${unit("ml")},\; \\text{@dose } ${tex(doseMg, 3)}${unit("mg")}`,
         }),
         step("koncentrace", {
-          formula: `c = ${frac("m_{\\text{lahvička}}", "V_{\\text{rozpouštědlo}}")}`,
+          formula: `c = ${frac("m_{\\text{@vial}}", "V_{\\text{@diluent}}")}`,
           substituted: `c = ${frac(`${tex(vialMg, 0)}${unit("mg")}`, `${tex(diluentMl, 0)}${unit("ml")}`)}`,
           result: `c = ${tex(concentration, 2)}${unit("mg/ml")}`,
         }),
         step("objem", {
-          formula: `V = ${frac("\\text{dávka}", "c")}`,
+          formula: `V = ${frac("\\text{@dose}", "c")}`,
           substituted: `V = ${frac(`${tex(doseMg, 3)}${unit("mg")}`, `${tex(concentration, 2)}${unit("mg/ml")}`)}`,
         }),
         step("vysledek", { result: `V = ${tex(volumeMl, 2)}${unit("ml")}` }),

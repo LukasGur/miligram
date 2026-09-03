@@ -74,6 +74,7 @@ export function buildExercise(templateId: string, seed: string, difficulty: Diff
   }
   return {
     templateId,
+    source: template.source,
     seed,
     difficulty,
     vars,

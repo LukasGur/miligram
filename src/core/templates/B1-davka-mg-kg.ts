@@ -53,7 +53,7 @@ export const B1 = register({
       value: doseMg,
       steps: [
         given(q(weightKg, "kg", 1), `${q(perKg, "mg/kg", 1)}`),
-        formula(`m = D_{\\text{kg}} \\times m_{\\text{tělesná}}`),
+        formula(`m = D_{\\text{kg}} \\times m_{\\text{@body}}`),
         substitute(`m = ${q(perKg, "mg/kg", 1)} \\times ${q(weightKg, "kg", 1)}`),
         result(doseMg, "mg", 1),
       ],

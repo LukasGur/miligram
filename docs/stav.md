@@ -31,13 +31,21 @@ která čeká na zdroj.
 | K pediatrie | K1–K6 | — |
 | L onkologie | L1–L4 | — |
 
+**Fáze 3, rozhraní** — obrazovka příkladu, vlastní numerická klávesnice,
+moment vyhodnocení a krokové řešení sázené KaTeXem. Lekce má sedm příkladů
+se stoupající obtížností a je určená jediným identifikátorem, takže se dá
+sestavit znovu. Ověřeno ve WebKitu na rozměrech iPhonu, česky i slovensky.
+
 ## Co dělat dál
 
-1. **Fáze 3, rozhraní.** Numerická klávesnice, obrazovka příkladu,
-   moment vyhodnocení s krokovým řešením sázeným KaTeXem.
-2. **I3** (korekční faktor inzulinu) čeká na zdroj, jinak vypustit.
+1. **Fáze 4, gamifikace lokálně.** Dexie, prášky, série, XP, nápovědy.
+   Ekonomika zatím nikde neexistuje: shrnutí lekce ukazuje XP spočítané
+   podle pravidla, ale nikam se neukládá.
+2. **Fáze 5, účet a sociální vrstva.** Supabase. Čeká na rozhodnutí,
+   jestli založit nový projekt.
+3. **I3** (korekční faktor inzulinu) čeká na zdroj, jinak vypustit.
    Do té doby ji `productionTemplates()` nevydá a test to hlídá.
-3. **Revize slovenštiny rodilým mluvčím.** Texty jsou napsané, ne
+4. **Revize slovenštiny rodilým mluvčím.** Texty jsou napsané, ne
    přeložené strojem, ale nikdo je zatím nečetl. Názvy přípravků zůstávají
    české — fond je z české databáze.
 
@@ -52,6 +60,11 @@ která čeká na zdroj.
 - Kde je podíl nebo interval součástí ordinace (redukce dávky, počet podání),
   je součástí zadání a netvrdí se jako fakt. Ze zdroje pochází jen rozsah,
   ve kterém se pohybuje.
+- Klávesnice je vlastní, ne systémová. Systémová na iOS překryje spodní
+  třetinu obrazovky i s tlačítkem odpovědi.
+- Ve výpočetním jádře není text v žádném jazyce. Vzorce sázejí tokeny
+  (`\text{@dose}`), jazyk se doplní až při zobrazení. Test to vynucuje tím,
+  že jádro smí vracet jen ASCII.
 - Zadání je klinická situace, ne holá rovnice: hmotnost, věk a nález
   v jedné větě, otázka na samostatném řádku.
 - Faktické údaje pocházejí z DLP a SPC. Výběr účinných látek je kurátorské
@@ -68,7 +81,7 @@ která čeká na zdroj.
 ## Příkazy
 
 ```bash
-pnpm test        # 275 testů jádra a překladů
+pnpm test        # 289 testů jádra, překladů a sazby
 pnpm typecheck
 pnpm lint
 pnpm dev         # https, LAN, pro test na iPhonu

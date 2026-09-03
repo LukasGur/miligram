@@ -67,7 +67,7 @@ export const K5 = register({
     return {
       value: perKgPerDay,
       steps: [
-        given(q(prescribedMl, "ml", 1), `${tex(dosesPerDay, 0)}\\times\\ \\text{denně}`, q(weightKg, "kg", 1)),
+        given(q(prescribedMl, "ml", 1), `${tex(dosesPerDay, 0)}\\times\\ \\text{@daily}`, q(weightKg, "kg", 1)),
         intermediate("dilciDavka", {
           substituted: `${tex(prescribedMl, 1)} \\times ${tex(concentration, 1)}`,
           result: q(singleMg, "mg", 1),
@@ -76,9 +76,9 @@ export const K5 = register({
           substituted: `${tex(singleMg, 1)} \\times ${tex(dosesPerDay, 0)}`,
           result: q(dailyMg, "mg", 1),
         }),
-        formula(`d_{kg} = ${frac("\\text{denní dávka}", "m")}`),
+        formula(`d_{kg} = ${frac("\\text{@dailyDose}", "m")}`),
         substitute(`d_{kg} = ${frac(q(dailyMg, "mg", 1), q(weightKg, "kg", 1))}`),
-        result(perKgPerDay, "mg/kg/den", 1),
+        result(perKgPerDay, "mg/kg/@day", 1),
       ],
       roundingNoteKey: "zaokrouhleniKontrola",
     };

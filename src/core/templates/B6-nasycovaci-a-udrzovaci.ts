@@ -51,16 +51,16 @@ export const B6 = register({
     return {
       value: differenceMg,
       steps: [
-        given(q(weightKg, "kg", 0), `${q(loadingPerKg, "mg/kg", 1)}\\text{ nasyc.}`, `${q(maintenancePerKg, "mg/kg", 1)}\\text{ udrž.}`),
+        given(q(weightKg, "kg", 0), `${q(loadingPerKg, "mg/kg", 1)}\\text{ @loadingShort}`, `${q(maintenancePerKg, "mg/kg", 1)}\\text{ @maintenanceShort}`),
         intermediate("nasycovaciDavka", {
-          substituted: `m_{\\text{nasyc.}} = ${q(loadingPerKg, "", 1)} \\times ${q(weightKg, "kg", 0)}`,
+          substituted: `m_{\\text{@loadingShort}} = ${q(loadingPerKg, "", 1)} \\times ${q(weightKg, "kg", 0)}`,
           result: q(loadingMg, "mg", 1),
         }),
         intermediate("udrzovaciDavka", {
-          substituted: `m_{\\text{udrž.}} = ${q(maintenancePerKg, "", 1)} \\times ${q(weightKg, "kg", 0)}`,
+          substituted: `m_{\\text{@maintenanceShort}} = ${q(maintenancePerKg, "", 1)} \\times ${q(weightKg, "kg", 0)}`,
           result: q(maintenanceMg, "mg", 1),
         }),
-        formula(`\\Delta m = m_{\\text{nasyc.}} - m_{\\text{udrž.}}`),
+        formula(`\\Delta m = m_{\\text{@loadingShort}} - m_{\\text{@maintenanceShort}}`),
         substitute(`\\Delta m = ${q(loadingMg, "mg", 1)} - ${q(maintenanceMg, "mg", 1)}`),
         result(differenceMg, "mg", 1),
       ],

@@ -49,12 +49,12 @@ export const A6 = register({
       steps: [
         given(`${q(ampouleMg, "mg", 3)} / ${q(ampouleMl, "ml", 1)}`, q(doseMg, "mg", 3)),
         intermediate("odebranyObjem", {
-          formula: `V_{\\text{odebráno}} = ${frac("\\text{dávka}", "\\text{obsah}")} \\times V_{\\text{ampule}}`,
-          substituted: `V_{\\text{odebráno}} = ${frac(q(doseMg, "mg", 3), q(ampouleMg, "mg", 3))} \\times ${q(ampouleMl, "ml", 1)}`,
+          formula: `V_{\\text{@withdrawn}} = ${frac("\\text{@dose}", "\\text{@content}")} \\times V_{\\text{@ampoule}}`,
+          substituted: `V_{\\text{@withdrawn}} = ${frac(q(doseMg, "mg", 3), q(ampouleMg, "mg", 3))} \\times ${q(ampouleMl, "ml", 1)}`,
           result: q(takenMl, "ml", 2),
         }),
-        formula(`V_{\\text{zbytek}} = V_{\\text{ampule}} - V_{\\text{odebráno}}`),
-        substitute(`V_{\\text{zbytek}} = ${q(ampouleMl, "ml", 1)} - ${q(takenMl, "ml", 2)}`),
+        formula(`V_{\\text{@remainder}} = V_{\\text{@ampoule}} - V_{\\text{@withdrawn}}`),
+        substitute(`V_{\\text{@remainder}} = ${q(ampouleMl, "ml", 1)} - ${q(takenMl, "ml", 2)}`),
         result(leftMl, "ml", 2),
       ],
       roundingNoteKey: "zaokrouhleniStrikacka",

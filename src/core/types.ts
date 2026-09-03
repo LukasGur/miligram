@@ -108,6 +108,12 @@ export type Template = {
 
 export type Exercise = {
   templateId: string;
+  /**
+   * Zdroje faktických údajů se nesou s příkladem, ne až s šablonou.
+   * Obrazovka řešení je ukazuje u každého příkladu — je to závazek
+   * z pravidel projektu, ne dobrovolná položka v nastavení.
+   */
+  source: Source | readonly Source[];
   seed: string;
   difficulty: Difficulty;
   vars: Vars;

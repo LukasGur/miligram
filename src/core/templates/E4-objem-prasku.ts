@@ -57,13 +57,13 @@ export const E4 = register({
     return {
       value: concentration,
       steps: [
-        given(q(vialMg, "mg", 0), q(diluentMl, "ml", 1), `V_{\\text{prášek}} = ${q(displacementMl, "ml", 1)}`),
+        given(q(vialMg, "mg", 0), q(diluentMl, "ml", 1), `V_{\\text{@powder}} = ${q(displacementMl, "ml", 1)}`),
         intermediate("celkovyObjem", {
-          formula: `V_{\\text{celkem}} = V_{\\text{rozpouštědlo}} + V_{\\text{prášek}}`,
-          substituted: `V_{\\text{celkem}} = ${q(diluentMl, "ml", 1)} + ${q(displacementMl, "ml", 1)}`,
+          formula: `V_{\\text{@total}} = V_{\\text{@diluent}} + V_{\\text{@powder}}`,
+          substituted: `V_{\\text{@total}} = ${q(diluentMl, "ml", 1)} + ${q(displacementMl, "ml", 1)}`,
           result: q(totalMl, "ml", 1),
         }),
-        formula(`c = ${frac("m", "V_{\\text{celkem}}")}`),
+        formula(`c = ${frac("m", "V_{\\text{@total}}")}`),
         substitute(`c = ${frac(q(vialMg, "mg", 0), q(totalMl, "ml", 1))}`),
         result(concentration, "mg/ml", 1),
       ],

@@ -74,7 +74,7 @@ export const K3 = register({
       steps: [
         given(q(weightKg, "kg", 1), `${tex(mgPerKgPerDay, 0)}\\ \\mathrm{mg/kg/den}`, q(concentration, "mg/ml", 0)),
         formula(
-          `V = ${frac("\\text{dávka amoxicilinu} \\times m", "\\text{koncentrace} \\times \\text{počet dílčích dávek}")}`,
+          `V = ${frac("\\text{@amoxicillinDose} \\times m", "\\text{@concentration} \\times \\text{@splitCount}")}`,
         ),
         substitute(
           `V = ${frac(`${tex(mgPerKgPerDay, 0)} \\times ${tex(weightKg, 1)}`, `${tex(concentration, 0)} \\times ${tex(dosesPerDay, 0)}`)}`,

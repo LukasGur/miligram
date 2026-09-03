@@ -32,6 +32,7 @@ pnpm preview    # HTTPS server nad out/, používá stejný certifikát
 | `pnpm build` | Statický export do `out/` + service worker s precache manifestem |
 | `pnpm preview` | Naservíruje `out/` přes HTTPS pro test na telefonu |
 | `pnpm icons` | Přegeneruje ikony a startovací obrazovky z `brand/icon.svg` |
+| `pnpm katex` | Přegeneruje `src/app/katex.css` a `public/fonts/katex` z balíčku katex |
 | `pnpm typecheck` | `tsc --noEmit` |
 | `pnpm lint` | ESLint |
 
@@ -43,6 +44,9 @@ messages/               překlady (cs, sk); v komponentách nesmí být natvrdo 
 scripts/build-sw.mjs    sestaví out/sw.js z šablony a obsahu out/
 scripts/sw.template.js  service worker — edituj tady, ne v out/
 src/app/globals.css     designové tokeny (barvy, typografie, tvar, pohyb)
+src/app/katex.css       generovaný soubor — needituj ručně, spusť `pnpm katex`
+src/core/               výpočetní jádro: jednotky, vzorce, šablony, fond přípravků
+src/components/exercise/  obrazovka příkladu, klávesnice, krokové řešení
 src/i18n/               volba jazyka a katalogy zpráv
 src/lib/splashScreens.ts  generovaný soubor — needituj ručně
 ```
@@ -55,3 +59,8 @@ src/lib/splashScreens.ts  generovaný soubor — needituj ručně
   takže přepnutí funguje offline a existuje jediná `start_url`.
 - **Červená je vyhrazená chybné odpovědi.** Správná odpověď se hlásí accentem.
 - **Čísla jsou tabulární.** Šířka číslic se nesmí měnit.
+- **Klávesnice je vlastní, ne systémová.** Systémová na iOS překryje spodní
+  třetinu i s tlačítkem odpovědi a nabízí znaky, které v odpovědi nedávají smysl.
+- **Ve výpočetním jádře není text v žádném jazyce.** Vzorce sázejí tokeny
+  (`\text{@dose}`) a jazyk se doplní až ve vrstvě zobrazení; test to hlídá
+  tím, že jádro smí vracet jen ASCII.

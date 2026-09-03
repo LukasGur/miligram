@@ -63,16 +63,16 @@ export const J2 = register({
     return {
       value: dailyMg,
       steps: [
-        given(`${tex(ageYears, 0)}\\ \\text{let}`, q(weightKg, "kg", 0), `${tex(creatinineUmolPerL, 0)}\\ \\mathrm{\\mu mol/l}`),
+        given(`${tex(ageYears, 0)}\\ \\text{@years}`, q(weightKg, "kg", 0), `${tex(creatinineUmolPerL, 0)}\\ \\mathrm{\\mu mol/l}`),
         intermediate("clearance", {
-          formula: `CrCl = ${frac("(140 - \\text{věk}) \\times m", "72 \\times S_{kr}")}${female ? " \\times 0{,}85" : ""}`,
+          formula: `CrCl = ${frac("(140 - \\text{@age}) \\times m", "72 \\times S_{kr}")}${female ? " \\times 0{,}85" : ""}`,
           result: q(crCl, "ml/min", 1),
         }),
         intermediate("pasmoZeSpc", {
-          result: `${tex(band.dose, 0)}\\ \\mathrm{mg/kg}\\ \\text{à}\\ ${tex(band.intervalHours, 0)}\\ \\mathrm{h}`,
+          result: `${tex(band.dose, 0)}\\ \\mathrm{mg/kg}\\ \\text{@every}\\ ${tex(band.intervalHours, 0)}\\ \\mathrm{h}`,
         }),
         substitute(`${tex(band.dose, 0)} \\times ${tex(weightKg, 0)}`, q(singleMg, "mg", 0)),
-        formula("D_{24} = d \\times \\text{počet podání}"),
+        formula("D_{24} = d \\times \\text{@doseCount}"),
         substitute(`${tex(singleMg, 0)} \\times ${tex(dosesPerDay, 0)}`, q(dailyMg, "mg", 0)),
         result(dailyMg, "mg", 0),
       ],

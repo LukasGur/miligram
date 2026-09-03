@@ -50,7 +50,7 @@ export const I1 = register({
       value: volumeMl,
       steps: [
         given(q(doseIU, "IU", 0), `${q(perMl, "IU", 0)}\\text{/ml}`),
-        formula(`V = ${frac("\\text{ordinace}", "\\text{koncentrace}")}`),
+        formula(`V = ${frac("\\text{@order}", "\\text{@concentration}")}`),
         substitute(`V = ${frac(q(doseIU, "IU", 0), `${q(perMl, "IU", 0)}\\text{/ml}`)}`),
         result(volumeMl, "ml", 2),
       ],

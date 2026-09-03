@@ -49,11 +49,11 @@ export const I3 = register({
       steps: [
         given(q(totalDailyIU, "IU", 0), `${tex(current, 1)}\\ \\mathrm{mmol/l}`, `${tex(target, 1)}\\ \\mathrm{mmol/l}`),
         intermediate("korekcniFaktor", {
-          formula: `\\mathrm{KF} = ${frac("100", "\\text{celková denní dávka}")}`,
+          formula: `\\mathrm{KF} = ${frac("100", "\\text{@totalDailyDose}")}`,
           substituted: `\\mathrm{KF} = ${frac("100", tex(totalDailyIU, 0))}`,
           result: `${tex(correctionFactor, 2)}\\ \\mathrm{mmol/l\\ na\\ 1\\ IU}`,
         }),
-        formula(`d = ${frac("\\text{glykémie} - \\text{cíl}", "\\mathrm{KF}")}`),
+        formula(`d = ${frac("\\text{@glycemia} - \\text{@target}", "\\mathrm{KF}")}`),
         substitute(`d = ${frac(`${tex(excess, 1)}\\ \\mathrm{mmol/l}`, `${tex(correctionFactor, 2)}`)}`),
         result(doseIU, "IU", 1),
       ],

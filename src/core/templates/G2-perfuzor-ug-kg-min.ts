@@ -63,7 +63,7 @@ export const G2 = register({
           result: `c = ${tex(concentration, 3)}${unit("mg/ml")}`,
         }),
         step("vzorec", {
-          formula: `\\text{ml/h} = ${frac("D \\times m_{\\text{tělesná}} \\times 60", "c \\times 1000")}`,
+          formula: `\\text{ml/h} = ${frac("D \\times m_{\\text{@body}} \\times 60", "c \\times 1000")}`,
         }),
         step("dosazeni", {
           substituted: `\\text{ml/h} = ${frac(`${tex(dose, 2)} \\times ${tex(weightKg, 0)} \\times 60`, `${tex(concentration, 3)} \\times 1000`)}`,
