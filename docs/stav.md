@@ -37,6 +37,8 @@ se stoupající obtížností a je určená jediným identifikátorem, takže se
 sestavit znovu. Ověřeno ve WebKitu na rozměrech iPhonu, česky i slovensky.
 
 **Fáze 4, gamifikace lokálně** — Dexie, prášky, XP, série, nápovědy.
+Celá lekce ověřena offline: po odpojení sítě běží ze service workeru
+včetně KaTeXu a jeho písem (73 souborů, 2,2 MB).
 Zdrojem pravdy pro hraní je zařízení: aplikace funguje offline a bez účtu.
 Ukládá se semínko odpovědi, ne zadání. Každá změna zároveň zapisuje
 událost do fronty `outbox`, ze které bude čerpat synchronizace.
