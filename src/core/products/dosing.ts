@@ -53,9 +53,10 @@ export type DosingRule = {
   presentation?: {
     /** Obsah rozhodné složky v referenčním objemu, v mg. */
     strengthMg: number;
-    referenceMl: number;
-    /** Objem lahvičky po rekonstituci, v ml. */
-    packVolumeMl: number;
+    /** Objem, ve kterém je síla uvedená. U lyofilizátů chybí. */
+    referenceMl?: number;
+    /** Objem celého balení v ml. U lyofilizátů chybí. */
+    packVolumeMl?: number;
   };
   /** Doslovná pasáž z SPC, o kterou se záznam opírá. */
   quote: string;
@@ -140,6 +141,7 @@ export const DOSING_RULES = {
     daily: { min: 3, max: 6, unit: "mg/kg/den" },
     maxDaily: { min: 7.5, max: 7.5, unit: "mg/kg/den" },
     dosesPerDay: [1, 3],
+    presentation: { strengthMg: 80, referenceMl: 2, packVolumeMl: 2 },
     quote:
       "Doporučená denní dávka u dětí, dospívajících a dospělých s normální funkcí ledvin " +
       "je 3–6 mg/kg. Maximální denní dávka gentamicinu je 7,5 mg/kg.",
@@ -179,6 +181,7 @@ export const DOSING_RULES = {
     spc: "SPC226307.pdf",
     single: { min: 10, max: 40, unit: "mg/kg" },
     dosesPerDay: [3],
+    presentation: { strengthMg: 1000 },
     quote: "Vhodným dávkovacím režimem mohlo být 20 mg/kg každých 8 hodin; akutní bakteriální meningitida 40 mg/kg.",
   },
 
@@ -189,9 +192,23 @@ export const DOSING_RULES = {
     spc: "SPC205710.pdf",
     single: { min: 1, max: 1, unit: "mg/kg" },
     dosesPerDay: [2],
+    presentation: { strengthMg: 60, referenceMl: 0.6, packVolumeMl: 0.6 },
     quote:
       "Sodná sůl enoxaparinu se může podávat s.c. injekcí buď jednou denně 150 IU/kg (1,5 mg/kg), " +
       "nebo dvakrát denně 100 IU/kg (1 mg/kg).",
+  },
+
+  adrenalinResuscitace: {
+    suklCode: "0000362",
+    product: "Adrenalin Léčiva 1 mg/ml injekční roztok",
+    substance: "EPINEFRIN",
+    spc: "SPC217219.pdf",
+    single: { min: 0.01, max: 0.03, unit: "mg/kg" },
+    maxSingleMg: 1,
+    presentation: { strengthMg: 1, referenceMl: 1, packVolumeMl: 1 },
+    quote:
+      "0,01 mg/kg tělesné hmotnosti i.v. nebo i. o. každých 3–5 minut (maximálně 1 mg); " +
+      "u novorozenců 0,01–0,03 mg/kg každých 5 minut.",
   },
 
   digoxin: {
@@ -233,6 +250,7 @@ export const DOSING_RULES = {
     substance: "PAKLITAXEL",
     spc: "SPC200355.pdf",
     single: { min: 135, max: 175, unit: "mg/m2" },
+    presentation: { strengthMg: 6, referenceMl: 1, packVolumeMl: 5 },
     quote:
       "Doporučuje se dvojí typ dávkování: 175 mg/m2 paklitaxelu aplikovat intravenózně " +
       "po dobu 3 hodin, nebo 135 mg/m2 podat v 24 hodinové infuzi.",
@@ -244,6 +262,7 @@ export const DOSING_RULES = {
     substance: "KARBOPLATINA",
     spc: "SPC212755.pdf",
     single: { min: 200, max: 400, unit: "mg/m2" },
+    presentation: { strengthMg: 10, referenceMl: 1, packVolumeMl: 5 },
     quote:
       "U dosud neléčených dospělých pacientů s normální funkcí ledvin, tj. clearance kreatininu " +
       "> 60 ml/min, je 400 mg/m2; při 41-59 ml/min 250 mg/m2, při 16-40 ml/min 200 mg/m2.",
@@ -251,6 +270,15 @@ export const DOSING_RULES = {
 } as const satisfies Record<string, DosingRule>;
 
 export type DosingRuleId = keyof typeof DOSING_RULES;
+
+/**
+ * Pravidla se širším typem. Zápis `as const` u tabulky zúží typ na
+ * konkrétní hodnoty, což je fajn pro našeptávání, ale procházet se přes to
+ * nedá — proto tenhle pohled.
+ */
+export const DOSING_RULE_LIST = Object.entries(DOSING_RULES) as ReadonlyArray<
+  readonly [DosingRuleId, DosingRule]
+>;
 
 export function dosingSource(id: DosingRuleId): Source {
   return SPC_SOURCE(DOSING_RULES[id]);
@@ -264,6 +292,23 @@ export function dosingRule(id: DosingRuleId): DosingRule {
  * Údaje o balení pro šablonu, která z pravidla počítá objem.
  * Přednost má výslovný záznam u pravidla, jinak se sáhne do fondu.
  */
+/** Balení včetně objemu. Pro šablony, které z pravidla počítají mililitry. */
+export function liquidPresentationOf(id: DosingRuleId): {
+  strengthMg: number;
+  referenceMl: number;
+  packVolumeMl: number;
+} {
+  const presentation = presentationOf(id);
+  if (presentation.referenceMl === undefined || presentation.packVolumeMl === undefined) {
+    throw new Error(`Pravidlo ${id} nemá objemové údaje, objem z něj spočítat nelze.`);
+  }
+  return {
+    strengthMg: presentation.strengthMg,
+    referenceMl: presentation.referenceMl,
+    packVolumeMl: presentation.packVolumeMl,
+  };
+}
+
 export function presentationOf(id: DosingRuleId): NonNullable<DosingRule["presentation"]> {
   const rule = dosingRule(id);
   if (rule.presentation) return rule.presentation;
@@ -276,7 +321,7 @@ export function presentationOf(id: DosingRuleId): NonNullable<DosingRule["presen
   const product = productByCode(rule.suklCode);
   return {
     strengthMg: product.strength,
-    referenceMl: product.volumeMl ?? 5,
-    packVolumeMl: product.packUnitVolumeMl ?? 100,
+    referenceMl: product.volumeMl,
+    packVolumeMl: product.packUnitVolumeMl,
   };
 }

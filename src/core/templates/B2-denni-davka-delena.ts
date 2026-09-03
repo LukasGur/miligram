@@ -1,6 +1,6 @@
 import { dividedDose, doseVolume } from "../formulas";
 import { syringeFor } from "../devices";
-import { dosingRule, dosingSource, presentationOf, type DosingRuleId } from "../products/dosing";
+import { dosingRule, dosingSource, liquidPresentationOf, type DosingRuleId } from "../products/dosing";
 import * as tolerances from "../tolerances";
 import type { Solution, Vars } from "../types";
 import { formula, frac, given, intermediate, q, result, substitute } from "./helpers";
@@ -26,7 +26,7 @@ export const B2 = register({
     const range = rule.daily;
     if (!range) throw new Error(`Pravidlo ${ruleId} nemá denní dávku.`);
 
-    const presentation = presentationOf(ruleId);
+    const presentation = liquidPresentationOf(ruleId);
     const weightKg = difficulty === 1 ? rng.step(10, 30, 5) : rng.step(4, 40, 0.5);
     const perKgPerDay = difficulty === 1
       ? rng.pick([range.min, range.max])

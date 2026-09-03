@@ -1,7 +1,7 @@
 import { describe, expect, it } from "vitest";
 import "../templates";
 import { buildExercise, getTemplate } from "../templates";
-import { DOSING_RULES, dosingRule, presentationOf, type DosingRuleId } from "../products/dosing";
+import { DOSING_RULE_LIST, dosingRule, liquidPresentationOf, presentationOf, type DosingRuleId } from "../products/dosing";
 import type { Difficulty } from "../types";
 
 const D2 = 2 as Difficulty;
@@ -9,7 +9,7 @@ const SEEDS = Array.from({ length: 40 }, (_, i) => `b${i}`);
 
 describe("dávkovací pravidla ze SPC", () => {
   it("každé pravidlo cituje konkrétní SPC a nese kód SÚKL", () => {
-    for (const [id, rule] of Object.entries(DOSING_RULES)) {
+    for (const [id, rule] of DOSING_RULE_LIST) {
       expect(rule.spc, id).toMatch(/^SPC\d+\.pdf$/);
       expect(rule.suklCode, id).toMatch(/^\d{7}$/);
       expect(rule.quote.length, id).toBeGreaterThan(30);
@@ -17,7 +17,7 @@ describe("dávkovací pravidla ze SPC", () => {
   });
 
   it("meze rozmezí dávají smysl", () => {
-    for (const [id, rule] of Object.entries(DOSING_RULES)) {
+    for (const [id, rule] of DOSING_RULE_LIST) {
       for (const range of [rule.single, rule.daily, rule.loading, rule.maxDaily]) {
         if (!range) continue;
         expect(range.min, id).toBeGreaterThan(0);
@@ -26,12 +26,31 @@ describe("dávkovací pravidla ze SPC", () => {
     }
   });
 
+  /**
+   * Fond dedupuje na jednu reprezentaci účinné látky, takže konkrétní
+   * přípravek z pravidla v něm být nemusí — Carboplatin Accord ani
+   * Nurofen pro děti v něm nejsou. Když pravidlo nemá vlastní údaje
+   * o balení a ve fondu chybí, šablona spadne až za běhu. Tohle to
+   * odchytí při testech.
+   */
+  it("každé pravidlo jde přeložit na údaje o balení", () => {
+    const broken: string[] = [];
+    for (const [id] of DOSING_RULE_LIST) {
+      try {
+        presentationOf(id);
+      } catch (error) {
+        broken.push(`${id}: ${(error as Error).message}`);
+      }
+    }
+    expect(broken).toEqual([]);
+  });
+
   it("pravidla, ze kterých se počítá objem, mají údaje o balení", () => {
     const needPresentation: DosingRuleId[] = [
       "amoxicilin", "ibuprofenDeti", "amoxicilinKlavulanat", "ibuprofenBaby",
     ];
     for (const id of needPresentation) {
-      const presentation = presentationOf(id);
+      const presentation = liquidPresentationOf(id);
       expect(presentation.strengthMg, id).toBeGreaterThan(0);
       expect(presentation.referenceMl, id).toBeGreaterThan(0);
       expect(presentation.packVolumeMl, id).toBeGreaterThan(0);
@@ -142,6 +161,49 @@ describe("B — dávkování podle hmotnosti", () => {
       const rule = dosingRule(String(vars.ruleId) as DosingRuleId);
       expect(Number(vars.perKg)).toBeGreaterThanOrEqual(rule.single!.min);
       expect(Number(vars.perKg)).toBeLessThanOrEqual(rule.single!.max);
+    }
+  });
+});
+
+describe("C — dávkování podle povrchu těla", () => {
+  const D = 2 as Difficulty;
+
+  it("C1: 180 cm a 80 kg dá přesně 2 m²", () => {
+    expect(getTemplate("C1").solve({ heightCm: 180, weightKg: 80 }, D).value).toBe(2);
+  });
+
+  it("C2: 175 mg/m² při povrchu 1,8 m² je 315 mg", () => {
+    expect(getTemplate("C2").solve({ perM2: 175, bsaM2: 1.8 }, D).value).toBe(315);
+  });
+
+  it("C3: 175 mg/m², 180 cm, 80 kg a koncentrát 6 mg/ml dá 58,33 ml", () => {
+    // BSA 2 m² → 350 mg → 350 / 6
+    const solution = getTemplate("C3").solve(
+      { heightCm: 180, weightKg: 80, perM2: 175, concentrationMgPerMl: 6 },
+      D,
+    );
+    expect(solution.value).toBeCloseTo(58.333, 3);
+  });
+
+  it("C4: dvojnásobný povrch by znamenal sto procent navíc", () => {
+    // 180/80 dá 2 m², 360/160 by dalo 4 m² — kontrola směru výpočtu
+    const solution = getTemplate("C4").solve(
+      { heightA: 180, weightA: 80, heightB: 180, weightB: 320 },
+      D,
+    );
+    expect(solution.value).toBeCloseTo(100, 6);
+  });
+
+  it("C5: strop z protokolu se uplatní, když je pod spočítanou dávkou", () => {
+    expect(getTemplate("C5").solve({ perM2: 175, bsaM2: 2, capMg: 300 }, D).value).toBe(300);
+    expect(getTemplate("C5").solve({ perM2: 175, bsaM2: 2, capMg: 400 }, D).value).toBe(350);
+  });
+
+  it("C1 dává povrch v rozsahu, který u lidí dává smysl", () => {
+    for (const seed of SEEDS) {
+      const { solution } = buildExercise("C1", seed, D);
+      expect(solution.value).toBeGreaterThan(0.7);
+      expect(solution.value).toBeLessThan(2.8);
     }
   });
 });

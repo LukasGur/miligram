@@ -1,5 +1,5 @@
 import { dividedDose, doseVolume } from "../formulas";
-import { dosingRule, dosingSource, presentationOf, type DosingRuleId } from "../products/dosing";
+import { dosingRule, dosingSource, liquidPresentationOf, type DosingRuleId } from "../products/dosing";
 import * as tolerances from "../tolerances";
 import type { Solution, Vars } from "../types";
 import { formula, frac, given, intermediate, q, result, substitute } from "./helpers";
@@ -22,7 +22,7 @@ export const B8 = register({
     const ruleId = rng.pick(RULES);
     const rule = dosingRule(ruleId);
     const range = rule.daily!;
-    const presentation = presentationOf(ruleId);
+    const presentation = liquidPresentationOf(ruleId);
 
     const perKgPerDay = difficulty === 1
       ? rng.pick([range.min, range.max])
