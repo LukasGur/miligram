@@ -45,7 +45,7 @@
     "pills": "Prášky",
     "xp": "XP",
     "buildNoticeTitle": "Rozpracované",
-    "buildNoticeBody": "Hotové je výpočtové jadro a obrazovka príkladu. Prášky, XP a séria sa zatiaľ nikam neukladajú — ekonomika príde vo fáze 4."
+    "buildNoticeBody": "Hotové je výpočtové jadro, obrazovka príkladu a lokálna ekonomika. Účet, rebríčky a súboje prídu vo fáze 5."
   },
   "settings": {
     "title": "Nastavenia",
@@ -330,8 +330,10 @@
     "summaryTitle": "Lekcia hotová",
     "summaryScore": "{correct, number} zo {count, number} správne",
     "summaryPerfect": "Bez jedinej chyby",
-    "summaryPending": "Prášky a XP sa začnú počítať, až bude hotová ekonomika.",
     "again": "Ďalšia lekcia",
-    "home": "Späť na začiatok"
+    "home": "Späť na začiatok",
+    "hint": "Nápoveda za {cost, number} práškov",
+    "hintPoor": "Na nápovedu potrebuješ {cost, number} práškov",
+    "hintTitle": "Nápoveda"
   }
 }

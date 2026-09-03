@@ -4,10 +4,12 @@ import { useState } from "react";
 import { useTranslations } from "next-intl";
 import { CloseIcon } from "@/components/icons";
 import { evaluateAnswer, parseAnswer, type Verdict } from "@/core/answer";
+import { HINT_COST } from "@/core/economy";
 import type { Exercise } from "@/core/types";
 import { useAnswerUnit, useExercisePrompt } from "@/i18n/exerciseText";
 import { AnswerDisplay } from "./AnswerDisplay";
 import { Keypad } from "./Keypad";
+import { Formula } from "./Formula";
 import { SolutionSteps } from "./SolutionSteps";
 import { VerdictPanel } from "./Verdict";
 
@@ -20,12 +22,16 @@ export function ExerciseView({
   count,
   onExit,
   onAnswered,
+  onHint,
+  pills,
 }: {
   exercise: Exercise;
   index: number;
   count: number;
   onExit: () => void;
-  onAnswered: (correct: boolean) => void;
+  onAnswered: (result: { correct: boolean; hinted: boolean }) => void;
+  onHint: () => Promise<boolean>;
+  pills: number;
 }) {
   const t = useTranslations("lesson");
   const prompt = useExercisePrompt();
@@ -34,9 +40,21 @@ export function ExerciseView({
   const [input, setInput] = useState("");
   const [verdict, setVerdict] = useState<Verdict | null>(null);
   const [solutionOpen, setSolutionOpen] = useState(false);
+  const [hinted, setHinted] = useState(false);
 
   const value = parseAnswer(input);
   const canCheck = value !== null && verdict === null;
+  const canAfford = pills >= HINT_COST;
+
+  /**
+   * Nápověda odkryje první krok řešení, ne výsledek. Prášky se strhnou
+   * až po potvrzení zápisu — kdyby se transakce nepovedla, uživatel
+   * o ně nepřijde a nápovědu nedostane.
+   */
+  async function buyHint() {
+    if (hinted || !canAfford) return;
+    if (await onHint()) setHinted(true);
+  }
 
   function check() {
     if (value === null) return;
@@ -79,6 +97,21 @@ export function ExerciseView({
             />
           </div>
 
+          {verdict === null ? (
+            <div className="mt-5">
+              {hinted ? <HintPanel exercise={exercise} /> : (
+                <button
+                  type="button"
+                  onClick={buyHint}
+                  disabled={!canAfford}
+                  className="text-accent min-h-11 text-label font-medium disabled:text-ink-soft"
+                >
+                  {canAfford ? t("hint", { cost: HINT_COST }) : t("hintPoor", { cost: HINT_COST })}
+                </button>
+              )}
+            </div>
+          ) : null}
+
           {verdict ? (
             <div className="mt-5">
               <VerdictPanel exercise={exercise} verdict={verdict} unit={answerUnit(exercise)} />
@@ -113,7 +146,7 @@ export function ExerciseView({
 
           <button
             type="button"
-            onClick={verdict === null ? check : () => onAnswered(verdict.correct)}
+            onClick={verdict === null ? check : () => onAnswered({ correct: verdict.correct, hinted })}
             disabled={verdict === null && !canCheck}
             className="bg-accent active:bg-accent-press mt-3 min-h-14 w-full rounded-control text-body font-semibold text-white transition-colors duration-75 disabled:opacity-40"
           >
@@ -139,6 +172,33 @@ function appendCharacter(current: string, character: string): string {
   // Vedoucí nula se nehromadí: 0 → 5 dá 5, ne 05. „0,“ zůstává.
   if (current === "0") return character;
   return current + character;
+}
+
+/** Odkrytý první krok řešení. Dál než k němu nápověda nesahá. */
+function HintPanel({ exercise }: { exercise: Exercise }) {
+  const t = useTranslations("lesson");
+  const tSteps = useTranslations("exercise.steps");
+  // První krok je vždy přehled zadaných hodnot; napovídá až ten druhý.
+  const step = exercise.solution.steps[1] ?? exercise.solution.steps[0];
+
+  return (
+    <section
+      /**
+       * Nápověda se objeví nad klávesnicí, takže bez odrolování by z ní byl
+       * vidět jen nadpis. Ref se zavolá při připojení uzlu — na rozdíl od
+       * efektu je to přesně ten okamžik, kdy má obsah přijít do zorného pole.
+       */
+      ref={(node) => node?.scrollIntoView({ block: "nearest", behavior: "smooth" })}
+      className="bg-accent-wash rounded-panel px-4 py-3"
+    >
+      <h3 className="text-micro text-accent-press uppercase tracking-wide">{t("hintTitle")}</h3>
+      <p className="text-label text-ink-soft mt-1">{tSteps(step.textKey)}</p>
+      <div className="mt-1 overflow-x-auto">
+        {step.formula ? <Formula latex={step.formula} display className="block" /> : null}
+        {!step.formula && step.result ? <Formula latex={step.result} className="block" /> : null}
+      </div>
+    </section>
+  );
 }
 
 function Progress({ index, count }: { index: number; count: number }) {

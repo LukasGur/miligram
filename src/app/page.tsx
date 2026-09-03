@@ -4,6 +4,7 @@ import { useState } from "react";
 import dynamic from "next/dynamic";
 import { useFormatter, useTranslations } from "next-intl";
 import { newLessonId, LESSON_LENGTH } from "@/core/lesson";
+import { useProfile } from "@/lib/useProfile";
 import { InstallBanner } from "@/components/InstallBanner";
 import { NetworkStatus } from "@/components/NetworkStatus";
 import { SettingsSheet } from "@/components/SettingsSheet";
@@ -28,6 +29,7 @@ export default function HomePage() {
   const format = useFormatter();
   const [settingsOpen, setSettingsOpen] = useState(false);
   const [lessonId, setLessonId] = useState<string | null>(null);
+  const { profile, streak } = useProfile();
 
   if (lessonId !== null) {
     return <LessonView lessonId={lessonId} onExit={() => setLessonId(null)} />;
@@ -54,9 +56,9 @@ export default function HomePage() {
 
       <main className="scroll-y mx-auto w-full max-w-md flex-1 px-5 pb-8">
         <dl className="border-line divide-line grid grid-cols-3 divide-x border-y py-4">
-          <Stat label={t("streak")} value={format.number(0)} suffix={t("streakUnit", { days: 0 })} />
-          <Stat label={t("pills")} value={format.number(0)} />
-          <Stat label={t("xp")} value={format.number(0)} />
+          <Stat label={t("streak")} value={format.number(streak)} suffix={t("streakUnit", { days: streak })} />
+          <Stat label={t("pills")} value={format.number(profile.pills)} />
+          <Stat label={t("xp")} value={format.number(profile.xp)} />
         </dl>
 
         <section className="bg-accent-wash rounded-panel mt-6 px-5 py-6">

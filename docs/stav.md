@@ -36,12 +36,20 @@ moment vyhodnocení a krokové řešení sázené KaTeXem. Lekce má sedm přík
 se stoupající obtížností a je určená jediným identifikátorem, takže se dá
 sestavit znovu. Ověřeno ve WebKitu na rozměrech iPhonu, česky i slovensky.
 
+**Fáze 4, gamifikace lokálně** — Dexie, prášky, XP, série, nápovědy.
+Zdrojem pravdy pro hraní je zařízení: aplikace funguje offline a bez účtu.
+Ukládá se semínko odpovědi, ne zadání. Každá změna zároveň zapisuje
+událost do fronty `outbox`, ze které bude čerpat synchronizace.
+
 ## Co dělat dál
 
-1. **Fáze 4, gamifikace lokálně.** Dexie, prášky, série, XP, nápovědy.
-   Ekonomika zatím nikde neexistuje: shrnutí lekce ukazuje XP spočítané
-   podle pravidla, ale nikam se neukládá.
-2. **Fáze 5, účet a sociální vrstva.** Supabase. Čeká na rozhodnutí,
+1. **Ověřit částky ekonomiky proti briefu, sekce 6.** Čísla
+   v `src/core/economy.ts` jsou návrh, ne převzaté hodnoty: 2 prášky
+   za správný příklad, 10 za bezchybnou lekci, nápověda za 15.
+   Všechna jsou na jednom místě.
+2. **Obchod s prášky.** Ochrana série a opravy chybného příkladu zatím
+   nemají kde se koupit; utrácet jde jen za nápovědu.
+3. **Fáze 5, účet a sociální vrstva.** Supabase. Čeká na rozhodnutí,
    jestli založit nový projekt.
 3. **I3** (korekční faktor inzulinu) čeká na zdroj, jinak vypustit.
    Do té doby ji `productionTemplates()` nevydá a test to hlídá.
@@ -51,6 +59,9 @@ sestavit znovu. Ověřeno ve WebKitu na rozměrech iPhonu, česky i slovensky.
 
 ## Rozhodnutí, která už padla
 
+- Synchronizovat se budou události, ne stav. Dvě zařízení offline nemůžou
+  poslat „mám 340 prášků“ — přepsala by se navzájem. Fronta `outbox` proto
+  vzniká hned, i když ji zatím nikdo nečte.
 - Prášky jsou měna, XP je neutratitelné skóre. Zisk XP: 10 za správný
   příklad, +20 za bezchybnou lekci. Lekce má 7 příkladů.
 - Tolerance se odvozuje z přesnosti prostředku (ISO 7886-1, IEC 60601-2-24,
@@ -81,7 +92,7 @@ sestavit znovu. Ověřeno ve WebKitu na rozměrech iPhonu, česky i slovensky.
 ## Příkazy
 
 ```bash
-pnpm test        # 289 testů jádra, překladů a sazby
+pnpm test        # 308 testů jádra, překladů, sazby a databáze
 pnpm typecheck
 pnpm lint
 pnpm dev         # https, LAN, pro test na iPhonu

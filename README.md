@@ -48,6 +48,7 @@ src/app/katex.css       generovaný soubor — needituj ručně, spusť `pnpm ka
 src/core/               výpočetní jádro: jednotky, vzorce, šablony, fond přípravků
 src/components/exercise/  obrazovka příkladu, klávesnice, krokové řešení
 src/i18n/               volba jazyka a katalogy zpráv
+src/lib/db.ts           lokální databáze (Dexie); zdroj pravdy pro hraní
 src/lib/splashScreens.ts  generovaný soubor — needituj ručně
 ```
 
@@ -59,6 +60,9 @@ src/lib/splashScreens.ts  generovaný soubor — needituj ručně
   takže přepnutí funguje offline a existuje jediná `start_url`.
 - **Červená je vyhrazená chybné odpovědi.** Správná odpověď se hlásí accentem.
 - **Čísla jsou tabulární.** Šířka číslic se nesmí měnit.
+- **Stav hry žije v zařízení.** Aplikace funguje offline a bez účtu; server
+  bude ve fázi 5 nadstavba, ne podmínka. Do fronty `outbox` se zapisuje, co se
+  stalo, ne jaký je stav — dvě zařízení offline by se stavem přepsala.
 - **Klávesnice je vlastní, ne systémová.** Systémová na iOS překryje spodní
   třetinu i s tlačítkem odpovědi a nabízí znaky, které v odpovědi nedávají smysl.
 - **Ve výpočetním jádře není text v žádném jazyce.** Vzorce sázejí tokeny

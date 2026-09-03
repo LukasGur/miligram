@@ -1,10 +1,15 @@
 "use client";
 
-import { useMemo, useState } from "react";
+import { useMemo, useRef, useState } from "react";
 import { useFormatter, useTranslations } from "next-intl";
+import { HINT_COST, rewardForLesson } from "@/core/economy";
 import { lessonExercise, planLesson } from "@/core/lesson";
-import { scoreLesson } from "@/core/scoring";
+import { recordLesson } from "@/lib/db";
+import { spendPills } from "@/lib/db";
+import { useProfile } from "@/lib/useProfile";
 import { ExerciseView } from "./ExerciseView";
+
+type Answered = { templateId: string; seed: string; difficulty: number; correct: boolean; hinted: boolean };
 
 /**
  * Průběh lekce.
@@ -16,7 +21,14 @@ import { ExerciseView } from "./ExerciseView";
 export function LessonView({ lessonId, onExit }: { lessonId: string; onExit: () => void }) {
   const plan = useMemo(() => planLesson(lessonId), [lessonId]);
   const [index, setIndex] = useState(0);
-  const [answers, setAnswers] = useState<boolean[]>([]);
+  const [answers, setAnswers] = useState<Answered[]>([]);
+  const { profile } = useProfile();
+  /**
+   * Zápis se smí provést jen jednou. Vykreslení se opakovat může,
+   * a v ostrém režimu React některé části schválně spouští dvakrát —
+   * lekce připsaná dvakrát by uživateli nadělila dvojnásobek prášků.
+   */
+  const recorded = useRef(false);
 
   const exercise = useMemo(
     () => (index < plan.items.length ? lessonExercise(plan, index) : null),
@@ -38,20 +50,46 @@ export function LessonView({ lessonId, onExit }: { lessonId: string; onExit: () 
       exercise={exercise}
       index={index}
       count={plan.items.length}
+      pills={profile.pills}
       onExit={onExit}
-      onAnswered={(correct) => {
-        setAnswers((current) => [...current, correct]);
-        setIndex((current) => current + 1);
+      onHint={() => spendPills(HINT_COST, `hint:${exercise.templateId}`)}
+      onAnswered={({ correct, hinted }) => {
+        const answered: Answered[] = [
+          ...answers,
+          {
+            templateId: exercise.templateId,
+            seed: exercise.seed,
+            difficulty: exercise.difficulty,
+            correct,
+            hinted,
+          },
+        ];
+        setAnswers(answered);
+        setIndex(index + 1);
+
+        // Poslední odpověď lekci uzavírá. Zapisuje se tady, v obsluze
+        // události, ne při vykreslení shrnutí — událost nastane jednou.
+        if (answered.length === plan.items.length && !recorded.current) {
+          recorded.current = true;
+          const reward = rewardForLesson(answered.map((item) => item.correct));
+          void recordLesson({ lessonId, answers: answered, reward });
+        }
       }}
     />
   );
 }
 
-function LessonSummary({ answers, onExit }: { answers: readonly boolean[]; onExit: () => void }) {
+function LessonSummary({
+  answers,
+  onExit,
+}: {
+  answers: readonly Answered[];
+  onExit: () => void;
+}) {
   const t = useTranslations("lesson");
   const tHome = useTranslations("home");
   const format = useFormatter();
-  const result = scoreLesson(answers);
+  const reward = useMemo(() => rewardForLesson(answers.map((answer) => answer.correct)), [answers]);
 
   return (
     <div className="bg-paper flex h-dvh flex-col overflow-hidden">
@@ -63,26 +101,23 @@ function LessonSummary({ answers, onExit }: { answers: readonly boolean[]; onExi
           <h1 className="text-title font-semibold">{t("summaryTitle")}</h1>
 
           <p className="num text-display mt-6 font-semibold" data-numeric>
-            {t("summaryScore", { correct: result.correct, count: result.count })}
+            {t("summaryScore", { correct: reward.correct, count: reward.count })}
           </p>
 
-          {result.flawless ? (
+          {reward.flawless ? (
             <p className="text-accent mt-2 text-heading font-semibold">{t("summaryPerfect")}</p>
           ) : null}
 
           <dl className="border-line divide-line mt-8 grid grid-cols-2 divide-x border-y py-4">
             <div className="pr-3">
               <dt className="text-ink-soft text-micro">{tHome("xp")}</dt>
-              <dd className="num mt-0.5 text-title font-semibold">{format.number(result.xp)}</dd>
+              <dd className="num mt-0.5 text-title font-semibold">+{format.number(reward.xp)}</dd>
             </div>
             <div className="pl-3">
               <dt className="text-ink-soft text-micro">{tHome("pills")}</dt>
-              {/* Prášky se zatím nikam neukládají, takže se ani nepředstírají. */}
-              <dd className="num text-ink-soft mt-0.5 text-title font-semibold">–</dd>
+              <dd className="num text-pill mt-0.5 text-title font-semibold">+{format.number(reward.pills)}</dd>
             </div>
           </dl>
-
-          <p className="text-ink-soft mt-4 text-label">{t("summaryPending")}</p>
         </div>
       </div>
 
