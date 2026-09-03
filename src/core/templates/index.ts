@@ -72,3 +72,7 @@ export { K3 } from "./K3-vzorec-ze-spc";
 export { K4 } from "./K4-nejmensi-pacienti";
 export { K5 } from "./K5-kontrola-objemu";
 export { K6 } from "./K6-jina-sila-sirupu";
+export { L1 } from "./L1-calvert";
+export { L2 } from "./L2-calvert-na-objem";
+export { L3 } from "./L3-redukce-davky";
+export { L4 } from "./L4-kumulativni-davka";
