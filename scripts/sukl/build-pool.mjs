@@ -48,6 +48,9 @@ const KIND_SELECTION = {
 
 const TABLET_ATC_GROUPS = VYBER.tabletyAtcSkupiny.skupiny;
 
+/** Látky, u kterých je volba správné síly součástí výpočtu. */
+const KEEP_ALL_STRENGTHS = new Set(VYBER.vsechnySily.latky);
+
 /** Skupiny, u kterých by cvičný výpočet působil nepatřičně. */
 const ATC_DENY = ["V12", "V08", "V09", "V10", "V07"];
 
@@ -89,6 +92,23 @@ function parseStrength(raw) {
   // Kombinace účinných látek: 500MG/125MG, 400MG/5ML+57MG/5ML
   if (text.includes("+")) return null;
 
+  /**
+   * Dvojí značení: 6000IU(60MG)/0,6ML. Používají ho nízkomolekulární
+   * hepariny a somatropin — obě čísla popisují tutéž látku, jen jinou
+   * stupnicí. Pro výpočet objemu je rozhodná hmotnost, aktivita se
+   * uchová zvlášť, protože zadání ji často uvádí místo miligramů.
+   */
+  const dual = text.match(/^([\d,.]+)(IU|U)\(([\d,.]+)(MG|G|MCG)\)(?:\/([\d,.]*)ML)?$/);
+  if (dual) {
+    const [, activity, , amount, massUnit, volume] = dual;
+    return {
+      amount: num(amount),
+      unit: normalizeUnit(massUnit),
+      volumeMl: volume === undefined ? null : volume === "" ? 1 : num(volume),
+      activityIU: num(activity),
+    };
+  }
+
   const perVolume = text.match(/^([\d,.]+)(MG|G|MCG|µG|UG|IU|U)\/([\d,.]*)(ML)$/);
   if (perVolume) {
     const [, amount, unit, volume] = perVolume;
@@ -96,12 +116,13 @@ function parseStrength(raw) {
       amount: num(amount),
       unit: normalizeUnit(unit),
       volumeMl: volume === "" ? 1 : num(volume),
+      activityIU: null,
     };
   }
 
   const plain = text.match(/^([\d,.]+)(MG|G|MCG|µG|UG|IU|U)$/);
   if (plain) {
-    return { amount: num(plain[1]), unit: normalizeUnit(plain[2]), volumeMl: null };
+    return { amount: num(plain[1]), unit: normalizeUnit(plain[2]), volumeMl: null, activityIU: null };
   }
   return null;
 }
@@ -193,6 +214,7 @@ for (const line of rows) {
     pack: cells[COL.pack].trim(),
     packCount: pack.count,
     packUnitVolumeMl: pack.unitVolumeMl,
+    activityIU: strength.activityIU ?? null,
   });
 }
 
@@ -212,6 +234,10 @@ for (const item of candidates) {
 const perSubstance = new Map();
 const pool = [];
 for (const item of [...byKey.values()].sort((a, b) => a.atc.localeCompare(b.atc) || a.strength - b.strength)) {
+  if (KEEP_ALL_STRENGTHS.has(item.substance)) {
+    pool.push(item);
+    continue;
+  }
   const key = `${item.atc}|${item.kind}`;
   const used = perSubstance.get(key) ?? 0;
   if (used >= 2) continue;
@@ -256,6 +282,7 @@ const lines = pool.map((p) => {
     `pack: ${JSON.stringify(p.pack)}`,
     p.packCount !== null ? `packCount: ${p.packCount}` : null,
     p.packUnitVolumeMl !== null ? `packUnitVolumeMl: ${p.packUnitVolumeMl}` : null,
+    p.activityIU !== null ? `activityIU: ${p.activityIU}` : null,
   ].filter(Boolean);
   return `  { ${fields.join(", ")} },`;
 });

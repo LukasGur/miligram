@@ -42,4 +42,10 @@ export type Product = {
   packCount?: number;
   /** Objem jednoho kusu v ml, jde-li ho z balení vyčíst. */
   packUnitVolumeMl?: number;
+  /**
+   * Aktivita v mezinárodních jednotkách u přípravků značených dvojí
+   * stupnicí — 6 000 IU (60 mg)/0,6 ml. Obě čísla popisují tutéž látku,
+   * takže z nich jde odvodit přepočet IU na miligramy.
+   */
+  activityIU?: number;
 };

@@ -42,7 +42,7 @@
       "AMFOTERICIN B"
     ],
     "antikoagulancia": [
-      "HEPARIN", "NADROPARIN", "BEMIPARIN", "FONDAPARINUX", "ALTEPLASA"
+      "HEPARIN", "ENOXAPARIN", "NADROPARIN", "BEMIPARIN", "FONDAPARINUX", "ALTEPLASA"
     ],
     "kortikosteroidy": ["DEXAMETHASON", "METHYLPREDNISOLON", "TRIAMCINOLON"],
     "antiemetika": ["ONDANSETRON", "GRANISETRON"],
@@ -135,6 +135,17 @@
       "PARACETAMOL", "ONDANSETRON", "LEVETIRACETAM", "KALCIUM-FOLINÁT",
       "DOXORUBICIN", "EPIRUBICIN", "FLUORURACIL", "CYTARABIN"
     ]
+  },
+
+  "vsechnySily": {
+    "_popis": [
+      "Látky, u kterých se do fondu pouští všechny síly, ne jen dvě.",
+      "U nich je volba správné síly součástí výpočtu: enoxaparin má sedm",
+      "předplněných stříkaček a smysl příkladu je vybrat tu, do které se",
+      "spočítaná dávka vejde. Jinde by deset generik téže molekuly fond",
+      "jen zaplnilo, proto je výjimka jmenovitá."
+    ],
+    "latky": ["ENOXAPARIN", "NADROPARIN", "HEPARIN", "LIDSKÝ INSULIN", "INSULIN ASPART"]
   },
 
   "tabletyAtcSkupiny": {

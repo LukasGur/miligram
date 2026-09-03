@@ -73,3 +73,10 @@ export function vialContentMg(product: Product): number {
   const vialMl = product.packUnitVolumeMl ?? product.volumeMl;
   return concentrationOf(product) * vialMl;
 }
+
+/** Přípravek podle kódu SÚKL. Používají ho šablony vázané na konkrétní SPC. */
+export function productByCode(code: string): Product {
+  const product = PRODUCTS.find((item) => item.code === code);
+  if (!product) throw new Error(`Přípravek s kódem SÚKL ${code} není ve fondu.`);
+  return product;
+}
