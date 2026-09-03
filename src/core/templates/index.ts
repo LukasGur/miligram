@@ -57,3 +57,7 @@ export { H3 } from "./H3-iu-na-objem";
 export { H4 } from "./H4-iu-a-mg";
 export { H5 } from "./H5-procenta-mg-ml-g-l";
 export { H6 } from "./H6-mg-ml-na-mmol-l";
+export { I1 } from "./I1-inzulin-100";
+export { I2 } from "./I2-inzulin-40";
+export { I3 } from "./I3-korekcni-faktor";
+export { I4 } from "./I4-na-kolik-dni-pero";
