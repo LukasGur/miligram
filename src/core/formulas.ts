@@ -93,6 +93,43 @@ export function volumeAfterDilution(c1: number, v1: number, c2: number): number 
 }
 
 /**
+ * Výsledná koncentrace roztoku o daném celkovém objemu, do kterého se
+ * přidalo jedno nebo víc množství léčivé látky.
+ *
+ * Pokrývá dva případy jedním vztahem: naředění koncentrátu (jedna složka)
+ * i smíchání dvou roztoků různé koncentrace (dvě složky). V obou jde
+ * o totéž — hmotnost se sečte, objem se ustálí na cílovém.
+ */
+export function mixedConcentration(
+  parts: readonly { concentration: number; volumeMl: number }[],
+  totalVolumeMl: number,
+): number {
+  positive(totalVolumeMl, "celkový objem");
+  if (parts.length === 0) throw new Error("Roztok musí mít aspoň jednu složku.");
+
+  const mass = parts.reduce((sum, part) => {
+    positive(part.volumeMl, "objem složky");
+    if (part.concentration < 0) throw new Error("Koncentrace složky nemůže být záporná.");
+    return sum + part.concentration * part.volumeMl;
+  }, 0);
+  return mass / totalVolumeMl;
+}
+
+/**
+ * Procentní vyjádření na poměrové a zpět.
+ *
+ * 1 % je 1 g ve 100 ml, což je totéž co 1:100. Adrenalin 1:1000 je proto
+ * roztok 0,1 %.
+ */
+export function percentToRatio(percent: number): number {
+  return 100 / positive(percent, "procento");
+}
+
+export function ratioToPercent(partsOfSolution: number): number {
+  return 100 / positive(partsOfSolution, "poměr");
+}
+
+/**
  * Procentní roztok na mg/ml.
  *
  * 1 % znamená 1 g ve 100 ml, tedy 10 mg/ml. Glukóza 40 % = 400 mg/ml.
