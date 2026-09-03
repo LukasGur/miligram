@@ -66,9 +66,10 @@ export type Solution = {
  * do soustavy SI nepatří, ale jako sufix se chová stejně.
  */
 export const ANSWER_UNITS = [
-  "mg", "g", "ug", "ml", "l", "mmol", "mEq", "IU",
+  "ng", "ug", "mg", "g", "ml", "l", "mmol", "mEq", "IU",
   "min", "h", "den",
-  "mlPerHour", "dropsPerMinute", "ugPerKgMin", "ugPerMin", "mgPerMl", "mmolPerL",
+  "mlPerHour", "mlPerMin", "dropsPerMinute", "ugPerKgMin", "ugPerMin",
+  "mgPerMl", "gPerL", "mmolPerL", "mgPerKgDen",
   "tablet", "ampoule", "vial", "pack", "cycle",
   "m2", "percent",
 ] as const;

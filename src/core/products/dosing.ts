@@ -45,6 +45,14 @@ export type DosingRule = {
   /** Nasycovací dávka, je-li v SPC uvedená. */
   loading?: DoseRange;
   /**
+   * Nepřekročitelná souhrnná celoživotní dávka v mg/m². Týká se antracyklinů,
+   * u kterých riziko kardiomyopatie roste s tím, kolik toho pacient dostal
+   * za celý život — ne s jednotlivou dávkou.
+   */
+  cumulativeMaxMgPerM2?: number;
+  /** Tentýž limit u pacienta s rizikovým faktorem podle SPC. */
+  cumulativeRiskMgPerM2?: number;
+  /**
    * Údaje o balení pro přípravky, které nejsou v automatickém fondu.
    * Kombinovaný přípravek má nejednoznačnou sílu, takže ho parser do fondu
    * nepustí — u Augmentinu je pro výpočet rozhodná amoxicilinová složka
@@ -266,6 +274,22 @@ export const DOSING_RULES = {
     quote:
       "U dosud neléčených dospělých pacientů s normální funkcí ledvin, tj. clearance kreatininu " +
       "> 60 ml/min, je 400 mg/m2; při 41-59 ml/min 250 mg/m2, při 16-40 ml/min 200 mg/m2.",
+  },
+  doxorubicin: {
+    suklCode: "0107681",
+    product: "Doxorubicin Ebewe 2 mg/ml koncentrát pro infuzní roztok",
+    substance: "DOXORUBICIN",
+    spc: "SPC202208.pdf",
+    single: { min: 60, max: 75, unit: "mg/m2" },
+    cumulativeMaxMgPerM2: 550,
+    cumulativeRiskMgPerM2: 400,
+    presentation: { strengthMg: 2, referenceMl: 1, packVolumeMl: 25 },
+    quote:
+      "Při monoterapii se obecně doporučuje dávkování v rozmezí 60 – 75 mg/m² intravenózní injekcí " +
+      "jednou za tři týdny. Maximální kumulativní dávka: Nemá být překročena maximální souhrnná " +
+      "celoživotní dávka 550 mg/m². Absolvoval-li pacient radioterapii mediastina, trpí-li průvodním " +
+      "srdečním onemocněním nebo je současně léčen jinými kardiotoxickými neantracyklinovými " +
+      "cytostatiky, doporučuje se maximální souhrnná dávka 400 mg/m² plochy povrchu těla.",
   },
 } as const satisfies Record<string, DosingRule>;
 

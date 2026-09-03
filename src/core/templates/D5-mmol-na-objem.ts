@@ -1,4 +1,4 @@
-import { electrolyte, electrolyteSource, ELECTROLYTE_LIST, POTASSIUM_LIMIT_SOURCE, POTASSIUM_MAX_MMOL_PER_HOUR } from "../products/electrolytes";
+import { electrolyte, electrolyteSource, POTASSIUM_LIST, POTASSIUM_LIMIT_SOURCE, POTASSIUM_MAX_MMOL_PER_HOUR } from "../products/electrolytes";
 import { syringeFor } from "../devices";
 import * as tolerances from "../tolerances";
 import type { Solution, Vars } from "../types";
@@ -16,13 +16,13 @@ export const D5 = register({
   id: "D5",
   category: "redeni",
   source: [
-    ...ELECTROLYTE_LIST.map(([id]) => electrolyteSource(id)),
+    ...POTASSIUM_LIST.map(([id]) => electrolyteSource(id)),
     POTASSIUM_LIMIT_SOURCE,
     ISO_7886,
   ],
 
   generate(rng, difficulty) {
-    const [id] = rng.pick(ELECTROLYTE_LIST);
+    const [id] = rng.pick(POTASSIUM_LIST);
     const item = electrolyte(id);
 
     // Ordinace nepřekročí hodinový limit z SPC, aby zadání dávalo smysl.

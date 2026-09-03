@@ -19,6 +19,18 @@ export const ISO_7886: Source = {
   verifiedAt: "2026-09-03",
 };
 
+/**
+ * Soustava SI. Předpony ani vztah mg → µg nejsou vlastností žádného léku,
+ * takže je nedokládá SPC — dokládá je definice jednotek.
+ */
+export const SI_SOURCE: Source = {
+  citation:
+    "BIPM, Mezinárodní soustava jednotek (SI), 9. vydání 2019, tabulka předpon SI: " +
+    "kilo 10³, milli 10⁻³, micro 10⁻⁶, nano 10⁻⁹.",
+  url: "https://www.bipm.org/en/publications/si-brochure",
+  verifiedAt: "2026-09-03",
+};
+
 const templates = new Map<string, Template>();
 
 export function register(template: Template): Template {

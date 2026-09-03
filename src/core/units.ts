@@ -66,7 +66,14 @@ export function convert(value: number, from: Unit, to: Unit): number {
   if ((from === "mEq") !== (to === "mEq")) {
     throw new Error("Převod mmol ↔ mEq vyžaduje mocenství iontu, použij convertEquivalents().");
   }
-  return (value * source.factor) / target.factor;
+  /**
+   * Podíl mocnin deseti v plovoucí čárce nevychází přesně: 50 µg na ng
+   * dá 50000,00000000001. U převodů, kde se odpověď porovnává na shodu,
+   * je takový ocas rozdíl mezi správně a špatně, tak se ořízne na dvanáct
+   * platných číslic — dost daleko za jakoukoli reálnou přesností měření.
+   */
+  const raw = (value * source.factor) / target.factor;
+  return Number(raw.toPrecision(12));
 }
 
 /** mEq = mmol × mocenství. Pro K⁺ a Na⁺ (mocenství 1) jsou hodnoty shodné. */
