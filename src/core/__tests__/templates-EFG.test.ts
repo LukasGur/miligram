@@ -1,0 +1,170 @@
+import { describe, expect, it } from "vitest";
+import "../templates";
+import { buildExercise, getTemplate } from "../templates";
+import { RECONSTITUTION_LIST } from "../products/reconstitution";
+import { DIFFICULTIES, type Difficulty } from "../types";
+
+const D = 2 as Difficulty;
+const SEEDS = Array.from({ length: 40 }, (_, i) => `e${i}`);
+
+describe("pravidla rekonstituce", () => {
+  it("koncentrace po rekonstituci sedí na obsah lahvičky a objem rozpouštědla", () => {
+    for (const [id, rule] of RECONSTITUTION_LIST) {
+      expect(rule.reconstitutedMgPerMl, id).toBeCloseTo(rule.vialMg / rule.diluentMl, 6);
+      expect(rule.spc, id).toMatch(/^SPC\d+\.pdf$/);
+      expect(rule.quote.length, id).toBeGreaterThan(40);
+    }
+  });
+
+  it("nejmenší objem infuze odpovídá stropu koncentrace", () => {
+    for (const [id, rule] of RECONSTITUTION_LIST) {
+      if (rule.maxInfusionMgPerMl === undefined || rule.minInfusionMl === undefined) continue;
+      // 1000 mg při stropu 5 mg/ml potřebuje aspoň 200 ml
+      expect(rule.minInfusionMl, id).toBeGreaterThanOrEqual(rule.vialMg / rule.maxInfusionMgPerMl - 1e-9);
+    }
+  });
+});
+
+describe("E — rekonstituce", () => {
+  it("E2: 1000 mg při stropu 5 mg/ml vyžaduje aspoň 200 ml", () => {
+    expect(getTemplate("E2").solve({ doseMg: 1000, maxInfusionMgPerMl: 5 }, D).value).toBe(200);
+  });
+
+  it("E3: 1000 mg na koncentraci 20 mg/ml je 50 ml", () => {
+    expect(getTemplate("E3").solve({ doseMg: 1000, targetMgPerMl: 20 }, D).value).toBe(50);
+  });
+
+  it("E4: objem prášku snižuje výslednou koncentraci", () => {
+    // 1000 mg v 9,3 ml rozpouštědla + 0,7 ml prášku = 100 mg/ml
+    const withDisplacement = getTemplate("E4").solve(
+      { vialMg: 1000, diluentMl: 9.3, displacementMl: 0.7 },
+      D,
+    ).value;
+    const withoutDisplacement = 1000 / 9.3;
+    expect(withDisplacement).toBe(100);
+    expect(withDisplacement).toBeLessThan(withoutDisplacement);
+  });
+
+  it("E5: 2500 mg z lahviček po 1000 mg jsou tři lahvičky", () => {
+    expect(getTemplate("E5").solve({ doseMg: 2500, vialMg: 1000 }, D).value).toBe(3);
+  });
+
+  it("E3 nikdy nenavrhne objem mimo rozsah z SPC", () => {
+    for (const seed of SEEDS) {
+      const { vars } = buildExercise("E3", seed, D);
+      expect(Number(vars.targetMgPerMl)).toBeGreaterThanOrEqual(Number(vars.rangeMin));
+      expect(Number(vars.targetMgPerMl)).toBeLessThanOrEqual(Number(vars.rangeMax));
+    }
+  });
+});
+
+describe("F — rychlost infuze", () => {
+  it("F1: 1000 ml za 8 hodin je 125 ml/h", () => {
+    expect(getTemplate("F1").solve({ bagMl: 1000, hours: 8 }, D).value).toBe(125);
+  });
+
+  it("F3: u mikrokapkového setu se kapky rovnají ml/h", () => {
+    const solution = getTemplate("F3").solve({ bagMl: 500, hours: 4 }, D);
+    expect(solution.value).toBe(125);
+  });
+
+  it("F4: 500 ml rychlostí 125 ml/h dokape za 240 minut", () => {
+    expect(getTemplate("F4").solve({ bagMl: 500, rateMlPerHour: 125 }, D).value).toBe(240);
+  });
+
+  it("F5: 20 kapek za minutu při faktoru 20 je 60 ml/h", () => {
+    expect(getTemplate("F5").solve({ dropFactor: 20, dropsPerMin: 20 }, D).value).toBe(60);
+  });
+
+  it("F5 a F2 jsou navzájem obrácené", () => {
+    // 1000 ml za 480 min při 20 gtt/ml dá 41,67 kapek; zpět to musí dát 125 ml/h
+    const drops = getTemplate("F2").solve({ bagMl: 1000, dropFactor: 20, hours: 8 }, D).value;
+    const rate = getTemplate("F5").solve({ dropFactor: 20, dropsPerMin: drops }, D).value;
+    expect(rate).toBeCloseTo(125, 6);
+  });
+
+  it("F6: z 500 ml po 60 minutách při 125 ml/h zbývá 180 minut", () => {
+    // podáno 125 ml, zbývá 375 ml → 375 / 125 × 60
+    const solution = getTemplate("F6").solve(
+      { bagMl: 500, rateMlPerHour: 125, elapsedMinutes: 60 },
+      D,
+    );
+    expect(solution.value).toBe(180);
+  });
+
+  it("F6 nikdy nevrátí záporný čas", () => {
+    for (const difficulty of DIFFICULTIES) {
+      for (const seed of SEEDS) {
+        expect(buildExercise("F6", seed, difficulty).solution.value).toBeGreaterThan(0);
+      }
+    }
+  });
+});
+
+describe("G — kontinuální infuze", () => {
+  it("G1: 6 µg/min z roztoku 0,08 mg/ml je 4,5 ml/h", () => {
+    expect(getTemplate("G1").solve({ totalMg: 4, syringeMl: 50, dosePerMin: 6 }, D).value).toBe(4.5);
+  });
+
+  it("G3: 4,8 ml/h z roztoku 5 mg/ml u 80 kg je 5 µg/kg/min", () => {
+    const solution = getTemplate("G3").solve(
+      { totalMg: 250, syringeMl: 50, weightKg: 80, rateMlPerHour: 4.8 },
+      D,
+    );
+    expect(solution.value).toBeCloseTo(5, 10);
+  });
+
+  it("G2 a G3 jsou navzájem obrácené", () => {
+    const rate = getTemplate("G2").solve(
+      { totalMg: 250, syringeMl: 50, weightKg: 80, dosePerKgMin: 5 },
+      D,
+    ).value;
+    const dose = getTemplate("G3").solve(
+      { totalMg: 250, syringeMl: 50, weightKg: 80, rateMlPerHour: rate },
+      D,
+    ).value;
+    expect(dose).toBeCloseTo(5, 9);
+  });
+
+  it("G4: na 5 mg/ml v 50 ml z ampulí po 250 mg je potřeba jedna", () => {
+    expect(getTemplate("G4").solve({ targetConcentration: 5, syringeMl: 50, ampouleMg: 250 }, D).value).toBe(1);
+  });
+
+  it("G5: zvýšení z 5 na 10 µg/kg/min zdvojnásobí rychlost", () => {
+    const solution = getTemplate("G5").solve(
+      { totalMg: 250, syringeMl: 50, weightKg: 80, fromDose: 5, toDose: 10 },
+      D,
+    );
+    expect(solution.value).toBeCloseTo(4.8, 9);
+  });
+
+  it("G6: dvě ampule po 5 ml do stříkačky 50 ml znamenají 40 ml ředidla", () => {
+    expect(getTemplate("G6").solve({ ampouleMl: 5, ampoules: 2, syringeMl: 50 }, D).value).toBe(40);
+  });
+
+  it("G7: 5 µg/kg/min u 80 kg je 400 µg/min a zpět", () => {
+    expect(getTemplate("G7").solve(
+      { direction: "perKgToTotal", weightKg: 80, dosePerKgMin: 5, dosePerMin: 0 }, D,
+    ).value).toBe(400);
+    expect(getTemplate("G7").solve(
+      { direction: "totalToPerKg", weightKg: 80, dosePerKgMin: 0, dosePerMin: 400 }, D,
+    ).value).toBe(5);
+  });
+
+  it("G6 nikdy nevrátí záporný objem ředidla", () => {
+    for (const seed of SEEDS) {
+      expect(buildExercise("G6", seed, D).solution.value).toBeGreaterThan(0);
+    }
+  });
+
+  it("rychlosti v perfuzorových šablonách zůstávají v rozsahu pumpy", () => {
+    for (const id of ["G1", "G2", "G5"]) {
+      for (const difficulty of DIFFICULTIES) {
+        for (const seed of SEEDS) {
+          const { solution } = buildExercise(id, seed, difficulty);
+          expect(Math.abs(solution.value), `${id}/${difficulty}/${seed}`).toBeLessThan(1000);
+        }
+      }
+    }
+  });
+});

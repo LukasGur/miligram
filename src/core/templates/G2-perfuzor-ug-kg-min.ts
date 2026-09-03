@@ -1,13 +1,11 @@
 import { microgramsPerKgMinToMlPerHour } from "../formulas";
 import { PUMP_SOURCE } from "../devices";
-import { concentrationOf, selectProducts, vialContentMg } from "../products";
+import { concentrationOf, vialContentMg } from "../products";
 import * as tolerances from "../tolerances";
 import type { Solution, Vars } from "../types";
 import { frac, step, tex, unit } from "./helpers";
 import { register, SUKL_DLP } from "./registry";
-
-/** Objemy stříkaček do lineárního dávkovače. */
-const SYRINGE_VOLUMES_ML = [20, 50] as const;
+import { choosePerfusorDilution } from "./perfusor";
 
 /**
  * G2 — kontinuální infuze v µg/kg/min.
@@ -26,39 +24,8 @@ export const G2 = register({
       ? rng.pick([2, 5, 10] as const)
       : rng.step(0.5, 20, 0.5);
 
-    /**
-     * Přípravek ani ředění se nelosují nezávisle na dávce. V praxi se ředění
-     * volí tak, aby pumpa běžela v rozumném rozsahu — u příliš zředěného
-     * roztoku by vycházely stovky ml/h, které dávkovač neumí nastavit
-     * a pacient by je neunesl. Z proveditelných kombinací proto losujeme
-     * a v rámci přípravku bereme tu, která míří nejblíž k 10 ml/h.
-     */
-    const options = selectProducts({
-      kind: "concentrate",
-      strengthUnit: "mg",
-      atcPrefixes: ["C01C", "C01D", "N01A", "N05C"],
-    }).flatMap((candidate) =>
-      SYRINGE_VOLUMES_ML.flatMap((syringeMl) =>
-        [1, 2, 3, 4].map((ampoules) => {
-          const totalMg = vialContentMg(candidate) * ampoules;
-          const rate = microgramsPerKgMinToMlPerHour(dosePerKgMin, weightKg, totalMg / syringeMl);
-          return { candidate, syringeMl, ampoules, totalMg, rate };
-        }),
-      ),
-    ).filter((option) => option.rate >= 0.5 && option.rate <= 60);
-
-    if (options.length === 0) {
-      throw new Error(`Pro dávku ${dosePerKgMin} µg/kg/min u ${weightKg} kg nevychází žádné ředění.`);
-    }
-
-    const product = rng.pick([...new Set(options.map((o) => o.candidate))]);
-    const chosen = options
-      .filter((o) => o.candidate === product)
-      .reduce((best, option) =>
-        Math.abs(Math.log(option.rate / 10)) < Math.abs(Math.log(best.rate / 10)) ? option : best,
-      );
-    const { syringeMl, ampoules, totalMg } = chosen;
-    const concentrationMgPerMl = totalMg / syringeMl;
+    const dilution = choosePerfusorDilution(rng, { perKgMin: dosePerKgMin, weightKg });
+    const { product, syringeMl, ampoules, totalMg, concentrationMgPerMl } = dilution;
 
     return {
       code: product.code,
