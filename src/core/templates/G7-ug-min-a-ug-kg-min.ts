@@ -1,5 +1,5 @@
 import * as tolerances from "../tolerances";
-import type { Solution, Vars } from "../types";
+import type { Solution } from "../types";
 import { formula, frac, given, q, result, substitute } from "./helpers";
 import { register } from "./registry";
 

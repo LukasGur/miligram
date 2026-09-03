@@ -32,6 +32,10 @@ vyhýbali. XP drží záznam odvedené práce nezávisle na útratě.
 Zisk XP: **10 za správný příklad, +20 za bezchybnou lekci.**
 Zisk prášků a útrata podle briefu (sekce 6).
 
+## Kde jsme
+
+Aktuální stav a co dělat dál je v `docs/stav.md`.
+
 ## Fáze
 
 1. ✅ Základ — PWA, manifest, service worker, iOS onboarding, tokeny, i18n
