@@ -61,3 +61,8 @@ export { I1 } from "./I1-inzulin-100";
 export { I2 } from "./I2-inzulin-40";
 export { I3 } from "./I3-korekcni-faktor";
 export { I4 } from "./I4-na-kolik-dni-pero";
+export { J1 } from "./J1-clearance";
+export { J2 } from "./J2-vankomycin-podle-clearance";
+export { J3 } from "./J3-karboplatina-podle-ledvin";
+export { J4 } from "./J4-prodlouzeni-intervalu";
+export { J5 } from "./J5-redukce-v-procentech";

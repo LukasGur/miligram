@@ -42,6 +42,16 @@ export function intermediate(): Tolerance {
 }
 
 /**
+ * Odhad funkce ledvin. Clearance z Cockcroft–Gaultova vzorce je odhad
+ * postavený na sérovém kreatininu, který sám kolísá — vymáhat u něj
+ * přísnější shodu než dvě procenta by předstíralo přesnost, kterou
+ * ta hodnota nemá.
+ */
+export function clearance(): Tolerance {
+  return { kind: "relative", value: 0.02 };
+}
+
+/**
  * Nejmenší počet desetinných míst, na kterém zaokrouhlený výsledek ještě
  * projde vlastní tolerancí.
  *

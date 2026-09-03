@@ -51,6 +51,7 @@ export const RENAL_RULES = {
       { minCrCl: 50, dose: 15, intervalHours: 12 },
       { minCrCl: 20, maxCrCl: 49, dose: 15, intervalHours: 24 },
     ],
+
     quote:
       "Obvyklá počáteční dávka pro dospělé pacienty je 15 až 20 mg/kg, má být podána každých " +
       "24 hodin u pacientů s clearance kreatininu mezi 20 až 49 ml/min. U pacientů s lehkou nebo " +
@@ -89,8 +90,10 @@ export const RENAL_RULES = {
     substance: "KARBOPLATINA",
     spc: "SPC212755.pdf",
     doseUnit: "mg/m2",
+    // SPC píše „> 60 ml/min“, ne „od 60“ — hodnota přesně 60 ml/min proto
+    // v tabulce není a šablony ji nelosují.
     bands: [
-      { minCrCl: 60, dose: 400 },
+      { minCrCl: 61, dose: 400 },
       { minCrCl: 41, maxCrCl: 59, dose: 250 },
       { minCrCl: 16, maxCrCl: 40, dose: 200 },
     ],
