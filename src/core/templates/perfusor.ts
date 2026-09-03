@@ -46,7 +46,12 @@ export function choosePerfusorDilution(
   }).flatMap((product) =>
     SYRINGE_VOLUMES_ML.flatMap((syringeMl) =>
       ampouleCounts.map((ampoules) => {
-        const totalMg = vialContentMg(product) * ampoules;
+        /**
+         * Obsah ampule krát počet ampulí nechává v plovoucí čárce zbytky:
+         * 0,2 mg × 3 vyjde 0,6000000000000001. Zadání pak ukazuje jiné
+         * číslo, než se kterým se počítá, tak se to hned ořízne.
+         */
+        const totalMg = Number((vialContentMg(product) * ampoules).toPrecision(12));
         const concentrationMgPerMl = totalMg / syringeMl;
         return {
           product,

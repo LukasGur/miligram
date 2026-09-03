@@ -12,8 +12,9 @@ offline v Chromiu i vizuálně ve WebKitu.
 prostředků, deterministický generátor, fond 614 přípravků ze SÚKL,
 tabulky dávkovacích rozmezí, rekonstituce a elektrolytů opsané ze SPC.
 
-**Fáze 2, šablony** — hotovo **72 ze 72**. Testů prochází 268.
-Mimo produkční set zůstává jediná, I3, která čeká na zdroj.
+**Fáze 2, šablony** — hotovo **72 ze 72** včetně českých a slovenských
+textů. Testů prochází 275. Mimo produkční set zůstává jediná, I3,
+která čeká na zdroj.
 
 | Kategorie | Hotovo | Zbývá |
 |---|---|---|
@@ -32,16 +33,13 @@ Mimo produkční set zůstává jediná, I3, která čeká na zdroj.
 
 ## Co dělat dál
 
-1. **Lokalizované texty.** Jediná věc, která šablonám chybí. Zadání ani
-   popisy kroků zatím neexistují — šablony vracejí jen klíče (`zadani`,
-   `vzorec`, `dosazeni`, `vysledek` a asi padesát názvů mezikroků),
-   `messages/cs.json` a `sk.json` sekci `exercise` nemají. Potřeba je:
-   72 zadání se zástupnými symboly, ~50 popisů kroků, 23 poznámek
-   o zaokrouhlení a 27 názvů jednotek, a to dvojjazyčně.
-2. **Fáze 3, rozhraní.** Numerická klávesnice, obrazovka příkladu,
+1. **Fáze 3, rozhraní.** Numerická klávesnice, obrazovka příkladu,
    moment vyhodnocení s krokovým řešením sázeným KaTeXem.
-3. **I3** (korekční faktor inzulinu) čeká na zdroj, jinak vypustit.
+2. **I3** (korekční faktor inzulinu) čeká na zdroj, jinak vypustit.
    Do té doby ji `productionTemplates()` nevydá a test to hlídá.
+3. **Revize slovenštiny rodilým mluvčím.** Texty jsou napsané, ne
+   přeložené strojem, ale nikdo je zatím nečetl. Názvy přípravků zůstávají
+   české — fond je z české databáze.
 
 ## Rozhodnutí, která už padla
 
@@ -54,6 +52,8 @@ Mimo produkční set zůstává jediná, I3, která čeká na zdroj.
 - Kde je podíl nebo interval součástí ordinace (redukce dávky, počet podání),
   je součástí zadání a netvrdí se jako fakt. Ze zdroje pochází jen rozsah,
   ve kterém se pohybuje.
+- Zadání je klinická situace, ne holá rovnice: hmotnost, věk a nález
+  v jedné větě, otázka na samostatném řádku.
 - Faktické údaje pocházejí z DLP a SPC. Výběr účinných látek je kurátorské
   rozhodnutí v `scripts/sukl/latky-vyber.json`; build ověřuje každý název
   proti číselníku ATC.
@@ -68,7 +68,7 @@ Mimo produkční set zůstává jediná, I3, která čeká na zdroj.
 ## Příkazy
 
 ```bash
-pnpm test        # 268 testů výpočetního jádra
+pnpm test        # 275 testů jádra a překladů
 pnpm typecheck
 pnpm lint
 pnpm dev         # https, LAN, pro test na iPhonu

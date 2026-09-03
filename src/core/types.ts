@@ -71,7 +71,7 @@ export const ANSWER_UNITS = [
   "mlPerHour", "mlPerMin", "dropsPerMinute", "ugPerKgMin", "ugPerMin",
   "mgPerMl", "gPerL", "mmolPerL", "mgPerKgDen",
   "tablet", "ampoule", "vial", "pack", "cycle",
-  "m2", "percent",
+  "m2", "percent", "ratio",
 ] as const;
 export type AnswerUnit = (typeof ANSWER_UNITS)[number];
 

@@ -73,8 +73,10 @@ export const D8 = register({
   },
 
   answer(vars, solution) {
+    // Odpovědí je N ze zápisu 1:N, ne procento — pole odpovědi to musí
+    // říct, jinak by u výsledku 50 svítilo „%“ a zadání by si protiřečilo.
     return vars.direction === "percentToRatio"
-      ? { unit: "percent", tolerance: tolerances.countable(), decimals: 0 }
+      ? { unit: "ratio", tolerance: tolerances.countable(), decimals: 0 }
       : {
           unit: "percent",
           tolerance: tolerances.intermediate(),
