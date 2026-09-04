@@ -371,6 +371,17 @@
     "leaderboardTotal": "Celkem",
     "leaderboardEmpty": "Zatím tu nikdo není. Přidej si kamaráda podle přezdívky.",
     "you": "ty",
-    "loading": "Načítám"
+    "loading": "Načítám",
+    "duelsTitle": "Souboje",
+    "duelChallenge": "Vyzvat",
+    "duelSent": "Výzva odeslána.",
+    "duelPlay": "Hrát",
+    "duelWaiting": "Čeká se na {handle}",
+    "duelYourTurn": "{handle} tě vyzval",
+    "duelScore": "{mine, number} : {theirs, number}",
+    "duelWon": "Vyhrál jsi",
+    "duelLost": "Prohrál jsi",
+    "duelDraw": "Remíza",
+    "duelsEmpty": "Zatím žádný souboj. Vyzvi kamaráda ze žebříčku."
   }
 }

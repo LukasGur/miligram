@@ -13,10 +13,16 @@ import { useCallback, useSyncExternalStore } from "react";
  * Dotaz se spustí ve chvíli, kdy se na něj přihlásí první komponenta,
  * a výsledek si drží tenhle modul.
  */
+type Snapshot = { status: "loading" | "ready" | "error"; data: unknown; error: unknown };
+
 type Entry = {
-  status: "loading" | "ready" | "error";
-  data: unknown;
-  error: unknown;
+  /**
+   * Snímek se při každé změně nahradí novým objektem, ne přepíše.
+   * `useSyncExternalStore` porovnává snímky přes Object.is — kdyby se
+   * měnil obsah téhož objektu, React by změnu neviděl a obrazovka by
+   * zůstala viset na „načítám“.
+   */
+  snapshot: Snapshot;
   listeners: Set<() => void>;
   started: boolean;
 };
@@ -26,33 +32,29 @@ const cache = new Map<string, Entry>();
 function entryFor(key: string): Entry {
   let entry = cache.get(key);
   if (!entry) {
-    entry = { status: "loading", data: undefined, error: undefined, listeners: new Set(), started: false };
+    entry = {
+      snapshot: { status: "loading", data: undefined, error: undefined },
+      listeners: new Set(),
+      started: false,
+    };
     cache.set(key, entry);
   }
   return entry;
 }
 
-function notify(entry: Entry) {
+function publish(entry: Entry, snapshot: Snapshot) {
+  entry.snapshot = snapshot;
   for (const listener of entry.listeners) listener();
 }
 
 function load(key: string, loader: () => Promise<unknown>) {
   const entry = entryFor(key);
   entry.started = true;
-  entry.status = "loading";
-  notify(entry);
+  publish(entry, { status: "loading", data: entry.snapshot.data, error: undefined });
 
   loader().then(
-    (data) => {
-      entry.status = "ready";
-      entry.data = data;
-      notify(entry);
-    },
-    (error) => {
-      entry.status = "error";
-      entry.error = error;
-      notify(entry);
-    },
+    (data) => publish(entry, { status: "ready", data, error: undefined }),
+    (error) => publish(entry, { status: "error", data: undefined, error }),
   );
 }
 
@@ -84,8 +86,8 @@ export function useRemoteQuery<T>(key: string | null, loader: () => Promise<T>):
     [key],
   );
 
-  const snapshot = useCallback(() => (key === null ? undefined : entryFor(key)), [key]);
-  const entry = useSyncExternalStore(subscribe, snapshot, () => undefined);
+  const snapshot = useCallback(() => (key === null ? undefined : entryFor(key).snapshot), [key]);
+  const state = useSyncExternalStore(subscribe, snapshot, () => undefined);
 
   const refresh = useCallback(() => {
     if (key !== null) load(key, loader);
@@ -93,9 +95,9 @@ export function useRemoteQuery<T>(key: string | null, loader: () => Promise<T>):
   }, [key]);
 
   return {
-    data: entry?.status === "ready" ? (entry.data as T) : undefined,
-    loading: entry === undefined || entry.status === "loading",
-    error: entry?.status === "error" ? entry.error : undefined,
+    data: state?.status === "ready" ? (state.data as T) : undefined,
+    loading: state === undefined || state.status === "loading",
+    error: state?.status === "error" ? state.error : undefined,
     refresh,
   };
 }

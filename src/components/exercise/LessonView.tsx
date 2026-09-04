@@ -4,8 +4,10 @@ import { useMemo, useRef, useState } from "react";
 import { useFormatter, useTranslations } from "next-intl";
 import { HINT_COST, rewardForLesson } from "@/core/economy";
 import { lessonExercise, planLesson } from "@/core/lesson";
-import { recordLesson } from "@/lib/db";
-import { spendPills } from "@/lib/db";
+import { recordLesson, spendPills } from "@/lib/db";
+import { recordDuelResult } from "@/lib/remote";
+import { supabase } from "@/lib/supabase";
+import { useSession } from "@/lib/useSession";
 import { useProfile } from "@/lib/useProfile";
 import { ExerciseView } from "./ExerciseView";
 
@@ -18,11 +20,21 @@ type Answered = { templateId: string; seed: string; difficulty: number; correct:
  * příklad je určený dvojicí (šablona, semínko), takže se dá kdykoli
  * sestavit znovu ze samotného identifikátoru lekce.
  */
-export function LessonView({ lessonId, onExit }: { lessonId: string; onExit: () => void }) {
+export function LessonView({
+  lessonId,
+  duelId,
+  onExit,
+}: {
+  lessonId: string;
+  /** Je-li vyplněné, hlásí se po dokončení výsledek do souboje. */
+  duelId?: string;
+  onExit: () => void;
+}) {
   const plan = useMemo(() => planLesson(lessonId), [lessonId]);
   const [index, setIndex] = useState(0);
   const [answers, setAnswers] = useState<Answered[]>([]);
   const { profile } = useProfile();
+  const { session } = useSession();
   /**
    * Zápis se smí provést jen jednou. Vykreslení se opakovat může,
    * a v ostrém režimu React některé části schválně spouští dvakrát —
@@ -73,6 +85,15 @@ export function LessonView({ lessonId, onExit }: { lessonId: string; onExit: () 
           recorded.current = true;
           const reward = rewardForLesson(answered.map((item) => item.correct));
           void recordLesson({ lessonId, answers: answered, reward });
+
+          // Výsledek souboje jde rovnou na server. Do fronty nepatří:
+          // bez připojení nemá souboj koho porovnávat a čekající výzva
+          // je srozumitelnější než výsledek, který dorazí za tři dny.
+          const client = supabase();
+          const userId = session?.user.id;
+          if (duelId && client && userId) {
+            void recordDuelResult(client, duelId, userId, reward.correct, reward.count).catch(() => {});
+          }
         }
       }}
     />

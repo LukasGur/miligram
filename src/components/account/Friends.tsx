@@ -5,12 +5,14 @@ import { useFormatter, useTranslations } from "next-intl";
 import type { SupabaseClient } from "@supabase/supabase-js";
 import {
   acceptFriend,
+  createDuel,
   friendScores,
   pendingRequests,
   requestFriend,
   type FriendRequest,
   type ScoreRow,
 } from "@/lib/remote";
+import { newLessonId } from "@/core/lesson";
 import { useRemoteQuery } from "@/lib/remoteQuery";
 import { Field } from "./SignIn";
 
@@ -21,7 +23,15 @@ import { Field } from "./SignIn";
  * každá vzatá nápověda by uživatele srazila dolů a lidé by se vysvětlením
  * vyhýbali — přesně tomu, kvůli čemu aplikace existuje.
  */
-export function Friends({ client, userId }: { client: SupabaseClient; userId: string }) {
+export function Friends({
+  client,
+  userId,
+  onChallenged,
+}: {
+  client: SupabaseClient;
+  userId: string;
+  onChallenged: () => void;
+}) {
   const t = useTranslations("account");
   const format = useFormatter();
 
@@ -133,6 +143,21 @@ export function Friends({ client, userId }: { client: SupabaseClient; userId: st
                   ) : null}
                 </span>
                 <span className="num text-body font-semibold">{format.number(row.xp)}</span>
+                {row.userId === userId ? null : (
+                  <button
+                    type="button"
+                    onClick={async () => {
+                      // Souboj je jen sdílený identifikátor lekce; oba hráči
+                      // si z něj sestaví tytéž příklady.
+                      await createDuel(client, userId, row.userId, newLessonId());
+                      setNotice(t("duelSent"));
+                      onChallenged();
+                    }}
+                    className="text-accent min-h-11 shrink-0 text-label font-medium"
+                  >
+                    {t("duelChallenge")}
+                  </button>
+                )}
               </li>
             ))}
           </ol>

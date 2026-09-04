@@ -3,7 +3,7 @@
 import { useState } from "react";
 import { useTranslations } from "next-intl";
 import { CloseIcon } from "@/components/icons";
-import { claimHandle, fetchProfile, remoteGateway, type RemoteProfile } from "@/lib/remote";
+import { claimHandle, fetchProfile, listDuels, remoteGateway, type Duel, type RemoteProfile } from "@/lib/remote";
 import { useRemoteQuery } from "@/lib/remoteQuery";
 import { supabase, isRemoteConfigured } from "@/lib/supabase";
 import { syncOutbox } from "@/lib/sync";
@@ -11,6 +11,7 @@ import { usePendingEvents } from "@/lib/useProfile";
 import { useSession } from "@/lib/useSession";
 import { Field, Primary, SignIn } from "./SignIn";
 import { Friends } from "./Friends";
+import { Duels } from "./Duels";
 
 /**
  * Účet, přátelé a žebříček.
@@ -19,7 +20,13 @@ import { Friends } from "./Friends";
  * aplikace funguje dál, jen se nedá s nikým porovnat. Proto se sem nedostane
  * nic, bez čeho by lekce nešla dohrát.
  */
-export function AccountScreen({ onClose }: { onClose: () => void }) {
+export function AccountScreen({
+  onClose,
+  onPlayDuel,
+}: {
+  onClose: () => void;
+  onPlayDuel: (duel: { id: string; lessonId: string }) => void;
+}) {
   const t = useTranslations("account");
   const { session, ready } = useSession();
   const client = supabase();
@@ -53,7 +60,7 @@ export function AccountScreen({ onClose }: { onClose: () => void }) {
           ) : session === null ? (
             <SignIn />
           ) : (
-            <SignedIn client={client} userId={session.user.id} />
+            <SignedIn client={client} userId={session.user.id} onPlayDuel={onPlayDuel} />
           )}
         </div>
       </div>
@@ -64,19 +71,38 @@ export function AccountScreen({ onClose }: { onClose: () => void }) {
 function SignedIn({
   client,
   userId,
+  onPlayDuel,
 }: {
   client: ReturnType<typeof supabase> & object;
   userId: string;
+  onPlayDuel: (duel: { id: string; lessonId: string }) => void;
 }) {
   const t = useTranslations("account");
   const profile = useRemoteQuery<RemoteProfile | null>(`profile:${userId}`, () =>
     fetchProfile(client, userId),
   );
+  const duels = useRemoteQuery<Duel[]>(`duels:${userId}`, () => listDuels(client, userId));
 
   return (
     <>
-      <HandleForm client={client} userId={userId} current={profile.data ?? null} onSaved={profile.refresh} />
-      {profile.data ? <Friends client={client} userId={userId} /> : null}
+      <HandleForm
+        /**
+         * Klíč vynutí novou instanci, jakmile profil dorazí ze serveru.
+         * Formulář si počáteční hodnotu bere z props jen při vytvoření —
+         * bez klíče by pole zůstalo prázdné, i když přezdívka existuje.
+         */
+        key={profile.data?.handle ?? "bez-prezdivky"}
+        client={client}
+        userId={userId}
+        current={profile.data ?? null}
+        onSaved={profile.refresh}
+      />
+      {profile.data ? (
+        <>
+          <Friends client={client} userId={userId} onChallenged={duels.refresh} />
+          <Duels duels={duels.data ?? []} loading={duels.loading} onPlay={onPlayDuel} />
+        </>
+      ) : null}
       <Sync client={client} userId={userId} />
       <button
         type="button"

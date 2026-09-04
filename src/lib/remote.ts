@@ -176,3 +176,95 @@ export async function acceptFriend(client: SupabaseClient, userId: string, reque
     .eq("addressee", userId);
   if (error) throw new Error(error.message);
 }
+
+/* ---------------------------------------------------------------------------
+   Souboje
+
+   Souboj nese jen identifikátor lekce. Oba hráči si z něj sestaví tytéž
+   příklady, takže se nikam neposílá zadání ani odpovědi — jen kolik kdo
+   měl správně.
+   ------------------------------------------------------------------------ */
+
+export type Duel = {
+  id: string;
+  lessonId: string;
+  opponentId: string;
+  opponentHandle: string;
+  challengedByMe: boolean;
+  createdAt: string;
+  mine: { correct: number; count: number } | null;
+  theirs: { correct: number; count: number } | null;
+};
+
+export async function createDuel(
+  client: SupabaseClient,
+  userId: string,
+  opponentId: string,
+  lessonId: string,
+): Promise<void> {
+  const { error } = await client
+    .from("duels")
+    .insert({ lesson_id: lessonId, challenger: userId, opponent: opponentId });
+  if (error) throw new Error(error.message);
+}
+
+export async function listDuels(client: SupabaseClient, userId: string): Promise<Duel[]> {
+  const { data, error } = await client
+    .from("duels")
+    .select("id, lesson_id, challenger, opponent, created_at")
+    .order("created_at", { ascending: false })
+    .limit(20);
+  if (error) throw new Error(error.message);
+  if ((data ?? []).length === 0) return [];
+
+  const ids = (data ?? []).map((duel) => duel.id);
+  const opponents = (data ?? []).map((duel) => (duel.challenger === userId ? duel.opponent : duel.challenger));
+
+  const [results, profiles] = await Promise.all([
+    client.from("duel_results").select("duel_id, user_id, correct, count").in("duel_id", ids),
+    client.from("profiles").select("id, handle").in("id", opponents),
+  ]);
+  if (results.error) throw new Error(results.error.message);
+  if (profiles.error) throw new Error(profiles.error.message);
+
+  const handles = new Map((profiles.data ?? []).map((profile) => [profile.id, profile.handle]));
+  const byDuel = new Map<string, { user_id: string; correct: number; count: number }[]>();
+  for (const row of results.data ?? []) {
+    byDuel.set(row.duel_id, [...(byDuel.get(row.duel_id) ?? []), row]);
+  }
+
+  return (data ?? []).map((duel) => {
+    const opponentId = duel.challenger === userId ? duel.opponent : duel.challenger;
+    const rows = byDuel.get(duel.id) ?? [];
+    const mine = rows.find((row) => row.user_id === userId);
+    const theirs = rows.find((row) => row.user_id === opponentId);
+    return {
+      id: duel.id,
+      lessonId: duel.lesson_id,
+      opponentId,
+      opponentHandle: handles.get(opponentId) ?? "",
+      challengedByMe: duel.challenger === userId,
+      createdAt: duel.created_at,
+      mine: mine ? { correct: mine.correct, count: mine.count } : null,
+      theirs: theirs ? { correct: theirs.correct, count: theirs.count } : null,
+    };
+  });
+}
+
+/**
+ * Zapíše vlastní výsledek. Opakovaný zápis narazí na primární klíč —
+ * souboj se nedá dohrát dvakrát a vylepšit si tím skóre.
+ */
+export async function recordDuelResult(
+  client: SupabaseClient,
+  duelId: string,
+  userId: string,
+  correct: number,
+  count: number,
+): Promise<void> {
+  const { error } = await client
+    .from("duel_results")
+    .insert({ duel_id: duelId, user_id: userId, correct, count });
+  // 23505 znamená, že výsledek už je zapsaný. To není chyba, jen druhý pokus.
+  if (error && error.code !== "23505") throw new Error(error.message);
+}

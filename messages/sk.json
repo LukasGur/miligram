@@ -371,6 +371,17 @@
     "leaderboardTotal": "Spolu",
     "leaderboardEmpty": "Zatiaľ tu nikto nie je. Pridaj si kamaráta podľa prezývky.",
     "you": "ty",
-    "loading": "Načítavam"
+    "loading": "Načítavam",
+    "duelsTitle": "Súboje",
+    "duelChallenge": "Vyzvať",
+    "duelSent": "Výzva odoslaná.",
+    "duelPlay": "Hrať",
+    "duelWaiting": "Čaká sa na {handle}",
+    "duelYourTurn": "{handle} ťa vyzval",
+    "duelScore": "{mine, number} : {theirs, number}",
+    "duelWon": "Vyhral si",
+    "duelLost": "Prehral si",
+    "duelDraw": "Remíza",
+    "duelsEmpty": "Zatiaľ žiadny súboj. Vyzvi kamaráta z rebríčka."
   }
 }

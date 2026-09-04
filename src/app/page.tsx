@@ -8,6 +8,7 @@ import { useProfile } from "@/lib/useProfile";
 import { InstallBanner } from "@/components/InstallBanner";
 import { NetworkStatus } from "@/components/NetworkStatus";
 import { SettingsSheet } from "@/components/SettingsSheet";
+import { SyncAgent } from "@/components/SyncAgent";
 import { Wordmark } from "@/components/Wordmark";
 import { PersonIcon, SettingsIcon } from "@/components/icons";
 
@@ -34,21 +35,31 @@ export default function HomePage() {
   const tAccount = useTranslations("account");
   const format = useFormatter();
   const [settingsOpen, setSettingsOpen] = useState(false);
-  const [lessonId, setLessonId] = useState<string | null>(null);
+  /** Rozehraná lekce. Souboj je táž lekce, jen se z ní hlásí výsledek. */
+  const [lesson, setLesson] = useState<{ id: string; duelId?: string } | null>(null);
   const [accountOpen, setAccountOpen] = useState(false);
   const { profile, streak } = useProfile();
 
-  if (lessonId !== null) {
-    return <LessonView lessonId={lessonId} onExit={() => setLessonId(null)} />;
+  if (lesson !== null) {
+    return <LessonView lessonId={lesson.id} duelId={lesson.duelId} onExit={() => setLesson(null)} />;
   }
 
   if (accountOpen) {
-    return <AccountScreen onClose={() => setAccountOpen(false)} />;
+    return (
+      <AccountScreen
+        onClose={() => setAccountOpen(false)}
+        onPlayDuel={(duel) => {
+          setAccountOpen(false);
+          setLesson({ id: duel.lessonId, duelId: duel.id });
+        }}
+      />
+    );
   }
 
   return (
     <div className="bg-paper flex h-dvh flex-col overflow-hidden">
       <NetworkStatus />
+      <SyncAgent />
 
       <header
         className="app-chrome flex items-center justify-between px-5 pb-2"
@@ -103,7 +114,7 @@ export default function HomePage() {
         >
           <button
             type="button"
-            onClick={() => setLessonId(newLessonId())}
+            onClick={() => setLesson({ id: newLessonId() })}
             className="bg-accent active:bg-accent-press min-h-14 w-full rounded-control text-body font-semibold text-white transition-colors duration-75"
           >
             {t("start")}

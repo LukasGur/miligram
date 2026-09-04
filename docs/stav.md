@@ -38,10 +38,18 @@ sestavit znovu. Ověřeno ve WebKitu na rozměrech iPhonu, česky i slovensky.
 
 **Fáze 5, účet a sociální vrstva** — projekt Supabase `Miligram`
 (`xvlhqtqwftgmirsjqpul`, eu-central-1). Schéma, politiky, přihlášení kódem
-z e-mailu, přezdívka, odeslání fronty, přátelé a žebříček. Ověřeno proti
-živé databázi: cizí lekce nejsou vidět, skóre nejde přepsat, opakované
-odeslání téže lekce XP nezdvojí, žádost o přátelství smí přijmout jen
-adresát. Zkušební účty po testu smazané.
+z e-mailu, přezdívka, přátelé, žebříček, souboje a odesílání fronty
+na pozadí. Ověřeno proti živé databázi přes publikovatelný klíč, tedy
+stejnou cestou, jakou k ní sahá aplikace:
+
+- cizí lekce, souboje ani výsledky nejsou vidět
+- skóre nejde přepsat, XP připisuje jen spouštěč z odpovědí
+- opakované odeslání téže lekce XP nezdvojí
+- žádost o přátelství smí přijmout jen adresát
+- vyzvat na souboj jde jen potvrzeného kamaráda
+- výsledek souboje si nikdo nepřepíše ani nezapíše za druhého
+
+Zkušební účty po testech smazané, databáze je prázdná.
 
 **Fáze 4, gamifikace lokálně** — Dexie, prášky, XP, série, nápovědy.
 Celá lekce ověřena offline: po odpojení sítě běží ze service workeru
@@ -58,10 +66,11 @@ událost do fronty `outbox`, ze které bude čerpat synchronizace.
    Všechna jsou na jednom místě.
 2. **Obchod s prášky.** Ochrana série a opravy chybného příkladu zatím
    nemají kde se koupit; utrácet jde jen za nápovědu.
-3. **Souboje.** Poslední kus fáze 5. Lekce je určená jedním řetězcem,
-   takže souboj je jen sdílený identifikátor a porovnání výsledků.
-4. **Automatická synchronizace.** Fronta se zatím odesílá tlačítkem
-   v účtu. Chce to odeslání na pozadí, až se objeví síť.
+3. **Vlastní SMTP.** Přihlašovací kódy chodí přes vestavěné SMTP
+   Supabase, které má tvrdý limit několika e-mailů za hodinu. Na ostrý
+   provoz to nestačí.
+4. **Liga.** Žebříček je zatím jen mezi přáteli. Rozdělení do divizí
+   a týdenní uzávěrka jsou další krok.
 5. **Revize slovenštiny rodilým mluvčím.** Texty jsou napsané, ne
    přeložené strojem, ale nikdo je zatím nečetl. Názvy přípravků zůstávají
    české — fond je z české databáze.
