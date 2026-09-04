@@ -59,15 +59,19 @@ Zdrojem pravdy pro hraní je zařízení: aplikace funguje offline a bez účtu.
 Ukládá se semínko odpovědi, ne zadání. Každá změna zároveň zapisuje
 událost do fronty `outbox`, ze které bude čerpat synchronizace.
 
+**Fáze 7, statistiky a tréninkové režimy** — přehled z uložených
+odpovědí, úspěšnost podle látky, opakování chyb a trénink jedné
+kategorie. Opakování předloží tentýž příklad se stejnými čísly; to je
+celý důvod, proč generátor stojí na semínkách.
+
 ## Co dělat dál
 
 1. **Ověřit částky ekonomiky proti briefu, sekce 6.** Čísla
    v `src/core/economy.ts` jsou návrh, ne převzaté hodnoty: 2 prášky
    za správný příklad, 10 za bezchybnou lekci, nápověda za 15.
    Všechna jsou na jednom místě.
-2. **Fáze 7, statistiky a tréninkové režimy.** Opakování chyb je skoro
-   zadarmo: chybné odpovědi mají uložené semínko, takže se z nich dá
-   sestavit lekce.
+2. **Fáze 8, leštění.** Přístupnost, výkon, Lighthouse, zkouška
+   na skutečném iPhonu.
 3. **Vlastní SMTP.** Přihlašovací kódy chodí přes vestavěné SMTP
    Supabase, které má tvrdý limit několika e-mailů za hodinu. Na ostrý
    provoz to nestačí.
@@ -118,7 +122,7 @@ událost do fronty `outbox`, ze které bude čerpat synchronizace.
 ## Příkazy
 
 ```bash
-pnpm test        # 308 testů jádra, překladů, sazby a databáze
+pnpm test        # 328 testů jádra, překladů, sazby, databáze a statistik
 pnpm typecheck
 pnpm lint
 pnpm dev         # https, LAN, pro test na iPhonu

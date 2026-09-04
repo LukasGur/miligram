@@ -3,7 +3,7 @@
 import { useMemo, useRef, useState } from "react";
 import { useFormatter, useTranslations } from "next-intl";
 import { HINT_COST, REPAIR_COST, rewardForLesson } from "@/core/economy";
-import { lessonExercise, planLesson } from "@/core/lesson";
+import { lessonExercise, planLesson, type LessonPlan } from "@/core/lesson";
 import { recordLesson, spendPills } from "@/lib/db";
 import { recordDuelResult } from "@/lib/remote";
 import { supabase } from "@/lib/supabase";
@@ -29,15 +29,21 @@ type Answered = {
  */
 export function LessonView({
   lessonId,
+  plan: given,
   duelId,
   onExit,
 }: {
   lessonId: string;
+  /**
+   * Hotový plán z tréninku nebo opakování chyb. Bez něj se sestaví
+   * denní lekce z identifikátoru.
+   */
+  plan?: LessonPlan;
   /** Je-li vyplněné, hlásí se po dokončení výsledek do souboje. */
   duelId?: string;
   onExit: () => void;
 }) {
-  const plan = useMemo(() => planLesson(lessonId), [lessonId]);
+  const plan = useMemo(() => given ?? planLesson(lessonId), [given, lessonId]);
   const [index, setIndex] = useState(0);
   const [answers, setAnswers] = useState<Answered[]>([]);
   const { profile } = useProfile();

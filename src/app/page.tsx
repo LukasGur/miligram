@@ -3,7 +3,8 @@
 import { useState } from "react";
 import dynamic from "next/dynamic";
 import { useFormatter, useTranslations } from "next-intl";
-import { newLessonId, LESSON_LENGTH } from "@/core/lesson";
+import { newLessonId, LESSON_LENGTH, planCategoryLesson, planFromItems } from "@/core/lesson";
+import type { LessonPlan } from "@/core/lesson";
 import { useProfile } from "@/lib/useProfile";
 import { InstallBanner } from "@/components/InstallBanner";
 import { NetworkStatus } from "@/components/NetworkStatus";
@@ -11,7 +12,7 @@ import { SettingsSheet } from "@/components/SettingsSheet";
 import { Shop } from "@/components/Shop";
 import { SyncAgent } from "@/components/SyncAgent";
 import { Wordmark } from "@/components/Wordmark";
-import { PersonIcon, SettingsIcon } from "@/components/icons";
+import { ChartIcon, PersonIcon, SettingsIcon } from "@/components/icons";
 
 const LESSON_MINUTES = "4–6";
 
@@ -25,6 +26,11 @@ const AccountScreen = dynamic(
   { ssr: false },
 );
 
+const StatsScreen = dynamic(
+  () => import("@/components/StatsScreen").then((module) => module.StatsScreen),
+  { ssr: false },
+);
+
 const LessonView = dynamic(
   () => import("@/components/exercise/LessonView").then((module) => module.LessonView),
   { ssr: false },
@@ -34,15 +40,44 @@ export default function HomePage() {
   const t = useTranslations("home");
   const tCommon = useTranslations("common");
   const tAccount = useTranslations("account");
+  const tStats = useTranslations("stats");
   const format = useFormatter();
   const [settingsOpen, setSettingsOpen] = useState(false);
-  /** Rozehraná lekce. Souboj je táž lekce, jen se z ní hlásí výsledek. */
-  const [lesson, setLesson] = useState<{ id: string; duelId?: string } | null>(null);
+  /**
+   * Rozehraná lekce. Denní lekce se sestaví z identifikátoru, trénink
+   * a opakování chyb přinesou hotový plán — proto se nese obojí.
+   */
+  const [lesson, setLesson] = useState<{ id: string; plan?: LessonPlan; duelId?: string } | null>(null);
   const [accountOpen, setAccountOpen] = useState(false);
+  const [statsOpen, setStatsOpen] = useState(false);
   const { profile, streak } = useProfile();
 
   if (lesson !== null) {
-    return <LessonView lessonId={lesson.id} duelId={lesson.duelId} onExit={() => setLesson(null)} />;
+    return (
+      <LessonView
+        lessonId={lesson.id}
+        plan={lesson.plan}
+        duelId={lesson.duelId}
+        onExit={() => setLesson(null)}
+      />
+    );
+  }
+
+  if (statsOpen) {
+    return (
+      <StatsScreen
+        onClose={() => setStatsOpen(false)}
+        onTrain={(mode) => {
+          const id = newLessonId();
+          const plan =
+            mode.kind === "mistakes"
+              ? planFromItems(id, mode.items)
+              : planCategoryLesson(id, mode.category);
+          setStatsOpen(false);
+          setLesson({ id, plan });
+        }}
+      />
+    );
   }
 
   if (accountOpen) {
@@ -68,6 +103,14 @@ export default function HomePage() {
       >
         <Wordmark className="text-accent text-heading" />
         <div className="-mr-3 flex items-center">
+          <button
+            type="button"
+            onClick={() => setStatsOpen(true)}
+            aria-label={tStats("title")}
+            className="text-ink-soft flex size-11 items-center justify-center"
+          >
+            <ChartIcon className="size-6" />
+          </button>
           <button
             type="button"
             onClick={() => setAccountOpen(true)}

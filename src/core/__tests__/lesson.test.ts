@@ -1,6 +1,15 @@
 import { describe, expect, it } from "vitest";
 import "../templates";
-import { LESSON_LENGTH, lessonExercise, newLessonId, planLesson } from "../lesson";
+import {
+  categoryOf,
+  LESSON_LENGTH,
+  lessonExercise,
+  newLessonId,
+  planCategoryLesson,
+  planFromItems,
+  planLesson,
+  trainableCategories,
+} from "../lesson";
 import { productionTemplates } from "../templates";
 
 describe("sestavení lekce", () => {
@@ -45,5 +54,46 @@ describe("sestavení lekce", () => {
     const ids = new Set(Array.from({ length: 200 }, () => newLessonId()));
     expect(ids.size).toBeGreaterThan(190);
     for (const id of ids) expect(id).toMatch(/^[0-9a-z]+$/);
+  });
+});
+
+describe("tréninkové režimy", () => {
+  it("opakování chyb předloží tytéž příklady, ne podobné", () => {
+    const original = planLesson("puvodni");
+    const wrong = [original.items[1], original.items[4]];
+    const repeat = planFromItems("opakovani", wrong);
+
+    expect(repeat.items).toEqual(wrong);
+    // Semínko určuje zadání, takže se vrátí přesně ten příklad,
+    // na kterém uživatel pohořel.
+    const before = lessonExercise(original, 1);
+    const after = lessonExercise(repeat, 0);
+    expect(after.vars).toEqual(before.vars);
+    expect(after.solution.value).toBe(before.solution.value);
+  });
+
+  it("prázdné opakování je chyba, ne prázdná lekce", () => {
+    expect(() => planFromItems("x", [])).toThrow(/aspoň jeden/);
+  });
+
+  it("trénink kategorie losuje jen z její látky", () => {
+    for (const category of trainableCategories()) {
+      const plan = planCategoryLesson(`k-${category}`, category);
+      expect(plan.items).toHaveLength(LESSON_LENGTH);
+      for (const item of plan.items) {
+        expect(categoryOf(item.templateId), `${category}/${item.templateId}`).toBe(category);
+      }
+    }
+  });
+
+  it("kategorie s malým počtem šablon lekci doplní opakováním", () => {
+    // Onkologie má čtyři šablony, lekce sedm příkladů — nesmí spadnout.
+    const plan = planCategoryLesson("onko", "onkologie");
+    expect(plan.items).toHaveLength(LESSON_LENGTH);
+    expect(new Set(plan.items.map((item) => item.templateId)).size).toBeGreaterThanOrEqual(4);
+  });
+
+  it("každá trénovatelná kategorie má aspoň jednu šablonu v produkci", () => {
+    expect(trainableCategories().length).toBeGreaterThanOrEqual(11);
   });
 });

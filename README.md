@@ -57,6 +57,7 @@ src/components/exercise/  obrazovka příkladu, klávesnice, krokové řešení
 src/i18n/               volba jazyka a katalogy zpráv
 src/lib/db.ts           lokální databáze (Dexie); zdroj pravdy pro hraní
 src/lib/sync.ts         odesílání fronty událostí na server
+src/lib/stats.ts        statistika a výběr chyb k opakování
 supabase/migrations/    schéma a politiky serverové vrstvy
 src/lib/splashScreens.ts  generovaný soubor — needituj ručně
 ```

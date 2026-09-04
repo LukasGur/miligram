@@ -1,6 +1,6 @@
 import { createRng } from "./random";
-import { buildExercise, productionTemplates } from "./templates";
-import type { Difficulty, Exercise } from "./types";
+import { buildExercise, getTemplate, productionTemplates } from "./templates";
+import type { Category, Difficulty, Exercise } from "./types";
 
 /**
  * Sestavení lekce.
@@ -68,4 +68,62 @@ export function newLessonId(): string {
   const now = Date.now().toString(36);
   const salt = Math.floor(Math.random() * 36 ** 4).toString(36).padStart(4, "0");
   return `${now}${salt}`;
+}
+
+/**
+ * Lekce z konkrétního seznamu příkladů.
+ *
+ * Používá se na opakování chyb: uložená odpověď nese semínko, takže se dá
+ * předložit přesně ten příklad, na kterém uživatel pohořel — ne jiný
+ * podobný. Tohle je celý důvod, proč generátor stojí na semínkách.
+ */
+export function planFromItems(
+  lessonId: string,
+  items: readonly { templateId: string; seed: string; difficulty: Difficulty }[],
+): LessonPlan {
+  if (items.length === 0) throw new Error("Lekce potřebuje aspoň jeden příklad.");
+  return { id: lessonId, items: [...items] };
+}
+
+/**
+ * Lekce z jedné kategorie. Obtížnost se drží stejného náběhu jako denní
+ * lekce — trénink kategorie není zkouška, jen užší výběr látky.
+ */
+export function planCategoryLesson(
+  lessonId: string,
+  category: Category,
+  length = LESSON_LENGTH,
+): LessonPlan {
+  const pool = productionTemplates()
+    .filter((template) => template.category === category)
+    .map((template) => template.id);
+  if (pool.length === 0) throw new Error(`Kategorie ${category} nemá žádnou šablonu.`);
+
+  const rng = createRng(`category:${category}:${lessonId}`);
+  const chosen: string[] = [];
+  while (chosen.length < length) {
+    const remaining = pool.filter((id) => !chosen.includes(id));
+    chosen.push(rng.pick(remaining.length > 0 ? remaining : pool));
+  }
+
+  return {
+    id: lessonId,
+    items: chosen.map((templateId, index) => ({
+      templateId,
+      seed: `${lessonId}:${index}`,
+      difficulty: DIFFICULTY_RAMP[index % DIFFICULTY_RAMP.length],
+    })),
+  };
+}
+
+/** Kategorie, ve kterých je z čeho losovat. */
+export function trainableCategories(): Category[] {
+  const seen = new Set<Category>();
+  for (const template of productionTemplates()) seen.add(template.category);
+  return [...seen];
+}
+
+/** Kategorie šablony — potřebuje ji statistika, aby uměla řadit podle látky. */
+export function categoryOf(templateId: string): Category {
+  return getTemplate(templateId).category;
 }

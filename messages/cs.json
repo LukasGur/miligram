@@ -393,5 +393,35 @@
     "freezeOwned": "{count, plural, =0 {Žádná v zásobě} one {# v zásobě} other {# v zásobě}}",
     "freezePoor": "Nemáš dost prášků",
     "freezeFull": "Víc než {max, number} si držet nejde"
+  },
+  "categories": {
+    "zaklad": "Základní dávkování",
+    "hmotnost": "Podle hmotnosti",
+    "povrch": "Povrch těla",
+    "redeni": "Ředění a koncentrace",
+    "rekonstituce": "Rekonstituce",
+    "infuze": "Rychlost infuze",
+    "vazoaktivni": "Vazoaktivní perfuzory",
+    "prevody": "Převody jednotek",
+    "inzulin": "Inzulin",
+    "renalni": "Renální dávkování",
+    "pediatrie": "Pediatrie",
+    "onkologie": "Onkologie"
+  },
+  "stats": {
+    "title": "Statistiky",
+    "lessons": "Lekcí",
+    "answered": "Příkladů",
+    "rate": "Úspěšnost",
+    "empty": "Zatím není z čeho počítat. Dohraj lekci a vrať se.",
+    "mistakesTitle": "Opakování chyb",
+    "mistakesBody": "Předloží přesně ty příklady, na kterých jsi pohořel — se stejnými čísly.",
+    "mistakesStart": "{count, plural, one {Opakovat # chybu} few {Opakovat # chyby} other {Opakovat # chyb}}",
+    "mistakesNone": "Žádná chyba k opakování. Dobrá práce.",
+    "categoriesTitle": "Podle látky",
+    "categoriesHint": "Řazeno od nejslabší. Úspěšnost se ukazuje od {count, number} odpovědí.",
+    "train": "Trénovat",
+    "tooFew": "málo odpovědí",
+    "helpUsed": "{hinted, number}× nápověda · {repaired, number}× oprava"
   }
 }

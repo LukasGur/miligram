@@ -100,3 +100,16 @@ export function PersonIcon({ className }: IconProps) {
     </svg>
   );
 }
+
+export function ChartIcon({ className }: IconProps) {
+  return (
+    <svg viewBox="0 0 24 24" fill="none" aria-hidden className={className}>
+      <path
+        d="M5 19V11M12 19V5M19 19v-5"
+        stroke="currentColor"
+        strokeWidth="1.8"
+        strokeLinecap="round"
+      />
+    </svg>
+  );
+}
