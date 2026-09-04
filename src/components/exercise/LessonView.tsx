@@ -129,7 +129,7 @@ function LessonSummary({
 
   return (
     <div className="bg-paper flex h-dvh flex-col overflow-hidden">
-      <div className="scroll-y flex-1">
+      <main tabIndex={0} className="scroll-y flex-1">
         <div
           className="mx-auto flex w-full max-w-md flex-col justify-center px-5"
           style={{ paddingTop: "calc(var(--sa-t) + 3rem)" }}
@@ -155,9 +155,9 @@ function LessonSummary({
             </div>
           </dl>
         </div>
-      </div>
+      </main>
 
-      <div
+      <footer
         className="bg-paper border-line shrink-0 border-t"
         style={{ paddingBottom: "calc(var(--sa-b) + 0.75rem)" }}
       >
@@ -170,7 +170,7 @@ function LessonSummary({
             {t("home")}
           </button>
         </div>
-      </div>
+      </footer>
     </div>
   );
 }

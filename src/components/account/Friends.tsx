@@ -68,7 +68,7 @@ export function Friends({
 
   return (
     <section className="mt-8">
-      <h3 className="text-heading font-semibold">{t("friendsTitle")}</h3>
+      <h2 className="text-heading font-semibold">{t("friendsTitle")}</h2>
 
       <div className="mt-3 flex items-end gap-2">
         <div className="flex-1">
@@ -87,7 +87,7 @@ export function Friends({
 
       {requests.length > 0 ? (
         <div className="mt-6">
-          <h4 className="text-ink-soft text-micro font-semibold">{t("requestsTitle")}</h4>
+          <h3 className="text-ink-soft text-micro font-semibold">{t("requestsTitle")}</h3>
           <ul className="border-line divide-line mt-2 divide-y rounded-control border">
             {requests.map((request) => (
               <li key={request.requester} className="flex min-h-12 items-center justify-between px-4">

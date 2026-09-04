@@ -102,8 +102,10 @@ export function ExerciseView({
         </span>
       </header>
 
-      <div className="scroll-y flex-1">
+      <main tabIndex={0} className="scroll-y flex-1">
         <div className="mx-auto w-full max-w-md px-5 pb-6">
+          {/* Obrazovka potřebuje nadpis, i když ho zrakem nikdo nehledá. */}
+          <h1 className="sr-only">{t("progress", { current: index + 1, count })}</h1>
           <p className="text-body whitespace-pre-line">{prompt(exercise)}</p>
 
           <div className="mt-6">
@@ -160,9 +162,11 @@ export function ExerciseView({
             </div>
           ) : null}
         </div>
-      </div>
+      </main>
 
-      <div
+      {/* Ovládací lišta je landmark: klávesnice i tlačítko odpovědi jsou
+          obsah stránky a nesmějí zůstat mimo orientační body. */}
+      <footer
         className="bg-paper border-line shrink-0 border-t"
         style={{ paddingBottom: "calc(var(--sa-b) + 0.75rem)" }}
       >
@@ -189,7 +193,7 @@ export function ExerciseView({
                 : t("continueLabel")}
           </button>
         </div>
-      </div>
+      </footer>
     </div>
   );
 }
@@ -223,7 +227,7 @@ function HintPanel({ exercise }: { exercise: Exercise }) {
       ref={(node) => node?.scrollIntoView({ block: "nearest", behavior: "smooth" })}
       className="bg-accent-wash rounded-panel px-4 py-3"
     >
-      <h3 className="text-micro text-accent-press uppercase tracking-wide">{t("hintTitle")}</h3>
+      <h2 className="text-micro text-accent-press uppercase tracking-wide">{t("hintTitle")}</h2>
       <p className="text-label text-ink-soft mt-1">{tSteps(step.textKey)}</p>
       <div className="mt-1 overflow-x-auto">
         {step.formula ? <Formula latex={step.formula} display className="block" /> : null}
@@ -234,10 +238,12 @@ function HintPanel({ exercise }: { exercise: Exercise }) {
 }
 
 function Progress({ index, count }: { index: number; count: number }) {
+  const t = useTranslations("lesson");
   return (
     <div
       className="bg-surface h-1.5 flex-1 overflow-hidden rounded-full"
       role="progressbar"
+      aria-label={t("progress", { current: index + 1, count })}
       aria-valuemin={0}
       aria-valuemax={count}
       aria-valuenow={index}

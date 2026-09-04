@@ -48,11 +48,11 @@ export function AccountScreen({
         </button>
       </header>
 
-      <div className="scroll-y flex-1">
+      <main tabIndex={0} className="scroll-y flex-1">
         <div className="mx-auto w-full max-w-md px-5 pb-10">
           {!isRemoteConfigured() || client === null ? (
             <section>
-              <h3 className="text-heading font-semibold">{t("disabledTitle")}</h3>
+              <h2 className="text-heading font-semibold">{t("disabledTitle")}</h2>
               <p className="text-ink-soft mt-1.5 text-label">{t("disabledBody")}</p>
             </section>
           ) : !ready ? (
@@ -63,7 +63,7 @@ export function AccountScreen({
             <SignedIn client={client} userId={session.user.id} onPlayDuel={onPlayDuel} />
           )}
         </div>
-      </div>
+      </main>
     </div>
   );
 }
@@ -150,7 +150,7 @@ function HandleForm({
 
   return (
     <section>
-      <h3 className="text-heading font-semibold">{t("handleTitle")}</h3>
+      <h2 className="text-heading font-semibold">{t("handleTitle")}</h2>
       <p className="text-ink-soft mt-1.5 text-label">{t("handleHint")}</p>
       <div className="mt-3">
         <Field label={t("handleTitle")} value={handle} onChange={setHandle} inputMode="text" />
@@ -188,7 +188,7 @@ function Sync({ client, userId }: { client: ReturnType<typeof supabase> & object
 
   return (
     <section className="mt-8">
-      <h3 className="text-heading font-semibold">{t("syncTitle")}</h3>
+      <h2 className="text-heading font-semibold">{t("syncTitle")}</h2>
       <p className="text-ink-soft mt-1.5 text-label" data-numeric>
         {t("syncPending", { count: pending })}
       </p>

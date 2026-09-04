@@ -64,14 +64,18 @@ odpovědí, úspěšnost podle látky, opakování chyb a trénink jedné
 kategorie. Opakování předloží tentýž příklad se stejnými čísly; to je
 celý důvod, proč generátor stojí na semínkách.
 
+**Fáze 8, leštění** — přístupnost prošla auditem axe-core (WCAG 2.1 AA
+i doporučené postupy) na všech sedmi obrazovkách: nula nálezů. Zbývá
+výkon a zkouška na skutečném iPhonu.
+
 ## Co dělat dál
 
 1. **Ověřit částky ekonomiky proti briefu, sekce 6.** Čísla
    v `src/core/economy.ts` jsou návrh, ne převzaté hodnoty: 2 prášky
    za správný příklad, 10 za bezchybnou lekci, nápověda za 15.
    Všechna jsou na jednom místě.
-2. **Fáze 8, leštění.** Přístupnost, výkon, Lighthouse, zkouška
-   na skutečném iPhonu.
+2. **Zkouška na skutečném iPhonu.** Všechno je zatím ověřené jen
+   ve WebKitu na rozměrech telefonu, ne na zařízení.
 3. **Vlastní SMTP.** Přihlašovací kódy chodí přes vestavěné SMTP
    Supabase, které má tvrdý limit několika e-mailů za hodinu. Na ostrý
    provoz to nestačí.
@@ -85,6 +89,9 @@ celý důvod, proč generátor stojí na semínkách.
 
 ## Rozhodnutí, která už padla
 
+- Rolovatelné oblasti nesou `tabIndex`, obrazovky mají `main` a lišta
+  s klávesnicí je `footer`. Bez toho se obsah ocitl mimo orientační body
+  a klávesnicí se k němu nedalo dostat.
 - Server je replika, ne podmínka. Přihlášení je nepovinné a bez něj
   aplikace umí všechno kromě porovnání s ostatními.
 - Synchronizovat se budou události, ne stav. Dvě zařízení offline nemůžou

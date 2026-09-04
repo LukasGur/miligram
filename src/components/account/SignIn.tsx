@@ -49,7 +49,7 @@ export function SignIn() {
 
   return (
     <section>
-      <h3 className="text-heading font-semibold">{t("signedOutTitle")}</h3>
+      <h2 className="text-heading font-semibold">{t("signedOutTitle")}</h2>
       <p className="text-ink-soft mt-1.5 text-label">{t("signedOutBody")}</p>
 
       {sent ? (

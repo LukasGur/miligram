@@ -19,7 +19,7 @@ export function SolutionSteps({ exercise }: { exercise: Exercise }) {
 
   return (
     <div className="mt-5">
-      <h3 className="text-label text-ink-soft font-semibold">{t("solutionTitle")}</h3>
+      <h2 className="text-label text-ink-soft font-semibold">{t("solutionTitle")}</h2>
 
       <ol className="border-line mt-3 space-y-4 border-l pl-4">
         {exercise.solution.steps.map((step, index) => (
@@ -39,7 +39,7 @@ export function SolutionSteps({ exercise }: { exercise: Exercise }) {
 
       {exercise.solution.roundingNoteKey ? (
         <section className="bg-surface rounded-panel mt-5 px-4 py-3">
-          <h4 className="text-micro text-ink-soft uppercase tracking-wide">{t("roundingTitle")}</h4>
+          <h3 className="text-micro text-ink-soft uppercase tracking-wide">{t("roundingTitle")}</h3>
           <p className="text-label mt-1">{tRounding(exercise.solution.roundingNoteKey)}</p>
         </section>
       ) : null}

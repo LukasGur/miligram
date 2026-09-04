@@ -45,7 +45,7 @@ export function StatsScreen({
         </button>
       </header>
 
-      <div className="scroll-y flex-1">
+      <main tabIndex={0} className="scroll-y flex-1">
         <div className="mx-auto w-full max-w-md px-5 pb-10">
           {stats === undefined ? null : stats.answered === 0 ? (
             <p className="text-ink-soft text-label">{t("empty")}</p>
@@ -122,7 +122,7 @@ export function StatsScreen({
             </>
           )}
         </div>
-      </div>
+      </main>
     </div>
   );
 }

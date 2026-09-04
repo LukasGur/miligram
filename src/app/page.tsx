@@ -130,7 +130,11 @@ export default function HomePage() {
         </div>
       </header>
 
-      <main className="scroll-y mx-auto w-full max-w-md flex-1 px-5 pb-8">
+      <main
+        /* Rolovatelnou oblast musí jít projet i klávesnicí, ne jen prstem. */
+        tabIndex={0}
+        className="scroll-y mx-auto w-full max-w-md flex-1 px-5 pb-8"
+      >
         <dl className="border-line divide-line grid grid-cols-3 divide-x border-y py-4">
           <Stat label={t("streak")} value={format.number(streak)} suffix={t("streakUnit", { days: streak })} />
           <Stat label={t("pills")} value={format.number(profile.pills)} />

@@ -23,7 +23,7 @@ export function Duels({
 
   return (
     <section className="mt-8">
-      <h3 className="text-heading font-semibold">{t("duelsTitle")}</h3>
+      <h2 className="text-heading font-semibold">{t("duelsTitle")}</h2>
 
       {loading ? (
         <p className="text-ink-soft mt-3 text-label">{t("loading")}</p>

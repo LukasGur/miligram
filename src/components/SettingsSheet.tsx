@@ -53,7 +53,9 @@ export function SettingsSheet({ open, onClose }: { open: boolean; onClose: () =>
         className="bg-paper relative max-h-[88dvh] rounded-t-sheet"
         style={{ paddingBottom: "calc(var(--sa-b) + 1rem)" }}
       >
-        <header className="border-line flex items-center justify-between border-b px-5 py-4">
+        {/* Ne <header>: ten by se počítal jako druhá hlavička stránky vedle
+            té na domovské obrazovce. Dialog má vlastní popis přes aria. */}
+        <div className="border-line flex items-center justify-between border-b px-5 py-4">
           <h2 id="settings-title" className="text-heading font-semibold">
             {t("title")}
           </h2>
@@ -66,9 +68,9 @@ export function SettingsSheet({ open, onClose }: { open: boolean; onClose: () =>
           >
             <CloseIcon className="size-5" />
           </button>
-        </header>
+        </div>
 
-        <div className="scroll-y max-h-[70dvh] px-5 py-5">
+        <div tabIndex={0} className="scroll-y max-h-[70dvh] px-5 py-5">
           <Section title={t("language")} hint={t("languageHint")}>
             <div className="border-line divide-line divide-y rounded-control border">
               {available.map((code) => (
