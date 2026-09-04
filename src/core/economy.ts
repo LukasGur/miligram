@@ -18,11 +18,25 @@ export const PILLS_FLAWLESS_BONUS = 10;
 /** Nápověda odkryje první krok řešení. */
 export const HINT_COST = 15;
 
+/** Oprava dovolí odpovědět na chybný příklad ještě jednou. */
+export const REPAIR_COST = 25;
+
+/** Ochrana série pokryje jeden vynechaný den. */
+export const STREAK_FREEZE_COST = 60;
+
+/**
+ * Kolik ochran si jde držet naráz. Bez stropu by se dala série udržovat
+ * donekonečna, aniž by se hrálo — a tím by přestala měřit, co má.
+ */
+export const MAX_STREAK_FREEZES = 2;
+
 export type StreakState = {
   /** Počet dní v řadě, kdy uživatel dokončil aspoň jednu lekci. */
   days: number;
   /** Den poslední dokončené lekce, ISO ve tvaru YYYY-MM-DD. */
   lastDay: string | null;
+  /** Kolik zbývá koupených ochran proti vynechanému dni. */
+  freezes: number;
 };
 
 /** Dnešek jako YYYY-MM-DD v místním čase — série se počítá podle kalendáře uživatele. */
@@ -48,8 +62,17 @@ function previousDay(day: string): string {
  */
 export function advanceStreak(state: StreakState, today = localDay()): StreakState {
   if (state.lastDay === today) return state;
-  if (state.lastDay === previousDay(today)) return { days: state.days + 1, lastDay: today };
-  return { days: 1, lastDay: today };
+  if (state.lastDay === previousDay(today)) return { ...state, days: state.days + 1, lastDay: today };
+
+  /**
+   * Vynechaný den. Ochrana ho pokryje, ale jen jeden a jen tehdy, když
+   * uživatel přišel hned nazítří — po týdnu mlčení už není co chránit.
+   */
+  const missedOneDay = state.lastDay !== null && state.lastDay === previousDay(previousDay(today));
+  if (missedOneDay && state.freezes > 0) {
+    return { days: state.days + 1, lastDay: today, freezes: state.freezes - 1 };
+  }
+  return { ...state, days: 1, lastDay: today };
 }
 
 /**
@@ -61,6 +84,9 @@ export function advanceStreak(state: StreakState, today = localDay()): StreakSta
 export function currentStreak(state: StreakState, today = localDay()): number {
   if (state.lastDay === null) return 0;
   if (state.lastDay === today || state.lastDay === previousDay(today)) return state.days;
+  // Koupená ochrana drží sérii naživu i den po vynechání — teprve pak
+  // se ukáže, jestli ji uživatel využije, nebo o sérii přijde.
+  if (state.freezes > 0 && state.lastDay === previousDay(previousDay(today))) return state.days;
   return 0;
 }
 

@@ -4,7 +4,7 @@ import { useState } from "react";
 import { useTranslations } from "next-intl";
 import { CloseIcon } from "@/components/icons";
 import { evaluateAnswer, parseAnswer, type Verdict } from "@/core/answer";
-import { HINT_COST } from "@/core/economy";
+import { HINT_COST, REPAIR_COST } from "@/core/economy";
 import type { Exercise } from "@/core/types";
 import { useAnswerUnit, useExercisePrompt } from "@/i18n/exerciseText";
 import { AnswerDisplay } from "./AnswerDisplay";
@@ -23,14 +23,16 @@ export function ExerciseView({
   onExit,
   onAnswered,
   onHint,
+  onRepair,
   pills,
 }: {
   exercise: Exercise;
   index: number;
   count: number;
   onExit: () => void;
-  onAnswered: (result: { correct: boolean; hinted: boolean }) => void;
+  onAnswered: (result: { correct: boolean; hinted: boolean; repaired: boolean }) => void;
   onHint: () => Promise<boolean>;
+  onRepair: () => Promise<boolean>;
   pills: number;
 }) {
   const t = useTranslations("lesson");
@@ -41,6 +43,7 @@ export function ExerciseView({
   const [verdict, setVerdict] = useState<Verdict | null>(null);
   const [solutionOpen, setSolutionOpen] = useState(false);
   const [hinted, setHinted] = useState(false);
+  const [repaired, setRepaired] = useState(false);
 
   const value = parseAnswer(input);
   const canCheck = value !== null && verdict === null;
@@ -54,6 +57,20 @@ export function ExerciseView({
   async function buyHint() {
     if (hinted || !canAfford) return;
     if (await onHint()) setHinted(true);
+  }
+
+  /**
+   * Oprava není přepsání výsledku na správný — to by se student nic
+   * nenaučil. Je to druhý pokus: zadání zůstává, odpověď se smaže
+   * a počítá se to, co uživatel odpoví podruhé.
+   */
+  async function buyRepair() {
+    if (repaired || pills < REPAIR_COST) return;
+    if (!(await onRepair())) return;
+    setRepaired(true);
+    setVerdict(null);
+    setInput("");
+    setSolutionOpen(false);
   }
 
   function check() {
@@ -116,13 +133,28 @@ export function ExerciseView({
             <div className="mt-5">
               <VerdictPanel exercise={exercise} verdict={verdict} unit={answerUnit(exercise)} />
 
-              <button
-                type="button"
-                onClick={() => setSolutionOpen((open) => !open)}
-                className="text-accent mt-4 min-h-11 text-label font-medium"
-              >
-                {solutionOpen ? t("hideSolution") : t("showSolution")}
-              </button>
+              <div className="mt-4 flex flex-wrap items-center gap-x-5">
+                <button
+                  type="button"
+                  onClick={() => setSolutionOpen((open) => !open)}
+                  className="text-accent min-h-11 text-label font-medium"
+                >
+                  {solutionOpen ? t("hideSolution") : t("showSolution")}
+                </button>
+
+                {!verdict.correct && !repaired ? (
+                  <button
+                    type="button"
+                    onClick={buyRepair}
+                    disabled={pills < REPAIR_COST}
+                    className="text-accent min-h-11 text-label font-medium disabled:text-ink-soft"
+                  >
+                    {pills >= REPAIR_COST
+                      ? t("repair", { cost: REPAIR_COST })
+                      : t("repairPoor", { cost: REPAIR_COST })}
+                  </button>
+                ) : null}
+              </div>
 
               {solutionOpen ? <SolutionSteps exercise={exercise} /> : null}
             </div>
@@ -146,7 +178,7 @@ export function ExerciseView({
 
           <button
             type="button"
-            onClick={verdict === null ? check : () => onAnswered({ correct: verdict.correct, hinted })}
+            onClick={verdict === null ? check : () => onAnswered({ correct: verdict.correct, hinted, repaired })}
             disabled={verdict === null && !canCheck}
             className="bg-accent active:bg-accent-press mt-3 min-h-14 w-full rounded-control text-body font-semibold text-white transition-colors duration-75 disabled:opacity-40"
           >

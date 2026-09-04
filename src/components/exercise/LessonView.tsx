@@ -2,7 +2,7 @@
 
 import { useMemo, useRef, useState } from "react";
 import { useFormatter, useTranslations } from "next-intl";
-import { HINT_COST, rewardForLesson } from "@/core/economy";
+import { HINT_COST, REPAIR_COST, rewardForLesson } from "@/core/economy";
 import { lessonExercise, planLesson } from "@/core/lesson";
 import { recordLesson, spendPills } from "@/lib/db";
 import { recordDuelResult } from "@/lib/remote";
@@ -11,7 +11,14 @@ import { useSession } from "@/lib/useSession";
 import { useProfile } from "@/lib/useProfile";
 import { ExerciseView } from "./ExerciseView";
 
-type Answered = { templateId: string; seed: string; difficulty: number; correct: boolean; hinted: boolean };
+type Answered = {
+  templateId: string;
+  seed: string;
+  difficulty: number;
+  correct: boolean;
+  hinted: boolean;
+  repaired: boolean;
+};
 
 /**
  * Průběh lekce.
@@ -65,7 +72,8 @@ export function LessonView({
       pills={profile.pills}
       onExit={onExit}
       onHint={() => spendPills(HINT_COST, `hint:${exercise.templateId}`)}
-      onAnswered={({ correct, hinted }) => {
+      onRepair={() => spendPills(REPAIR_COST, `repair:${exercise.templateId}`)}
+      onAnswered={({ correct, hinted, repaired }) => {
         const answered: Answered[] = [
           ...answers,
           {
@@ -74,6 +82,7 @@ export function LessonView({
             difficulty: exercise.difficulty,
             correct,
             hinted,
+            repaired,
           },
         ];
         setAnswers(answered);

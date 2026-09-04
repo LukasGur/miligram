@@ -334,7 +334,9 @@
     "home": "Zpět na začátek",
     "hint": "Nápověda za {cost, number} prášků",
     "hintPoor": "Na nápovědu potřebuješ {cost, number} prášků",
-    "hintTitle": "Nápověda"
+    "hintTitle": "Nápověda",
+    "repair": "Zkusit znovu za {cost, number} prášků",
+    "repairPoor": "Na opravu potřebuješ {cost, number} prášků"
   },
   "account": {
     "title": "Účet",
@@ -383,5 +385,13 @@
     "duelLost": "Prohrál jsi",
     "duelDraw": "Remíza",
     "duelsEmpty": "Zatím žádný souboj. Vyzvi kamaráda ze žebříčku."
+  },
+  "shop": {
+    "freezeTitle": "Ochrana série",
+    "freezeBody": "Pokryje jeden vynechaný den. Uplatní se sama, až se vrátíš.",
+    "freezeBuy": "Koupit za {cost, number} prášků",
+    "freezeOwned": "{count, plural, =0 {Žádná v zásobě} one {# v zásobě} other {# v zásobě}}",
+    "freezePoor": "Nemáš dost prášků",
+    "freezeFull": "Víc než {max, number} si držet nejde"
   }
 }

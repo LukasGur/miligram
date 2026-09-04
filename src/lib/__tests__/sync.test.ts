@@ -5,7 +5,7 @@ import { syncOutbox, type LessonEventRow, type SyncGateway } from "../sync";
 
 const LESSON = {
   lessonId: "abc",
-  answers: [{ templateId: "A1", seed: "abc:0", difficulty: 1, correct: true, hinted: false }],
+  answers: [{ templateId: "A1", seed: "abc:0", difficulty: 1, correct: true, hinted: false, repaired: false }],
   reward: { xp: 10, pills: 2, correct: 1, count: 1, flawless: true },
 };
 

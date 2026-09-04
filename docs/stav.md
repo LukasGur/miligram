@@ -51,7 +51,8 @@ stejnou cestou, jakou k ní sahá aplikace:
 
 Zkušební účty po testech smazané, databáze je prázdná.
 
-**Fáze 4, gamifikace lokálně** — Dexie, prášky, XP, série, nápovědy.
+**Fáze 4, gamifikace lokálně** — Dexie, prášky, XP, série, nápovědy,
+oprava chybného příkladu a ochrana série.
 Celá lekce ověřena offline: po odpojení sítě běží ze service workeru
 včetně KaTeXu a jeho písem (73 souborů, 2,2 MB).
 Zdrojem pravdy pro hraní je zařízení: aplikace funguje offline a bez účtu.
@@ -64,8 +65,9 @@ událost do fronty `outbox`, ze které bude čerpat synchronizace.
    v `src/core/economy.ts` jsou návrh, ne převzaté hodnoty: 2 prášky
    za správný příklad, 10 za bezchybnou lekci, nápověda za 15.
    Všechna jsou na jednom místě.
-2. **Obchod s prášky.** Ochrana série a opravy chybného příkladu zatím
-   nemají kde se koupit; utrácet jde jen za nápovědu.
+2. **Fáze 7, statistiky a tréninkové režimy.** Opakování chyb je skoro
+   zadarmo: chybné odpovědi mají uložené semínko, takže se z nich dá
+   sestavit lekce.
 3. **Vlastní SMTP.** Přihlašovací kódy chodí přes vestavěné SMTP
    Supabase, které má tvrdý limit několika e-mailů za hodinu. Na ostrý
    provoz to nestačí.
@@ -84,6 +86,8 @@ událost do fronty `outbox`, ze které bude čerpat synchronizace.
 - Synchronizovat se budou události, ne stav. Dvě zařízení offline nemůžou
   poslat „mám 340 prášků“ — přepsala by se navzájem. Fronta `outbox` proto
   vzniká hned, i když ji zatím nikdo nečte.
+- Oprava je druhý pokus, ne přepsání výsledku na správný. Za prášky se
+  kupuje šance, ne bod — jinak by se student nic nenaučil.
 - Prášky jsou měna, XP je neutratitelné skóre. Zisk XP: 10 za správný
   příklad, +20 za bezchybnou lekci. Lekce má 7 příkladů.
 - Tolerance se odvozuje z přesnosti prostředku (ISO 7886-1, IEC 60601-2-24,

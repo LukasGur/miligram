@@ -19,7 +19,11 @@ export function useProfile(): { profile: Profile; streak: number; ready: boolean
     profile,
     // Uložená série může být z předvčerejška; co se má zobrazit dnes,
     // se dopočítá při čtení, aby se kvůli tomu nemusela přepisovat databáze.
-    streak: currentStreak({ days: profile.streakDays, lastDay: profile.lastLessonDay }),
+    streak: currentStreak({
+      days: profile.streakDays,
+      lastDay: profile.lastLessonDay,
+      freezes: profile.streakFreezes ?? 0,
+    }),
     ready: stored !== undefined,
   };
 }

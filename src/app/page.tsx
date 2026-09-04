@@ -8,6 +8,7 @@ import { useProfile } from "@/lib/useProfile";
 import { InstallBanner } from "@/components/InstallBanner";
 import { NetworkStatus } from "@/components/NetworkStatus";
 import { SettingsSheet } from "@/components/SettingsSheet";
+import { Shop } from "@/components/Shop";
 import { SyncAgent } from "@/components/SyncAgent";
 import { Wordmark } from "@/components/Wordmark";
 import { PersonIcon, SettingsIcon } from "@/components/icons";
@@ -99,6 +100,8 @@ export default function HomePage() {
             {t("lessonMeta", { count: LESSON_LENGTH, minutes: LESSON_MINUTES })}
           </p>
         </section>
+
+        <Shop />
 
         <section className="border-line mt-8 border-l-2 pl-4">
           <h2 className="text-label font-semibold">{t("buildNoticeTitle")}</h2>

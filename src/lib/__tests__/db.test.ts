@@ -5,8 +5,8 @@ import { db, readProfile, recordLesson, spendPills } from "../db";
 const LESSON = {
   lessonId: "abc",
   answers: [
-    { templateId: "A1", seed: "abc:0", difficulty: 1, correct: true, hinted: false },
-    { templateId: "B1", seed: "abc:1", difficulty: 1, correct: false, hinted: true },
+    { templateId: "A1", seed: "abc:0", difficulty: 1, correct: true, hinted: false, repaired: false },
+    { templateId: "B1", seed: "abc:1", difficulty: 1, correct: false, hinted: true, repaired: false },
   ],
   reward: { xp: 10, pills: 2, correct: 1, count: 2, flawless: false },
 };
@@ -43,7 +43,7 @@ describe("zápis dokončené lekce", () => {
     await recordLesson(LESSON);
     const answers = await db().answers.orderBy("id").toArray();
     expect(answers).toHaveLength(2);
-    expect(answers[1]).toMatchObject({ templateId: "B1", seed: "abc:1", correct: false, hinted: true });
+    expect(answers[1]).toMatchObject({ templateId: "B1", seed: "abc:1", correct: false, hinted: true, repaired: false });
     // Zadání ani zobrazený text se neukládá — příklad se sestaví ze semínka.
     expect(Object.keys(answers[0])).not.toContain("vars");
   });
