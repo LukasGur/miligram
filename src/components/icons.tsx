@@ -86,3 +86,17 @@ export function AlertIcon({ className }: IconProps) {
     </svg>
   );
 }
+
+export function PersonIcon({ className }: IconProps) {
+  return (
+    <svg viewBox="0 0 24 24" fill="none" aria-hidden className={className}>
+      <circle cx="12" cy="8.5" r="3.75" stroke="currentColor" strokeWidth="1.8" />
+      <path
+        d="M4.5 20c.9-3.6 3.9-5.5 7.5-5.5s6.6 1.9 7.5 5.5"
+        stroke="currentColor"
+        strokeWidth="1.8"
+        strokeLinecap="round"
+      />
+    </svg>
+  );
+}

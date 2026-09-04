@@ -7,3 +7,4 @@ certificates/
 next-env.d.ts
 .env*.local
 .vercel
+.env.local

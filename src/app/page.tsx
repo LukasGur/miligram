@@ -9,7 +9,7 @@ import { InstallBanner } from "@/components/InstallBanner";
 import { NetworkStatus } from "@/components/NetworkStatus";
 import { SettingsSheet } from "@/components/SettingsSheet";
 import { Wordmark } from "@/components/Wordmark";
-import { SettingsIcon } from "@/components/icons";
+import { PersonIcon, SettingsIcon } from "@/components/icons";
 
 const LESSON_MINUTES = "4–6";
 
@@ -18,6 +18,11 @@ const LESSON_MINUTES = "4–6";
  * přípravků — dohromady největší kus aplikace, který úvodní obrazovka
  * k ničemu nepotřebuje.
  */
+const AccountScreen = dynamic(
+  () => import("@/components/account/AccountScreen").then((module) => module.AccountScreen),
+  { ssr: false },
+);
+
 const LessonView = dynamic(
   () => import("@/components/exercise/LessonView").then((module) => module.LessonView),
   { ssr: false },
@@ -26,13 +31,19 @@ const LessonView = dynamic(
 export default function HomePage() {
   const t = useTranslations("home");
   const tCommon = useTranslations("common");
+  const tAccount = useTranslations("account");
   const format = useFormatter();
   const [settingsOpen, setSettingsOpen] = useState(false);
   const [lessonId, setLessonId] = useState<string | null>(null);
+  const [accountOpen, setAccountOpen] = useState(false);
   const { profile, streak } = useProfile();
 
   if (lessonId !== null) {
     return <LessonView lessonId={lessonId} onExit={() => setLessonId(null)} />;
+  }
+
+  if (accountOpen) {
+    return <AccountScreen onClose={() => setAccountOpen(false)} />;
   }
 
   return (
@@ -44,14 +55,24 @@ export default function HomePage() {
         style={{ paddingTop: "calc(var(--sa-t) + 0.75rem)" }}
       >
         <Wordmark className="text-accent text-heading" />
-        <button
-          type="button"
-          onClick={() => setSettingsOpen(true)}
-          aria-label={tCommon("settings")}
-          className="text-ink-soft -mr-3 flex size-11 items-center justify-center"
-        >
-          <SettingsIcon className="size-6" />
-        </button>
+        <div className="-mr-3 flex items-center">
+          <button
+            type="button"
+            onClick={() => setAccountOpen(true)}
+            aria-label={tAccount("title")}
+            className="text-ink-soft flex size-11 items-center justify-center"
+          >
+            <PersonIcon className="size-6" />
+          </button>
+          <button
+            type="button"
+            onClick={() => setSettingsOpen(true)}
+            aria-label={tCommon("settings")}
+            className="text-ink-soft flex size-11 items-center justify-center"
+          >
+            <SettingsIcon className="size-6" />
+          </button>
+        </div>
       </header>
 
       <main className="scroll-y mx-auto w-full max-w-md flex-1 px-5 pb-8">

@@ -1,0 +1,178 @@
+"use client";
+
+import type { SupabaseClient } from "@supabase/supabase-js";
+import type { LessonEventRow, SyncGateway } from "./sync";
+
+/**
+ * Dotazy proti serveru.
+ *
+ * Nikde tu není kontrola oprávnění — tu dělá Row Level Security v databázi.
+ * Kdyby se sem nějaká připletla, byla by to kosmetika: statický export nemá
+ * server, kde by šla vynutit.
+ */
+
+export type RemoteProfile = { id: string; handle: string; displayName: string };
+
+export type ScoreRow = {
+  userId: string;
+  handle: string;
+  displayName: string;
+  xp: number;
+};
+
+export function remoteGateway(client: SupabaseClient, userId: string): SyncGateway {
+  return {
+    async pushLessonEvents(rows: readonly LessonEventRow[]) {
+      const { error } = await client
+        .from("lesson_events")
+        .upsert(
+          rows.map((row) => ({ ...row, user_id: userId })),
+          // Opakované odeslání téže události není chyba, jen se zahodí.
+          { onConflict: "user_id,client_event_id", ignoreDuplicates: true },
+        );
+      if (error) throw new Error(error.message);
+    },
+  };
+}
+
+export async function fetchProfile(client: SupabaseClient, userId: string): Promise<RemoteProfile | null> {
+  const { data, error } = await client
+    .from("profiles")
+    .select("id, handle, display_name")
+    .eq("id", userId)
+    .maybeSingle();
+  if (error) throw new Error(error.message);
+  return data ? { id: data.id, handle: data.handle, displayName: data.display_name } : null;
+}
+
+/** Přezdívka se zabírá zápisem — o jedinečnost se stará index, ne kontrola předem. */
+export async function claimHandle(
+  client: SupabaseClient,
+  userId: string,
+  handle: string,
+): Promise<{ ok: true } | { ok: false; reason: "taken" | "invalid" }> {
+  const normalized = handle.trim().toLowerCase();
+  if (!/^[a-z0-9_]{3,20}$/.test(normalized)) return { ok: false, reason: "invalid" };
+
+  const { error } = await client
+    .from("profiles")
+    .upsert({ id: userId, handle: normalized, updated_at: new Date().toISOString() });
+
+  if (!error) return { ok: true };
+  // 23505 je porušení jedinečnosti — přezdívku má někdo jiný.
+  if (error.code === "23505") return { ok: false, reason: "taken" };
+  throw new Error(error.message);
+}
+
+/** Pondělí probíhajícího týdne, ve stejném tvaru, jaký drží tabulka weekly_xp. */
+export function weekStart(date = new Date()): string {
+  const copy = new Date(Date.UTC(date.getFullYear(), date.getMonth(), date.getDate()));
+  const weekday = (copy.getUTCDay() + 6) % 7;
+  copy.setUTCDate(copy.getUTCDate() - weekday);
+  return copy.toISOString().slice(0, 10);
+}
+
+/**
+ * Žebříček přátel. Vrací i samotného uživatele — bez něj by nebylo vidět,
+ * kde v pořadí stojí, a to je jediné, kvůli čemu se do žebříčku dívá.
+ */
+export async function friendScores(
+  client: SupabaseClient,
+  userId: string,
+  scope: "week" | "total",
+): Promise<ScoreRow[]> {
+  const friends = await acceptedFriendIds(client, userId);
+  const ids = [...friends, userId];
+
+  const [profiles, scores] = await Promise.all([
+    client.from("profiles").select("id, handle, display_name").in("id", ids),
+    scope === "week"
+      ? client.from("weekly_xp").select("user_id, xp").eq("week_start", weekStart()).in("user_id", ids)
+      : client.from("stats").select("user_id, xp_total").in("user_id", ids),
+  ]);
+
+  if (profiles.error) throw new Error(profiles.error.message);
+  if (scores.error) throw new Error(scores.error.message);
+
+  const xpByUser = new Map<string, number>();
+  for (const row of scores.data ?? []) {
+    const value = "xp" in row ? row.xp : row.xp_total;
+    xpByUser.set(row.user_id, Number(value ?? 0));
+  }
+
+  return (profiles.data ?? [])
+    .map((profile) => ({
+      userId: profile.id,
+      handle: profile.handle,
+      displayName: profile.display_name,
+      xp: xpByUser.get(profile.id) ?? 0,
+    }))
+    .sort((a, b) => b.xp - a.xp || a.handle.localeCompare(b.handle));
+}
+
+async function acceptedFriendIds(client: SupabaseClient, userId: string): Promise<string[]> {
+  const { data, error } = await client
+    .from("friendships")
+    .select("requester, addressee, status")
+    .eq("status", "accepted");
+  if (error) throw new Error(error.message);
+
+  return (data ?? []).map((row) => (row.requester === userId ? row.addressee : row.requester));
+}
+
+export type FriendRequest = { requester: string; handle: string; createdAt: string };
+
+export async function pendingRequests(client: SupabaseClient, userId: string): Promise<FriendRequest[]> {
+  const { data, error } = await client
+    .from("friendships")
+    .select("requester, created_at")
+    .eq("addressee", userId)
+    .eq("status", "pending");
+  if (error) throw new Error(error.message);
+  if ((data ?? []).length === 0) return [];
+
+  const { data: profiles, error: profileError } = await client
+    .from("profiles")
+    .select("id, handle")
+    .in("id", (data ?? []).map((row) => row.requester));
+  if (profileError) throw new Error(profileError.message);
+
+  const handles = new Map((profiles ?? []).map((profile) => [profile.id, profile.handle]));
+  return (data ?? []).map((row) => ({
+    requester: row.requester,
+    handle: handles.get(row.requester) ?? "",
+    createdAt: row.created_at,
+  }));
+}
+
+export async function requestFriend(
+  client: SupabaseClient,
+  userId: string,
+  handle: string,
+): Promise<{ ok: true } | { ok: false; reason: "notFound" | "self" | "duplicate" }> {
+  const normalized = handle.trim().toLowerCase();
+  const { data, error } = await client
+    .from("profiles")
+    .select("id")
+    .eq("handle", normalized)
+    .maybeSingle();
+  if (error) throw new Error(error.message);
+  if (!data) return { ok: false, reason: "notFound" };
+  if (data.id === userId) return { ok: false, reason: "self" };
+
+  const { error: insertError } = await client
+    .from("friendships")
+    .insert({ requester: userId, addressee: data.id });
+  if (!insertError) return { ok: true };
+  if (insertError.code === "23505") return { ok: false, reason: "duplicate" };
+  throw new Error(insertError.message);
+}
+
+export async function acceptFriend(client: SupabaseClient, userId: string, requester: string): Promise<void> {
+  const { error } = await client
+    .from("friendships")
+    .update({ status: "accepted", responded_at: new Date().toISOString() })
+    .eq("requester", requester)
+    .eq("addressee", userId);
+  if (error) throw new Error(error.message);
+}

@@ -24,6 +24,13 @@ pnpm build      # next build (statický export do out/) + vygenerování out/sw.
 pnpm preview    # HTTPS server nad out/, používá stejný certifikát
 ```
 
+## Účet a žebříček (nepovinné)
+
+Aplikace funguje bez serveru. Přihlášení, přátelé a žebříček se zapnou, až
+`.env.local` dostane údaje k Supabase — vzor je v `.env.example`. Schéma
+a politiky jsou v `supabase/migrations`; přístup hlídá Row Level Security,
+protože statický export nemá server, kam by se dala schovat kontrola práv.
+
 ## Skripty
 
 | Skript | Co dělá |
@@ -49,6 +56,8 @@ src/core/               výpočetní jádro: jednotky, vzorce, šablony, fond p�
 src/components/exercise/  obrazovka příkladu, klávesnice, krokové řešení
 src/i18n/               volba jazyka a katalogy zpráv
 src/lib/db.ts           lokální databáze (Dexie); zdroj pravdy pro hraní
+src/lib/sync.ts         odesílání fronty událostí na server
+supabase/migrations/    schéma a politiky serverové vrstvy
 src/lib/splashScreens.ts  generovaný soubor — needituj ručně
 ```
 

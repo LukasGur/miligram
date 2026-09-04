@@ -23,3 +23,12 @@ export function useProfile(): { profile: Profile; streak: number; ready: boolean
     ready: stored !== undefined,
   };
 }
+
+/** Kolik událostí čeká na odeslání. Nula znamená, že server ví všechno. */
+export function usePendingEvents(): number {
+  return useLiveQuery(
+    () => db().outbox.filter((event) => event.syncedAt === undefined && event.type === "lessonFinished").count(),
+    [],
+    0,
+  );
+}
