@@ -36,6 +36,13 @@ moment vyhodnocení a krokové řešení sázené KaTeXem. Lekce má sedm přík
 se stoupající obtížností a je určená jediným identifikátorem, takže se dá
 sestavit znovu. Ověřeno ve WebKitu na rozměrech iPhonu, česky i slovensky.
 
+**Fáze 5, účet a sociální vrstva** — projekt Supabase `Miligram`
+(`xvlhqtqwftgmirsjqpul`, eu-central-1). Schéma, politiky, přihlášení kódem
+z e-mailu, přezdívka, odeslání fronty, přátelé a žebříček. Ověřeno proti
+živé databázi: cizí lekce nejsou vidět, skóre nejde přepsat, opakované
+odeslání téže lekce XP nezdvojí, žádost o přátelství smí přijmout jen
+adresát. Zkušební účty po testu smazané.
+
 **Fáze 4, gamifikace lokálně** — Dexie, prášky, XP, série, nápovědy.
 Celá lekce ověřena offline: po odpojení sítě běží ze service workeru
 včetně KaTeXu a jeho písem (73 souborů, 2,2 MB).
@@ -51,16 +58,20 @@ událost do fronty `outbox`, ze které bude čerpat synchronizace.
    Všechna jsou na jednom místě.
 2. **Obchod s prášky.** Ochrana série a opravy chybného příkladu zatím
    nemají kde se koupit; utrácet jde jen za nápovědu.
-3. **Fáze 5, účet a sociální vrstva.** Supabase. Čeká na rozhodnutí,
-   jestli založit nový projekt.
-3. **I3** (korekční faktor inzulinu) čeká na zdroj, jinak vypustit.
-   Do té doby ji `productionTemplates()` nevydá a test to hlídá.
-4. **Revize slovenštiny rodilým mluvčím.** Texty jsou napsané, ne
+3. **Souboje.** Poslední kus fáze 5. Lekce je určená jedním řetězcem,
+   takže souboj je jen sdílený identifikátor a porovnání výsledků.
+4. **Automatická synchronizace.** Fronta se zatím odesílá tlačítkem
+   v účtu. Chce to odeslání na pozadí, až se objeví síť.
+5. **Revize slovenštiny rodilým mluvčím.** Texty jsou napsané, ne
    přeložené strojem, ale nikdo je zatím nečetl. Názvy přípravků zůstávají
    české — fond je z české databáze.
+6. **I3** (korekční faktor inzulinu) čeká na zdroj, jinak vypustit.
+   Do té doby ji `productionTemplates()` nevydá a test to hlídá.
 
 ## Rozhodnutí, která už padla
 
+- Server je replika, ne podmínka. Přihlášení je nepovinné a bez něj
+  aplikace umí všechno kromě porovnání s ostatními.
 - Synchronizovat se budou události, ne stav. Dvě zařízení offline nemůžou
   poslat „mám 340 prášků“ — přepsala by se navzájem. Fronta `outbox` proto
   vzniká hned, i když ji zatím nikdo nečte.
