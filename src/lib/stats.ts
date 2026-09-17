@@ -122,20 +122,34 @@ export async function answeredToday(today = localDay()): Promise<number> {
   return answers.filter((answer) => answer.answeredAt.slice(0, 10) === today).length;
 }
 
+export type WeekDay = {
+  day: string;
+  /** Dohrál v ten den uživatel aspoň jednu lekci? */
+  active: boolean;
+  today: boolean;
+  /** Den, který teprve přijde. Není to zmeškaný den, jen ještě nenastal. */
+  upcoming: boolean;
+};
+
 /**
- * Dny posledního týdne a to, jestli v nich uživatel hrál.
+ * Probíhající kalendářní týden, pondělím počínaje.
  *
- * Vrací se sedm dní končících dneškem, aby týden na obrazovce začínal
- * tam, kde uživatel skutečně je — ne pondělím, které může být za pět dní.
+ * Ne posledních sedm dní končících dneškem: takový pás sice ukazuje totéž
+ * množství historie, ale začíná pokaždé jiným dnem a nikdo ho tak nečte.
+ * Týden má v ČR i SR pevný začátek a obrazovka se mu má přizpůsobit.
  */
-export async function weekActivity(today = localDay()): Promise<{ day: string; active: boolean }[]> {
+export async function weekActivity(today = localDay()): Promise<WeekDay[]> {
   const lessons = await db().lessons.toArray();
   const played = new Set(lessons.map((lesson) => lesson.finishedAt.slice(0, 10)));
 
   const [year, month, date] = today.split("-").map(Number);
+  const reference = new Date(Date.UTC(year, month - 1, date));
+  // getUTCDay() vrací neděli jako nulu; posun udělá z pondělí začátek.
+  const sinceMonday = (reference.getUTCDay() + 6) % 7;
+
   return Array.from({ length: 7 }, (_, index) => {
-    const moment = new Date(Date.UTC(year, month - 1, date - (6 - index)));
+    const moment = new Date(Date.UTC(year, month - 1, date - sinceMonday + index));
     const day = moment.toISOString().slice(0, 10);
-    return { day, active: played.has(day) };
+    return { day, active: played.has(day), today: day === today, upcoming: day > today };
   });
 }

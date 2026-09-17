@@ -16,6 +16,7 @@ import { Readout } from "@/components/ui/Readout";
 import { LESSON_LENGTH, newLessonId, planCategoryLesson, planFromItems } from "@/core/lesson";
 import type { LessonPlan } from "@/core/lesson";
 import { useLocale } from "@/i18n/LocaleProvider";
+import type { WeekDay } from "@/lib/stats";
 import { useProfile, useToday } from "@/lib/useProfile";
 
 const LESSON_MINUTES = "4–6";
@@ -198,10 +199,10 @@ export default function HomePage() {
 }
 
 /**
- * Týden jako sedm dílků. Poslední je dnešek, takže se čte zprava doleva
- * jako „co mám za sebou“ — a je hned vidět, jestli dneska ještě chybí.
+ * Probíhající týden, pondělím počínaje. Dny, které teprve přijdou, jsou
+ * jen naznačené — nejsou to zmeškané dny a nemají tak vypadat.
  */
-function Week({ week }: { week: { day: string; active: boolean }[] }) {
+function Week({ week }: { week: WeekDay[] }) {
   const t = useTranslations("home");
   const { locale } = useLocale();
   /* Jednopísmenné zkratky se v češtině opakují (pondělí i pátek je „P"),
@@ -211,21 +212,18 @@ function Week({ week }: { week: { day: string; active: boolean }[] }) {
   return (
     <section className="w-full" aria-label={t("weekTitle")}>
       <ul className="flex justify-between gap-1.5">
-        {week.map(({ day, active }, index) => {
-          const today = index === week.length - 1;
-          return (
-            <li key={day} className="flex flex-1 flex-col items-center gap-2">
-              <span className={`panel-label ${today ? "text-ink" : ""}`}>
-                {letters.format(new Date(`${day}T00:00:00Z`))}
-              </span>
-              <span
-                className={`h-2 w-full rounded-[1px] ${
-                  active ? "bg-accent" : today ? "bg-accent/25" : "bg-line"
-                }`}
-              />
-            </li>
-          );
-        })}
+        {week.map(({ day, active, today, upcoming }) => (
+          <li key={day} className="flex flex-1 flex-col items-center gap-2">
+            <span className={`panel-label ${today ? "text-ink" : ""}`}>
+              {letters.format(new Date(`${day}T00:00:00Z`))}
+            </span>
+            <span
+              className={`h-2 w-full rounded-[1px] ${
+                active ? "bg-accent" : today ? "bg-accent/25" : upcoming ? "bg-surface" : "bg-line"
+              }`}
+            />
+          </li>
+        ))}
       </ul>
     </section>
   );

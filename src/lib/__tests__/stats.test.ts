@@ -2,7 +2,7 @@ import "fake-indexeddb/auto";
 import { beforeEach, describe, expect, it } from "vitest";
 import "@/core/templates";
 import { db, recordLesson } from "../db";
-import { mistakesToRepeat, overview } from "../stats";
+import { mistakesToRepeat, overview, weekActivity } from "../stats";
 
 const answer = (templateId: string, seed: string, correct: boolean) => ({
   templateId,
@@ -89,5 +89,50 @@ describe("chyby k opakování", () => {
       reward: { xp: 0, pills: 0, correct: 0, count: 9, flawless: false },
     });
     expect(await mistakesToRepeat(7)).toHaveLength(7);
+  });
+});
+
+describe("týden na domovské obrazovce", () => {
+  it("začíná pondělím, ať je dnes kterýkoli den", async () => {
+    // 17. 9. 2026 je čtvrtek
+    const week = await weekActivity("2026-09-17");
+    expect(week.map((d) => d.day)).toEqual([
+      "2026-09-14", "2026-09-15", "2026-09-16", "2026-09-17",
+      "2026-09-18", "2026-09-19", "2026-09-20",
+    ]);
+    expect(week.filter((d) => d.today).map((d) => d.day)).toEqual(["2026-09-17"]);
+  });
+
+  it("v neděli ukazuje týden, který právě končí, ne ten příští", async () => {
+    const week = await weekActivity("2026-09-20");
+    expect(week[0].day).toBe("2026-09-14");
+    expect(week.at(-1)).toMatchObject({ day: "2026-09-20", today: true, upcoming: false });
+  });
+
+  it("v pondělí je dnešek hned první", async () => {
+    const week = await weekActivity("2026-09-14");
+    expect(week[0]).toMatchObject({ day: "2026-09-14", today: true });
+    expect(week.filter((d) => d.upcoming)).toHaveLength(6);
+  });
+
+  it("označí dny, ve kterých uživatel dohrál lekci", async () => {
+    await recordLesson(
+      {
+        lessonId: "l",
+        answers: [answer("A1", "s", true)],
+        reward: { xp: 10, pills: 2, correct: 1, count: 1, flawless: true },
+      },
+      new Date("2026-09-16T10:00:00"),
+    );
+
+    const week = await weekActivity("2026-09-17");
+    expect(week.filter((d) => d.active).map((d) => d.day)).toEqual(["2026-09-16"]);
+  });
+
+  it("dny, které teprve přijdou, nejsou zmeškané", async () => {
+    const week = await weekActivity("2026-09-17");
+    expect(week.filter((d) => d.upcoming).map((d) => d.day)).toEqual([
+      "2026-09-18", "2026-09-19", "2026-09-20",
+    ]);
   });
 });
