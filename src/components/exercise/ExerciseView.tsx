@@ -11,6 +11,7 @@ import { AnswerDisplay } from "./AnswerDisplay";
 import { Keypad } from "./Keypad";
 import { TickScale } from "@/components/ui/TickScale";
 import { Formula } from "./Formula";
+import { Prompt } from "./Prompt";
 import { SolutionSteps } from "./SolutionSteps";
 import { VerdictPanel } from "./Verdict";
 
@@ -112,7 +113,7 @@ export function ExerciseView({
         <div className="mx-auto w-full max-w-md px-5 pb-6">
           {/* Obrazovka potřebuje nadpis, i když ho zrakem nikdo nehledá. */}
           <h1 className="sr-only">{t("progress", { current: index + 1, count })}</h1>
-          <p className="text-body whitespace-pre-line">{prompt(exercise)}</p>
+          <Prompt text={prompt(exercise)} />
 
           {/* U chyby displej mizí: správnou hodnotu i zadanou ukazuje panel
               níž a dvojí výpis téhož čísla jen tříští pozornost. U správné
@@ -123,17 +124,28 @@ export function ExerciseView({
                 value={input}
                 unit={answerUnit(exercise)}
                 state={verdict === null ? "editing" : "correct"}
+                action={
+                  verdict === null && !hinted ? (
+                    <button
+                      type="button"
+                      onClick={buyHint}
+                      disabled={!canAfford}
+                      className="text-accent disabled:text-ink-soft flex items-center gap-1.5 text-label font-medium"
+                    >
+                      {t("hintTitle")}
+                      <span className="readout" data-numeric>
+                        {HINT_COST}
+                      </span>
+                    </button>
+                  ) : null
+                }
               />
             </div>
           )}
 
-          {verdict === null ? (
-            <div className="mt-5">
-              {hinted ? <HintPanel exercise={exercise} /> : (
-                <SecondaryAction onClick={buyHint} disabled={!canAfford} cost={HINT_COST}>
-                  {t("hintTitle")}
-                </SecondaryAction>
-              )}
+          {verdict === null && hinted ? (
+            <div className="mt-4">
+              <HintPanel exercise={exercise} />
             </div>
           ) : null}
 

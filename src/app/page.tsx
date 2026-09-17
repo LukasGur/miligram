@@ -18,6 +18,8 @@ import type { LessonPlan } from "@/core/lesson";
 import { useLocale } from "@/i18n/LocaleProvider";
 import { useProfile, useToday } from "@/lib/useProfile";
 
+const LESSON_MINUTES = "4–6";
+
 const AccountScreen = dynamic(
   () => import("@/components/account/AccountScreen").then((module) => module.AccountScreen),
   { ssr: false },
@@ -57,6 +59,8 @@ export default function HomePage() {
 
   const { profile, streak } = useProfile();
   const { answered, week } = useToday();
+  /** Kdo ještě nic nedohrál, potřebuje vědět, do čeho jde. */
+  const firstRun = profile.xp === 0 && answered === 0;
 
   if (lesson !== null) {
     return (
@@ -141,6 +145,12 @@ export default function HomePage() {
               </ProgressRing>
             </div>
           </div>
+
+          {firstRun ? (
+            <p className="text-ink-soft text-center text-label" data-numeric>
+              {t("lessonMeta", { count: LESSON_LENGTH, minutes: LESSON_MINUTES })}
+            </p>
+          ) : null}
 
           <Week week={week} />
 
