@@ -1,6 +1,7 @@
 "use client";
 
 import { useFormatter, useTranslations } from "next-intl";
+import { displayTier } from "@/core/league";
 import type { LeagueStanding } from "@/lib/remote";
 
 /**
@@ -20,7 +21,7 @@ export function League({ standing, userId }: { standing: LeagueStanding | null; 
         <h2 className="text-heading font-semibold">{t("leagueTitle")}</h2>
         {standing ? (
           <span className="readout text-accent text-label font-medium" data-numeric>
-            {t("leagueTier", { tier: standing.tier })}
+            {t("leagueTier", { tier: displayTier(standing.tier) })}
           </span>
         ) : null}
       </div>

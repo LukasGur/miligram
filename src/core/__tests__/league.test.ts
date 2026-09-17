@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { PROMOTED, RELEGATED, rankLeague } from "../league";
+import { displayTier, PROMOTED, RELEGATED, rankLeague, TOP_TIER } from "../league";
 
 const group = (count: number) =>
   Array.from({ length: count }, (_, i) => ({
@@ -58,5 +58,18 @@ describe("pořadí v lize", () => {
     const before = entries.map((e) => e.userId);
     rankLeague(entries);
     expect(entries.map((e) => e.userId)).toEqual(before);
+  });
+});
+
+describe("číslo divize", () => {
+  it("nejvyšší divize se ukazuje jako první", () => {
+    expect(displayTier(TOP_TIER)).toBe(1);
+    expect(displayTier(1)).toBe(TOP_TIER);
+  });
+
+  it("postup o stupeň sníží zobrazené číslo", () => {
+    // Hráč postupuje z interní 3 na 4; česky je to ze třetí do druhé ligy.
+    expect(displayTier(3)).toBe(3);
+    expect(displayTier(4)).toBe(2);
   });
 });

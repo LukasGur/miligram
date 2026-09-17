@@ -41,3 +41,15 @@ export function rankLeague(entries: readonly LeagueEntry[]): RankedEntry[] {
           : null,
   }));
 }
+
+/**
+ * Číslo divize, jak se ukazuje uživateli.
+ *
+ * V databázi je 1 nejnižší divize a 5 nejvyšší, protože postup je pak
+ * prosté zvýšení o jedna. Česky i slovensky je ale „první liga" ta
+ * nejvyšší, takže se pro zobrazení pořadí obrací. Kdyby se to nedělalo,
+ * hráč by po postupu viděl vyšší číslo a rozuměl tomu jako sestupu.
+ */
+export function displayTier(tier: number): number {
+  return TOP_TIER + 1 - tier;
+}
