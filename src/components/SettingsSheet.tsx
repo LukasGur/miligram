@@ -109,7 +109,7 @@ export function SettingsSheet({ open, onClose }: { open: boolean; onClose: () =>
           </Section>
 
           <Section title={t("about")}>
-            <p className="text-ink-soft text-label" data-numeric>
+            <p className="text-ink-soft readout text-label" data-numeric>
               {t("version", { version: APP_VERSION })}
             </p>
           </Section>
@@ -130,7 +130,7 @@ function Section({
 }) {
   return (
     <section className="mb-7 last:mb-0">
-      <h3 className="text-ink-soft mb-2 text-micro font-semibold">{title}</h3>
+      <h3 className="panel-label mb-2">{title}</h3>
       {children}
       {hint ? <p className="text-ink-soft mt-2 text-micro">{hint}</p> : null}
     </section>
