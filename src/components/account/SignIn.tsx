@@ -110,7 +110,7 @@ export function Field({
 }) {
   return (
     <label className="block">
-      <span className="text-ink-soft text-micro">{label}</span>
+      <span className="panel-label">{label}</span>
       <input
         value={value}
         onChange={(event) => onChange(event.target.value)}
@@ -120,7 +120,11 @@ export function Field({
         autoCapitalize="none"
         autoCorrect="off"
         spellCheck={false}
-        className="border-line bg-paper mt-1 min-h-12 w-full rounded-control border px-3 text-body"
+        /* Číselný kód se píše strojopisem — číslice mají stejnou šířku,
+           takže se dá při opisování z e-mailu hlídat pozice. */
+        className={`border-line bg-paper rounded-readout mt-1.5 min-h-12 w-full border px-3 text-body ${
+          inputMode === "numeric" ? "readout tracking-[0.3em]" : ""
+        }`}
       />
     </label>
   );

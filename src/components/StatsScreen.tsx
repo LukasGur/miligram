@@ -62,7 +62,8 @@ export function StatsScreen({
                 <div className="px-3 first:pl-0 last:pr-0">
                   <Readout
                     label={t("rate")}
-                    value={stats.rate === null ? "–" : format.number(stats.rate, { style: "percent" })}
+                    value={stats.rate === null ? "–" : format.number(Math.round(stats.rate * 100))}
+                    unit={stats.rate === null ? undefined : "%"}
                     size="small"
                     tone="accent"
                   />
@@ -95,7 +96,7 @@ export function StatsScreen({
                   {t("categoriesHint", { count: MEANINGFUL_SAMPLE })}
                 </p>
 
-                <ul className="mt-3 space-y-3">
+                <ul className="border-line divide-line mt-4 divide-y border-y">
                   {orderedCategories(stats.categories.map((row) => row.category)).map((category) => {
                     const row = stats.categories.find((item) => item.category === category);
                     const answered = row?.answered ?? 0;
@@ -104,25 +105,32 @@ export function StatsScreen({
 
                     return (
                       <li key={category}>
-                        <div className="flex items-baseline justify-between gap-3">
-                          <span className="text-body">{tCategories(category)}</span>
-                          <span className="readout text-ink-soft shrink-0 text-label" data-numeric>
-                            {shown ? format.number(rate, { style: "percent" }) : t("tooFew")}
+                        {/* Celý řádek je tlačítko: cíl přes celou šířku se trefí
+                            palcem líp než odkaz na jeho konci. */}
+                        <button
+                          type="button"
+                          onClick={() => onTrain({ kind: "category", category })}
+                          aria-label={`${t("train")}: ${tCategories(category)}`}
+                          className="active:bg-surface w-full py-3 text-left transition-colors duration-75"
+                        >
+                          <span className="flex items-baseline justify-between gap-3">
+                            <span className="text-body">{tCategories(category)}</span>
+                            {shown ? (
+                              <span className="readout text-label font-medium" data-numeric>
+                                {format.number(Math.round(rate * 100))}
+                                <span className="text-ink-soft ml-1 font-normal">%</span>
+                              </span>
+                            ) : (
+                              <span className="text-ink-soft text-micro">{t("tooFew")}</span>
+                            )}
                           </span>
-                          <button
-                            type="button"
-                            onClick={() => onTrain({ kind: "category", category })}
-                            className="text-accent min-h-11 shrink-0 text-label font-medium"
-                          >
-                            {t("train")}
-                          </button>
-                        </div>
-                        <div className="bg-surface mt-1 h-1.5 overflow-hidden rounded-full">
-                          <div
-                            className={`h-full rounded-full ${shown ? "bg-accent" : "bg-line"}`}
-                            style={{ width: `${shown ? Math.round(rate * 100) : 0}%` }}
-                          />
-                        </div>
+                          <span className="bg-surface mt-2 flex h-1.5 overflow-hidden rounded-[1px]">
+                            <span
+                              className={`h-full rounded-[1px] ${shown ? "bg-accent" : "bg-line"}`}
+                              style={{ width: `${shown ? Math.round(rate * 100) : 0}%` }}
+                            />
+                          </span>
+                        </button>
                       </li>
                     );
                   })}
