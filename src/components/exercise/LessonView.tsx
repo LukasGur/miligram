@@ -9,6 +9,8 @@ import { recordDuelResult } from "@/lib/remote";
 import { supabase } from "@/lib/supabase";
 import { useSession } from "@/lib/useSession";
 import { useProfile } from "@/lib/useProfile";
+import { Numeral } from "@/components/ui/Numeral";
+import { Tally } from "@/components/ui/Tally";
 import { ExerciseView } from "./ExerciseView";
 
 type Answered = {
@@ -115,6 +117,18 @@ export function LessonView({
   );
 }
 
+/** Řádek odměny. Číslo doběhne od nuly, ať je vidět, že něco přibylo. */
+function Award({ label, value }: { label: string; value: number }) {
+  return (
+    <div className="flex items-baseline justify-between gap-3 py-3">
+      <dt className="panel-label">{label}</dt>
+      <dd className="text-title font-semibold">
+        <Tally value={value} prefix="+" />
+      </dd>
+    </div>
+  );
+}
+
 function LessonSummary({
   answers,
   onExit,
@@ -130,29 +144,26 @@ function LessonSummary({
   return (
     <div className="bg-paper flex h-dvh flex-col overflow-hidden">
       <main tabIndex={0} className="scroll-y flex-1">
+        {/* Zpráva se drží ve středu, ne u horní hrany — jinak pod ní zůstane
+            půl obrazovky prázdna. */}
         <div
-          className="mx-auto flex w-full max-w-md flex-col justify-center px-5"
-          style={{ paddingTop: "calc(var(--sa-t) + 3rem)" }}
+          className="mx-auto flex h-full w-full max-w-md flex-col justify-center px-5"
+          style={{ paddingTop: "var(--sa-t)" }}
         >
-          <h1 className="text-title font-semibold">{t("summaryTitle")}</h1>
+          <h1 className="panel-label">{t("summaryTitle")}</h1>
 
-          <p className="num text-display mt-6 font-semibold" data-numeric>
-            {t("summaryScore", { correct: reward.correct, count: reward.count })}
+          <p className="readout text-display mt-3 font-semibold" data-numeric>
+            <Numeral value={`${format.number(reward.correct)}/${format.number(reward.count)}`} />
           </p>
+          <p className="panel-label mt-1">{t("summaryScoreLabel")}</p>
 
           {reward.flawless ? (
-            <p className="text-accent mt-2 text-heading font-semibold">{t("summaryPerfect")}</p>
+            <p className="text-accent mt-5 text-heading font-semibold">{t("summaryPerfect")}</p>
           ) : null}
 
-          <dl className="border-line divide-line mt-8 grid grid-cols-2 divide-x border-y py-4">
-            <div className="pr-3">
-              <dt className="text-ink-soft text-micro">{tHome("xp")}</dt>
-              <dd className="num mt-0.5 text-title font-semibold">+{format.number(reward.xp)}</dd>
-            </div>
-            <div className="pl-3">
-              <dt className="text-ink-soft text-micro">{tHome("pills")}</dt>
-              <dd className="num text-pill mt-0.5 text-title font-semibold">+{format.number(reward.pills)}</dd>
-            </div>
+          <dl className="border-line divide-line mt-8 divide-y border-y">
+            <Award label={tHome("xp")} value={reward.xp} />
+            <Award label={tHome("pills")} value={reward.pills} />
           </dl>
         </div>
       </main>

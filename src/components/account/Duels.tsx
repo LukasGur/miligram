@@ -46,7 +46,7 @@ export function Duels({
                   {t("duelPlay")}
                 </button>
               ) : duel.theirs ? (
-                <span className="num text-body font-semibold" data-numeric>
+                <span className="readout text-body font-semibold" data-numeric>
                   {t("duelScore", { mine: duel.mine.correct, theirs: duel.theirs.correct })}
                 </span>
               ) : null}

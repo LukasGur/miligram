@@ -6,6 +6,7 @@ import { CloseIcon } from "@/components/icons";
 import { trainableCategories } from "@/core/lesson";
 import type { Category } from "@/core/types";
 import { LESSON_LENGTH } from "@/core/lesson";
+import { Readout } from "@/components/ui/Readout";
 import { MEANINGFUL_SAMPLE, mistakesToRepeat, overview, type Mistake } from "@/lib/stats";
 
 /**
@@ -51,14 +52,22 @@ export function StatsScreen({
             <p className="text-ink-soft text-label">{t("empty")}</p>
           ) : (
             <>
-              <dl className="border-line divide-line grid grid-cols-3 divide-x border-y py-4">
-                <Tile label={t("lessons")} value={format.number(stats.lessons)} />
-                <Tile label={t("answered")} value={format.number(stats.answered)} />
-                <Tile
-                  label={t("rate")}
-                  value={stats.rate === null ? "–" : format.number(stats.rate, { style: "percent" })}
-                />
-              </dl>
+              <div className="border-line divide-line grid grid-cols-3 divide-x border-y py-4">
+                <div className="px-3 first:pl-0 last:pr-0">
+                  <Readout label={t("lessons")} value={format.number(stats.lessons)} size="small" />
+                </div>
+                <div className="px-3 first:pl-0 last:pr-0">
+                  <Readout label={t("answered")} value={format.number(stats.answered)} size="small" />
+                </div>
+                <div className="px-3 first:pl-0 last:pr-0">
+                  <Readout
+                    label={t("rate")}
+                    value={stats.rate === null ? "–" : format.number(stats.rate, { style: "percent" })}
+                    size="small"
+                    tone="accent"
+                  />
+                </div>
+              </div>
 
               <p className="text-ink-soft mt-3 text-micro" data-numeric>
                 {t("helpUsed", { hinted: stats.hinted, repaired: stats.repaired })}
@@ -97,7 +106,7 @@ export function StatsScreen({
                       <li key={category}>
                         <div className="flex items-baseline justify-between gap-3">
                           <span className="text-body">{tCategories(category)}</span>
-                          <span className="num text-ink-soft shrink-0 text-label" data-numeric>
+                          <span className="readout text-ink-soft shrink-0 text-label" data-numeric>
                             {shown ? format.number(rate, { style: "percent" }) : t("tooFew")}
                           </span>
                           <button
@@ -134,13 +143,4 @@ export function StatsScreen({
 function orderedCategories(answered: readonly Category[]): Category[] {
   const rest = trainableCategories().filter((category) => !answered.includes(category));
   return [...answered, ...rest];
-}
-
-function Tile({ label, value }: { label: string; value: string }) {
-  return (
-    <div className="px-3 first:pl-0 last:pr-0">
-      <dt className="text-ink-soft text-micro">{label}</dt>
-      <dd className="num mt-0.5 text-title font-semibold">{value}</dd>
-    </div>
-  );
 }

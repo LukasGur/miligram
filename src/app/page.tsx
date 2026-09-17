@@ -3,24 +3,21 @@
 import { useState } from "react";
 import dynamic from "next/dynamic";
 import { useFormatter, useTranslations } from "next-intl";
-import { newLessonId, LESSON_LENGTH, planCategoryLesson, planFromItems } from "@/core/lesson";
-import type { LessonPlan } from "@/core/lesson";
-import { useProfile } from "@/lib/useProfile";
 import { InstallBanner } from "@/components/InstallBanner";
 import { NetworkStatus } from "@/components/NetworkStatus";
 import { SettingsSheet } from "@/components/SettingsSheet";
-import { Shop } from "@/components/Shop";
+import { ShopSheet } from "@/components/ShopSheet";
 import { SyncAgent } from "@/components/SyncAgent";
 import { Wordmark } from "@/components/Wordmark";
 import { ChartIcon, PersonIcon, SettingsIcon } from "@/components/icons";
+import { LogoMark } from "@/components/ui/Logo";
+import { ProgressRing } from "@/components/ui/ProgressRing";
+import { Readout } from "@/components/ui/Readout";
+import { LESSON_LENGTH, newLessonId, planCategoryLesson, planFromItems } from "@/core/lesson";
+import type { LessonPlan } from "@/core/lesson";
+import { useLocale } from "@/i18n/LocaleProvider";
+import { useProfile, useToday } from "@/lib/useProfile";
 
-const LESSON_MINUTES = "4–6";
-
-/**
- * Lekce se načítá až při spuštění. Je v ní KaTeX, všech 72 šablon i fond
- * přípravků — dohromady největší kus aplikace, který úvodní obrazovka
- * k ničemu nepotřebuje.
- */
 const AccountScreen = dynamic(
   () => import("@/components/account/AccountScreen").then((module) => module.AccountScreen),
   { ssr: false },
@@ -31,6 +28,11 @@ const StatsScreen = dynamic(
   { ssr: false },
 );
 
+/**
+ * Lekce se načítá až při spuštění. Je v ní KaTeX, všech 72 šablon i fond
+ * přípravků — dohromady největší kus aplikace, který úvodní obrazovka
+ * k ničemu nepotřebuje.
+ */
 const LessonView = dynamic(
   () => import("@/components/exercise/LessonView").then((module) => module.LessonView),
   { ssr: false },
@@ -42,15 +44,19 @@ export default function HomePage() {
   const tAccount = useTranslations("account");
   const tStats = useTranslations("stats");
   const format = useFormatter();
+
   const [settingsOpen, setSettingsOpen] = useState(false);
+  const [shopOpen, setShopOpen] = useState(false);
+  const [accountOpen, setAccountOpen] = useState(false);
+  const [statsOpen, setStatsOpen] = useState(false);
   /**
    * Rozehraná lekce. Denní lekce se sestaví z identifikátoru, trénink
    * a opakování chyb přinesou hotový plán — proto se nese obojí.
    */
   const [lesson, setLesson] = useState<{ id: string; plan?: LessonPlan; duelId?: string } | null>(null);
-  const [accountOpen, setAccountOpen] = useState(false);
-  const [statsOpen, setStatsOpen] = useState(false);
+
   const { profile, streak } = useProfile();
+  const { answered, week } = useToday();
 
   if (lesson !== null) {
     return (
@@ -70,9 +76,7 @@ export default function HomePage() {
         onTrain={(mode) => {
           const id = newLessonId();
           const plan =
-            mode.kind === "mistakes"
-              ? planFromItems(id, mode.items)
-              : planCategoryLesson(id, mode.category);
+            mode.kind === "mistakes" ? planFromItems(id, mode.items) : planCategoryLesson(id, mode.category);
           setStatsOpen(false);
           setLesson({ id, plan });
         }}
@@ -92,73 +96,78 @@ export default function HomePage() {
     );
   }
 
+  const goalMet = answered >= LESSON_LENGTH;
+
   return (
     <div className="bg-paper flex h-dvh flex-col overflow-hidden">
       <NetworkStatus />
       <SyncAgent />
 
       <header
-        className="app-chrome flex items-center justify-between px-5 pb-2"
+        className="app-chrome flex items-center justify-between px-5 pb-3"
         style={{ paddingTop: "calc(var(--sa-t) + 0.75rem)" }}
       >
-        <Wordmark className="text-accent text-heading" />
+        <div className="text-accent flex items-center gap-2">
+          <LogoMark className="size-5" />
+          <Wordmark className="text-heading" />
+        </div>
         <div className="-mr-3 flex items-center">
-          <button
-            type="button"
-            onClick={() => setStatsOpen(true)}
-            aria-label={tStats("title")}
-            className="text-ink-soft flex size-11 items-center justify-center"
-          >
+          <IconButton label={tStats("title")} onClick={() => setStatsOpen(true)}>
             <ChartIcon className="size-6" />
-          </button>
-          <button
-            type="button"
-            onClick={() => setAccountOpen(true)}
-            aria-label={tAccount("title")}
-            className="text-ink-soft flex size-11 items-center justify-center"
-          >
+          </IconButton>
+          <IconButton label={tAccount("title")} onClick={() => setAccountOpen(true)}>
             <PersonIcon className="size-6" />
-          </button>
-          <button
-            type="button"
-            onClick={() => setSettingsOpen(true)}
-            aria-label={tCommon("settings")}
-            className="text-ink-soft flex size-11 items-center justify-center"
-          >
+          </IconButton>
+          <IconButton label={tCommon("settings")} onClick={() => setSettingsOpen(true)}>
             <SettingsIcon className="size-6" />
-          </button>
+          </IconButton>
         </div>
       </header>
 
-      <main
-        /* Rolovatelnou oblast musí jít projet i klávesnicí, ne jen prstem. */
-        tabIndex={0}
-        className="scroll-y mx-auto w-full max-w-md flex-1 px-5 pb-8"
-      >
-        <dl className="border-line divide-line grid grid-cols-3 divide-x border-y py-4">
-          <Stat label={t("streak")} value={format.number(streak)} suffix={t("streakUnit", { days: streak })} />
-          <Stat label={t("pills")} value={format.number(profile.pills)} />
-          <Stat label={t("xp")} value={format.number(profile.xp)} />
-        </dl>
+      <main tabIndex={0} className="scroll-y mx-auto flex w-full max-w-md flex-1 flex-col px-5">
+        {/* Hrdina se drží ve svislém středu volného místa — jinak se obrazovka
+            rozpadne na horní půlku s obsahem a spodní s prázdnem. */}
+        <section className="flex flex-1 flex-col items-center justify-center gap-7 py-4">
+          <div className="flex flex-col items-center">
+            <h1 className="panel-label">{t("dailyGoal")}</h1>
+            <div className="mt-3">
+              <ProgressRing done={answered} total={LESSON_LENGTH}>
+                <span className="readout text-display font-semibold" data-numeric>
+                  {format.number(Math.min(answered, LESSON_LENGTH))}
+                </span>
+                <span className="panel-label mt-0.5">
+                  {goalMet ? t("dailyDone") : t("dailyOf", { total: LESSON_LENGTH })}
+                </span>
+              </ProgressRing>
+            </div>
+          </div>
 
-        <section className="bg-accent-wash rounded-panel mt-6 px-5 py-6">
-          <h1 className="text-title font-semibold">{t("lessonTitle")}</h1>
-          <p className="text-ink-soft mt-1.5 text-label" data-numeric>
-            {t("lessonMeta", { count: LESSON_LENGTH, minutes: LESSON_MINUTES })}
-          </p>
-        </section>
+          <Week week={week} />
 
-        <Shop />
-
-        <section className="border-line mt-8 border-l-2 pl-4">
-          <h2 className="text-label font-semibold">{t("buildNoticeTitle")}</h2>
-          <p className="text-ink-soft mt-1 text-label">{t("buildNoticeBody")}</p>
+          {/* Ne <dl>: jedna z hodnot je tlačítko a seznam definic v sobě
+              nesmí mít nic než dvojice dt/dd. */}
+          <div className="border-line divide-line grid w-full grid-cols-3 divide-x border-t pt-4">
+          <div className="pr-3">
+            <Readout label={t("streak")} value={format.number(streak)} unit={t("streakUnit", { days: streak })} size="small" />
+          </div>
+          <button
+            type="button"
+            onClick={() => setShopOpen(true)}
+            aria-label={t("openShop")}
+            className="px-3 text-left"
+          >
+            <Readout label={t("pills")} value={format.number(profile.pills)} size="small" tone="accent" />
+          </button>
+          <div className="pl-3">
+            <Readout label={t("xp")} value={format.number(profile.xp)} size="small" />
+          </div>
+          </div>
         </section>
       </main>
 
       <div className="app-chrome shrink-0">
         <InstallBanner />
-        <div
+        <footer
           className="bg-paper border-line mx-auto w-full max-w-md border-t px-5 pt-3"
           style={{ paddingBottom: "calc(var(--sa-b) + 0.75rem)" }}
         >
@@ -169,22 +178,66 @@ export default function HomePage() {
           >
             {t("start")}
           </button>
-        </div>
+        </footer>
       </div>
 
+      <ShopSheet open={shopOpen} onClose={() => setShopOpen(false)} />
       <SettingsSheet open={settingsOpen} onClose={() => setSettingsOpen(false)} />
     </div>
   );
 }
 
-function Stat({ label, value, suffix }: { label: string; value: string; suffix?: string }) {
+/**
+ * Týden jako sedm dílků. Poslední je dnešek, takže se čte zprava doleva
+ * jako „co mám za sebou“ — a je hned vidět, jestli dneska ještě chybí.
+ */
+function Week({ week }: { week: { day: string; active: boolean }[] }) {
+  const t = useTranslations("home");
+  const { locale } = useLocale();
+  /* Jednopísmenné zkratky se v češtině opakují (pondělí i pátek je „P"),
+     takže se dny nedají rozeznat. Dvoupísmenné ano. */
+  const letters = new Intl.DateTimeFormat(locale, { weekday: "short", timeZone: "UTC" });
+
   return (
-    <div className="px-3 first:pl-0 last:pr-0">
-      <dt className="text-ink-soft text-micro">{label}</dt>
-      <dd className="num mt-0.5 text-title font-semibold">
-        {value}
-        {suffix ? <span className="text-ink-soft ml-1 text-label font-normal">{suffix}</span> : null}
-      </dd>
-    </div>
+    <section className="w-full" aria-label={t("weekTitle")}>
+      <ul className="flex justify-between gap-1.5">
+        {week.map(({ day, active }, index) => {
+          const today = index === week.length - 1;
+          return (
+            <li key={day} className="flex flex-1 flex-col items-center gap-2">
+              <span className={`panel-label ${today ? "text-ink" : ""}`}>
+                {letters.format(new Date(`${day}T00:00:00Z`))}
+              </span>
+              <span
+                className={`h-2 w-full rounded-[1px] ${
+                  active ? "bg-accent" : today ? "bg-accent/25" : "bg-line"
+                }`}
+              />
+            </li>
+          );
+        })}
+      </ul>
+    </section>
+  );
+}
+
+function IconButton({
+  label,
+  onClick,
+  children,
+}: {
+  label: string;
+  onClick: () => void;
+  children: React.ReactNode;
+}) {
+  return (
+    <button
+      type="button"
+      onClick={onClick}
+      aria-label={label}
+      className="text-ink-soft flex size-11 items-center justify-center"
+    >
+      {children}
+    </button>
   );
 }

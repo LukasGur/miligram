@@ -1,3 +1,4 @@
+import { localDay } from "@/core/economy";
 import { categoryOf } from "@/core/lesson";
 import type { Category, Difficulty } from "@/core/types";
 import { db, type AnswerRecord } from "./db";
@@ -105,4 +106,36 @@ function safeCategory(templateId: string): Category | null {
   } catch {
     return null;
   }
+}
+
+/* ---------------------------------------------------------------------------
+   Dnešek a týden
+
+   Domovská obrazovka stojí na jedné otázce: jak jsem na tom dnes.
+   Odpověď se počítá z odpovědí, ne z profilu — profil drží celkové součty
+   a ty o dnešku nic neříkají.
+   ------------------------------------------------------------------------ */
+
+/** Kolik příkladů uživatel zodpověděl dnes. */
+export async function answeredToday(today = localDay()): Promise<number> {
+  const answers = await db().answers.toArray();
+  return answers.filter((answer) => answer.answeredAt.slice(0, 10) === today).length;
+}
+
+/**
+ * Dny posledního týdne a to, jestli v nich uživatel hrál.
+ *
+ * Vrací se sedm dní končících dneškem, aby týden na obrazovce začínal
+ * tam, kde uživatel skutečně je — ne pondělím, které může být za pět dní.
+ */
+export async function weekActivity(today = localDay()): Promise<{ day: string; active: boolean }[]> {
+  const lessons = await db().lessons.toArray();
+  const played = new Set(lessons.map((lesson) => lesson.finishedAt.slice(0, 10)));
+
+  const [year, month, date] = today.split("-").map(Number);
+  return Array.from({ length: 7 }, (_, index) => {
+    const moment = new Date(Date.UTC(year, month - 1, date - (6 - index)));
+    const day = moment.toISOString().slice(0, 10);
+    return { day, active: played.has(day) };
+  });
 }

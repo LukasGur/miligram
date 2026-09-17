@@ -9,6 +9,7 @@ import type { Exercise } from "@/core/types";
 import { useAnswerUnit, useExercisePrompt } from "@/i18n/exerciseText";
 import { AnswerDisplay } from "./AnswerDisplay";
 import { Keypad } from "./Keypad";
+import { TickScale } from "@/components/ui/TickScale";
 import { Formula } from "./Formula";
 import { SolutionSteps } from "./SolutionSteps";
 import { VerdictPanel } from "./Verdict";
@@ -96,8 +97,13 @@ export function ExerciseView({
         >
           <CloseIcon className="size-6" />
         </button>
-        <Progress index={index} count={count} />
-        <span className="num text-ink-soft w-12 shrink-0 text-right text-label" data-numeric>
+        <TickScale
+          total={count}
+          done={index}
+          current={index}
+          label={t("progress", { current: index + 1, count })}
+        />
+        <span className="readout text-ink-soft w-12 shrink-0 text-right text-label" data-numeric>
           {t("progress", { current: index + 1, count })}
         </span>
       </header>
@@ -108,53 +114,44 @@ export function ExerciseView({
           <h1 className="sr-only">{t("progress", { current: index + 1, count })}</h1>
           <p className="text-body whitespace-pre-line">{prompt(exercise)}</p>
 
-          <div className="mt-6">
-            <AnswerDisplay
-              value={input}
-              unit={answerUnit(exercise)}
-              state={verdict === null ? "editing" : verdict.correct ? "correct" : "wrong"}
-            />
-          </div>
+          {/* U chyby displej mizí: správnou hodnotu i zadanou ukazuje panel
+              níž a dvojí výpis téhož čísla jen tříští pozornost. U správné
+              odpovědi zůstává — je to ta věc, která se rozsvítí. */}
+          {verdict?.correct === false ? null : (
+            <div className="mt-6">
+              <AnswerDisplay
+                value={input}
+                unit={answerUnit(exercise)}
+                state={verdict === null ? "editing" : "correct"}
+              />
+            </div>
+          )}
 
           {verdict === null ? (
             <div className="mt-5">
               {hinted ? <HintPanel exercise={exercise} /> : (
-                <button
-                  type="button"
-                  onClick={buyHint}
-                  disabled={!canAfford}
-                  className="text-accent min-h-11 text-label font-medium disabled:text-ink-soft"
-                >
-                  {canAfford ? t("hint", { cost: HINT_COST }) : t("hintPoor", { cost: HINT_COST })}
-                </button>
+                <SecondaryAction onClick={buyHint} disabled={!canAfford} cost={HINT_COST}>
+                  {t("hintTitle")}
+                </SecondaryAction>
               )}
             </div>
           ) : null}
 
           {verdict ? (
             <div className="mt-5">
-              <VerdictPanel exercise={exercise} verdict={verdict} unit={answerUnit(exercise)} />
+              <VerdictPanel exercise={exercise} verdict={verdict} unit={answerUnit(exercise)} answer={value} />
 
-              <div className="mt-4 flex flex-wrap items-center gap-x-5">
-                <button
-                  type="button"
-                  onClick={() => setSolutionOpen((open) => !open)}
-                  className="text-accent min-h-11 text-label font-medium"
-                >
-                  {solutionOpen ? t("hideSolution") : t("showSolution")}
-                </button>
+              {/* Dvě akce vedle sebe, jedna přes celou šířku — mřížka s prázdným
+                  místem po pravé straně vypadá jako chybějící tlačítko. */}
+              <div className="mt-4 flex gap-2 [&>*]:flex-1">
+                <SecondaryAction onClick={() => setSolutionOpen((open) => !open)}>
+                  {solutionOpen ? t("hideSolution") : t("solutionShort")}
+                </SecondaryAction>
 
                 {!verdict.correct && !repaired ? (
-                  <button
-                    type="button"
-                    onClick={buyRepair}
-                    disabled={pills < REPAIR_COST}
-                    className="text-accent min-h-11 text-label font-medium disabled:text-ink-soft"
-                  >
-                    {pills >= REPAIR_COST
-                      ? t("repair", { cost: REPAIR_COST })
-                      : t("repairPoor", { cost: REPAIR_COST })}
-                  </button>
+                  <SecondaryAction onClick={buyRepair} disabled={pills < REPAIR_COST} cost={REPAIR_COST}>
+                    {t("repairShort")}
+                  </SecondaryAction>
                 ) : null}
               </div>
 
@@ -198,6 +195,39 @@ export function ExerciseView({
   );
 }
 
+/**
+ * Vedlejší akce: rámeček, ne modrý odkaz. Odkaz vypadá jako text, který
+ * se dá přehlédnout; tady jde o volbu, která něco stojí — nápověda
+ * i oprava se platí prášky, a cena patří vedle názvu, ne do věty.
+ */
+function SecondaryAction({
+  onClick,
+  disabled,
+  cost,
+  children,
+}: {
+  onClick: () => void;
+  disabled?: boolean;
+  cost?: number;
+  children: React.ReactNode;
+}) {
+  return (
+    <button
+      type="button"
+      onClick={onClick}
+      disabled={disabled}
+      className="border-line text-ink active:bg-surface flex min-h-11 items-center justify-center gap-2 rounded-control border px-3 text-label font-medium transition-colors duration-75 disabled:opacity-40"
+    >
+      {children}
+      {cost === undefined ? null : (
+        <span className="readout text-accent" data-numeric>
+          {cost}
+        </span>
+      )}
+    </button>
+  );
+}
+
 /** Do odpovědi patří číslice a jedna desetinná čárka, nic jiného. */
 function appendCharacter(current: string, character: string): string {
   if (current.length >= MAX_INPUT_LENGTH) return current;
@@ -237,21 +267,3 @@ function HintPanel({ exercise }: { exercise: Exercise }) {
   );
 }
 
-function Progress({ index, count }: { index: number; count: number }) {
-  const t = useTranslations("lesson");
-  return (
-    <div
-      className="bg-surface h-1.5 flex-1 overflow-hidden rounded-full"
-      role="progressbar"
-      aria-label={t("progress", { current: index + 1, count })}
-      aria-valuemin={0}
-      aria-valuemax={count}
-      aria-valuenow={index}
-    >
-      <div
-        className="bg-accent h-full rounded-full transition-[width] duration-300 ease-[var(--ease-decel)]"
-        style={{ width: `${(index / count) * 100}%` }}
-      />
-    </div>
-  );
-}

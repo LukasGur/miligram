@@ -55,10 +55,15 @@
   --text-micro--line-height: 1.4;
   --text-micro--letter-spacing: 0.005em;
 
-  /* --- tvar a pohyb ----------------------------------------------------- */
-  --radius-control: 0.75rem;
-  --radius-panel: 1.25rem;
-  --radius-sheet: 1.75rem;
+  /* --- tvar a pohyb -----------------------------------------------------
+     Poloměry jsou schválně malé. Kulaté rohy působí přátelsky, ostré
+     působí přesně — a tahle aplikace má působit jako přístroj, na kterém
+     se odměřuje dávka, ne jako hra.                                      */
+  --radius-control: 0.5rem;
+  --radius-panel: 0.75rem;
+  --radius-sheet: 1.25rem;
+  /* Odečtová pole: skoro ostrá, jako displej. */
+  --radius-readout: 0.25rem;
 
   --ease-decel: cubic-bezier(0.16, 1, 0.3, 1);
   --ease-standard: cubic-bezier(0.4, 0, 0.2, 1);
@@ -129,6 +134,30 @@
     font-feature-settings: "tnum" 1;
   }
 
+  /* -------------------------------------------------------------------
+     Odečet hodnoty
+
+     Čísla, která něco měří, jsou strojopisem. Je to jediná věc, kterou
+     tahle aplikace dělá — a rozdíl mezi „140" v běžném řezu a v Plex Mono
+     je přesně ten rozdíl mezi textem a displejem. Písmo je v balíku
+     od začátku, jen se dosud nepoužívalo.
+     ------------------------------------------------------------------- */
+  .readout {
+    font-family: var(--font-mono);
+    font-variant-numeric: tabular-nums;
+    font-feature-settings: "tnum" 1;
+    letter-spacing: -0.02em;
+  }
+
+  /* Popisek nad hodnotou. Verzálky s rozpalem, jak je má přístroj na panelu. */
+  .panel-label {
+    font-size: var(--text-micro);
+    line-height: var(--text-micro--line-height);
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+    color: var(--color-ink-soft);
+  }
+
   /* Text jen pro odečítač obrazovky. Nadpis, který zrakem netřeba,
      ale bez kterého obrazovka nemá strukturu. */
   .sr-only {
@@ -147,6 +176,61 @@
     overflow-y: auto;
     overscroll-behavior-y: contain;
     -webkit-overflow-scrolling: touch;
+  }
+}
+
+/* ---------------------------------------------------------------------------
+   Krátká odměna
+
+   Přístroj neslaví konfetami, ale ukáže, že hodnotu přijal. Proto jeden
+   krátký záblesk u správné odpovědi a doběh počítadla na konci lekce —
+   nic přes celou obrazovku a nic, co by zdrželo.
+--------------------------------------------------------------------------- */
+@keyframes readout-accept {
+  0% { background-color: var(--color-accent-wash); border-color: var(--color-accent); }
+  100% { background-color: var(--color-paper); border-color: var(--color-accent); }
+}
+
+/**
+ * Počítadlo, které doběhne.
+ *
+ * Bez JavaScriptu a bez časovače: hodnota je vlastní vlastnost, kterou
+ * prohlížeč umí animovat, a vypisuje se přes counter(). Základní hodnota
+ * je cíl, animace jen startuje od nuly — díky tomu při vypnutém pohybu
+ * číslo rovnou sedí, místo aby zůstalo na nule.
+ */
+@property --tally {
+  syntax: "<integer>";
+  initial-value: 0;
+  inherits: false;
+}
+
+@keyframes tally-up {
+  from { --tally: 0; }
+}
+
+@keyframes tick-in {
+  from { opacity: 0; transform: translateY(0.25rem); }
+  to { opacity: 1; transform: none; }
+}
+
+@layer utilities {
+  .animate-accept {
+    animation: readout-accept 220ms var(--ease-decel) both;
+  }
+
+  .animate-tick {
+    animation: tick-in 180ms var(--ease-decel) both;
+  }
+
+  .tally {
+    --tally: var(--tally-target);
+    counter-reset: tally var(--tally);
+    animation: tally-up 700ms var(--ease-decel);
+  }
+
+  .tally::after {
+    content: counter(tally);
   }
 }
 

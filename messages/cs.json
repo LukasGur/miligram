@@ -45,7 +45,12 @@
     "pills": "Prášky",
     "xp": "XP",
     "buildNoticeTitle": "Rozpracováno",
-    "buildNoticeBody": "Hotové je výpočetní jádro, obrazovka příkladu a lokální ekonomika. Účet, žebříčky a souboje přijdou ve fázi 5."
+    "buildNoticeBody": "Hotové je výpočetní jádro, obrazovka příkladu a lokální ekonomika. Účet, žebříčky a souboje přijdou ve fázi 5.",
+    "dailyGoal": "Dnešní cíl",
+    "dailyDone": "Cíl splněn",
+    "weekTitle": "Týden",
+    "openShop": "Zásoby a nákup",
+    "dailyOf": "ze {total, number}"
   },
   "settings": {
     "title": "Nastavení",
@@ -328,7 +333,6 @@
     "roundingTitle": "Zaokrouhlení v praxi",
     "sourceTitle": "Odkud jsou čísla",
     "summaryTitle": "Lekce hotová",
-    "summaryScore": "{correct, number} z {count, number} správně",
     "summaryPerfect": "Bez jediné chyby",
     "again": "Další lekce",
     "home": "Zpět na začátek",
@@ -336,7 +340,14 @@
     "hintPoor": "Na nápovědu potřebuješ {cost, number} prášků",
     "hintTitle": "Nápověda",
     "repair": "Zkusit znovu za {cost, number} prášků",
-    "repairPoor": "Na opravu potřebuješ {cost, number} prášků"
+    "repairPoor": "Na opravu potřebuješ {cost, number} prášků",
+    "correctIs": "Správně je",
+    "yourAnswer": "Tvoje odpověď",
+    "deviation": "Odchylka",
+    "magnitudeShort": "Chyba o řád",
+    "solutionShort": "Postup",
+    "repairShort": "Zkusit znovu",
+    "summaryScoreLabel": "správně"
   },
   "account": {
     "title": "Účet",
@@ -392,7 +403,9 @@
     "freezeBuy": "Koupit za {cost, number} prášků",
     "freezeOwned": "{count, plural, =0 {Žádná v zásobě} one {# v zásobě} other {# v zásobě}}",
     "freezePoor": "Nemáš dost prášků",
-    "freezeFull": "Víc než {max, number} si držet nejde"
+    "freezeFull": "Víc než {max, number} si držet nejde",
+    "title": "Zásoby",
+    "freezeBuyShort": "Koupit ochranu série"
   },
   "categories": {
     "zaklad": "Základní dávkování",

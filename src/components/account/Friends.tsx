@@ -135,14 +135,14 @@ export function Friends({
           <ol className="border-line divide-line mt-3 divide-y rounded-control border">
             {scores.map((row, index) => (
               <li key={row.userId} className="flex min-h-12 items-center gap-3 px-4">
-                <span className="num text-ink-soft w-5 text-label">{index + 1}</span>
+                <span className="readout text-ink-soft w-5 text-label">{index + 1}</span>
                 <span className="flex-1 text-body">
                   {row.handle}
                   {row.userId === userId ? (
                     <span className="text-ink-soft ml-1 text-label">· {t("you")}</span>
                   ) : null}
                 </span>
-                <span className="num text-body font-semibold">{format.number(row.xp)}</span>
+                <span className="readout text-body font-semibold">{format.number(row.xp)}</span>
                 {row.userId === userId ? null : (
                   <button
                     type="button"

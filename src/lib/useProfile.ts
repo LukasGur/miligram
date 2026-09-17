@@ -3,6 +3,7 @@
 import { useLiveQuery } from "dexie-react-hooks";
 import { currentStreak } from "@/core/economy";
 import { db, emptyProfile, PROFILE_ID, type Profile } from "./db";
+import { answeredToday, weekActivity } from "./stats";
 
 /**
  * Profil pro zobrazení.
@@ -35,4 +36,14 @@ export function usePendingEvents(): number {
     [],
     0,
   );
+}
+
+/**
+ * Dnešní postup a týden pozadu. Obojí se přepočítá samo, jakmile doběhne
+ * zápis lekce — proto `useLiveQuery` a ne jednorázové načtení.
+ */
+export function useToday(): { answered: number; week: { day: string; active: boolean }[] } {
+  const answered = useLiveQuery(() => answeredToday(), [], 0);
+  const week = useLiveQuery(() => weekActivity(), [], []);
+  return { answered, week };
 }

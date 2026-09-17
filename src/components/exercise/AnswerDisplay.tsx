@@ -1,13 +1,17 @@
 "use client";
 
 import { useTranslations } from "next-intl";
+import { Numeral } from "@/components/ui/Numeral";
 
 /**
- * Pole odpovědi.
+ * Pole odpovědi jako displej přístroje.
  *
  * Není to `<input>`: hodnotu píše vlastní klávesnice a systémovou nechceme
  * vyvolat. Aby na tom nedoplatila přístupnost, nese pole roli `textbox`
  * s příznakem `readonly` a živě se hlásí odečítači.
+ *
+ * Číslo je strojopisem a zarovnané doprava, jak to má odečet na přístroji —
+ * při psaní se tak nehýbe jednotka, jen přibývají číslice.
  */
 export function AnswerDisplay({
   value,
@@ -22,10 +26,10 @@ export function AnswerDisplay({
 
   const tone =
     state === "correct"
-      ? "border-accent bg-accent-wash"
+      ? "border-accent animate-accept"
       : state === "wrong"
         ? "border-danger bg-danger-wash"
-        : "border-line bg-paper";
+        : "border-line";
 
   return (
     <div
@@ -34,14 +38,17 @@ export function AnswerDisplay({
       aria-label={t("answerLabel")}
       aria-live="polite"
       tabIndex={0}
-      className={`rounded-panel flex min-h-16 items-baseline justify-center gap-2 border px-5 py-3 transition-colors ${tone}`}
+      className={`rounded-readout border px-4 py-3 transition-colors ${tone}`}
     >
-      {value === "" ? (
-        <span className="text-ink-soft text-title">{t("answerHint")}</span>
-      ) : (
-        <span className="num text-display font-semibold tracking-tight">{value}</span>
-      )}
-      <span className="text-ink-soft text-heading">{unit}</span>
+      <p className="panel-label">{t("answerLabel")}</p>
+      <p className="mt-1 flex items-baseline justify-end gap-2">
+        {value === "" ? (
+          <span className="text-ink-soft readout text-title">—</span>
+        ) : (
+          <span className="readout text-display font-semibold"><Numeral value={value} /></span>
+        )}
+        <span className="text-ink-soft text-heading">{unit}</span>
+      </p>
     </div>
   );
 }
