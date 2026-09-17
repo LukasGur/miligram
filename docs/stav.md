@@ -68,23 +68,33 @@ celý důvod, proč generátor stojí na semínkách.
 i doporučené postupy) na všech sedmi obrazovkách: nula nálezů. Zbývá
 výkon a zkouška na skutečném iPhonu.
 
+**Vizuální výraz** — rozhraní bylo čisté, ale bez názoru. Zvolený směr je
+klinický přístroj: ostré poloměry, popisky verzálkami, čísla strojopisem
+(IBM Plex Mono byl v balíku od první fáze a nepoužíval se). Domovská
+obrazovka má těžiště v kruhu denního cíle, moment vyhodnocení je odečet
+s velkou správnou hodnotou, postup je stupnice po dílcích jako graduace
+na stříkačce. Odměna je počítadlo, které doběhne — celé v CSS, bez
+časovače.
+
 ## Co dělat dál
 
 1. **Ověřit částky ekonomiky proti briefu, sekce 6.** Čísla
    v `src/core/economy.ts` jsou návrh, ne převzaté hodnoty: 2 prášky
    za správný příklad, 10 za bezchybnou lekci, nápověda za 15.
    Všechna jsou na jednom místě.
-2. **Zkouška na skutečném iPhonu.** Všechno je zatím ověřené jen
+2. **Doladit výraz podle zpětné vazby.** Směr je nastavený, čeká se,
+   co bude na telefonu drhnout.
+3. **Zkouška na skutečném iPhonu.** Všechno je zatím ověřené jen
    ve WebKitu na rozměrech telefonu, ne na zařízení.
-3. **Vlastní SMTP.** Přihlašovací kódy chodí přes vestavěné SMTP
+4. **Vlastní SMTP.** Přihlašovací kódy chodí přes vestavěné SMTP
    Supabase, které má tvrdý limit několika e-mailů za hodinu. Na ostrý
    provoz to nestačí.
-4. **Liga.** Žebříček je zatím jen mezi přáteli. Rozdělení do divizí
+5. **Liga.** Žebříček je zatím jen mezi přáteli. Rozdělení do divizí
    a týdenní uzávěrka jsou další krok.
-5. **Revize slovenštiny rodilým mluvčím.** Texty jsou napsané, ne
+6. **Revize slovenštiny rodilým mluvčím.** Texty jsou napsané, ne
    přeložené strojem, ale nikdo je zatím nečetl. Názvy přípravků zůstávají
    české — fond je z české databáze.
-6. **I3** (korekční faktor inzulinu) čeká na zdroj, jinak vypustit.
+7. **I3** (korekční faktor inzulinu) čeká na zdroj, jinak vypustit.
    Do té doby ji `productionTemplates()` nevydá a test to hlídá.
 
 ## Rozhodnutí, která už padla
@@ -108,6 +118,8 @@ výkon a zkouška na skutečném iPhonu.
 - Kde je podíl nebo interval součástí ordinace (redukce dávky, počet podání),
   je součástí zadání a netvrdí se jako fakt. Ze zdroje pochází jen rozsah,
   ve kterém se pohybuje.
+- Výraz je klinický přístroj, ne hra. Čísla jsou strojopisem, tvary ostré,
+  odměna je doběh počítadla — žádné konfety. Červená zůstává jen pro chybu.
 - Klávesnice je vlastní, ne systémová. Systémová na iOS překryje spodní
   třetinu obrazovky i s tlačítkem odpovědi.
 - Ve výpočetním jádře není text v žádném jazyce. Vzorce sázejí tokeny
