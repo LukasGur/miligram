@@ -395,7 +395,13 @@
     "duelWon": "Vyhrál jsi",
     "duelLost": "Prohrál jsi",
     "duelDraw": "Remíza",
-    "duelsEmpty": "Zatím žádný souboj. Vyzvi kamaráda ze žebříčku."
+    "duelsEmpty": "Zatím žádný souboj. Vyzvi kamaráda ze žebříčku.",
+    "leagueTitle": "Liga",
+    "leagueTier": "{tier, number}. divize",
+    "leagueTop": "Postup",
+    "leagueBottom": "Sestup",
+    "leagueEmpty": "Dohraj tento týden lekci a zařadíme tě do skupiny.",
+    "leagueHint": "Skupina dvaceti lidí, řazeno podle XP za tento týden. První tři postoupí, posledních pět sestoupí."
   },
   "shop": {
     "freezeTitle": "Ochrana série",

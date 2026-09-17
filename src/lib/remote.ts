@@ -1,6 +1,7 @@
 "use client";
 
 import type { SupabaseClient } from "@supabase/supabase-js";
+import { rankLeague, type RankedEntry } from "@/core/league";
 import type { LessonEventRow, SyncGateway } from "./sync";
 
 /**
@@ -267,4 +268,56 @@ export async function recordDuelResult(
     .insert({ duel_id: duelId, user_id: userId, correct, count });
   // 23505 znamená, že výsledek už je zapsaný. To není chyba, jen druhý pokus.
   if (error && error.code !== "23505") throw new Error(error.message);
+}
+
+/* ---------------------------------------------------------------------------
+   Liga
+
+   Skupina dvaceti lidí v jedné divizi, řazená podle týdenních XP. První tři
+   postoupí, posledních pět sestoupí. Zařazení dělá server při zápisu lekce,
+   klient se jen ptá, jak to vypadá.
+   ------------------------------------------------------------------------ */
+
+export type LeagueStanding = {
+  tier: number;
+  season: string;
+  rows: RankedEntry[];
+};
+
+export async function leagueStanding(
+  client: SupabaseClient,
+  userId: string,
+): Promise<LeagueStanding | null> {
+  const { data: own, error } = await client
+    .from("stats")
+    .select("league_tier, league_season, league_group")
+    .eq("user_id", userId)
+    .maybeSingle();
+  if (error) throw new Error(error.message);
+  if (!own?.league_group || !own.league_season) return null;
+
+  const [members, scores] = await Promise.all([
+    client.from("league_members").select("user_id").eq("group_id", own.league_group),
+    client.from("weekly_xp").select("user_id, xp").eq("week_start", own.league_season),
+  ]);
+  if (members.error) throw new Error(members.error.message);
+  if (scores.error) throw new Error(scores.error.message);
+
+  const ids = (members.data ?? []).map((row) => row.user_id);
+  const { data: profiles, error: profileError } = await client
+    .from("profiles")
+    .select("id, handle")
+    .in("id", ids);
+  if (profileError) throw new Error(profileError.message);
+
+  const handles = new Map((profiles ?? []).map((profile) => [profile.id, profile.handle]));
+  const xpByUser = new Map((scores.data ?? []).map((row) => [row.user_id, Number(row.xp ?? 0)]));
+
+  return {
+    tier: own.league_tier ?? 1,
+    season: own.league_season,
+    rows: rankLeague(
+      ids.map((id) => ({ userId: id, handle: handles.get(id) ?? "", xp: xpByUser.get(id) ?? 0 })),
+    ),
+  };
 }

@@ -89,8 +89,8 @@ na stříkačce. Odměna je počítadlo, které doběhne — celé v CSS, bez
 4. **Vlastní SMTP.** Přihlašovací kódy chodí přes vestavěné SMTP
    Supabase, které má tvrdý limit několika e-mailů za hodinu. Na ostrý
    provoz to nestačí.
-5. **Liga.** Žebříček je zatím jen mezi přáteli. Rozdělení do divizí
-   a týdenní uzávěrka jsou další krok.
+5. **Ověřit ligu na skutečném provozu.** Postup a sestup se počítají až
+   při první lekci v novém týdnu, takže se to pozná nejdřív za týden.
 6. **Revize slovenštiny rodilým mluvčím.** Texty jsou napsané, ne
    přeložené strojem, ale nikdo je zatím nečetl. Názvy přípravků zůstávají
    české — fond je z české databáze.
@@ -102,6 +102,9 @@ na stříkačce. Odměna je počítadlo, které doběhne — celé v CSS, bez
 - Rolovatelné oblasti nesou `tabIndex`, obrazovky mají `main` a lišta
   s klávesnicí je `footer`. Bez toho se obsah ocitl mimo orientační body
   a klávesnicí se k němu nedalo dostat.
+- Liga nemá naplánovanou úlohu. Přeřazení se počítá ve chvíli, kdy se
+  uživatel v novém týdnu poprvé ozve — naplánovaná úloha by musela běžet
+  i pro účty, které se týden neozvaly, a musela by se hlídat.
 - Server je replika, ne podmínka. Přihlášení je nepovinné a bez něj
   aplikace umí všechno kromě porovnání s ostatními.
 - Synchronizovat se budou události, ne stav. Dvě zařízení offline nemůžou

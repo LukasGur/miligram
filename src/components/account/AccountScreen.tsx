@@ -3,7 +3,16 @@
 import { useState } from "react";
 import { useTranslations } from "next-intl";
 import { CloseIcon } from "@/components/icons";
-import { claimHandle, fetchProfile, listDuels, remoteGateway, type Duel, type RemoteProfile } from "@/lib/remote";
+import {
+  claimHandle,
+  fetchProfile,
+  leagueStanding,
+  listDuels,
+  remoteGateway,
+  type Duel,
+  type LeagueStanding,
+  type RemoteProfile,
+} from "@/lib/remote";
 import { useRemoteQuery } from "@/lib/remoteQuery";
 import { supabase, isRemoteConfigured } from "@/lib/supabase";
 import { syncOutbox } from "@/lib/sync";
@@ -12,6 +21,7 @@ import { useSession } from "@/lib/useSession";
 import { Field, Primary, SignIn } from "./SignIn";
 import { Friends } from "./Friends";
 import { Duels } from "./Duels";
+import { League } from "./League";
 
 /**
  * Účet, přátelé a žebříček.
@@ -82,6 +92,9 @@ function SignedIn({
     fetchProfile(client, userId),
   );
   const duels = useRemoteQuery<Duel[]>(`duels:${userId}`, () => listDuels(client, userId));
+  const league = useRemoteQuery<LeagueStanding | null>(`league:${userId}`, () =>
+    leagueStanding(client, userId),
+  );
 
   return (
     <>
@@ -99,6 +112,7 @@ function SignedIn({
       />
       {profile.data ? (
         <>
+          <League standing={league.data ?? null} userId={userId} />
           <Friends client={client} userId={userId} onChallenged={duels.refresh} />
           <Duels duels={duels.data ?? []} loading={duels.loading} onPlay={onPlayDuel} />
         </>
