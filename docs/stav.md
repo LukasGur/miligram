@@ -1,6 +1,6 @@
 # Kde jsme
 
-Poslední aktualizace: **3. 9. 2026**
+Poslední aktualizace: **18. 9. 2026**
 
 ## Hotovo
 
@@ -13,8 +13,9 @@ prostředků, deterministický generátor, fond 614 přípravků ze SÚKL,
 tabulky dávkovacích rozmezí, rekonstituce a elektrolytů opsané ze SPC.
 
 **Fáze 2, šablony** — hotovo **72 ze 72** včetně českých a slovenských
-textů. Testů prochází 275. Mimo produkční set zůstává jediná, I3,
-která čeká na zdroj.
+textů. Testů prochází 361. Mimo produkční set zůstává jediná, I3: zdroj
+se našel (ISPAD 2022), ale ISPAD není v seznamu přípustných zdrojů
+v CLAUDE.md a rozšířit ho je rozhodnutí, ne úklid.
 
 | Kategorie | Hotovo | Zbývá |
 |---|---|---|
@@ -48,11 +49,23 @@ stejnou cestou, jakou k ní sahá aplikace:
 - žádost o přátelství smí přijmout jen adresát
 - vyzvat na souboj jde jen potvrzeného kamaráda
 - výsledek souboje si nikdo nepřepíše ani nezapíše za druhého
+- vlastní historie se stáhne celá, cizí ani anonymovi ani přihlášenému ne
+
+**Obnova na novém zařízení.** Fronta byla jednosměrná: kdo se přihlásil
+na novém telefonu, viděl doma nulu a vedle v lize svoje skutečné XP.
+Stahuje se totéž, co se posílá — co se stalo —, a skóre i série se z toho
+počítají znovu týmiž pravidly. Ověřeno proti živé databázi: XP spočítané
+obnovou sedí na XP, které si spočítal spouštěč na serveru. Slučuje se
+podle `lessonId`, takže na pořadí odeslání a stažení nezáleží a druhé
+spuštění skóre nenafoukne. Prášky se neobnovují — server zná výdělek,
+ne útratu.
 
 Zkušební účty po testech smazané, databáze je prázdná.
 
 **Fáze 4, gamifikace lokálně** — Dexie, prášky, XP, série, nápovědy,
-oprava chybného příkladu a ochrana série.
+oprava chybného příkladu a ochrana série. Každá odpověď se ukládá hned,
+ne až po dohrané lekci: rozehraná lekce přežije odchod z obrazovky
+i zavření aplikace a domovská obrazovka nabídne „Pokračovat · 3/7“.
 Celá lekce ověřena offline: po odpojení sítě běží ze service workeru
 včetně KaTeXu a jeho písem (73 souborů, 2,2 MB).
 Zdrojem pravdy pro hraní je zařízení: aplikace funguje offline a bez účtu.
@@ -65,8 +78,13 @@ kategorie. Opakování předloží tentýž příklad se stejnými čísly; to j
 celý důvod, proč generátor stojí na semínkách.
 
 **Fáze 8, leštění** — přístupnost prošla auditem axe-core (WCAG 2.1 AA
-i doporučené postupy) na všech sedmi obrazovkách: nula nálezů. Zbývá
-výkon a zkouška na skutečném iPhonu.
+i doporučené postupy) na všech sedmi obrazovkách: nula nálezů.
+
+Výkon: první načtení stáhne 849 kB místo 1 295 kB. Fond přípravků
+(309 kB) se vezl na domovskou obrazovku dvěma nenápadnými importy —
+`LESSON_LENGTH` sídlil vedle sestavování lekce a přehled statistik sahá
+přes `categoryOf` na šablony. Klient Supabase (241 kB) se dotahuje až
+při použití. Zbývá zkouška na skutečném iPhonu.
 
 **Vizuální výraz** — rozhraní bylo čisté, ale bez názoru. Zvolený směr je
 klinický přístroj: ostré poloměry, popisky verzálkami, čísla strojopisem
@@ -82,20 +100,22 @@ na stříkačce. Odměna je počítadlo, které doběhne — celé v CSS, bez
    v `src/core/economy.ts` jsou návrh, ne převzaté hodnoty: 2 prášky
    za správný příklad, 10 za bezchybnou lekci, nápověda za 15.
    Všechna jsou na jednom místě.
-2. **Doladit výraz podle zpětné vazby.** Směr je nastavený, čeká se,
+2. **Rozhodnout o I3.** Pravidlo 100 uvádí doporučený postup ISPAD 2022,
+   citace je v šabloně i v `docs/zdroje.md`. Otázka je, jestli doporučený
+   postup odborné společnosti patří mezi přípustné zdroje vedle SÚKL,
+   SPC a BNF. Pak je zapnutí jedna řádka.
+3. **Doladit výraz podle zpětné vazby.** Směr je nastavený, čeká se,
    co bude na telefonu drhnout.
-3. **Zkouška na skutečném iPhonu.** Všechno je zatím ověřené jen
+4. **Zkouška na skutečném iPhonu.** Všechno je zatím ověřené jen
    ve WebKitu na rozměrech telefonu, ne na zařízení.
-4. **Vlastní SMTP.** Přihlašovací kódy chodí přes vestavěné SMTP
+5. **Vlastní SMTP.** Přihlašovací kódy chodí přes vestavěné SMTP
    Supabase, které má tvrdý limit několika e-mailů za hodinu. Na ostrý
    provoz to nestačí.
-5. **Ověřit ligu na skutečném provozu.** Postup a sestup se počítají až
+6. **Ověřit ligu na skutečném provozu.** Postup a sestup se počítají až
    při první lekci v novém týdnu, takže se to pozná nejdřív za týden.
-6. **Revize slovenštiny rodilým mluvčím.** Texty jsou napsané, ne
+7. **Revize slovenštiny rodilým mluvčím.** Texty jsou napsané, ne
    přeložené strojem, ale nikdo je zatím nečetl. Názvy přípravků zůstávají
    české — fond je z české databáze.
-7. **I3** (korekční faktor inzulinu) čeká na zdroj, jinak vypustit.
-   Do té doby ji `productionTemplates()` nevydá a test to hlídá.
 
 ## Rozhodnutí, která už padla
 
@@ -110,6 +130,15 @@ na stříkačce. Odměna je počítadlo, které doběhne — celé v CSS, bez
 - Synchronizovat se budou události, ne stav. Dvě zařízení offline nemůžou
   poslat „mám 340 prášků“ — přepsala by se navzájem. Fronta `outbox` proto
   vzniká hned, i když ji zatím nikdo nečte.
+- Odpověď se ukládá hned, odměna až za celou lekci. Dnešní cíl i statistiky
+  proto počítají i s nedohranou lekcí, ale XP a prášky ne: v odměně je
+  bonus za bezchybný průchod a server ji počítá ze všech odpovědí naráz.
+- Události mají vlastní uid, ne pořadové číslo z Dexie. Pořadová čísla se
+  po přeinstalaci i na druhém zařízení opakují a server by takovou lekci
+  zahodil jako duplicitu.
+- Den se počítá podle kalendáře uživatele, ne podle UTC. Uložený čas je
+  v UTC a ukrajovat z něj prvních deset znaků znamená, že lekce dohraná
+  po půlnoci padne na včerejšek.
 - Oprava je druhý pokus, ne přepsání výsledku na správný. Za prášky se
   kupuje šance, ne bod — jinak by se student nic nenaučil.
 - Prášky jsou měna, XP je neutratitelné skóre. Zisk XP: 10 za správný
@@ -144,7 +173,7 @@ na stříkačce. Odměna je počítadlo, které doběhne — celé v CSS, bez
 ## Příkazy
 
 ```bash
-pnpm test        # 328 testů jádra, překladů, sazby, databáze a statistik
+pnpm test        # 361 testů jádra, překladů, sazby, databáze a statistik
 pnpm typecheck
 pnpm lint
 pnpm dev         # https, LAN, pro test na iPhonu
