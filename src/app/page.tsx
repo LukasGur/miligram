@@ -17,7 +17,8 @@ import { LESSON_LENGTH, newLessonId, planCategoryLesson, planFromItems } from "@
 import type { LessonPlan } from "@/core/lesson";
 import { useLocale } from "@/i18n/LocaleProvider";
 import type { WeekDay } from "@/lib/stats";
-import { useProfile, useToday } from "@/lib/useProfile";
+import { clearProgress, type AnsweredItem } from "@/lib/db";
+import { useLessonProgress, useProfile, useToday } from "@/lib/useProfile";
 
 const LESSON_MINUTES = "4–6";
 
@@ -56,10 +57,19 @@ export default function HomePage() {
    * Rozehraná lekce. Denní lekce se sestaví z identifikátoru, trénink
    * a opakování chyb přinesou hotový plán — proto se nese obojí.
    */
-  const [lesson, setLesson] = useState<{ id: string; plan?: LessonPlan; duelId?: string } | null>(null);
+  const [lesson, setLesson] = useState<{
+    id: string;
+    plan?: LessonPlan;
+    duelId?: string;
+    answered?: readonly AnsweredItem[];
+  } | null>(null);
 
   const { profile, streak } = useProfile();
   const { answered, week } = useToday();
+  const progress = useLessonProgress();
+  /** Rozehraná lekce se nabízí, dokud v ní zbývá aspoň jeden příklad. */
+  const unfinished =
+    progress && progress.answers.length < LESSON_LENGTH ? progress : null;
   /** Kdo ještě nic nedohrál, potřebuje vědět, do čeho jde. */
   const firstRun = profile.xp === 0 && answered === 0;
 
@@ -69,6 +79,7 @@ export default function HomePage() {
         lessonId={lesson.id}
         plan={lesson.plan}
         duelId={lesson.duelId}
+        answered={lesson.answered}
         onExit={() => setLesson(null)}
       />
     );
@@ -184,11 +195,37 @@ export default function HomePage() {
         >
           <button
             type="button"
-            onClick={() => setLesson({ id: newLessonId() })}
+            onClick={() =>
+              unfinished
+                ? setLesson({
+                    id: unfinished.lessonId,
+                    plan: unfinished.plan as LessonPlan | undefined,
+                    duelId: unfinished.duelId,
+                    answered: unfinished.answers,
+                  })
+                : setLesson({ id: newLessonId() })
+            }
             className="bg-accent active:bg-accent-press min-h-14 w-full rounded-control text-body font-semibold text-white transition-colors duration-75"
           >
-            {t("start")}
+            {unfinished
+              ? t("resume", { done: unfinished.answers.length, total: LESSON_LENGTH })
+              : t("start")}
           </button>
+
+          {/* Rozehranou lekci jde odložit stranou. Odpovědi z ní zůstávají
+              uložené, jen se v ní už nepokračuje. */}
+          {unfinished ? (
+            <button
+              type="button"
+              onClick={() => {
+                void clearProgress();
+                setLesson({ id: newLessonId() });
+              }}
+              className="text-ink-soft min-h-11 w-full text-label"
+            >
+              {t("startFresh")}
+            </button>
+          ) : null}
         </footer>
       </div>
 

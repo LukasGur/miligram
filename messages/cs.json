@@ -50,7 +50,9 @@
     "dailyDone": "Cíl splněn",
     "weekTitle": "Týden",
     "openShop": "Zásoby a nákup",
-    "dailyOf": "ze {total, number}"
+    "dailyOf": "ze {total, number}",
+    "resume": "Pokračovat · {done, number}/{total, number}",
+    "startFresh": "Začít novou lekci"
   },
   "settings": {
     "title": "Nastavení",

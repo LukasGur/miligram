@@ -2,7 +2,7 @@
 
 import { useLiveQuery } from "dexie-react-hooks";
 import { currentStreak } from "@/core/economy";
-import { db, emptyProfile, PROFILE_ID, type Profile } from "./db";
+import { db, emptyProfile, PROFILE_ID, PROGRESS_ID, type LessonProgress, type Profile } from "./db";
 import { answeredToday, weekActivity, type WeekDay } from "./stats";
 
 /**
@@ -46,4 +46,15 @@ export function useToday(): { answered: number; week: WeekDay[] } {
   const answered = useLiveQuery(() => answeredToday(), [], 0);
   const week = useLiveQuery(() => weekActivity(), [], []);
   return { answered, week };
+}
+
+/**
+ * Rozehraná lekce, jestli nějaká je.
+ *
+ * `undefined` znamená „ještě se čte“, `null` „žádná není“ — domovská
+ * obrazovka podle toho rozliší, jestli má nabídnout pokračování, nebo
+ * ještě nic nevědět a nepřepsat popisek tlačítka pod rukou.
+ */
+export function useLessonProgress(): LessonProgress | null | undefined {
+  return useLiveQuery(async () => (await db().progress.get(PROGRESS_ID)) ?? null, []);
 }

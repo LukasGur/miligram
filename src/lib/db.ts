@@ -61,6 +61,37 @@ export type LessonRecord = {
   finishedAt: string;
 };
 
+export type AnsweredItem = {
+  templateId: string;
+  seed: string;
+  difficulty: number;
+  correct: boolean;
+  hinted: boolean;
+  repaired: boolean;
+};
+
+/**
+ * Rozehraná lekce.
+ *
+ * Jediný řádek: naráz se hraje jedna lekce. Drží pořadí odpovědí, aby se
+ * dalo pokračovat tam, kde uživatel přestal. Zadání se neukládá ani tady —
+ * příklad se z plánu sestaví znovu.
+ */
+export type LessonProgress = {
+  id: number;
+  lessonId: string;
+  /**
+   * Plán tréninku nebo opakování chyb. Denní lekce ho nemá: odvodí se celá
+   * z identifikátoru, takže by uložený plán byl jen druhá kopie téhož.
+   */
+  plan?: unknown;
+  /** Souboj, do kterého se po dokončení hlásí výsledek. */
+  duelId?: string;
+  answers: readonly AnsweredItem[];
+  startedAt: string;
+  updatedAt: string;
+};
+
 /**
  * Fronta událostí pro synchronizaci.
  *
@@ -99,6 +130,7 @@ class MiligramDatabase extends Dexie {
   answers!: Table<AnswerRecord, number>;
   lessons!: Table<LessonRecord, number>;
   outbox!: Table<OutboxEvent, number>;
+  progress!: Table<LessonProgress, number>;
 
   constructor() {
     super("miligram");
@@ -138,6 +170,13 @@ class MiligramDatabase extends Dexie {
             event.uid ??= eventUid();
           });
       });
+
+    /**
+     * Čtvrtá verze ukládá rozehranou lekci. Bez ní se odpovědi držely jen
+     * v paměti obrazovky: kdo lekci opustil v půlce, přišel o všechny
+     * a dnešní cíl se po jeho práci nepohnul.
+     */
+    this.version(4).stores({ progress: "id" });
   }
 }
 
@@ -173,16 +212,75 @@ export async function readProfile(): Promise<Profile> {
 export type FinishedLesson = {
   lessonId: string;
   /** Odpovědi v pořadí, v jakém se příklady zobrazily. */
-  answers: readonly {
-    templateId: string;
-    seed: string;
-    difficulty: number;
-    correct: boolean;
-    hinted: boolean;
-    repaired: boolean;
-  }[];
+  answers: readonly AnsweredItem[];
   reward: { xp: number; pills: number; correct: number; count: number; flawless: boolean };
 };
+
+/** Jediný řádek — naráz je rozehraná nejvýš jedna lekce. */
+export const PROGRESS_ID = 1;
+
+export async function readProgress(): Promise<LessonProgress | undefined> {
+  return db().progress.get(PROGRESS_ID);
+}
+
+/**
+ * Zapíše jednu zodpovězenou otázku.
+ *
+ * Zapisuje se hned, ne až na konci lekce. Kdo vystoupí z tramvaje po třetím
+ * příkladu, má tři hotové — jak v dnešním cíli, tak ve chvíli, kdy se vrátí
+ * a bude chtít lekci dohrát. Dřív odpovědi žily jen v paměti obrazovky
+ * a odchod je zahodil.
+ *
+ * XP a prášky se tu nepřipisují. Odměna patří lekci jako celku: je v ní
+ * bonus za bezchybný průchod a server ji počítá z celé lekce. Rozpad
+ * na jednotlivé odpovědi by se s ním rozešel.
+ */
+export async function recordAnswer(
+  lessonId: string,
+  answer: AnsweredItem,
+  options: { plan?: unknown; duelId?: string } = {},
+  now = new Date(),
+): Promise<void> {
+  const timestamp = now.toISOString();
+  const database = db();
+
+  await database.transaction("rw", database.answers, database.progress, async () => {
+    const current = await database.progress.get(PROGRESS_ID);
+    // Jiná lekce než rozehraná znamená, že uživatel mezitím začal jinou.
+    // Odpovědi té předchozí zůstávají uložené, jen se v ní už nepokračuje.
+    const running = current?.lessonId === lessonId ? current : undefined;
+    const answers = [...(running?.answers ?? []), answer];
+
+    await database.answers.add({
+      lessonId,
+      index: answers.length - 1,
+      templateId: answer.templateId,
+      seed: answer.seed,
+      difficulty: answer.difficulty,
+      correct: answer.correct,
+      hinted: answer.hinted,
+      repaired: answer.repaired,
+      answeredAt: timestamp,
+    });
+
+    await database.progress.put({
+      id: PROGRESS_ID,
+      lessonId,
+      // Plán a souboj se opisují z rozehrané lekce, když je volající
+      // nepřipomene. Jinak by je druhá odpověď v pořadí umazala.
+      plan: options.plan ?? running?.plan,
+      duelId: options.duelId ?? running?.duelId,
+      answers,
+      startedAt: running?.startedAt ?? timestamp,
+      updatedAt: timestamp,
+    });
+  });
+}
+
+/** Zahodí rozehranou lekci. Uložené odpovědi zůstávají — práce se nemaže. */
+export async function clearProgress(): Promise<void> {
+  await db().progress.delete(PROGRESS_ID);
+}
 
 /**
  * Zapíše dokončenou lekci. Všechno v jedné transakci: kdyby zápis skončil
@@ -193,7 +291,10 @@ export async function recordLesson(lesson: FinishedLesson, now = new Date()): Pr
   const today = localDay(now);
   const database = db();
 
-  return database.transaction("rw", database.profile, database.answers, database.lessons, database.outbox, async () => {
+  // Tabulky polem, ať se řádek vejde: přibyla mezi ně rozehraná lekce.
+  const tables = [database.profile, database.answers, database.lessons, database.outbox, database.progress];
+
+  return database.transaction("rw", tables, async () => {
     const current = (await database.profile.get(PROFILE_ID)) ?? emptyProfile(now);
     const streak: StreakState = advanceStreak(
       { days: current.streakDays, lastDay: current.lastLessonDay, freezes: current.streakFreezes ?? 0 },
@@ -211,19 +312,27 @@ export async function recordLesson(lesson: FinishedLesson, now = new Date()): Pr
     };
 
     await database.profile.put(updated);
-    await database.answers.bulkAdd(
-      lesson.answers.map((answer, index) => ({
-        lessonId: lesson.lessonId,
-        index,
-        templateId: answer.templateId,
-        seed: answer.seed,
-        difficulty: answer.difficulty,
-        correct: answer.correct,
-        hinted: answer.hinted,
-        repaired: answer.repaired,
-        answeredAt: timestamp,
-      })),
-    );
+    /**
+     * Odpovědi zpravidla uložil `recordAnswer` hned po každém příkladu.
+     * Zapisují se tady jen tehdy, když po lekci žádné nezůstaly — z testu
+     * nebo z obnovy —, aby se nezaložily dvakrát.
+     */
+    const stored = await database.answers.where("lessonId").equals(lesson.lessonId).count();
+    if (stored === 0) {
+      await database.answers.bulkAdd(
+        lesson.answers.map((answer, index) => ({
+          lessonId: lesson.lessonId,
+          index,
+          templateId: answer.templateId,
+          seed: answer.seed,
+          difficulty: answer.difficulty,
+          correct: answer.correct,
+          hinted: answer.hinted,
+          repaired: answer.repaired,
+          answeredAt: timestamp,
+        })),
+      );
+    }
     await database.lessons.add({
       lessonId: lesson.lessonId,
       count: lesson.reward.count,
@@ -249,6 +358,9 @@ export async function recordLesson(lesson: FinishedLesson, now = new Date()): Pr
       },
       createdAt: timestamp,
     });
+
+    // Lekce je dohraná, rozehranou už není co držet.
+    await database.progress.delete(PROGRESS_ID);
 
     return updated;
   });

@@ -4,7 +4,7 @@ import { useMemo, useRef, useState } from "react";
 import { useFormatter, useTranslations } from "next-intl";
 import { HINT_COST, REPAIR_COST, rewardForLesson } from "@/core/economy";
 import { lessonExercise, planLesson, type LessonPlan } from "@/core/lesson";
-import { recordLesson, spendPills } from "@/lib/db";
+import { recordAnswer, recordLesson, spendPills, type AnsweredItem } from "@/lib/db";
 import { recordDuelResult } from "@/lib/remote";
 import { supabase } from "@/lib/supabase";
 import { useSession } from "@/lib/useSession";
@@ -13,26 +13,21 @@ import { Numeral } from "@/components/ui/Numeral";
 import { Tally } from "@/components/ui/Tally";
 import { ExerciseView } from "./ExerciseView";
 
-type Answered = {
-  templateId: string;
-  seed: string;
-  difficulty: number;
-  correct: boolean;
-  hinted: boolean;
-  repaired: boolean;
-};
-
 /**
  * Průběh lekce.
  *
  * Drží jen pořadové číslo a seznam výsledků. Zadání se nikam neukládá —
  * příklad je určený dvojicí (šablona, semínko), takže se dá kdykoli
  * sestavit znovu ze samotného identifikátoru lekce.
+ *
+ * Každá odpověď se zapisuje hned. Rozehraná lekce tím přežije odchod
+ * z obrazovky i zavření aplikace a dá se v ní pokračovat.
  */
 export function LessonView({
   lessonId,
   plan: given,
   duelId,
+  answered: resumed,
   onExit,
 }: {
   lessonId: string;
@@ -43,11 +38,14 @@ export function LessonView({
   plan?: LessonPlan;
   /** Je-li vyplněné, hlásí se po dokončení výsledek do souboje. */
   duelId?: string;
+  /** Odpovědi z rozehrané lekce, na které se navazuje. */
+  answered?: readonly AnsweredItem[];
   onExit: () => void;
 }) {
   const plan = useMemo(() => given ?? planLesson(lessonId), [given, lessonId]);
-  const [index, setIndex] = useState(0);
-  const [answers, setAnswers] = useState<Answered[]>([]);
+  // Rozehraná lekce začíná tam, kde uživatel přestal.
+  const [index, setIndex] = useState(resumed?.length ?? 0);
+  const [answers, setAnswers] = useState<AnsweredItem[]>([...(resumed ?? [])]);
   const { profile } = useProfile();
   const { session } = useSession();
   /**
@@ -82,7 +80,7 @@ export function LessonView({
       onHint={() => spendPills(HINT_COST, `hint:${exercise.templateId}`)}
       onRepair={() => spendPills(REPAIR_COST, `repair:${exercise.templateId}`)}
       onAnswered={({ correct, hinted, repaired }) => {
-        const answered: Answered[] = [
+        const answered: AnsweredItem[] = [
           ...answers,
           {
             templateId: exercise.templateId,
@@ -95,6 +93,21 @@ export function LessonView({
         ];
         setAnswers(answered);
         setIndex(index + 1);
+
+        // Zápis odpovědi je samostatný od zápisu lekce: lekce se nemusí
+        // dohrát, odpověď už padla.
+        void recordAnswer(
+          lessonId,
+          {
+            templateId: exercise.templateId,
+            seed: exercise.seed,
+            difficulty: exercise.difficulty,
+            correct,
+            hinted,
+            repaired,
+          },
+          { plan: given, duelId },
+        );
 
         // Poslední odpověď lekci uzavírá. Zapisuje se tady, v obsluze
         // události, ne při vykreslení shrnutí — událost nastane jednou.
@@ -133,7 +146,7 @@ function LessonSummary({
   answers,
   onExit,
 }: {
-  answers: readonly Answered[];
+  answers: readonly AnsweredItem[];
   onExit: () => void;
 }) {
   const t = useTranslations("lesson");
