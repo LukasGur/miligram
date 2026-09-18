@@ -7,11 +7,15 @@ import { register } from "./registry";
  *
  * POZOR: šablona je označená `needsReview` a do produkčního setu nepatří.
  *
- * Pravidla 100 a 500 jsou zavedená klinická praxe, ale v SPC inzulinů
- * nejsou a nenašli jsme je ani v žádném zdroji, ke kterému máme přístup.
- * Bez doporučeného postupu odborné společnosti nebo BNF nesmí šablona
- * tvrdit, že se korekční faktor počítá takhle — proto se negeneruje.
- * Kód tu zůstává, aby stačilo doplnit zdroj, ne psát ji znovu.
+ * Zdroj se našel: konsenzuální doporučený postup ISPAD z roku 2022 pravidlo
+ * uvádí výslovně („The usual 100/TDD for mmol/l (or 1800 for mg/dL)“).
+ * V SPC inzulinů pravidlo není a nikdy nebude — je to postup, jak dávku
+ * spočítat, ne údaj o přípravku.
+ *
+ * Zbývá rozhodnutí, které není naše: CLAUDE.md připouští SÚKL, ŠÚKL, SPC,
+ * AISLP a BNF, a ISPAD mezi nimi není. Doporučený postup odborné společnosti
+ * je jiný druh zdroje než souhrn údajů o přípravku a rozšířit ten seznam
+ * má smysl jen vědomě. Do té doby se šablona negeneruje.
  */
 export const I3 = register({
   id: "I3",
@@ -19,10 +23,13 @@ export const I3 = register({
   needsReview: true,
   source: {
     citation:
-      "Nedoloženo. Pravidlo 100 (korekční faktor = 100 / celková denní dávka) je zavedená " +
-      "klinická praxe, ale v SPC inzulinů uvedené není. Šablona čeká na doporučený postup " +
-      "odborné společnosti nebo na BNF.",
-    verifiedAt: "2026-09-03",
+      "Sundberg F, deBeaufort C, Krogvold L, et al. ISPAD Clinical Practice Consensus " +
+      "Guidelines 2022: Managing diabetes in preschoolers. Pediatr Diabetes. " +
+      "2022;23(8):1496–1511. doi:10.1111/pedi.13427 — „The usual 100/TDD for mmol/l " +
+      "(or 1800 for mg/dL) often needs to be adjusted…“. Pravidlo 100 tedy stojí " +
+      "v doporučeném postupu odborné společnosti, ne v SPC. Seznam zdrojů v CLAUDE.md " +
+      "ISPAD zatím neuvádí, proto šablona čeká na rozhodnutí, jestli tam patří.",
+    verifiedAt: "2026-09-18",
   },
 
   generate(rng, difficulty) {

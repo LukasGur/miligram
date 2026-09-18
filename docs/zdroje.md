@@ -140,6 +140,13 @@ Tyto nesmí do produkčního setu, dokud nebudou podložené (`needsReview: true
 - ~~L4 — kumulativní dávka antracyklinu~~ **doloženo** SPC doxorubicinu:
   celoživotní limit 550 mg/m², u pacienta po ozáření mediastina nebo se
   srdečním onemocněním 400 mg/m².
-- **I3 — korekční faktor a poměr inzulin/sacharidy.** Pravidla 100 a 500
-  nejsou v SPC inzulinů; jde o klinickou praxi. Potřebuje doporučený postup
-  odborné společnosti nebo BNF. Jediná šablona mimo produkční set.
+- **I3 — korekční faktor a poměr inzulin/sacharidy.** Pravidlo 100 uvádí
+  konsenzuální doporučený postup ISPAD 2022 („The usual 100/TDD for mmol/l
+  (or 1800 for mg/dL)“, Sundberg F, deBeaufort C, Krogvold L, et al.
+  Pediatr Diabetes. 2022;23(8):1496–1511, doi:10.1111/pedi.13427). V SPC
+  inzulinů pravidlo není a být nemůže — je to postup výpočtu dávky, ne údaj
+  o přípravku.
+
+  Zbývá rozhodnout, jestli doporučený postup odborné společnosti patří mezi
+  přípustné zdroje; CLAUDE.md dnes uvádí SÚKL, ŠÚKL, SPC, AISLP a BNF.
+  Do rozhodnutí zůstává I3 jediná šablona mimo produkční set.
