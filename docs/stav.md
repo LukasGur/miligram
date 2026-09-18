@@ -51,13 +51,19 @@ stejnou cestou, jakou k ní sahá aplikace:
 - výsledek souboje si nikdo nepřepíše ani nezapíše za druhého
 - vlastní historie se stáhne celá, cizí ani anonymovi ani přihlášenému ne
 
-**Obnova na novém zařízení.** Fronta byla jednosměrná: kdo se přihlásil
+**Stahování ze serveru.** Fronta byla jednosměrná: kdo se přihlásil
 na novém telefonu, viděl doma nulu a vedle v lize svoje skutečné XP.
 Stahuje se totéž, co se posílá — co se stalo —, a skóre i série se z toho
-počítají znovu týmiž pravidly. Ověřeno proti živé databázi: XP spočítané
-obnovou sedí na XP, které si spočítal spouštěč na serveru. Slučuje se
-podle `lessonId`, takže na pořadí odeslání a stažení nezáleží a druhé
-spuštění skóre nenafoukne. Prášky se neobnovují — server zná výdělek,
+počítají znovu týmiž pravidly. Poprvé na účet přijde celá historie,
+podruhé a dál jen to, co je novější než nejnovější známá lekce; běžné
+spuštění tak zaplatí jeden dotaz a nevrátí nic. Tím se zároveň doženou
+dvě zařízení téhož uživatele.
+
+Ověřeno proti živé databázi: XP spočítané ze stažených dat sedí na XP,
+které si spočítal spouštěč na serveru, hranice podle času vrací jen
+novinky a lekce zapsaná „z druhého zařízení“ dorazí. Slučuje se podle
+`lessonId`, takže na pořadí odeslání a stažení nezáleží a opakované
+stažení skóre nenafoukne. Prášky se neobnovují — server zná výdělek,
 ne útratu.
 
 Zkušební účty po testech smazané, databáze je prázdná.
@@ -67,7 +73,7 @@ oprava chybného příkladu a ochrana série. Každá odpověď se ukládá hned
 ne až po dohrané lekci: rozehraná lekce přežije odchod z obrazovky
 i zavření aplikace a domovská obrazovka nabídne „Pokračovat · 3/7“.
 Celá lekce ověřena offline: po odpojení sítě běží ze service workeru
-včetně KaTeXu a jeho písem (73 souborů, 2,2 MB).
+včetně KaTeXu a jeho písem (82 souborů, 2,5 MB).
 Zdrojem pravdy pro hraní je zařízení: aplikace funguje offline a bez účtu.
 Ukládá se semínko odpovědi, ne zadání. Každá změna zároveň zapisuje
 událost do fronty `outbox`, ze které bude čerpat synchronizace.

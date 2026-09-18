@@ -46,14 +46,23 @@ export function remoteGateway(client: SupabaseClient, userId: string): SyncGatew
  */
 const PAGE = 500;
 
-export async function fetchLessons(client: SupabaseClient, userId: string): Promise<RemoteLesson[]> {
+export async function fetchLessons(
+  client: SupabaseClient,
+  userId: string,
+  since?: string,
+): Promise<RemoteLesson[]> {
   const lessons: RemoteLesson[] = [];
 
   for (let from = 0; ; from += PAGE) {
-    const { data, error } = await client
+    let query = client
       .from("lesson_events")
       .select("lesson_id, answers, finished_at")
-      .eq("user_id", userId)
+      .eq("user_id", userId);
+    // Hranice je včetně: lekce se stejným časem by při ostrém větším
+    // propadla. Znovu stažená lekce nevadí, slučuje se podle lessonId.
+    if (since) query = query.gte("finished_at", since);
+
+    const { data, error } = await query
       .order("finished_at", { ascending: true })
       .range(from, from + PAGE - 1);
     if (error) throw new Error(error.message);

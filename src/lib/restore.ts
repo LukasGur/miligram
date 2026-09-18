@@ -31,8 +31,11 @@ export type RemoteLesson = {
 };
 
 export type RestoreGateway = {
-  /** Všechny lekce uživatele, od nejstarší. */
-  pullLessons(): Promise<readonly RemoteLesson[]>;
+  /**
+   * Lekce uživatele od nejstarší. `since` omezuje dotaz na to, co se stalo
+   * od poslední návštěvy — při běžném spuštění se tak nevrací nic.
+   */
+  pullLessons(since?: string): Promise<readonly RemoteLesson[]>;
 };
 
 export type RestoreResult = {
@@ -49,8 +52,8 @@ export type RestoreResult = {
  * jedinečný napříč zařízeními. Díky tomu nezáleží na pořadí: ať se dřív
  * odešle fronta, nebo stáhne historie, každá lekce skončí uložená jednou.
  */
-export async function restoreLessons(gateway: RestoreGateway): Promise<RestoreResult> {
-  const remote = await gateway.pullLessons();
+export async function restoreLessons(gateway: RestoreGateway, since?: string): Promise<RestoreResult> {
+  const remote = await gateway.pullLessons(since);
   const database = db();
 
   return database.transaction("rw", database.profile, database.answers, database.lessons, async () => {
@@ -127,20 +130,35 @@ function streakFromHistory(lessons: readonly LessonRecord[], freezes: number): S
 }
 
 /**
- * Obnova při přihlášení, nejvýš jednou na účet a zařízení.
+ * Stažení toho, co zařízení nezná.
  *
- * Značka se ukládá do profilu, ne do paměti — jinak by se celá historie
- * stahovala po každém otevření aplikace. Zapíše se až po úspěchu, takže
- * přerušené stahování se příště zkusí znovu.
+ * Poprvé na účet stáhne celou historii — to je obnova po přeinstalaci.
+ * Podruhé a dál se ptá jen na to, co se stalo od nejnovější známé lekce,
+ * takže běžné spuštění vrátí prázdno a zaplatí jeden dotaz. Díky tomu se
+ * doženou i dvě zařízení téhož uživatele: co se odehrálo na tabletu,
+ * dorazí do telefonu při jeho příštím spuštění.
+ *
+ * Meze se posouvají až po úspěchu, takže přerušené stahování se příště
+ * zkusí znovu. Hranice je včetně (`>=`) — lekce se stejným časem by při
+ * ostrém `>` propadla. Podruhé stažená lekce nevadí, slučuje se
+ * podle `lessonId`.
  */
-export async function restoreOnce(userId: string, gateway: RestoreGateway): Promise<RestoreResult | null> {
+export async function pullNews(userId: string, gateway: RestoreGateway): Promise<RestoreResult> {
   const database = db();
   const current = (await database.profile.get(PROFILE_ID)) ?? emptyProfile();
-  if (current.restoredFor === userId) return null;
+  // Po přihlášení k jinému účtu se ptáme znovu na všechno: historie toho
+  // druhého na zařízení není.
+  const since = current.restoredFor === userId ? current.restoredThrough : undefined;
 
-  const result = await restoreLessons(gateway);
+  const result = await restoreLessons(gateway, since);
 
+  const newest = await database.lessons.orderBy("finishedAt").last();
   const after = (await database.profile.get(PROFILE_ID)) ?? emptyProfile();
-  await database.profile.put({ ...after, restoredFor: userId, updatedAt: new Date().toISOString() });
+  await database.profile.put({
+    ...after,
+    restoredFor: userId,
+    restoredThrough: newest?.finishedAt ?? since,
+    updatedAt: new Date().toISOString(),
+  });
   return result;
 }

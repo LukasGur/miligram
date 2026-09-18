@@ -26,11 +26,15 @@ export type Profile = {
   /** Koupené ochrany série. Uplatní se samy, když uživatel den vynechá. */
   streakFreezes: number;
   /**
-   * Účet, jehož historie se na tohle zařízení už stáhla. Drží se proto,
-   * aby se obnova nespouštěla při každém otevření aplikace — stahovat
-   * celou historii kvůli ničemu by stálo data hned na úvodní obrazovce.
+   * Účet, jehož historie se na tohle zařízení stahovala. Po přihlášení
+   * k jinému se stahuje znovu celá — historie toho druhého tu není.
    */
   restoredFor?: string;
+  /**
+   * Čas nejnovější stažené lekce. Další spuštění se ptá jen na to, co je
+   * novější, takže běžně nepřijde nic a stahování stojí jeden dotaz.
+   */
+  restoredThrough?: string;
   createdAt: string;
   updatedAt: string;
 };

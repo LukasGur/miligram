@@ -2,7 +2,7 @@
 
 import { useEffect } from "react";
 import { fetchLessons, remoteGateway } from "@/lib/remote";
-import { restoreOnce } from "@/lib/restore";
+import { pullNews } from "@/lib/restore";
 import { supabase } from "@/lib/supabase";
 import { syncOutbox } from "@/lib/sync";
 import { usePendingEvents } from "@/lib/useProfile";
@@ -42,9 +42,10 @@ export function SyncAgent() {
   }, [userId, pending]);
 
   /**
-   * Obnova po přihlášení. Čerstvá instalace nemá doma nic, ale server její
-   * historii zná — bez stažení by uživatel viděl doma nulu a vedle v lize
-   * svoje skutečné XP. Běží jednou na účet, značka je v profilu.
+   * Stažení toho, co zařízení nezná. Čerstvá instalace nemá doma nic, ale
+   * server historii zná — bez stažení by uživatel viděl doma nulu a vedle
+   * v lize svoje skutečné XP. Podruhé a dál se ptá jen na novinky, takže
+   * se doženou i dvě zařízení téhož uživatele.
    */
   useEffect(() => {
     const client = supabase();
@@ -53,7 +54,7 @@ export function SyncAgent() {
     let cancelled = false;
     const pull = () => {
       if (cancelled || !navigator.onLine) return;
-      void restoreOnce(userId, { pullLessons: () => fetchLessons(client, userId) }).catch(() => {});
+      void pullNews(userId, { pullLessons: (since) => fetchLessons(client, userId, since) }).catch(() => {});
     };
 
     pull();

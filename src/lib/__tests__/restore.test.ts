@@ -1,7 +1,7 @@
 import "fake-indexeddb/auto";
 import { beforeEach, describe, expect, it } from "vitest";
 import { db, readProfile, recordLesson, PROFILE_ID } from "../db";
-import { restoreLessons, restoreOnce, type RemoteLesson, type RestoreGateway } from "../restore";
+import { pullNews, restoreLessons, type RemoteLesson, type RestoreGateway } from "../restore";
 
 function odpoved(correct: boolean, index = 0) {
   return {
@@ -32,12 +32,15 @@ function lekce(lessonId: string, den: string, correct = 7): RemoteLesson {
   };
 }
 
-function gateway(lessons: readonly RemoteLesson[]): RestoreGateway & { calls: number } {
+function gateway(lessons: readonly RemoteLesson[]): RestoreGateway & { calls: number; since: (string | undefined)[] } {
   const state = {
     calls: 0,
-    async pullLessons() {
+    since: [] as (string | undefined)[],
+    async pullLessons(since?: string) {
       state.calls += 1;
-      return lessons;
+      state.since.push(since);
+      // Server vrací jen to, co je od zadané hranice novější.
+      return since ? lessons.filter((lesson) => lesson.finishedAt >= since) : lessons;
     },
   };
   return state;
@@ -128,31 +131,45 @@ describe("obnova historie", () => {
   });
 });
 
-describe("obnova při přihlášení", () => {
-  it("proběhne jednou na účet", async () => {
-    const server = gateway([lekce("a", "2026-09-10")]);
+describe("stahování novinek", () => {
+  it("poprvé stáhne celou historii, podruhé se ptá jen na novinky", async () => {
+    const server = gateway([lekce("a", "2026-09-10"), lekce("b", "2026-09-11")]);
 
-    expect(await restoreOnce("uzivatel-1", server)).toMatchObject({ added: 1 });
-    expect(await restoreOnce("uzivatel-1", server)).toBeNull();
-    expect(server.calls).toBe(1);
+    expect(await pullNews("uzivatel-1", server)).toMatchObject({ added: 2 });
+    expect(server.since).toEqual([undefined]);
+
+    expect(await pullNews("uzivatel-1", server)).toMatchObject({ added: 0 });
+    // Podruhé se ptá od nejnovější známé lekce, ne od začátku.
+    expect(server.since[1]).toBe(poledne("2026-09-11"));
   });
 
-  it("jiný účet na témže zařízení se stáhne znovu", async () => {
+  /** Kvůli tomuhle to celé je: co se odehrálo na tabletu, dorazí do telefonu. */
+  it("dožene lekci, která vznikla na druhém zařízení", async () => {
     const server = gateway([lekce("a", "2026-09-10")]);
-    await restoreOnce("uzivatel-1", server);
+    await pullNews("uzivatel-1", server);
 
-    expect(await restoreOnce("uzivatel-2", server)).toMatchObject({ added: 0 });
-    expect(server.calls).toBe(2);
+    const tablet = gateway([lekce("a", "2026-09-10"), lekce("b", "2026-09-12")]);
+    expect(await pullNews("uzivatel-1", tablet)).toMatchObject({ added: 1 });
+    expect((await readProfile()).xp).toBe(180);
   });
 
-  it("po neúspěchu se značka nezapíše a příště se zkusí znovu", async () => {
+  it("jiný účet na témže zařízení se stáhne znovu od začátku", async () => {
+    const server = gateway([lekce("a", "2026-09-10")]);
+    await pullNews("uzivatel-1", server);
+
+    await pullNews("uzivatel-2", server);
+    expect(server.since).toEqual([undefined, undefined]);
+  });
+
+  it("po neúspěchu se mez neposune a příště se zkusí znovu", async () => {
     const rozbity: RestoreGateway = {
       async pullLessons() {
         throw new Error("síť je pryč");
       },
     };
 
-    await expect(restoreOnce("uzivatel-1", rozbity)).rejects.toThrow(/síť/);
+    await expect(pullNews("uzivatel-1", rozbity)).rejects.toThrow(/síť/);
     expect((await readProfile()).restoredFor).toBeUndefined();
+    expect((await readProfile()).restoredThrough).toBeUndefined();
   });
 });
