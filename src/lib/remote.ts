@@ -2,6 +2,7 @@
 
 import type { SupabaseClient } from "@supabase/supabase-js";
 import { rankLeague, type RankedEntry } from "@/core/league";
+import type { RemoteLesson } from "./restore";
 import type { LessonEventRow, SyncGateway } from "./sync";
 
 /**
@@ -34,6 +35,39 @@ export function remoteGateway(client: SupabaseClient, userId: string): SyncGatew
       if (error) throw new Error(error.message);
     },
   };
+}
+
+/**
+ * Stažení vlastní historie pro obnovu na novém zařízení.
+ *
+ * Stránkuje se, protože po roce hraní jde o stovky záznamů a jediný dotaz
+ * by narazil na strop odpovědi. Řadí se od nejstarší, aby se série skládala
+ * ve stejném pořadí, v jakém vznikala.
+ */
+const PAGE = 500;
+
+export async function fetchLessons(client: SupabaseClient, userId: string): Promise<RemoteLesson[]> {
+  const lessons: RemoteLesson[] = [];
+
+  for (let from = 0; ; from += PAGE) {
+    const { data, error } = await client
+      .from("lesson_events")
+      .select("lesson_id, answers, finished_at")
+      .eq("user_id", userId)
+      .order("finished_at", { ascending: true })
+      .range(from, from + PAGE - 1);
+    if (error) throw new Error(error.message);
+
+    const page = data ?? [];
+    lessons.push(
+      ...page.map((row) => ({
+        lessonId: row.lesson_id,
+        finishedAt: row.finished_at,
+        answers: (row.answers as RemoteLesson["answers"]) ?? [],
+      })),
+    );
+    if (page.length < PAGE) return lessons;
+  }
 }
 
 export async function fetchProfile(client: SupabaseClient, userId: string): Promise<RemoteProfile | null> {

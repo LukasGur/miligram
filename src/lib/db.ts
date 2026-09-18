@@ -25,6 +25,12 @@ export type Profile = {
   lastLessonDay: string | null;
   /** Koupené ochrany série. Uplatní se samy, když uživatel den vynechá. */
   streakFreezes: number;
+  /**
+   * Účet, jehož historie se na tohle zařízení už stáhla. Drží se proto,
+   * aby se obnova nespouštěla při každém otevření aplikace — stahovat
+   * celou historii kvůli ničemu by stálo data hned na úvodní obrazovce.
+   */
+  restoredFor?: string;
   createdAt: string;
   updatedAt: string;
 };

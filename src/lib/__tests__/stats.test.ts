@@ -2,7 +2,7 @@ import "fake-indexeddb/auto";
 import { beforeEach, describe, expect, it } from "vitest";
 import "@/core/templates";
 import { db, recordLesson } from "../db";
-import { mistakesToRepeat, overview, weekActivity } from "../stats";
+import { answeredToday, mistakesToRepeat, overview, weekActivity } from "../stats";
 
 const answer = (templateId: string, seed: string, correct: boolean) => ({
   templateId,
@@ -127,6 +127,26 @@ describe("týden na domovské obrazovce", () => {
 
     const week = await weekActivity("2026-09-17");
     expect(week.filter((d) => d.active).map((d) => d.day)).toEqual(["2026-09-16"]);
+  });
+
+  /**
+   * Lekce dohraná krátce po půlnoci. Uložený čas je v UTC, takže ve
+   * středoevropském létě padne ještě na předchozí den — den se ale počítá
+   * podle kalendáře uživatele, jinak by se po půlnoci vybarvil včerejšek.
+   */
+  it("lekci po půlnoci započítá dnešku, ne včerejšku", async () => {
+    await recordLesson(
+      {
+        lessonId: "l",
+        answers: [answer("A1", "s", true)],
+        reward: { xp: 10, pills: 2, correct: 1, count: 1, flawless: true },
+      },
+      new Date(2026, 8, 17, 0, 30),
+    );
+
+    const week = await weekActivity("2026-09-17");
+    expect(week.filter((d) => d.active).map((d) => d.day)).toEqual(["2026-09-17"]);
+    expect(await answeredToday("2026-09-17")).toBe(1);
   });
 
   it("dny, které teprve přijdou, nejsou zmeškané", async () => {

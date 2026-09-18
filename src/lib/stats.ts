@@ -116,10 +116,17 @@ function safeCategory(templateId: string): Category | null {
    a ty o dnešku nic neříkají.
    ------------------------------------------------------------------------ */
 
-/** Kolik příkladů uživatel zodpověděl dnes. */
+/**
+ * Kolik příkladů uživatel zodpověděl dnes.
+ *
+ * Uložený čas je v UTC, ale den se počítá podle kalendáře uživatele —
+ * proto se převádí, místo aby se z řetězce ukrojilo prvních deset znaků.
+ * Ve středoevropském létě totiž lekce dohraná o půl jedné v noci padne
+ * v UTC ještě na včerejšek a dnešní cíl by se po ní nepohnul.
+ */
 export async function answeredToday(today = localDay()): Promise<number> {
   const answers = await db().answers.toArray();
-  return answers.filter((answer) => answer.answeredAt.slice(0, 10) === today).length;
+  return answers.filter((answer) => localDay(new Date(answer.answeredAt)) === today).length;
 }
 
 export type WeekDay = {
@@ -140,7 +147,9 @@ export type WeekDay = {
  */
 export async function weekActivity(today = localDay()): Promise<WeekDay[]> {
   const lessons = await db().lessons.toArray();
-  const played = new Set(lessons.map((lesson) => lesson.finishedAt.slice(0, 10)));
+  // Den podle kalendáře uživatele, ne podle UTC — jinak by se lekce dohraná
+  // krátce po půlnoci vybarvila u včerejška.
+  const played = new Set(lessons.map((lesson) => localDay(new Date(lesson.finishedAt))));
 
   const [year, month, date] = today.split("-").map(Number);
   const reference = new Date(Date.UTC(year, month - 1, date));
