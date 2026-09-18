@@ -341,15 +341,13 @@
     "hint": "Nápověda za {cost, number} prášků",
     "hintPoor": "Na nápovědu potřebuješ {cost, number} prášků",
     "hintTitle": "Nápověda",
-    "repair": "Zkusit znovu za {cost, number} prášků",
-    "repairPoor": "Na opravu potřebuješ {cost, number} prášků",
     "correctIs": "Správně je",
     "yourAnswer": "Tvoje odpověď",
     "deviation": "Odchylka",
     "magnitudeShort": "Chyba o řád",
     "solutionShort": "Postup",
-    "repairShort": "Zkusit znovu",
-    "summaryScoreLabel": "správně"
+    "summaryScoreLabel": "správně",
+    "repeat": "Znovu"
   },
   "account": {
     "title": "Účet",
@@ -443,6 +441,6 @@
     "categoriesHint": "Řazeno od nejslabší. Úspěšnost se ukazuje od {count, number} odpovědí.",
     "train": "Trénovat",
     "tooFew": "málo odpovědí",
-    "helpUsed": "{hinted, number}× nápověda · {repaired, number}× oprava"
+    "helpUsed": "{hinted, number}× nápověda"
   }
 }

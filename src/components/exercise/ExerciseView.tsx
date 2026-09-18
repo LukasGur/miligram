@@ -4,7 +4,7 @@ import { useState } from "react";
 import { useTranslations } from "next-intl";
 import { CloseIcon } from "@/components/icons";
 import { evaluateAnswer, parseAnswer, type Verdict } from "@/core/answer";
-import { HINT_COST, REPAIR_COST } from "@/core/economy";
+import { HINT_COST } from "@/core/economy";
 import type { Exercise } from "@/core/types";
 import { useAnswerUnit, useExercisePrompt } from "@/i18n/exerciseText";
 import { AnswerDisplay } from "./AnswerDisplay";
@@ -20,21 +20,23 @@ const MAX_INPUT_LENGTH = 9;
 
 export function ExerciseView({
   exercise,
-  index,
+  solved,
   count,
+  repeat,
   onExit,
   onAnswered,
   onHint,
-  onRepair,
   pills,
 }: {
   exercise: Exercise;
-  index: number;
+  /** Kolik příkladů z lekce je hotových. Ukazatel jede podle vyřešených. */
+  solved: number;
   count: number;
+  /** Příklad, který se vrátil, protože poprvé nevyšel. */
+  repeat: boolean;
   onExit: () => void;
-  onAnswered: (result: { correct: boolean; hinted: boolean; repaired: boolean }) => void;
+  onAnswered: (result: { correct: boolean; hinted: boolean }) => void;
   onHint: () => Promise<boolean>;
-  onRepair: () => Promise<boolean>;
   pills: number;
 }) {
   const t = useTranslations("lesson");
@@ -45,9 +47,13 @@ export function ExerciseView({
   const [verdict, setVerdict] = useState<Verdict | null>(null);
   const [solutionOpen, setSolutionOpen] = useState(false);
   const [hinted, setHinted] = useState(false);
-  const [repaired, setRepaired] = useState(false);
 
   const value = parseAnswer(input);
+  /**
+   * Ukazatel se hne ve chvíli, kdy odpověď sedne, ne až po klepnutí
+   * na Pokračovat. Přístroj potvrzuje hodnotu hned, jak ji přijme.
+   */
+  const shown = solved + (verdict?.correct ? 1 : 0);
   const canCheck = value !== null && verdict === null;
   const canAfford = pills >= HINT_COST;
 
@@ -59,20 +65,6 @@ export function ExerciseView({
   async function buyHint() {
     if (hinted || !canAfford) return;
     if (await onHint()) setHinted(true);
-  }
-
-  /**
-   * Oprava není přepsání výsledku na správný — to by se student nic
-   * nenaučil. Je to druhý pokus: zadání zůstává, odpověď se smaže
-   * a počítá se to, co uživatel odpoví podruhé.
-   */
-  async function buyRepair() {
-    if (repaired || pills < REPAIR_COST) return;
-    if (!(await onRepair())) return;
-    setRepaired(true);
-    setVerdict(null);
-    setInput("");
-    setSolutionOpen(false);
   }
 
   function check() {
@@ -100,19 +92,24 @@ export function ExerciseView({
         </button>
         <TickScale
           total={count}
-          done={index}
-          current={index}
-          label={t("progress", { current: index + 1, count })}
+          done={shown}
+          current={shown}
+          label={t("progress", { current: shown, count })}
         />
         <span className="readout text-ink-soft w-12 shrink-0 text-right text-label" data-numeric>
-          {t("progress", { current: index + 1, count })}
+          {t("progress", { current: shown, count })}
         </span>
       </header>
 
       <main tabIndex={0} className="scroll-y flex-1">
         <div className="mx-auto w-full max-w-md px-5 pb-6">
           {/* Obrazovka potřebuje nadpis, i když ho zrakem nikdo nehledá. */}
-          <h1 className="sr-only">{t("progress", { current: index + 1, count })}</h1>
+          <h1 className="sr-only">{t("progress", { current: shown, count })}</h1>
+
+          {/* Vrácený příklad se označí. Bez toho vypadá jako chyba aplikace,
+              že se totéž zadání objevilo podruhé. */}
+          {repeat ? <p className="panel-label mb-2">{t("repeat")}</p> : null}
+
           <Prompt text={prompt(exercise)} />
 
           {/* U chyby displej mizí: správnou hodnotu i zadanou ukazuje panel
@@ -160,11 +157,6 @@ export function ExerciseView({
                   {solutionOpen ? t("hideSolution") : t("solutionShort")}
                 </SecondaryAction>
 
-                {!verdict.correct && !repaired ? (
-                  <SecondaryAction onClick={buyRepair} disabled={pills < REPAIR_COST} cost={REPAIR_COST}>
-                    {t("repairShort")}
-                  </SecondaryAction>
-                ) : null}
               </div>
 
               {solutionOpen ? <SolutionSteps exercise={exercise} /> : null}
@@ -191,13 +183,13 @@ export function ExerciseView({
 
           <button
             type="button"
-            onClick={verdict === null ? check : () => onAnswered({ correct: verdict.correct, hinted, repaired })}
+            onClick={verdict === null ? check : () => onAnswered({ correct: verdict.correct, hinted })}
             disabled={verdict === null && !canCheck}
             className="bg-accent active:bg-accent-press mt-3 min-h-14 w-full rounded-control text-body font-semibold text-white transition-colors duration-75 disabled:opacity-40"
           >
             {verdict === null
               ? t("check")
-              : index + 1 === count
+              : verdict.correct && solved + 1 === count
                 ? t("finish")
                 : t("continueLabel")}
           </button>
@@ -209,8 +201,8 @@ export function ExerciseView({
 
 /**
  * Vedlejší akce: rámeček, ne modrý odkaz. Odkaz vypadá jako text, který
- * se dá přehlédnout; tady jde o volbu, která něco stojí — nápověda
- * i oprava se platí prášky, a cena patří vedle názvu, ne do věty.
+ * se dá přehlédnout; tady jde o volbu, která něco stojí — nápověda se
+ * platí prášky a cena patří vedle názvu, ne do věty.
  */
 function SecondaryAction({
   onClick,

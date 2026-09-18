@@ -43,7 +43,14 @@ describe("zápis dokončené lekce", () => {
     await recordLesson(LESSON);
     const answers = await db().answers.orderBy("id").toArray();
     expect(answers).toHaveLength(2);
-    expect(answers[1]).toMatchObject({ templateId: "B1", seed: "abc:1", correct: false, hinted: true, repaired: false });
+    expect(answers[1]).toMatchObject({
+      templateId: "B1",
+      seed: "abc:1",
+      correct: false,
+      firstTry: false,
+      attempts: 1,
+      hinted: true,
+    });
     // Zadání ani zobrazený text se neukládá — příklad se sestaví ze semínka.
     expect(Object.keys(answers[0])).not.toContain("vars");
   });

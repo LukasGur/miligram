@@ -3,7 +3,7 @@ import { beforeEach, describe, expect, it } from "vitest";
 import "@/core/templates";
 import { db, recordLesson } from "../db";
 import { mistakesToRepeat, overview } from "../stats";
-import { answeredToday, weekActivity } from "../today";
+import { solvedToday, weekActivity } from "../today";
 
 const answer = (templateId: string, seed: string, correct: boolean) => ({
   templateId,
@@ -11,7 +11,6 @@ const answer = (templateId: string, seed: string, correct: boolean) => ({
   difficulty: 1,
   correct,
   hinted: false,
-  repaired: false,
 });
 
 beforeEach(async () => {
@@ -60,7 +59,14 @@ describe("přehled", () => {
   });
 
   it("historie po smazané šabloně statistiku nepoloží", async () => {
-    await db().answers.add({ ...answer("ZZ9", "x", false), lessonId: "l", index: 0, answeredAt: "" });
+    await db().answers.add({
+      ...answer("ZZ9", "x", false),
+      lessonId: "l",
+      index: 0,
+      firstTry: false,
+      attempts: 1,
+      answeredAt: "",
+    });
     await expect(overview()).resolves.toMatchObject({ answered: 1 });
   });
 });
@@ -147,7 +153,7 @@ describe("týden na domovské obrazovce", () => {
 
     const week = await weekActivity("2026-09-17");
     expect(week.filter((d) => d.active).map((d) => d.day)).toEqual(["2026-09-17"]);
-    expect(await answeredToday("2026-09-17")).toBe(1);
+    expect(await solvedToday("2026-09-17")).toBe(1);
   });
 
   it("dny, které teprve přijdou, nejsou zmeškané", async () => {

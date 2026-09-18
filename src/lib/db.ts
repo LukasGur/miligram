@@ -39,6 +39,15 @@ export type Profile = {
   updatedAt: string;
 };
 
+/**
+ * Jeden příklad z lekce, ne jeden pokus.
+ *
+ * Chybný příklad se v lekci vrací, dokud ho student nespočítá, takže
+ * pokusů může být víc. Záznam je jeden a drží obojí: `correct` říká, jestli
+ * se to nakonec povedlo — z toho se plní denní cíl —, a `firstTry`, jestli
+ * to sedlo napoprvé. Odměna se počítá z `firstTry`, aby se XP nedalo
+ * nasbírat opakováním.
+ */
 export type AnswerRecord = {
   id?: number;
   lessonId: string;
@@ -46,11 +55,14 @@ export type AnswerRecord = {
   templateId: string;
   seed: string;
   difficulty: number;
+  /** Vyřešeno, byť napodruhé. */
   correct: boolean;
+  /** Správně hned napoprvé. Z tohohle je XP a prášky. */
+  firstTry: boolean;
+  /** Kolikrát si na příklad student sáhl. */
+  attempts: number;
   /** Zda si uživatel u příkladu koupil nápovědu. */
   hinted: boolean;
-  /** Zda si koupil druhý pokus. */
-  repaired: boolean;
   answeredAt: string;
 };
 
@@ -71,7 +83,6 @@ export type AnsweredItem = {
   difficulty: number;
   correct: boolean;
   hinted: boolean;
-  repaired: boolean;
 };
 
 /**
@@ -91,9 +102,23 @@ export type LessonProgress = {
   plan?: unknown;
   /** Souboj, do kterého se po dokončení hlásí výsledek. */
   duelId?: string;
-  answers: readonly AnsweredItem[];
+  /**
+   * Pokusy v pořadí, v jakém padly — i ty chybné. Z nich se po návratu
+   * dopočítá, co předložit dál, takže se pořadí nedrží nikde jinde.
+   */
+  attempts: readonly LessonAttempt[];
   startedAt: string;
   updatedAt: string;
+};
+
+export type LessonAttempt = {
+  templateId: string;
+  seed: string;
+  difficulty: number;
+  /** Index příkladu v plánu lekce. */
+  index: number;
+  correct: boolean;
+  hinted: boolean;
 };
 
 /**
@@ -181,6 +206,38 @@ class MiligramDatabase extends Dexie {
      * a dnešní cíl se po jeho práci nepohnul.
      */
     this.version(4).stores({ progress: "id" });
+
+    /**
+     * Pátá verze rozlišuje „vyřešeno“ a „správně napoprvé“. Chybný příklad
+     * se nově v lekci vrací, takže jeden příklad může mít víc pokusů;
+     * starším záznamům obojí splývá, což odpovídá tomu, jak vznikly.
+     * Rozehraná lekce zároveň přechází z hotových odpovědí na pokusy.
+     */
+    this.version(5).upgrade(async (transaction) => {
+      await transaction
+        .table<AnswerRecord>("answers")
+        .toCollection()
+        .modify((answer) => {
+          answer.firstTry ??= answer.correct;
+          answer.attempts ??= 1;
+        });
+
+      await transaction
+        .table("progress")
+        .toCollection()
+        .modify((progress: LessonProgress & { answers?: readonly AnsweredItem[] }) => {
+          if (progress.attempts !== undefined) return;
+          progress.attempts = (progress.answers ?? []).map((answer, index) => ({
+            templateId: answer.templateId,
+            seed: answer.seed,
+            difficulty: answer.difficulty,
+            index,
+            correct: answer.correct,
+            hinted: answer.hinted,
+          }));
+          delete progress.answers;
+        });
+    });
   }
 }
 
@@ -241,7 +298,7 @@ export async function readProgress(): Promise<LessonProgress | undefined> {
  */
 export async function recordAnswer(
   lessonId: string,
-  answer: AnsweredItem,
+  attempt: LessonAttempt,
   options: { plan?: unknown; duelId?: string } = {},
   now = new Date(),
 ): Promise<void> {
@@ -251,30 +308,48 @@ export async function recordAnswer(
   await database.transaction("rw", database.answers, database.progress, async () => {
     const current = await database.progress.get(PROGRESS_ID);
     // Jiná lekce než rozehraná znamená, že uživatel mezitím začal jinou.
-    // Odpovědi té předchozí zůstávají uložené, jen se v ní už nepokračuje.
+    // Pokusy té předchozí zůstávají uložené, jen se v ní už nepokračuje.
     const running = current?.lessonId === lessonId ? current : undefined;
-    const answers = [...(running?.answers ?? []), answer];
+    const attempts = [...(running?.attempts ?? []), attempt];
 
-    await database.answers.add({
-      lessonId,
-      index: answers.length - 1,
-      templateId: answer.templateId,
-      seed: answer.seed,
-      difficulty: answer.difficulty,
-      correct: answer.correct,
-      hinted: answer.hinted,
-      repaired: answer.repaired,
-      answeredAt: timestamp,
-    });
+    /**
+     * Záznam je jeden na příklad, ne na pokus. Druhý pokus tedy původní
+     * záznam doplní: přibude pokus a `correct` se překlopí, jakmile se to
+     * povede. `firstTry` zůstává, jak dopadl první pokus — z něj je odměna.
+     */
+    const stored = await database.answers.where("lessonId").equals(lessonId).toArray();
+    const existing = stored.find((answer) => answer.seed === attempt.seed);
+
+    if (existing?.id === undefined) {
+      await database.answers.add({
+        lessonId,
+        index: attempt.index,
+        templateId: attempt.templateId,
+        seed: attempt.seed,
+        difficulty: attempt.difficulty,
+        correct: attempt.correct,
+        firstTry: attempt.correct,
+        attempts: 1,
+        hinted: attempt.hinted,
+        answeredAt: timestamp,
+      });
+    } else {
+      await database.answers.update(existing.id, {
+        correct: existing.correct || attempt.correct,
+        attempts: existing.attempts + 1,
+        hinted: existing.hinted || attempt.hinted,
+        answeredAt: timestamp,
+      });
+    }
 
     await database.progress.put({
       id: PROGRESS_ID,
       lessonId,
       // Plán a souboj se opisují z rozehrané lekce, když je volající
-      // nepřipomene. Jinak by je druhá odpověď v pořadí umazala.
+      // nepřipomene. Jinak by je druhý pokus v pořadí umazal.
       plan: options.plan ?? running?.plan,
       duelId: options.duelId ?? running?.duelId,
-      answers,
+      attempts,
       startedAt: running?.startedAt ?? timestamp,
       updatedAt: timestamp,
     });
@@ -317,9 +392,10 @@ export async function recordLesson(lesson: FinishedLesson, now = new Date()): Pr
 
     await database.profile.put(updated);
     /**
-     * Odpovědi zpravidla uložil `recordAnswer` hned po každém příkladu.
+     * Odpovědi zpravidla uložil `recordAnswer` hned po každém pokusu.
      * Zapisují se tady jen tehdy, když po lekci žádné nezůstaly — z testu
-     * nebo z obnovy —, aby se nezaložily dvakrát.
+     * nebo z obnovy —, aby se nezaložily dvakrát. Tehdy se z nich dá
+     * vyčíst jen první pokus; víc se na server neposílá.
      */
     const stored = await database.answers.where("lessonId").equals(lesson.lessonId).count();
     if (stored === 0) {
@@ -331,8 +407,9 @@ export async function recordLesson(lesson: FinishedLesson, now = new Date()): Pr
           seed: answer.seed,
           difficulty: answer.difficulty,
           correct: answer.correct,
+          firstTry: answer.correct,
+          attempts: 1,
           hinted: answer.hinted,
-          repaired: answer.repaired,
           answeredAt: timestamp,
         })),
       );
@@ -357,7 +434,6 @@ export async function recordLesson(lesson: FinishedLesson, now = new Date()): Pr
           difficulty: answer.difficulty,
           correct: answer.correct,
           hinted: answer.hinted,
-          repaired: answer.repaired,
         })),
       },
       createdAt: timestamp,

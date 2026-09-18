@@ -26,7 +26,6 @@ export type RemoteLesson = {
     difficulty: number;
     correct: boolean;
     hinted: boolean;
-    repaired: boolean;
   }[];
 };
 
@@ -82,9 +81,11 @@ export async function restoreLessons(gateway: RestoreGateway, since?: string): P
           templateId: answer.templateId,
           seed: answer.seed,
           difficulty: answer.difficulty,
+          // Server zná jen první pokus: opakování se mu neposílá.
           correct: answer.correct,
+          firstTry: answer.correct,
+          attempts: 1,
           hinted: answer.hinted,
-          repaired: answer.repaired,
           // Čas jednotlivé odpovědi se na server neposílá — stačí čas konce
           // lekce. Statistiky počítají po dnech, a ten den sedí.
           answeredAt: lesson.finishedAt,

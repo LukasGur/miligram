@@ -18,9 +18,6 @@ export const PILLS_FLAWLESS_BONUS = 10;
 /** Nápověda odkryje první krok řešení. */
 export const HINT_COST = 15;
 
-/** Oprava dovolí odpovědět na chybný příklad ještě jednou. */
-export const REPAIR_COST = 25;
-
 /** Ochrana série pokryje jeden vynechaný den. */
 export const STREAK_FREEZE_COST = 60;
 

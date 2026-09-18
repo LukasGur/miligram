@@ -104,20 +104,16 @@ na stříkačce. Odměna je počítadlo, které doběhne — celé v CSS, bez
 
 ## Co dělat dál
 
-1. **Ověřit částky ekonomiky proti briefu, sekce 6.** Čísla
-   v `src/core/economy.ts` jsou návrh, ne převzaté hodnoty: 2 prášky
-   za správný příklad, 10 za bezchybnou lekci, nápověda za 15.
-   Všechna jsou na jednom místě.
-2. **Doladit výraz podle zpětné vazby.** Směr je nastavený, čeká se,
+1. **Doladit výraz podle zpětné vazby.** Směr je nastavený, čeká se,
    co bude na telefonu drhnout.
-3. **Zkouška na skutečném iPhonu.** Všechno je zatím ověřené jen
+2. **Zkouška na skutečném iPhonu.** Všechno je zatím ověřené jen
    ve WebKitu na rozměrech telefonu, ne na zařízení.
-4. **Vlastní SMTP.** Přihlašovací kódy chodí přes vestavěné SMTP
+3. **Vlastní SMTP.** Přihlašovací kódy chodí přes vestavěné SMTP
    Supabase, které má tvrdý limit několika e-mailů za hodinu. Na ostrý
    provoz to nestačí.
-5. **Ověřit ligu na skutečném provozu.** Postup a sestup se počítají až
+4. **Ověřit ligu na skutečném provozu.** Postup a sestup se počítají až
    při první lekci v novém týdnu, takže se to pozná nejdřív za týden.
-6. **Revize slovenštiny rodilým mluvčím.** Texty jsou napsané, ne
+5. **Revize slovenštiny rodilým mluvčím.** Texty jsou napsané, ne
    přeložené strojem, ale nikdo je zatím nečetl. Názvy přípravků zůstávají
    české — fond je z české databáze.
 
@@ -143,8 +139,13 @@ na stříkačce. Odměna je počítadlo, které doběhne — celé v CSS, bez
 - Den se počítá podle kalendáře uživatele, ne podle UTC. Uložený čas je
   v UTC a ukrajovat z něj prvních deset znaků znamená, že lekce dohraná
   po půlnoci padne na včerejšek.
-- Oprava je druhý pokus, ne přepsání výsledku na správný. Za prášky se
-  kupuje šance, ne bod — jinak by se student nic nenaučil.
+- Chybný příklad se v lekci vrací se stejnými čísly, dokud nevyjde. Lekce
+  je hotová po sedmi spočítaných příkladech, ne po sedmi odpovědích —
+  sedm chyb ze sedmi proto neznamená splněný denní cíl. Placená oprava
+  tím ztratila smysl a zmizela: druhý pokus má nově každý a zadarmo.
+- Odměna se počítá z prvního pokusu. Opakování je na učení, ne na sbírání
+  bodů, a na server jde jeden záznam na příklad — kdyby se posílaly
+  pokusy, přičetly by XP.
 - Prášky jsou měna, XP je neutratitelné skóre. Zisk XP: 10 za správný
   příklad, +20 za bezchybnou lekci. Lekce má 7 příkladů.
 - Tolerance se odvozuje z přesnosti prostředku (ISO 7886-1, IEC 60601-2-24,

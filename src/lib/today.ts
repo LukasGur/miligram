@@ -14,16 +14,22 @@ import { db } from "./db";
    ------------------------------------------------------------------------ */
 
 /**
- * Kolik příkladů uživatel zodpověděl dnes.
+ * Kolik příkladů má uživatel dnes spočítaných.
+ *
+ * Počítají se vyřešené, ne zodpovězené. Sedm chyb ze sedmi není splněný
+ * denní cíl; chybný příklad se v lekci vrací, a jakmile vyjde, cíl se
+ * pohne. Druhý pokus tím cíl nepřifoukne — záznam je jeden na příklad.
  *
  * Uložený čas je v UTC, ale den se počítá podle kalendáře uživatele —
  * proto se převádí, místo aby se z řetězce ukrojilo prvních deset znaků.
  * Ve středoevropském létě totiž lekce dohraná o půl jedné v noci padne
  * v UTC ještě na včerejšek a dnešní cíl by se po ní nepohnul.
  */
-export async function answeredToday(today = localDay()): Promise<number> {
+export async function solvedToday(today = localDay()): Promise<number> {
   const answers = await db().answers.toArray();
-  return answers.filter((answer) => localDay(new Date(answer.answeredAt)) === today).length;
+  return answers.filter(
+    (answer) => answer.correct && localDay(new Date(answer.answeredAt)) === today,
+  ).length;
 }
 
 export type WeekDay = {

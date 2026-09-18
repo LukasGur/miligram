@@ -2,9 +2,10 @@
 
 import { useMemo, useRef, useState } from "react";
 import { useFormatter, useTranslations } from "next-intl";
-import { HINT_COST, REPAIR_COST, rewardForLesson } from "@/core/economy";
+import { HINT_COST, rewardForLesson } from "@/core/economy";
 import { lessonExercise, planLesson, type LessonPlan } from "@/core/lesson";
-import { recordAnswer, recordLesson, spendPills, type AnsweredItem } from "@/lib/db";
+import { firstTryOutcomes, nextIndex, solvedCount } from "@/core/lessonRun";
+import { recordAnswer, recordLesson, spendPills, type LessonAttempt } from "@/lib/db";
 import { useProfile } from "@/lib/useProfile";
 import { Numeral } from "@/components/ui/Numeral";
 import { Tally } from "@/components/ui/Tally";
@@ -24,7 +25,7 @@ export function LessonView({
   lessonId,
   plan: given,
   duelId,
-  answered: resumed,
+  attempts: resumed,
   onExit,
 }: {
   lessonId: string;
@@ -35,14 +36,14 @@ export function LessonView({
   plan?: LessonPlan;
   /** Je-li vyplněné, hlásí se po dokončení výsledek do souboje. */
   duelId?: string;
-  /** Odpovědi z rozehrané lekce, na které se navazuje. */
-  answered?: readonly AnsweredItem[];
+  /** Pokusy z rozehrané lekce, na které se navazuje. */
+  attempts?: readonly LessonAttempt[];
   onExit: () => void;
 }) {
   const plan = useMemo(() => given ?? planLesson(lessonId), [given, lessonId]);
-  // Rozehraná lekce začíná tam, kde uživatel přestal.
-  const [index, setIndex] = useState(resumed?.length ?? 0);
-  const [answers, setAnswers] = useState<AnsweredItem[]>([...(resumed ?? [])]);
+  // Rozehraná lekce začíná tam, kde uživatel přestal. Pořadí se dopočítá
+  // z pokusů, takže se nemusí ukládat vedle.
+  const [attempts, setAttempts] = useState<LessonAttempt[]>([...(resumed ?? [])]);
   const { profile } = useProfile();
   /**
    * Zápis se smí provést jen jednou. Vykreslení se opakovat může,
@@ -51,13 +52,15 @@ export function LessonView({
    */
   const recorded = useRef(false);
 
+  const index = nextIndex(plan, attempts);
   const exercise = useMemo(
-    () => (index < plan.items.length ? lessonExercise(plan, index) : null),
+    () => (index === null ? null : lessonExercise(plan, index)),
     [plan, index],
   );
+  const solved = solvedCount(plan, attempts);
 
-  if (exercise === null) {
-    return <LessonSummary answers={answers} onExit={onExit} />;
+  if (index === null || exercise === null) {
+    return <LessonSummary outcomes={firstTryOutcomes(plan, attempts)} onExit={onExit} />;
   }
 
   return (
@@ -67,50 +70,51 @@ export function LessonView({
        * verdikt i odrolování se tím vynulují samy — bez efektu, který by
        * stav uklízel ručně.
        */
-      key={`${exercise.templateId}:${exercise.seed}`}
+      key={`${exercise.seed}:${attempts.length}`}
       exercise={exercise}
-      index={index}
+      solved={solved}
       count={plan.items.length}
+      /** Opakování: příklad, na kterém už student jednou pohořel. */
+      repeat={attempts.some((attempt) => attempt.seed === exercise.seed)}
       pills={profile.pills}
       onExit={onExit}
       onHint={() => spendPills(HINT_COST, `hint:${exercise.templateId}`)}
-      onRepair={() => spendPills(REPAIR_COST, `repair:${exercise.templateId}`)}
-      onAnswered={({ correct, hinted, repaired }) => {
-        const answered: AnsweredItem[] = [
-          ...answers,
-          {
-            templateId: exercise.templateId,
-            seed: exercise.seed,
-            difficulty: exercise.difficulty,
-            correct,
-            hinted,
-            repaired,
-          },
-        ];
-        setAnswers(answered);
-        setIndex(index + 1);
+      onAnswered={({ correct, hinted }) => {
+        const attempt: LessonAttempt = {
+          templateId: exercise.templateId,
+          seed: exercise.seed,
+          difficulty: exercise.difficulty,
+          index,
+          correct,
+          hinted,
+        };
+        const next = [...attempts, attempt];
+        setAttempts(next);
 
-        // Zápis odpovědi je samostatný od zápisu lekce: lekce se nemusí
+        // Zápis pokusu je samostatný od zápisu lekce: lekce se nemusí
         // dohrát, odpověď už padla.
-        void recordAnswer(
-          lessonId,
-          {
-            templateId: exercise.templateId,
-            seed: exercise.seed,
-            difficulty: exercise.difficulty,
-            correct,
-            hinted,
-            repaired,
-          },
-          { plan: given, duelId },
-        );
+        void recordAnswer(lessonId, attempt, { plan: given, duelId });
 
-        // Poslední odpověď lekci uzavírá. Zapisuje se tady, v obsluze
-        // události, ne při vykreslení shrnutí — událost nastane jednou.
-        if (answered.length === plan.items.length && !recorded.current) {
+        // Poslední vyřešený příklad lekci uzavírá. Zapisuje se tady,
+        // v obsluze události, ne při vykreslení shrnutí — událost nastane
+        // jednou.
+        if (nextIndex(plan, next) === null && !recorded.current) {
           recorded.current = true;
-          const reward = rewardForLesson(answered.map((item) => item.correct));
-          void recordLesson({ lessonId, answers: answered, reward });
+          const outcomes = firstTryOutcomes(plan, next);
+          const reward = rewardForLesson(outcomes);
+          void recordLesson({
+            lessonId,
+            // Na server jde jeden záznam na příklad a v něm první pokus.
+            // Opakování je na učení; kdyby se posílalo, přičetlo by XP.
+            answers: plan.items.map((item, position) => ({
+              templateId: item.templateId,
+              seed: item.seed,
+              difficulty: item.difficulty,
+              correct: outcomes[position],
+              hinted: next.some((one) => one.seed === item.seed && one.hinted),
+            })),
+            reward,
+          });
 
           // Výsledek souboje jde rovnou na server. Do fronty nepatří:
           // bez připojení nemá souboj koho porovnávat a čekající výzva
@@ -158,16 +162,17 @@ function Award({ label, value }: { label: string; value: number }) {
 }
 
 function LessonSummary({
-  answers,
+  outcomes,
   onExit,
 }: {
-  answers: readonly AnsweredItem[];
+  /** Jak dopadl první pokus u každého příkladu. Odměna je z toho. */
+  outcomes: readonly boolean[];
   onExit: () => void;
 }) {
   const t = useTranslations("lesson");
   const tHome = useTranslations("home");
   const format = useFormatter();
-  const reward = useMemo(() => rewardForLesson(answers.map((answer) => answer.correct)), [answers]);
+  const reward = useMemo(() => rewardForLesson(outcomes), [outcomes]);
 
   return (
     <div className="bg-paper flex h-dvh flex-col overflow-hidden">

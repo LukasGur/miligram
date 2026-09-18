@@ -15,7 +15,7 @@ import { Readout } from "@/components/ui/Readout";
 import { LESSON_LENGTH, newLessonId, type LessonPlan } from "@/core/lessonPlan";
 import { useLocale } from "@/i18n/LocaleProvider";
 import type { WeekDay } from "@/lib/today";
-import { clearProgress, type AnsweredItem } from "@/lib/db";
+import { clearProgress, type LessonAttempt } from "@/lib/db";
 import { useLessonProgress, useProfile, useToday } from "@/lib/useProfile";
 
 const LESSON_MINUTES = "4–6";
@@ -68,17 +68,20 @@ export default function HomePage() {
     id: string;
     plan?: LessonPlan;
     duelId?: string;
-    answered?: readonly AnsweredItem[];
+    attempts?: readonly LessonAttempt[];
   } | null>(null);
 
   const { profile, streak } = useProfile();
-  const { answered, week } = useToday();
+  const { solved, week } = useToday();
   const progress = useLessonProgress();
   /** Rozehraná lekce se nabízí, dokud v ní zbývá aspoň jeden příklad. */
-  const unfinished =
-    progress && progress.answers.length < LESSON_LENGTH ? progress : null;
+  const unfinished = progress?.attempts.length ? progress : null;
+  /** Kolik příkladů z rozehrané lekce je vyřešených, ne kolik jich padlo. */
+  const unfinishedSolved = unfinished
+    ? new Set(unfinished.attempts.filter((one) => one.correct).map((one) => one.seed)).size
+    : 0;
   /** Kdo ještě nic nedohrál, potřebuje vědět, do čeho jde. */
-  const firstRun = profile.xp === 0 && answered === 0;
+  const firstRun = profile.xp === 0 && solved === 0;
 
   if (lesson !== null) {
     return (
@@ -86,7 +89,7 @@ export default function HomePage() {
         lessonId={lesson.id}
         plan={lesson.plan}
         duelId={lesson.duelId}
-        answered={lesson.answered}
+        attempts={lesson.attempts}
         onExit={() => setLesson(null)}
       />
     );
@@ -122,7 +125,7 @@ export default function HomePage() {
     );
   }
 
-  const goalMet = answered >= LESSON_LENGTH;
+  const goalMet = solved >= LESSON_LENGTH;
 
   return (
     <div className="bg-paper flex h-dvh flex-col overflow-hidden">
@@ -157,9 +160,9 @@ export default function HomePage() {
           <div className="flex flex-col items-center">
             <h1 className="panel-label">{t("dailyGoal")}</h1>
             <div className="mt-3">
-              <ProgressRing done={answered} total={LESSON_LENGTH}>
+              <ProgressRing done={solved} total={LESSON_LENGTH}>
                 <span className="readout text-display font-semibold" data-numeric>
-                  {format.number(Math.min(answered, LESSON_LENGTH))}
+                  {format.number(Math.min(solved, LESSON_LENGTH))}
                 </span>
                 <span className="panel-label mt-0.5">
                   {goalMet ? t("dailyDone") : t("dailyOf", { total: LESSON_LENGTH })}
@@ -211,14 +214,14 @@ export default function HomePage() {
                     id: unfinished.lessonId,
                     plan: unfinished.plan as LessonPlan | undefined,
                     duelId: unfinished.duelId,
-                    answered: unfinished.answers,
+                    attempts: unfinished.attempts,
                   })
                 : setLesson({ id: newLessonId() })
             }
             className="bg-accent active:bg-accent-press min-h-14 w-full rounded-control text-body font-semibold text-white transition-colors duration-75"
           >
             {unfinished
-              ? t("resume", { done: unfinished.answers.length, total: LESSON_LENGTH })
+              ? t("resume", { done: unfinishedSolved, total: LESSON_LENGTH })
               : t("start")}
           </button>
 

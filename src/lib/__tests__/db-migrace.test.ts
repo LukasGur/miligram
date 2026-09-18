@@ -46,3 +46,68 @@ describe("migrace databáze", () => {
     expect(udalosti[1].syncedAt).toBe("2026-09-01T10:06:00.000Z");
   });
 });
+
+describe("migrace na pátou verzi", () => {
+  it("starým odpovědím dopočítá první pokus a rozehrané lekci pokusy", async () => {
+    await Dexie.delete("miligram");
+
+    const stara = new Dexie("miligram");
+    stara.version(4).stores({
+      profile: "id",
+      answers: "++id, lessonId, templateId, correct, answeredAt",
+      lessons: "++id, lessonId, finishedAt",
+      outbox: "++id, &uid, type, syncedAt",
+      progress: "id",
+    });
+    await stara.open();
+    await stara.table("answers").bulkAdd([
+      {
+        lessonId: "l",
+        index: 0,
+        templateId: "A1",
+        seed: "l:0",
+        difficulty: 1,
+        correct: true,
+        hinted: false,
+        repaired: false,
+        answeredAt: "2026-09-01T10:00:00.000Z",
+      },
+      {
+        lessonId: "l",
+        index: 1,
+        templateId: "A2",
+        seed: "l:1",
+        difficulty: 1,
+        correct: false,
+        hinted: false,
+        repaired: true,
+        answeredAt: "2026-09-01T10:01:00.000Z",
+      },
+    ]);
+    await stara.table("progress").put({
+      id: 1,
+      lessonId: "m",
+      answers: [
+        { templateId: "A1", seed: "m:0", difficulty: 1, correct: true, hinted: false, repaired: false },
+        { templateId: "A2", seed: "m:1", difficulty: 2, correct: false, hinted: true, repaired: false },
+      ],
+      startedAt: "2026-09-02T10:00:00.000Z",
+      updatedAt: "2026-09-02T10:05:00.000Z",
+    });
+    stara.close();
+
+    vi.resetModules();
+    const { db } = await import("../db");
+    const odpovedi = await db().answers.orderBy("id").toArray();
+
+    // Starý záznam první pokus nerozlišoval: jak dopadl, tak dopadl.
+    expect(odpovedi[0]).toMatchObject({ correct: true, firstTry: true, attempts: 1 });
+    expect(odpovedi[1]).toMatchObject({ correct: false, firstTry: false, attempts: 1 });
+
+    const rozehrana = await db().progress.get(1);
+    expect(rozehrana?.attempts.map((one) => [one.seed, one.index, one.correct])).toEqual([
+      ["m:0", 0, true],
+      ["m:1", 1, false],
+    ]);
+  });
+});

@@ -27,7 +27,7 @@ export, offline-first. Podrobnosti k příkazům a struktuře jsou v README.md.
 
 ## Ekonomika: dvě veličiny, ne jedna
 
-- **Prášky** — měna. Utrácejí se za nápovědy, ochranu série a opravy.
+- **Prášky** — měna. Utrácejí se za nápovědy a ochranu série.
 - **XP** — skóre. Nedá se utratit, slouží k řazení týdenní ligy
   a žebříčku přátel (celkové i týdenní XP).
 
@@ -35,8 +35,13 @@ Důvod pro rozdělení: kdyby se liga řadila podle prášků, každá vzatá
 nápověda by uživatele srazila v žebříčku a lidé by se vysvětlením
 vyhýbali. XP drží záznam odvedené práce nezávisle na útratě.
 
-Zisk XP: **10 za správný příklad, +20 za bezchybnou lekci.**
-Zisk prášků a útrata podle briefu (sekce 6).
+Zisk XP: **10 za příklad správně napoprvé, +20 za lekci bez chyby.**
+Chybný příklad se v lekci vrací, dokud ho student nespočítá — lekce je
+hotová, až vyjde všech sedm. Opakování se ale do odměny nepočítá: XP
+i prášky jsou za první pokus, jinak by se skóre dalo nasbírat chybováním.
+
+Zisk prášků: **2 za příklad správně napoprvé, +10 za lekci bez chyby.**
+Útrata: nápověda 15, ochrana série 60 (nejvýš dvě naráz).
 
 ## Kde jsme
 

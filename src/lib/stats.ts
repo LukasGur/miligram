@@ -5,6 +5,10 @@ import { db, type AnswerRecord } from "./db";
 /**
  * Statistika z uložených odpovědí.
  *
+ * Úspěšnost se počítá z prvního pokusu. Chybný příklad se v lekci vrací,
+ * dokud ho student nespočítá, takže „vyřešeno“ nakonec platí skoro
+ * o všem — jako měřítko by nic neřeklo. Zajímavé je, co sedlo napoprvé.
+ *
  * Počítá se při čtení, ne průběžně. Odpovědí je řádově tisíce, ne miliony,
  * a předpočítaná čísla by se musela udržovat v souladu s historií —
  * což je přesně ten druh dvojí pravdy, kvůli které pak nesedí součty.
@@ -24,7 +28,6 @@ export type Overview = {
   correct: number;
   rate: number | null;
   hinted: number;
-  repaired: number;
   categories: CategoryStat[];
 };
 
@@ -44,11 +47,11 @@ export async function overview(): Promise<Overview> {
     if (category === null) continue;
     const bucket = byCategory.get(category) ?? { answered: 0, correct: 0 };
     bucket.answered += 1;
-    if (answer.correct) bucket.correct += 1;
+    if (answer.firstTry) bucket.correct += 1;
     byCategory.set(category, bucket);
   }
 
-  const correct = answers.filter((answer) => answer.correct).length;
+  const correct = answers.filter((answer) => answer.firstTry).length;
 
   return {
     lessons,
@@ -56,7 +59,6 @@ export async function overview(): Promise<Overview> {
     correct,
     rate: answers.length === 0 ? null : correct / answers.length,
     hinted: answers.filter((answer) => answer.hinted).length,
-    repaired: answers.filter((answer) => answer.repaired).length,
     categories: [...byCategory.entries()]
       .map(([category, bucket]) => ({
         category,
@@ -86,7 +88,9 @@ export async function mistakesToRepeat(limit: number): Promise<Mistake[]> {
   }
 
   return [...latest.values()]
-    .filter((answer) => !answer.correct)
+    // Příklad, který napoprvé nevyšel, stojí za zopakování i tehdy, když
+    // ho student v téže lekci nakonec spočítal — sedlo mu to až po chybě.
+    .filter((answer) => !answer.firstTry)
     .slice(0, limit)
     .map((answer) => ({
       templateId: answer.templateId,

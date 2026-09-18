@@ -71,7 +71,7 @@ export function StatsScreen({
               </div>
 
               <p className="text-ink-soft mt-3 text-micro" data-numeric>
-                {t("helpUsed", { hinted: stats.hinted, repaired: stats.repaired })}
+                {t("helpUsed", { hinted: stats.hinted })}
               </p>
 
               <section className="mt-8">
