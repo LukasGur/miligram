@@ -5,7 +5,7 @@ import { useFormatter, useTranslations } from "next-intl";
 import { CloseIcon } from "@/components/icons";
 import { trainableCategories } from "@/core/lesson";
 import type { Category } from "@/core/types";
-import { LESSON_LENGTH } from "@/core/lesson";
+import { LESSON_LENGTH } from "@/core/lessonPlan";
 import { Readout } from "@/components/ui/Readout";
 import { MEANINGFUL_SAMPLE, mistakesToRepeat, overview, type Mistake } from "@/lib/stats";
 

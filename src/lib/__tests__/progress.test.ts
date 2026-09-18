@@ -1,7 +1,7 @@
 import "fake-indexeddb/auto";
 import { beforeEach, describe, expect, it } from "vitest";
 import { clearProgress, db, readProgress, recordAnswer, recordLesson } from "../db";
-import { answeredToday } from "../stats";
+import { answeredToday } from "../today";
 
 const odpoved = (seed: string, correct = true) => ({
   templateId: "A1",

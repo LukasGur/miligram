@@ -3,7 +3,7 @@
 import { useLiveQuery } from "dexie-react-hooks";
 import { currentStreak } from "@/core/economy";
 import { db, emptyProfile, PROFILE_ID, PROGRESS_ID, type LessonProgress, type Profile } from "./db";
-import { answeredToday, weekActivity, type WeekDay } from "./stats";
+import { answeredToday, weekActivity, type WeekDay } from "./today";
 
 /**
  * Profil pro zobrazení.

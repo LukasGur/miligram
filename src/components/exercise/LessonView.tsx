@@ -5,9 +5,6 @@ import { useFormatter, useTranslations } from "next-intl";
 import { HINT_COST, REPAIR_COST, rewardForLesson } from "@/core/economy";
 import { lessonExercise, planLesson, type LessonPlan } from "@/core/lesson";
 import { recordAnswer, recordLesson, spendPills, type AnsweredItem } from "@/lib/db";
-import { recordDuelResult } from "@/lib/remote";
-import { supabase } from "@/lib/supabase";
-import { useSession } from "@/lib/useSession";
 import { useProfile } from "@/lib/useProfile";
 import { Numeral } from "@/components/ui/Numeral";
 import { Tally } from "@/components/ui/Tally";
@@ -47,7 +44,6 @@ export function LessonView({
   const [index, setIndex] = useState(resumed?.length ?? 0);
   const [answers, setAnswers] = useState<AnsweredItem[]>([...(resumed ?? [])]);
   const { profile } = useProfile();
-  const { session } = useSession();
   /**
    * Zápis se smí provést jen jednou. Vykreslení se opakovat může,
    * a v ostrém režimu React některé části schválně spouští dvakrát —
@@ -119,15 +115,34 @@ export function LessonView({
           // Výsledek souboje jde rovnou na server. Do fronty nepatří:
           // bez připojení nemá souboj koho porovnávat a čekající výzva
           // je srozumitelnější než výsledek, který dorazí za tři dny.
-          const client = supabase();
-          const userId = session?.user.id;
-          if (duelId && client && userId) {
-            void recordDuelResult(client, duelId, userId, reward.correct, reward.count).catch(() => {});
-          }
+          //
+          // Klient Supabase se dotahuje až tady. Souboj je menšina lekcí
+          // a 240 kB navíc by jinak čekalo na každou z nich.
+          if (duelId) void reportDuel(duelId, reward.correct, reward.count);
         }
       }}
     />
   );
+}
+
+/** Nahlášení výsledku souboje. Tichý neúspěch: výzva zůstane nedohraná. */
+async function reportDuel(duelId: string, correct: number, count: number): Promise<void> {
+  try {
+    const [{ supabase }, { recordDuelResult }] = await Promise.all([
+      import("@/lib/supabase"),
+      import("@/lib/remote"),
+    ]);
+    const client = supabase();
+    if (!client) return;
+
+    const { data } = await client.auth.getSession();
+    const userId = data.session?.user.id;
+    if (!userId) return;
+
+    await recordDuelResult(client, duelId, userId, correct, count);
+  } catch {
+    // Bez sítě se výsledek nezapíše a souboj zůstane otevřený.
+  }
 }
 
 /** Řádek odměny. Číslo doběhne od nuly, ať je vidět, že něco přibylo. */

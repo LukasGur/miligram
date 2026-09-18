@@ -2,7 +2,8 @@ import "fake-indexeddb/auto";
 import { beforeEach, describe, expect, it } from "vitest";
 import "@/core/templates";
 import { db, recordLesson } from "../db";
-import { answeredToday, mistakesToRepeat, overview, weekActivity } from "../stats";
+import { mistakesToRepeat, overview } from "../stats";
+import { answeredToday, weekActivity } from "../today";
 
 const answer = (templateId: string, seed: string, correct: boolean) => ({
   templateId,

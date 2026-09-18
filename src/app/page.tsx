@@ -7,20 +7,27 @@ import { InstallBanner } from "@/components/InstallBanner";
 import { NetworkStatus } from "@/components/NetworkStatus";
 import { SettingsSheet } from "@/components/SettingsSheet";
 import { ShopSheet } from "@/components/ShopSheet";
-import { SyncAgent } from "@/components/SyncAgent";
 import { Wordmark } from "@/components/Wordmark";
 import { ChartIcon, PersonIcon, SettingsIcon } from "@/components/icons";
 import { LogoMark } from "@/components/ui/Logo";
 import { ProgressRing } from "@/components/ui/ProgressRing";
 import { Readout } from "@/components/ui/Readout";
-import { LESSON_LENGTH, newLessonId, planCategoryLesson, planFromItems } from "@/core/lesson";
-import type { LessonPlan } from "@/core/lesson";
+import { LESSON_LENGTH, newLessonId, type LessonPlan } from "@/core/lessonPlan";
 import { useLocale } from "@/i18n/LocaleProvider";
-import type { WeekDay } from "@/lib/stats";
+import type { WeekDay } from "@/lib/today";
 import { clearProgress, type AnsweredItem } from "@/lib/db";
 import { useLessonProgress, useProfile, useToday } from "@/lib/useProfile";
 
 const LESSON_MINUTES = "4–6";
+
+/**
+ * Výměna se serverem se dotahuje až po vykreslení. Je v ní klient Supabase
+ * (240 kB) a domovská obrazovka na něj nečeká — bez účtu ho nepotřebuje
+ * vůbec a s účtem stačí, když se ozve o chvíli později.
+ */
+const SyncAgent = dynamic(() => import("@/components/SyncAgent").then((module) => module.SyncAgent), {
+  ssr: false,
+});
 
 const AccountScreen = dynamic(
   () => import("@/components/account/AccountScreen").then((module) => module.AccountScreen),
@@ -89,7 +96,10 @@ export default function HomePage() {
     return (
       <StatsScreen
         onClose={() => setStatsOpen(false)}
-        onTrain={(mode) => {
+        onTrain={async (mode) => {
+          // Sestavení lekce se dotahuje až tady: je v něm fond přípravků
+          // a všech 72 šablon, které domovská obrazovka nepotřebuje.
+          const { planCategoryLesson, planFromItems } = await import("@/core/lesson");
           const id = newLessonId();
           const plan =
             mode.kind === "mistakes" ? planFromItems(id, mode.items) : planCategoryLesson(id, mode.category);

@@ -12,7 +12,7 @@ import {
   type FriendRequest,
   type ScoreRow,
 } from "@/lib/remote";
-import { newLessonId } from "@/core/lesson";
+import { newLessonId } from "@/core/lessonPlan";
 import { useRemoteQuery } from "@/lib/remoteQuery";
 import { Field } from "./SignIn";
 

@@ -1,6 +1,12 @@
 import { createRng } from "./random";
+import { DIFFICULTY_RAMP, LESSON_LENGTH, newLessonId, type LessonPlan } from "./lessonPlan";
 import { buildExercise, getTemplate, productionTemplates } from "./templates";
 import type { Category, Difficulty, Exercise } from "./types";
+
+// Délka, náběh obtížnosti a nové id žijí vedle, aby se daly použít bez
+// fondu přípravků. Odsud se vydávají dál, ať se nemusí hledat na dvou
+// místech.
+export { DIFFICULTY_RAMP, LESSON_LENGTH, newLessonId, type LessonPlan };
 
 /**
  * Sestavení lekce.
@@ -9,20 +15,6 @@ import type { Category, Difficulty, Exercise } from "./types";
  * semínka jednotlivých příkladů, takže se dá kdykoli sestavit znovu — pro
  * opakování chyb, pro souboj i pro test. Neukládá se nic než ten řetězec.
  */
-
-/** Délka lekce je pevná napříč aplikací; počítá se z ní ekonomika. */
-export const LESSON_LENGTH = 7;
-
-/**
- * Náběh obtížnosti. Lekce začíná lehce, aby se uživatel chytil, a končí
- * nejtěžším příkladem — poslední je ten, který si zapamatuje.
- */
-const DIFFICULTY_RAMP: readonly Difficulty[] = [1, 1, 2, 2, 2, 3, 3];
-
-export type LessonPlan = {
-  id: string;
-  items: readonly { templateId: string; seed: string; difficulty: Difficulty }[];
-};
 
 /**
  * Vybere šablony pro lekci. Dokud je z čeho brát, žádná se neopakuje —
@@ -58,16 +50,6 @@ export function lessonExercise(plan: LessonPlan, index: number): Exercise {
   const item = plan.items[index];
   if (!item) throw new Error(`Lekce ${plan.id} nemá příklad číslo ${index}.`);
   return buildExercise(item.templateId, item.seed, item.difficulty);
-}
-
-/**
- * Nové id lekce. Náhodné, ale zapsatelné — dá se opsat i nadiktovat,
- * což bude potřeba u soubojů.
- */
-export function newLessonId(): string {
-  const now = Date.now().toString(36);
-  const salt = Math.floor(Math.random() * 36 ** 4).toString(36).padStart(4, "0");
-  return `${now}${salt}`;
 }
 
 /**
