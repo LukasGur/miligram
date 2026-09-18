@@ -8,15 +8,17 @@ import { NetworkStatus } from "@/components/NetworkStatus";
 import { SettingsSheet } from "@/components/SettingsSheet";
 import { ShopSheet } from "@/components/ShopSheet";
 import { Wordmark } from "@/components/Wordmark";
-import { ChartIcon, PersonIcon, SettingsIcon } from "@/components/icons";
+import { ChartIcon, ChevronRightIcon, PersonIcon, SettingsIcon } from "@/components/icons";
 import { LogoMark } from "@/components/ui/Logo";
 import { ProgressRing } from "@/components/ui/ProgressRing";
 import { Readout } from "@/components/ui/Readout";
-import { LESSON_LENGTH, newLessonId, type LessonPlan } from "@/core/lessonPlan";
+import { DAILY_REVIEW_ITEMS, LESSON_LENGTH, newLessonId, type LessonPlan } from "@/core/lessonPlan";
 import { useLocale } from "@/i18n/LocaleProvider";
 import type { WeekDay } from "@/lib/today";
+import type { DailySpec, StageId } from "@/core/curriculum";
 import { clearProgress, type LessonAttempt } from "@/lib/db";
-import { useLessonProgress, useProfile, useToday } from "@/lib/useProfile";
+import { dailySpec } from "@/lib/curriculum";
+import { useCurriculum, useLessonProgress, useProfile, useToday } from "@/lib/useProfile";
 
 const LESSON_MINUTES = "4–6";
 
@@ -31,6 +33,11 @@ const SyncAgent = dynamic(() => import("@/components/SyncAgent").then((module) =
 
 const AccountScreen = dynamic(
   () => import("@/components/account/AccountScreen").then((module) => module.AccountScreen),
+  { ssr: false },
+);
+
+const CurriculumScreen = dynamic(
+  () => import("@/components/CurriculumScreen").then((module) => module.CurriculumScreen),
   { ssr: false },
 );
 
@@ -54,12 +61,14 @@ export default function HomePage() {
   const tCommon = useTranslations("common");
   const tAccount = useTranslations("account");
   const tStats = useTranslations("stats");
+  const tCurriculum = useTranslations("curriculum");
   const format = useFormatter();
 
   const [settingsOpen, setSettingsOpen] = useState(false);
   const [shopOpen, setShopOpen] = useState(false);
   const [accountOpen, setAccountOpen] = useState(false);
   const [statsOpen, setStatsOpen] = useState(false);
+  const [programOpen, setProgramOpen] = useState(false);
   /**
    * Rozehraná lekce. Denní lekce se sestaví z identifikátoru, trénink
    * a opakování chyb přinesou hotový plán — proto se nese obojí.
@@ -67,6 +76,7 @@ export default function HomePage() {
   const [lesson, setLesson] = useState<{
     id: string;
     plan?: LessonPlan;
+    spec?: DailySpec;
     duelId?: string;
     attempts?: readonly LessonAttempt[];
   } | null>(null);
@@ -74,6 +84,7 @@ export default function HomePage() {
   const { profile, streak } = useProfile();
   const { solved, week } = useToday();
   const progress = useLessonProgress();
+  const curriculum = useCurriculum();
   /** Rozehraná lekce se nabízí, dokud v ní zbývá aspoň jeden příklad. */
   const unfinished = progress?.attempts.length ? progress : null;
   /** Kolik příkladů z rozehrané lekce je vyřešených, ne kolik jich padlo. */
@@ -83,14 +94,36 @@ export default function HomePage() {
   /** Kdo ještě nic nedohrál, potřebuje vědět, do čeho jde. */
   const firstRun = profile.xp === 0 && solved === 0;
 
+  /**
+   * Spustí lekci ze stupně programu. Bez argumentu z toho rozepsaného.
+   * Plán se staví až v obrazovce lekce, takže se sem nedostane fond
+   * přípravků — domovská obrazovka ho nesmí stáhnout.
+   */
+  function startStage(stage?: StageId) {
+    if (!curriculum) return;
+    setProgramOpen(false);
+    setLesson({ id: newLessonId(), spec: dailySpec(curriculum, stage) });
+  }
+
   if (lesson !== null) {
     return (
       <LessonView
         lessonId={lesson.id}
         plan={lesson.plan}
+        spec={lesson.spec}
         duelId={lesson.duelId}
         attempts={lesson.attempts}
         onExit={() => setLesson(null)}
+      />
+    );
+  }
+
+  if (programOpen) {
+    return (
+      <CurriculumScreen
+        state={curriculum}
+        onClose={() => setProgramOpen(false)}
+        onStart={(stage) => startStage(stage)}
       />
     );
   }
@@ -126,6 +159,14 @@ export default function HomePage() {
   }
 
   const goalMet = solved >= LESSON_LENGTH;
+
+  /** Stupeň, na který se kouká tlačítko: rozehraná lekce má svůj vlastní. */
+  const stageId = unfinished?.stageId ?? curriculum?.current;
+  const review = curriculum && stageId ? dailySpec(curriculum, stageId).review.length : 0;
+  const mix =
+    review > 0
+      ? t("mix", { stage: LESSON_LENGTH - DAILY_REVIEW_ITEMS, review: DAILY_REVIEW_ITEMS })
+      : t("mixOnly", { stage: LESSON_LENGTH });
 
   return (
     <div className="bg-paper flex h-dvh flex-col overflow-hidden">
@@ -206,17 +247,35 @@ export default function HomePage() {
           className="bg-paper border-line mx-auto w-full max-w-md border-t px-5 pt-3"
           style={{ paddingBottom: "calc(var(--sa-b) + 0.75rem)" }}
         >
+          {/* Na co lekce je. Bez toho student neví, do čeho jde, a program
+              by neměl kudy otevřít. */}
+          {stageId ? (
+            <button
+              type="button"
+              onClick={() => setProgramOpen(true)}
+              className="border-line mb-3 flex min-h-11 w-full items-center gap-3 rounded-control border px-3 text-left"
+            >
+              <span className="min-w-0 flex-1">
+                <span className="panel-label block truncate">{tCurriculum(`stages.${stageId}`)}</span>
+                <span className="text-ink-soft mt-0.5 block text-micro" data-numeric>
+                  {mix}
+                </span>
+              </span>
+              <ChevronRightIcon className="text-ink-soft size-5 shrink-0" />
+            </button>
+          ) : null}
+
           <button
             type="button"
             onClick={() =>
               unfinished
                 ? setLesson({
                     id: unfinished.lessonId,
-                    plan: unfinished.plan as LessonPlan | undefined,
+                    plan: unfinished.plan,
                     duelId: unfinished.duelId,
                     attempts: unfinished.attempts,
                   })
-                : setLesson({ id: newLessonId() })
+                : startStage()
             }
             className="bg-accent active:bg-accent-press min-h-14 w-full rounded-control text-body font-semibold text-white transition-colors duration-75"
           >
@@ -232,7 +291,7 @@ export default function HomePage() {
               type="button"
               onClick={() => {
                 void clearProgress();
-                setLesson({ id: newLessonId() });
+                startStage();
               }}
               className="text-ink-soft min-h-11 w-full text-label"
             >

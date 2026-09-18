@@ -52,7 +52,9 @@
     "openShop": "Zásoby a nákup",
     "dailyOf": "zo {total, number}",
     "resume": "Pokračovať · {done, number}/{total, number}",
-    "startFresh": "Začať novú lekciu"
+    "startFresh": "Začať novú lekciu",
+    "mix": "{stage, number} z témy · {review, number} opakovanie",
+    "mixOnly": "{stage, number} príkladov z témy"
   },
   "settings": {
     "title": "Nastavenia",
@@ -442,5 +444,25 @@
     "train": "Trénovať",
     "tooFew": "málo odpovedí",
     "helpUsed": "{hinted, number}× nápoveda"
+  },
+  "curriculum": {
+    "title": "Program",
+    "close": "Zavrieť program",
+    "intro": "Poradie je odporúčanie, nie závora. Ktorýkoľvek stupeň sa dá spustiť hneď — poradie zodpovedá tomu, ako sa látka preberá na fakulte.",
+    "current": "Teraz",
+    "mastered": "Zvládnuté",
+    "tooFew": "málo odpovedí",
+    "restsOn": "Stojí na látke „{stage}“, ktorú máš na {rate, number} %.",
+    "restsOnUntouched": "Stojí na látke „{stage}“, ktorú si zatiaľ neskúšal.",
+    "stages": {
+      "jednotky": "Jednotky a dávka",
+      "koncentrace": "Riedenie a koncentrácie",
+      "hmotnost": "Podľa hmotnosti a pediatria",
+      "priprava": "Rekonštitúcia a infúzie",
+      "ledviny": "Obličky",
+      "inzulin": "Inzulín",
+      "perfuzory": "Vazoaktívne lieky",
+      "povrch": "Povrch tela a onkológia"
+    }
   }
 }

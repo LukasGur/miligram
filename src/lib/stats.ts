@@ -1,4 +1,4 @@
-import { categoryOf } from "@/core/lesson";
+import { categoryOfId } from "@/core/templateCategories";
 import type { Category, Difficulty } from "@/core/types";
 import { db, type AnswerRecord } from "./db";
 
@@ -43,7 +43,9 @@ export async function overview(): Promise<Overview> {
 
   const byCategory = new Map<Category, { answered: number; correct: number }>();
   for (const answer of answers) {
-    const category = safeCategory(answer.templateId);
+    // Šablona, kterou aplikace už nezná: historie ji přežije a statistika
+    // kvůli ní nesmí spadnout.
+    const category = categoryOfId(answer.templateId);
     if (category === null) continue;
     const bucket = byCategory.get(category) ?? { answered: 0, correct: 0 };
     bucket.answered += 1;
@@ -99,14 +101,3 @@ export async function mistakesToRepeat(limit: number): Promise<Mistake[]> {
     }));
 }
 
-/**
- * Kategorie šablony, která už v aplikaci nemusí být. Historie přežije
- * i smazanou šablonu a statistika kvůli tomu nesmí spadnout.
- */
-function safeCategory(templateId: string): Category | null {
-  try {
-    return categoryOf(templateId);
-  } catch {
-    return null;
-  }
-}

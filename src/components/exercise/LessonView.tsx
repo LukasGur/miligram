@@ -3,7 +3,8 @@
 import { useMemo, useRef, useState } from "react";
 import { useFormatter, useTranslations } from "next-intl";
 import { HINT_COST, rewardForLesson } from "@/core/economy";
-import { lessonExercise, planLesson, type LessonPlan } from "@/core/lesson";
+import { lessonExercise, resolvePlan, type LessonPlan } from "@/core/lesson";
+import type { DailySpec } from "@/core/curriculum";
 import { firstTryOutcomes, nextIndex, solvedCount } from "@/core/lessonRun";
 import { recordAnswer, recordLesson, spendPills, type LessonAttempt } from "@/lib/db";
 import { useProfile } from "@/lib/useProfile";
@@ -24,23 +25,26 @@ import { ExerciseView } from "./ExerciseView";
 export function LessonView({
   lessonId,
   plan: given,
+  spec,
   duelId,
   attempts: resumed,
   onExit,
 }: {
   lessonId: string;
-  /**
-   * Hotový plán z tréninku nebo opakování chyb. Bez něj se sestaví
-   * denní lekce z identifikátoru.
-   */
+  /** Hotový plán z tréninku, opakování chyb nebo rozehrané lekce. */
   plan?: LessonPlan;
+  /**
+   * Předpis denní lekce. Plán se z něj sestaví tady a hned se uloží
+   * k rozehrané lekci, aby se po návratu předložily tytéž příklady.
+   */
+  spec?: DailySpec;
   /** Je-li vyplněné, hlásí se po dokončení výsledek do souboje. */
   duelId?: string;
   /** Pokusy z rozehrané lekce, na které se navazuje. */
   attempts?: readonly LessonAttempt[];
   onExit: () => void;
 }) {
-  const plan = useMemo(() => given ?? planLesson(lessonId), [given, lessonId]);
+  const plan = useMemo(() => resolvePlan({ lessonId, plan: given, spec }), [given, spec, lessonId]);
   // Rozehraná lekce začíná tam, kde uživatel přestal. Pořadí se dopočítá
   // z pokusů, takže se nemusí ukládat vedle.
   const [attempts, setAttempts] = useState<LessonAttempt[]>([...(resumed ?? [])]);
@@ -93,7 +97,13 @@ export function LessonView({
 
         // Zápis pokusu je samostatný od zápisu lekce: lekce se nemusí
         // dohrát, odpověď už padla.
-        void recordAnswer(lessonId, attempt, { plan: given, duelId });
+        // Plán se ukládá i u denní lekce: sestavil se ze stavu, který se
+        // během lekce mění, takže z předpisu by po návratu vyšel jiný.
+        void recordAnswer(lessonId, attempt, {
+          plan: spec || given ? plan : undefined,
+          stageId: spec?.stage,
+          duelId,
+        });
 
         // Poslední vyřešený příklad lekci uzavírá. Zapisuje se tady,
         // v obsluze události, ne při vykreslení shrnutí — událost nastane

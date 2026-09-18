@@ -1,5 +1,7 @@
 import Dexie, { type Table } from "dexie";
+import type { StageId } from "@/core/curriculum";
 import { advanceStreak, localDay, type StreakState } from "@/core/economy";
+import type { LessonPlan } from "@/core/lessonPlan";
 
 /**
  * Lokální databáze.
@@ -96,10 +98,13 @@ export type LessonProgress = {
   id: number;
   lessonId: string;
   /**
-   * Plán tréninku nebo opakování chyb. Denní lekce ho nemá: odvodí se celá
-   * z identifikátoru, takže by uložený plán byl jen druhá kopie téhož.
+   * Plán lekce. Nese ho každá osobní lekce — denní podle programu, trénink
+   * kategorie i opakování chyb —, protože závisí na stavu uživatele a z
+   * identifikátoru se sestavit nedá. Sdílená lekce (souboj) ho nemá.
    */
-  plan?: unknown;
+  plan?: LessonPlan;
+  /** Stupeň programu, ze kterého lekce je. Kvůli titulku po návratu. */
+  stageId?: StageId;
   /** Souboj, do kterého se po dokončení hlásí výsledek. */
   duelId?: string;
   /**
@@ -299,7 +304,7 @@ export async function readProgress(): Promise<LessonProgress | undefined> {
 export async function recordAnswer(
   lessonId: string,
   attempt: LessonAttempt,
-  options: { plan?: unknown; duelId?: string } = {},
+  options: { plan?: LessonPlan; stageId?: StageId; duelId?: string } = {},
   now = new Date(),
 ): Promise<void> {
   const timestamp = now.toISOString();
@@ -345,9 +350,10 @@ export async function recordAnswer(
     await database.progress.put({
       id: PROGRESS_ID,
       lessonId,
-      // Plán a souboj se opisují z rozehrané lekce, když je volající
+      // Plán, stupeň a souboj se opisují z rozehrané lekce, když je volající
       // nepřipomene. Jinak by je druhý pokus v pořadí umazal.
       plan: options.plan ?? running?.plan,
+      stageId: options.stageId ?? running?.stageId,
       duelId: options.duelId ?? running?.duelId,
       attempts,
       startedAt: running?.startedAt ?? timestamp,

@@ -6,11 +6,21 @@ import {
   lessonExercise,
   newLessonId,
   planCategoryLesson,
+  planDailyLesson,
   planFromItems,
   planLesson,
+  resolvePlan,
   trainableCategories,
 } from "../lesson";
+import { DAILY_REVIEW_ITEMS, DAILY_STAGE_ITEMS, REVIEW_SLOTS } from "../lessonPlan";
+import { RAMPS, stageById, type DailySpec } from "../curriculum";
 import { productionTemplates } from "../templates";
+
+const DENNI: DailySpec = { stage: "priprava", review: ["redeni", "prevody"], ramp: "standard" };
+
+/** Kategorie příkladu podle plánu — ověřuje, že se losovalo ze správného fondu. */
+const kategorie = (plan: { items: readonly { templateId: string }[] }) =>
+  plan.items.map((item) => categoryOf(item.templateId));
 
 describe("sestavení lekce", () => {
   it("má pevnou délku a stoupající obtížnost", () => {
@@ -95,5 +105,79 @@ describe("tréninkové režimy", () => {
 
   it("každá trénovatelná kategorie má aspoň jednu šablonu v produkci", () => {
     expect(trainableCategories().length).toBeGreaterThanOrEqual(11);
+  });
+});
+
+describe("denní lekce podle programu", () => {
+  it("má pět příkladů ze stupně a dvě opakování", () => {
+    expect(DAILY_STAGE_ITEMS + DAILY_REVIEW_ITEMS).toBe(LESSON_LENGTH);
+    expect(REVIEW_SLOTS).toHaveLength(DAILY_REVIEW_ITEMS);
+
+    const plan = planDailyLesson("den", DENNI);
+    const vestupni = new Set(stageById("priprava").categories);
+    const opakovaci = kategorie(plan).filter((_, index) => REVIEW_SLOTS.includes(index));
+    const stupnove = kategorie(plan).filter((_, index) => !REVIEW_SLOTS.includes(index));
+
+    expect(plan.items).toHaveLength(LESSON_LENGTH);
+    expect(stupnove).toHaveLength(DAILY_STAGE_ITEMS);
+    expect(stupnove.every((category) => vestupni.has(category))).toBe(true);
+    expect(opakovaci.every((category) => DENNI.review.includes(category))).toBe(true);
+  });
+
+  /** Poslední příklad si student zapamatuje — musí být z toho, co se učí teď. */
+  it("končí příkladem z rozepsaného stupně, ne opakováním", () => {
+    expect(REVIEW_SLOTS).not.toContain(LESSON_LENGTH - 1);
+    const plan = planDailyLesson("den", DENNI);
+    expect(stageById("priprava").categories).toContain(kategorie(plan).at(-1));
+  });
+
+  it("obtížnost bere z náběhu v předpisu", () => {
+    const plan = planDailyLesson("den", { ...DENNI, ramp: "push" });
+    expect(plan.items.map((item) => item.difficulty)).toEqual([...RAMPS.push]);
+  });
+
+  it("tentýž identifikátor a předpis dají tutéž lekci", () => {
+    expect(planDailyLesson("den", DENNI)).toEqual(planDailyLesson("den", DENNI));
+    expect(planDailyLesson("den", { ...DENNI, stage: "ledviny" })).not.toEqual(
+      planDailyLesson("den", DENNI),
+    );
+  });
+
+  it("bez zvládnuté látky naplní všech sedm ze stupně", () => {
+    const plan = planDailyLesson("den", { ...DENNI, review: [] });
+    const vestupni = new Set(stageById("priprava").categories);
+    expect(plan.items).toHaveLength(LESSON_LENGTH);
+    expect(kategorie(plan).every((category) => vestupni.has(category))).toBe(true);
+  });
+
+  /** Inzulin má jen čtyři šablony na pět míst. */
+  it("z malého fondu zopakuje šablonu, ale ne hned vedle sebe a s jiným semínkem", () => {
+    const plan = planDailyLesson("den", { stage: "inzulin", review: ["prevody"], ramp: "standard" });
+    const ze_stupne = plan.items.filter((_, index) => !REVIEW_SLOTS.includes(index));
+
+    expect(new Set(ze_stupne.map((item) => item.templateId)).size).toBeLessThan(ze_stupne.length);
+    for (let index = 1; index < ze_stupne.length; index += 1) {
+      expect(ze_stupne[index].templateId).not.toBe(ze_stupne[index - 1].templateId);
+    }
+    expect(new Set(plan.items.map((item) => item.seed)).size).toBe(LESSON_LENGTH);
+  });
+});
+
+describe("který plán se hraje", () => {
+  it("uložený plán má přednost před předpisem i identifikátorem", () => {
+    const ulozeny = planFromItems("x", [{ templateId: "A1", seed: "x:0", difficulty: 1 }]);
+    expect(resolvePlan({ lessonId: "x", plan: ulozeny, spec: DENNI })).toBe(ulozeny);
+  });
+
+  it("předpis má přednost před holým identifikátorem", () => {
+    expect(resolvePlan({ lessonId: "den", spec: DENNI })).toEqual(planDailyLesson("den", DENNI));
+  });
+
+  /**
+   * Souboj stojí na tom, že oba hráči sestaví z téhož identifikátoru tutéž
+   * lekci. Sdílená lekce proto nesmí sáhnout na stav uživatele.
+   */
+  it("holý identifikátor dá oběma hráčům souboje tutéž lekci", () => {
+    expect(resolvePlan({ lessonId: "souboj" })).toEqual(planLesson("souboj"));
   });
 });

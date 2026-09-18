@@ -13,10 +13,22 @@ import type { Difficulty } from "./types";
 export const LESSON_LENGTH = 7;
 
 /**
- * Náběh obtížnosti. Lekce začíná lehce, aby se uživatel chytil, a končí
- * nejtěžším příkladem — poslední je ten, který si zapamatuje.
+ * Náběh obtížnosti lekce bez stupně — souboj a trénink kategorie. Denní
+ * lekce má náběhy tři a vybírá podle toho, jak student ve stupni stojí
+ * (`RAMPS` v curriculum.ts); tady není podle čeho se rozhodovat.
  */
 export const DIFFICULTY_RAMP: readonly Difficulty[] = [1, 1, 2, 2, 2, 3, 3];
+
+/** Kolik příkladů denní lekce bere z rozepsaného stupně a kolik z opakování. */
+export const DAILY_STAGE_ITEMS = 5;
+export const DAILY_REVIEW_ITEMS = 2;
+
+/**
+ * Kam v lekci opakování patří. Proložené se lépe učí než blok na konci
+ * a hlavně: poslední příklad musí zůstat z rozepsaného stupně, protože
+ * ten si student zapamatuje.
+ */
+export const REVIEW_SLOTS: readonly number[] = [2, 5];
 
 export type LessonPlan = {
   id: string;

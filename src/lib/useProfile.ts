@@ -2,6 +2,7 @@
 
 import { useLiveQuery } from "dexie-react-hooks";
 import { currentStreak } from "@/core/economy";
+import { curriculumState, type CurriculumState } from "./curriculum";
 import { db, emptyProfile, PROFILE_ID, PROGRESS_ID, type LessonProgress, type Profile } from "./db";
 import { solvedToday, weekActivity, type WeekDay } from "./today";
 
@@ -57,4 +58,12 @@ export function useToday(): { solved: number; week: WeekDay[] } {
  */
 export function useLessonProgress(): LessonProgress | null | undefined {
   return useLiveQuery(async () => (await db().progress.get(PROGRESS_ID)) ?? null, []);
+}
+
+/**
+ * Kde student stojí v programu. `undefined`, dokud se to nespočítá —
+ * domovská obrazovka podle toho pozná, že ještě nemá psát název lekce.
+ */
+export function useCurriculum(): CurriculumState | undefined {
+  return useLiveQuery(() => curriculumState(), []);
 }
