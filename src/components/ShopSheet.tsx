@@ -5,7 +5,7 @@ import { useFormatter, useTranslations } from "next-intl";
 import { MAX_STREAK_FREEZES, STREAK_FREEZE_COST } from "@/core/economy";
 import { buyStreakFreeze } from "@/lib/db";
 import { useProfile } from "@/lib/useProfile";
-import { CloseIcon } from "./icons";
+import { CloseIcon, PillIcon, ShieldIcon } from "./icons";
 import { Readout } from "./ui/Readout";
 
 /**
@@ -80,11 +80,17 @@ export function ShopSheet({ open, onClose }: { open: boolean; onClose: () => voi
         </div>
 
         <div className="px-5 py-5">
-          <Readout label={tHome("pills")} value={format.number(profile.pills)} tone="accent" />
+          <div className="flex items-center gap-3">
+            <PillIcon className="text-pill size-7 shrink-0" />
+            <Readout label={tHome("pills")} value={format.number(profile.pills)} />
+          </div>
 
           <section className="border-line mt-6 border-t pt-5">
             <div className="flex items-baseline justify-between gap-3">
-              <h3 className="text-body font-semibold">{t("freezeTitle")}</h3>
+              <h3 className="flex items-center gap-2 text-body font-semibold">
+                <ShieldIcon className="text-ink-soft size-5 shrink-0" />
+                {t("freezeTitle")}
+              </h3>
               <span className="readout text-ink-soft text-label" data-numeric>
                 {t("freezeOwned", { count: owned })}
               </span>
@@ -98,7 +104,7 @@ export function ShopSheet({ open, onClose }: { open: boolean; onClose: () => voi
               className="border-line text-ink active:bg-surface mt-4 flex min-h-12 w-full items-center justify-between rounded-control border px-4 text-body font-semibold transition-colors duration-75 disabled:opacity-40"
             >
               <span>{t("freezeBuyShort")}</span>
-              <span className="readout text-accent" data-numeric>
+              <span className="readout text-pill" data-numeric>
                 {format.number(STREAK_FREEZE_COST)}
               </span>
             </button>

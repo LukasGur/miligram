@@ -37,15 +37,12 @@
     "backOnline": "Připojení obnoveno"
   },
   "home": {
-    "lessonTitle": "Denní lekce",
     "lessonMeta": "{count} příkladů · {minutes} minut",
     "start": "Začít lekci",
     "streak": "Série",
     "streakUnit": "{days, plural, =0 {dní} one {den} few {dny} other {dní}}",
     "pills": "Prášky",
     "xp": "XP",
-    "buildNoticeTitle": "Rozpracováno",
-    "buildNoticeBody": "Hotové je výpočetní jádro, obrazovka příkladu a lokální ekonomika. Účet, žebříčky a souboje přijdou ve fázi 5.",
     "dailyGoal": "Dnešní cíl",
     "dailyDone": "Cíl splněn",
     "weekTitle": "Týden",
@@ -54,7 +51,8 @@
     "resume": "Pokračovat · {done, number}/{total, number}",
     "startFresh": "Začít novou lekci",
     "mix": "{stage, number} z tématu · {review, number} opakování",
-    "mixOnly": "{stage, number} příkladů z tématu"
+    "mixOnly": "{stage, number} příkladů z tématu",
+    "supplies": "Zásoby"
   },
   "settings": {
     "title": "Nastavení",
@@ -64,7 +62,6 @@
     "legal": "Právní informace",
     "about": "O aplikaci",
     "version": "Verze {version}",
-    "showDisclaimer": "Zobrazit podmínky použití",
     "storage": "Data",
     "storageHint": "Všechno zůstává v tomhle zařízení. Nic se nikam neodesílá."
   },
@@ -332,16 +329,13 @@
     "magnitudeHigher": "Odpověď je {factor, number}× větší, než má být. Chyba o řád je ve výpočtu dávky ta nejnebezpečnější — stojí za to najít, kde se ztratil převod.",
     "magnitudeLower": "Odpověď je {factor, number}× menší, než má být. Chyba o řád je ve výpočtu dávky ta nejnebezpečnější — stojí za to najít, kde se ztratil převod.",
     "solutionTitle": "Postup",
-    "showSolution": "Ukázat postup",
     "hideSolution": "Skrýt postup",
     "roundingTitle": "Zaokrouhlení v praxi",
     "sourceTitle": "Odkud jsou čísla",
     "summaryTitle": "Lekce hotová",
     "summaryPerfect": "Bez jediné chyby",
     "again": "Další lekce",
-    "home": "Zpět na začátek",
-    "hint": "Nápověda za {cost, number} prášků",
-    "hintPoor": "Na nápovědu potřebuješ {cost, number} prášků",
+    "home": "Domů",
     "hintTitle": "Nápověda",
     "correctIs": "Správně je",
     "yourAnswer": "Tvoje odpověď",
@@ -410,7 +404,6 @@
   "shop": {
     "freezeTitle": "Ochrana série",
     "freezeBody": "Pokryje jeden vynechaný den. Uplatní se sama, až se vrátíš.",
-    "freezeBuy": "Koupit za {cost, number} prášků",
     "freezeOwned": "{count, plural, =0 {Žádná v zásobě} one {# v zásobě} other {# v zásobě}}",
     "freezePoor": "Nemáš dost prášků",
     "freezeFull": "Víc než {max, number} si držet nejde",

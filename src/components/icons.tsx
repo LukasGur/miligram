@@ -127,3 +127,87 @@ export function ChevronRightIcon({ className }: IconProps) {
     </svg>
   );
 }
+
+export function PillIcon({ className }: IconProps) {
+  return (
+    <svg viewBox="0 0 24 24" fill="none" aria-hidden className={className}>
+      <g stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round">
+        <rect x="2.4" y="8.4" width="19.2" height="7.2" rx="3.6" transform="rotate(-45 12 12)" />
+        <path d="M9.5 9.5 14.5 14.5" />
+      </g>
+    </svg>
+  );
+}
+
+export function ShieldIcon({ className }: IconProps) {
+  return (
+    <svg viewBox="0 0 24 24" fill="none" aria-hidden className={className}>
+      <g stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round">
+        <path d="M12 3l7 2.8v5.4c0 4.3-2.9 8.1-7 9.3-4.1-1.2-7-5-7-9.3V5.8z" />
+        <path d="M9 12l2.2 2.2L15.5 10" />
+      </g>
+    </svg>
+  );
+}
+
+export function HomeIcon({ className }: IconProps) {
+  return (
+    <svg viewBox="0 0 24 24" fill="none" aria-hidden className={className}>
+      <g stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round">
+        <path d="M4 10.5 12 4l8 6.5V19a1.5 1.5 0 0 1-1.5 1.5h-13A1.5 1.5 0 0 1 4 19z" />
+        <path d="M9.5 20.5v-6h5v6" />
+      </g>
+    </svg>
+  );
+}
+
+export function RepeatIcon({ className }: IconProps) {
+  return (
+    <svg viewBox="0 0 24 24" fill="none" aria-hidden className={className}>
+      <g stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round">
+        <path d="M4 12a8 8 0 0 1 13.7-5.6L20 8.5" />
+        <path d="M20 4v4.5h-4.5" />
+        <path d="M20 12a8 8 0 0 1-13.7 5.6L4 15.5" />
+        <path d="M4 20v-4.5h4.5" />
+      </g>
+    </svg>
+  );
+}
+
+export function UsersIcon({ className }: IconProps) {
+  return (
+    <svg viewBox="0 0 24 24" fill="none" aria-hidden className={className}>
+      <g stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round">
+        <circle cx="9" cy="8" r="3.2" />
+        <path d="M3.5 19.5v-1.2a5.5 5.5 0 0 1 11 0v1.2" />
+        <path d="M16.5 5.2a3.2 3.2 0 0 1 0 5.6" />
+        <path d="M17.5 13.2a5.5 5.5 0 0 1 3 4.9v1.4" />
+      </g>
+    </svg>
+  );
+}
+
+export function VersusIcon({ className }: IconProps) {
+  return (
+    <svg viewBox="0 0 24 24" fill="none" aria-hidden className={className}>
+      <g stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round">
+        <path d="M3 8h11" />
+        <path d="M11 5l3 3-3 3" />
+        <path d="M21 16H10" />
+        <path d="M13 13l-3 3 3 3" />
+      </g>
+    </svg>
+  );
+}
+
+export function LadderIcon({ className }: IconProps) {
+  return (
+    <svg viewBox="0 0 24 24" fill="none" aria-hidden className={className}>
+      <g stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round">
+        <path d="M4 20v-5.5h5V20" />
+        <path d="M9.5 20V9h5v11" />
+        <path d="M15 20V4.5h5V20" />
+      </g>
+    </svg>
+  );
+}

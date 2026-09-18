@@ -1,6 +1,7 @@
 "use client";
 
 import { useTranslations } from "next-intl";
+import { VersusIcon } from "@/components/icons";
 import type { Duel } from "@/lib/remote";
 
 /**
@@ -23,7 +24,10 @@ export function Duels({
 
   return (
     <section className="mt-8">
-      <h2 className="text-heading font-semibold">{t("duelsTitle")}</h2>
+      <h2 className="flex items-center gap-2 text-heading font-semibold">
+        <VersusIcon className="text-ink-soft size-5 shrink-0" />
+        {t("duelsTitle")}
+      </h2>
 
       {loading ? (
         <p className="text-ink-soft mt-3 text-label">{t("loading")}</p>

@@ -217,18 +217,15 @@ export function ExerciseView({
 
 /**
  * Vedlejší akce: rámeček, ne modrý odkaz. Odkaz vypadá jako text, který
- * se dá přehlédnout; tady jde o volbu, která něco stojí — nápověda se
- * platí prášky a cena patří vedle názvu, ne do věty.
+ * se dá přehlédnout, a tohle je volba, ne poznámka.
  */
 function SecondaryAction({
   onClick,
   disabled,
-  cost,
   children,
 }: {
   onClick: () => void;
   disabled?: boolean;
-  cost?: number;
   children: React.ReactNode;
 }) {
   return (
@@ -239,11 +236,6 @@ function SecondaryAction({
       className="border-line text-ink active:bg-surface flex min-h-11 items-center justify-center gap-2 rounded-control border px-3 text-label font-medium transition-colors duration-75 disabled:opacity-40"
     >
       {children}
-      {cost === undefined ? null : (
-        <span className="readout text-accent" data-numeric>
-          {cost}
-        </span>
-      )}
     </button>
   );
 }

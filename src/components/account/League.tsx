@@ -1,6 +1,7 @@
 "use client";
 
 import { useFormatter, useTranslations } from "next-intl";
+import { LadderIcon } from "@/components/icons";
 import { displayTier } from "@/core/league";
 import type { LeagueStanding } from "@/lib/remote";
 
@@ -18,7 +19,10 @@ export function League({ standing, userId }: { standing: LeagueStanding | null; 
   return (
     <section className="mt-8">
       <div className="flex items-baseline justify-between gap-3">
-        <h2 className="text-heading font-semibold">{t("leagueTitle")}</h2>
+        <h2 className="flex items-center gap-2 text-heading font-semibold">
+        <LadderIcon className="text-ink-soft size-5 shrink-0" />
+        {t("leagueTitle")}
+      </h2>
         {standing ? (
           <span className="readout text-accent text-label font-medium" data-numeric>
             {t("leagueTier", { tier: displayTier(standing.tier) })}

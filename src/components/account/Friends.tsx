@@ -2,6 +2,7 @@
 
 import { useState } from "react";
 import { useFormatter, useTranslations } from "next-intl";
+import { UsersIcon } from "@/components/icons";
 import type { SupabaseClient } from "@supabase/supabase-js";
 import {
   acceptFriend,
@@ -68,7 +69,10 @@ export function Friends({
 
   return (
     <section className="mt-8">
-      <h2 className="text-heading font-semibold">{t("friendsTitle")}</h2>
+      <h2 className="flex items-center gap-2 text-heading font-semibold">
+        <UsersIcon className="text-ink-soft size-5 shrink-0" />
+        {t("friendsTitle")}
+      </h2>
 
       <div className="mt-3 flex items-end gap-2">
         <div className="flex-1">

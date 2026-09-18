@@ -3,6 +3,7 @@
 import { useLiveQuery } from "dexie-react-hooks";
 import { useFormatter, useTranslations } from "next-intl";
 import { CloseIcon } from "@/components/icons";
+import { CategoryIcon } from "@/components/ui/CategoryIcon";
 import { trainableCategories } from "@/core/lesson";
 import type { Category } from "@/core/types";
 import { LESSON_LENGTH } from "@/core/lessonPlan";
@@ -113,8 +114,11 @@ export function StatsScreen({
                           aria-label={`${t("train")}: ${tCategories(category)}`}
                           className="active:bg-surface w-full py-3 text-left transition-colors duration-75"
                         >
-                          <span className="flex items-baseline justify-between gap-3">
-                            <span className="text-body">{tCategories(category)}</span>
+                          <span className="flex items-center justify-between gap-3">
+                            <span className="flex min-w-0 flex-1 items-center gap-2.5">
+                              <CategoryIcon category={category} className="text-ink-soft size-5 shrink-0" />
+                              <span className="text-body truncate">{tCategories(category)}</span>
+                            </span>
                             {shown ? (
                               <span className="readout text-label font-medium" data-numeric>
                                 {format.number(Math.round(rate * 100))}

@@ -8,6 +8,7 @@ import type { DailySpec } from "@/core/curriculum";
 import { attemptsOn, firstTryOutcomes, nextIndex, solvedCount } from "@/core/lessonRun";
 import { recordAnswer, recordLesson, spendPills, type LessonAttempt } from "@/lib/db";
 import { useProfile } from "@/lib/useProfile";
+import { HomeIcon, RepeatIcon } from "@/components/icons";
 import { Numeral } from "@/components/ui/Numeral";
 import { Tally } from "@/components/ui/Tally";
 import { ExerciseView } from "./ExerciseView";
@@ -29,6 +30,7 @@ export function LessonView({
   duelId,
   attempts: resumed,
   onExit,
+  onAgain,
 }: {
   lessonId: string;
   /** Hotový plán z tréninku, opakování chyb nebo rozehrané lekce. */
@@ -43,6 +45,8 @@ export function LessonView({
   /** Pokusy z rozehrané lekce, na které se navazuje. */
   attempts?: readonly LessonAttempt[];
   onExit: () => void;
+  /** Spustí další lekci rovnou ze shrnutí, bez návratu domů. */
+  onAgain: () => void;
 }) {
   const plan = useMemo(() => resolvePlan({ lessonId, plan: given, spec }), [given, spec, lessonId]);
   // Rozehraná lekce začíná tam, kde uživatel přestal. Pořadí se dopočítá
@@ -69,6 +73,7 @@ export function LessonView({
         outcomes={firstTryOutcomes(plan, attempts)}
         unsolved={plan.items.length - solved}
         onExit={onExit}
+        onAgain={onAgain}
       />
     );
   }
@@ -183,12 +188,14 @@ function LessonSummary({
   outcomes,
   unsolved,
   onExit,
+  onAgain,
 }: {
   /** Jak dopadl první pokus u každého příkladu. Odměna je z toho. */
   outcomes: readonly boolean[];
   /** Kolik příkladů student vzdal. Bez toho nedává denní cíl smysl. */
   unsolved: number;
   onExit: () => void;
+  onAgain: () => void;
 }) {
   const t = useTranslations("lesson");
   const tHome = useTranslations("home");
@@ -236,9 +243,21 @@ function LessonSummary({
           <button
             type="button"
             onClick={onExit}
-            className="bg-accent active:bg-accent-press min-h-14 w-full rounded-control text-body font-semibold text-white transition-colors duration-75"
+            className="bg-accent active:bg-accent-press flex min-h-14 w-full items-center justify-center gap-2 rounded-control text-body font-semibold text-white transition-colors duration-75"
           >
+            <HomeIcon className="size-5" />
             {t("home")}
+          </button>
+
+          {/* Další lekce je tichá volba: po splněném cíli je správné odejít,
+              ne hrát dál. */}
+          <button
+            type="button"
+            onClick={onAgain}
+            className="text-ink-soft mt-1 flex min-h-11 w-full items-center justify-center gap-2 text-label"
+          >
+            <RepeatIcon className="size-4" />
+            {t("again")}
           </button>
         </div>
       </footer>
