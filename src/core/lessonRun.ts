@@ -3,10 +3,14 @@ import type { LessonPlan } from "./lessonPlan";
 /**
  * Průběh lekce: co předložit dál.
  *
- * Lekce není hotová po sedmi odpovědích, ale po sedmi spočítaných
+ * Lekce není hotová po sedmi odpovědích, ale po sedmi uzavřených
  * příkladech. Kdo se splete, dostane tentýž příklad — se stejnými čísly —
  * znovu na konci, a lekce končí, až je všechno správně. Sedm chyb ze sedmi
  * proto nemůže znamenat splněný denní cíl.
+ *
+ * Uvíznout ale nejde: kdo se splete podruhé, může si nechat ukázat celý
+ * postup a jít dál. Vzdaný příklad se nevrací a do denního cíle se
+ * nepočítá — do statistik ano, takže se vrátí jindy v opakování chyb.
  *
  * Všechno se odvozuje z pokusů v pořadí, v jakém padly. Díky tomu stačí
  * uložit pokusy a pořadí se po návratu do rozehrané lekce dopočítá samo —
@@ -16,11 +20,29 @@ export type Attempt = {
   /** Semínko určuje příklad; v rámci lekce je jedinečné. */
   seed: string;
   correct: boolean;
+  /**
+   * Student příklad vzdal: po druhé chybě si nechal ukázat celý postup
+   * a šel dál. Bez téhle možnosti se v lekci uvízne — kdo látku nezná,
+   * dostává tentýž příklad pořád dokola a lekci nedokončí nikdy.
+   */
+  gaveUp?: boolean;
 };
 
 /** Semínka příkladů, které už student vyřešil. */
 export function solvedSeeds(attempts: readonly Attempt[]): Set<string> {
   return new Set(attempts.filter((attempt) => attempt.correct).map((attempt) => attempt.seed));
+}
+
+/** Semínka, která se v lekci už nevrátí: vyřešená i vzdaná. */
+function closedSeeds(attempts: readonly Attempt[]): Set<string> {
+  const closed = solvedSeeds(attempts);
+  for (const attempt of attempts) if (attempt.gaveUp) closed.add(attempt.seed);
+  return closed;
+}
+
+/** Kolikátý pokus na příkladu student právě má. Podle toho se nabídne vzdání. */
+export function attemptsOn(attempts: readonly Attempt[], seed: string): number {
+  return attempts.filter((attempt) => attempt.seed === seed).length;
 }
 
 /**
@@ -32,14 +54,14 @@ export function solvedSeeds(attempts: readonly Attempt[]): Set<string> {
  * znovu druhý a pak pátý.
  */
 export function nextIndex(plan: LessonPlan, attempts: readonly Attempt[]): number | null {
-  const solved = solvedSeeds(attempts);
+  const closed = closedSeeds(attempts);
   const lastAttempt = new Map<string, number>();
   attempts.forEach((attempt, order) => lastAttempt.set(attempt.seed, order));
 
   let candidate: { index: number; order: number } | null = null;
 
   for (const [index, item] of plan.items.entries()) {
-    if (solved.has(item.seed)) continue;
+    if (closed.has(item.seed)) continue;
 
     const order = lastAttempt.get(item.seed);
     // Nezkoušený příklad má přednost před opravou: první průchod se

@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { firstTryOutcomes, isFinished, nextIndex, solvedCount } from "../lessonRun";
+import { attemptsOn, firstTryOutcomes, isFinished, nextIndex, solvedCount } from "../lessonRun";
 import type { LessonPlan } from "../lessonPlan";
 
 const plan: LessonPlan = {
@@ -60,5 +60,35 @@ describe("průběh lekce", () => {
 
   it("nezkoušený příklad se do odměny počítá jako chyba", () => {
     expect(firstTryOutcomes(plan, [ok(0)])).toEqual([true, false, false, false, false, false, false]);
+  });
+});
+
+describe("vzdaný příklad", () => {
+  const vzdano = (index: number) => ({ seed: `l:${index}`, correct: false, gaveUp: true });
+
+  it("se v lekci už nevrátí", () => {
+    const pokusy = [chyba(0), vzdano(0)];
+    expect(nextIndex(plan, pokusy)).toBe(1);
+  });
+
+  /** Tohle je celý důvod: bez vzdání se v lekci dá uvíznout napořád. */
+  it("dovolí lekci skončit, i když se příklad nespočítal", () => {
+    const pokusy = [
+      ok(0), ok(1), ok(2), ok(3), ok(4), ok(5),
+      chyba(6), chyba(6), vzdano(6),
+    ];
+    expect(isFinished(plan, pokusy)).toBe(true);
+    // Do denního cíle se počítá spočítané, ne odbyté.
+    expect(solvedCount(plan, pokusy)).toBe(6);
+  });
+
+  it("odměnu nemění — napoprvé to stejně nevyšlo", () => {
+    const pokusy = [chyba(0), chyba(0), vzdano(0), ok(1)];
+    expect(firstTryOutcomes(plan, pokusy).slice(0, 2)).toEqual([false, true]);
+  });
+
+  it("počítadlo pokusů ví, kolikrát student na příklad sáhl", () => {
+    expect(attemptsOn([chyba(0), ok(1), chyba(0)], "l:0")).toBe(2);
+    expect(attemptsOn([], "l:0")).toBe(0);
   });
 });

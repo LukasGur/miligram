@@ -124,6 +124,8 @@ export type LessonAttempt = {
   index: number;
   correct: boolean;
   hinted: boolean;
+  /** Student si po druhé chybě nechal ukázat postup a šel dál. */
+  gaveUp?: boolean;
 };
 
 /**

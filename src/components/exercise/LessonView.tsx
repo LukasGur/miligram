@@ -5,7 +5,7 @@ import { useFormatter, useTranslations } from "next-intl";
 import { HINT_COST, rewardForLesson } from "@/core/economy";
 import { lessonExercise, resolvePlan, type LessonPlan } from "@/core/lesson";
 import type { DailySpec } from "@/core/curriculum";
-import { firstTryOutcomes, nextIndex, solvedCount } from "@/core/lessonRun";
+import { attemptsOn, firstTryOutcomes, nextIndex, solvedCount } from "@/core/lessonRun";
 import { recordAnswer, recordLesson, spendPills, type LessonAttempt } from "@/lib/db";
 import { useProfile } from "@/lib/useProfile";
 import { Numeral } from "@/components/ui/Numeral";
@@ -64,7 +64,13 @@ export function LessonView({
   const solved = solvedCount(plan, attempts);
 
   if (index === null || exercise === null) {
-    return <LessonSummary outcomes={firstTryOutcomes(plan, attempts)} onExit={onExit} />;
+    return (
+      <LessonSummary
+        outcomes={firstTryOutcomes(plan, attempts)}
+        unsolved={plan.items.length - solved}
+        onExit={onExit}
+      />
+    );
   }
 
   return (
@@ -79,11 +85,12 @@ export function LessonView({
       solved={solved}
       count={plan.items.length}
       /** Opakování: příklad, na kterém už student jednou pohořel. */
-      repeat={attempts.some((attempt) => attempt.seed === exercise.seed)}
+      repeat={attemptsOn(attempts, exercise.seed) > 0}
+      attempt={attemptsOn(attempts, exercise.seed) + 1}
       pills={profile.pills}
       onExit={onExit}
       onHint={() => spendPills(HINT_COST, `hint:${exercise.templateId}`)}
-      onAnswered={({ correct, hinted }) => {
+      onAnswered={({ correct, hinted, gaveUp }) => {
         const attempt: LessonAttempt = {
           templateId: exercise.templateId,
           seed: exercise.seed,
@@ -91,6 +98,7 @@ export function LessonView({
           index,
           correct,
           hinted,
+          ...(gaveUp ? { gaveUp: true } : {}),
         };
         const next = [...attempts, attempt];
         setAttempts(next);
@@ -173,10 +181,13 @@ function Award({ label, value }: { label: string; value: number }) {
 
 function LessonSummary({
   outcomes,
+  unsolved,
   onExit,
 }: {
   /** Jak dopadl první pokus u každého příkladu. Odměna je z toho. */
   outcomes: readonly boolean[];
+  /** Kolik příkladů student vzdal. Bez toho nedává denní cíl smysl. */
+  unsolved: number;
   onExit: () => void;
 }) {
   const t = useTranslations("lesson");
@@ -202,6 +213,12 @@ function LessonSummary({
 
           {reward.flawless ? (
             <p className="text-accent mt-5 text-heading font-semibold">{t("summaryPerfect")}</p>
+          ) : null}
+
+          {unsolved > 0 ? (
+            <p className="text-ink-soft mt-4 text-label" data-numeric>
+              {t("summaryUnsolved", { count: unsolved })}
+            </p>
           ) : null}
 
           <dl className="border-line divide-line mt-8 divide-y border-y">

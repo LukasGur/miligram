@@ -23,6 +23,7 @@ export function ExerciseView({
   solved,
   count,
   repeat,
+  attempt,
   onExit,
   onAnswered,
   onHint,
@@ -34,8 +35,10 @@ export function ExerciseView({
   count: number;
   /** Příklad, který se vrátil, protože poprvé nevyšel. */
   repeat: boolean;
+  /** Kolikátý pokus tohle je. Od druhého se nabídne jít dál. */
+  attempt: number;
   onExit: () => void;
-  onAnswered: (result: { correct: boolean; hinted: boolean }) => void;
+  onAnswered: (result: { correct: boolean; hinted: boolean; gaveUp?: boolean }) => void;
   onHint: () => Promise<boolean>;
   pills: number;
 }) {
@@ -75,6 +78,13 @@ export function ExerciseView({
     // ne po něm ještě sahat.
     setSolutionOpen(!result.correct);
   }
+
+  /**
+   * Druhá chyba na témže příkladu. Vracet ho donekonečna je pro toho, kdo
+   * látku nezná, slepá ulička — od téhle chvíle se dá projít dál s tím,
+   * že se příklad vrátí jindy v opakování chyb.
+   */
+  const stuck = verdict !== null && !verdict.correct && attempt >= 2;
 
   return (
     <div className="bg-paper flex h-dvh flex-col overflow-hidden">
@@ -156,6 +166,12 @@ export function ExerciseView({
                 <SecondaryAction onClick={() => setSolutionOpen((open) => !open)}>
                   {solutionOpen ? t("hideSolution") : t("solutionShort")}
                 </SecondaryAction>
+
+                {stuck ? (
+                  <SecondaryAction onClick={() => onAnswered({ correct: false, hinted, gaveUp: true })}>
+                    {t("giveUp")}
+                  </SecondaryAction>
+                ) : null}
 
               </div>
 

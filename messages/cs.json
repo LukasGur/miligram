@@ -349,7 +349,9 @@
     "magnitudeShort": "Chyba o řád",
     "solutionShort": "Postup",
     "summaryScoreLabel": "správně",
-    "repeat": "Znovu"
+    "repeat": "Znovu",
+    "giveUp": "Rozumím, jdu dál",
+    "summaryUnsolved": "{count, plural, one {# příklad zůstal nespočítaný} few {# příklady zůstaly nespočítané} other {# příkladů zůstalo nespočítaných}} — vrátí se v opakování chyb."
   },
   "account": {
     "title": "Účet",
