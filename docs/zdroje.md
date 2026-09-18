@@ -158,3 +158,20 @@ Tyto nesmí do produkčního setu, dokud nebudou podložené (`needsReview: true
   výpočet, ne ordinace.
 
   Všech 72 šablon je tím v produkčním setu.
+
+## Pořadí učiva v programu
+
+Osm stupňů kopíruje praktická cvičení Ústavu farmakologie LF UP
+v Olomouci — dávkování se tam neučí jako samostatný předmět, je rozeseté
+v cvičeních z preskripce a z jednotlivých skupin léčiv.
+
+- **Farmakologie 1** (FAR/VCB11, 3. ročník): tekuté lékové formy (cv. 2),
+  dávkování léků v dětském věku (cv. 4), parenterální léky (cv. 5),
+  farmakokinetika a terapeutické monitorování léčiv (cv. 7).
+- **Farmakologie 2** (FAR/VCA13, 4. ročník): kardiovaskulární léky
+  (cv. 2–3), antibiotika včetně glykopeptidů (cv. 7–8), změny
+  farmakokinetiky u dětí, starých a v graviditě (cv. 12), hormony
+  (cv. 13). Přednášky: diabetes (11), onkologie (13), akutní život
+  ohrožující stavy (14).
+
+Sylaby: <https://www.lf.upol.cz/ustavy-a-kliniky/ustavy/ustav-farmakologie/>

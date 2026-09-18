@@ -1,6 +1,6 @@
 # Kde jsme
 
-Poslední aktualizace: **18. 9. 2026**
+Poslední aktualizace: **18. 9. 2026** (druhá dávka)
 
 ## Hotovo
 
@@ -85,6 +85,14 @@ odpovědí, úspěšnost podle látky, opakování chyb a trénink jedné
 kategorie. Opakování předloží tentýž příklad se stejnými čísly; to je
 celý důvod, proč generátor stojí na semínkách.
 
+**Program** — učivo v osmi stupních v pořadí opsaném z praktických
+cvičení Ústavu farmakologie LF UP (Farmakologie 1 a 2; sylaby
+v docs/zdroje.md). Nic se nezamyká: kterýkoli stupeň jde spustit
+klepnutím a u stupně, který stojí na nezvládnuté látce, se to napíše
+větou. Denní lekce má pět příkladů z rozepsaného stupně a dvě opakování
+starší zvládnuté látky na třetí a šesté pozici. Stupeň platí za zvládnutý
+při deseti odpovědích a víc než osmdesáti procentech správně napoprvé.
+
 **Fáze 8, leštění** — přístupnost prošla auditem axe-core (WCAG 2.1 AA
 i doporučené postupy) na všech sedmi obrazovkách: nula nálezů.
 
@@ -104,16 +112,20 @@ na stříkačce. Odměna je počítadlo, které doběhne — celé v CSS, bez
 
 ## Co dělat dál
 
-1. **Doladit výraz podle zpětné vazby.** Směr je nastavený, čeká se,
+1. **Darování ochrany série kamarádovi.** Vyžaduje přesunout prášky
+   na server (dnes žijí jen v telefonu) a ohlídat, aby si je nikdo
+   nevyrobil sám — vlastní tabulka, vlastní pravidla přístupu, ověření
+   proti živé databázi.
+2. **Doladit výraz podle zpětné vazby.** Směr je nastavený, čeká se,
    co bude na telefonu drhnout.
-2. **Zkouška na skutečném iPhonu.** Všechno je zatím ověřené jen
+3. **Zkouška na skutečném iPhonu.** Všechno je zatím ověřené jen
    ve WebKitu na rozměrech telefonu, ne na zařízení.
-3. **Vlastní SMTP.** Přihlašovací kódy chodí přes vestavěné SMTP
+4. **Vlastní SMTP.** Přihlašovací kódy chodí přes vestavěné SMTP
    Supabase, které má tvrdý limit několika e-mailů za hodinu. Na ostrý
    provoz to nestačí.
-4. **Ověřit ligu na skutečném provozu.** Postup a sestup se počítají až
+5. **Ověřit ligu na skutečném provozu.** Postup a sestup se počítají až
    při první lekci v novém týdnu, takže se to pozná nejdřív za týden.
-5. **Revize slovenštiny rodilým mluvčím.** Texty jsou napsané, ne
+6. **Revize slovenštiny rodilým mluvčím.** Texty jsou napsané, ne
    přeložené strojem, ale nikdo je zatím nečetl. Názvy přípravků zůstávají
    české — fond je z české databáze.
 
@@ -143,6 +155,19 @@ na stříkačce. Odměna je počítadlo, které doběhne — celé v CSS, bez
   je hotová po sedmi spočítaných příkladech, ne po sedmi odpovědích —
   sedm chyb ze sedmi proto neznamená splněný denní cíl. Placená oprava
   tím ztratila smysl a zmizela: druhý pokus má nově každý a zadarmo.
+- Od druhé chyby na témže příkladu se dá jít dál s ukázaným postupem.
+  Bez toho by v lekci uvízl ten, kdo látku nezná — a to je přesně trest
+  začátečníka, kvůli kterému Duolingo letos zrušilo srdce.
+- Program nezamyká. Výpočty dávkování nejsou kumulativní jako jazyk
+  a medik před zkouškou má právo jít rovnou na to, co potřebuje. Pořadí
+  je doporučení; závislost stupňů slouží k jedné větě, ne k zákazu.
+- Lekci určuje buď identifikátor, nebo uložený plán. Sdílená lekce
+  (souboj) se sestaví z identifikátoru a nesmí záviset na stavu
+  uživatele — dva hráči nemají stejný stav. Osobní lekce (program,
+  trénink, opakování chyb) si plán uloží k rozehrané lekci.
+- Kategorie šablony se čte z ploché tabulky, ne přes registr. Program
+  se počítá na domovské obrazovce a ta nesmí kvůli němu stáhnout fond
+  614 přípravků. Test hlídá, že se tabulka se šablonami nerozejde.
 - Odměna se počítá z prvního pokusu. Opakování je na učení, ne na sbírání
   bodů, a na server jde jeden záznam na příklad — kdyby se posílaly
   pokusy, přičetly by XP.
@@ -178,7 +203,7 @@ na stříkačce. Odměna je počítadlo, které doběhne — celé v CSS, bez
 ## Příkazy
 
 ```bash
-pnpm test        # 362 testů jádra, překladů, sazby, databáze a statistik
+pnpm test        # 410 testů jádra, překladů, sazby, databáze a statistik
 pnpm typecheck
 pnpm lint
 pnpm dev         # https, LAN, pro test na iPhonu
