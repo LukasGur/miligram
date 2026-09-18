@@ -40,9 +40,10 @@ describe("I2 — inzulin 40 IU/ml", () => {
 });
 
 describe("I3 — korekční faktor", () => {
-  it("zůstává mimo produkční set, dokud nemá zdroj", () => {
-    expect(getTemplate("I3").needsReview).toBe(true);
-    expect(productionTemplates().map((t) => t.id)).not.toContain("I3");
+  it("je v produkčním setu a nese citaci doporučeného postupu", () => {
+    expect(getTemplate("I3").needsReview).toBeUndefined();
+    expect(productionTemplates().map((t) => t.id)).toContain("I3");
+    expect(JSON.stringify(getTemplate("I3").source)).toMatch(/ISPAD/);
   });
 
   it("při denní dávce 50 IU je korekční faktor 2 mmol/l na jednotku", () => {

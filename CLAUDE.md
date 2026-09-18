@@ -12,6 +12,12 @@ export, offline-first. Podrobnosti k příkazům a struktuře jsou v README.md.
   a dávkovací rozmezí musí mít v kódu pole `source` a `verifiedAt`
   a pocházet ze SÚKL/ŠÚKL/SPC/AISLP/BNF. Nedohledané šablony se značí
   `needsReview: true` a do produkčního setu nepatří.
+- **Postupy výpočtu smí pocházet i z doporučeného postupu odborné
+  společnosti** (ISPAD, ČDS ČLS JEP a podobně), s plnou citací včetně
+  ročníku a stran. Je to jiný druh zdroje než souhrn údajů o přípravku:
+  jak se dávka počítá, v SPC nestojí a stát nebude. Kde takový postup
+  dává jen odhad pro začátek, musí to být vidět v zadání i v poznámce
+  o zdroji — ať student ví, že počítá orientační hodnotu, ne ordinaci.
 - **Červená (`--color-danger`) jen pro chybnou odpověď.** Nikdy dekorativně.
 - **Tabulární číslice** všude, kde se hodnota mění (`.num`, `data-numeric`).
 - **Sahatelné cíle ≥ 44 px**, primární akce ve spodní třetině obrazovky.

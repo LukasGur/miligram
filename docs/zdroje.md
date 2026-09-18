@@ -140,13 +140,21 @@ Tyto nesmí do produkčního setu, dokud nebudou podložené (`needsReview: true
 - ~~L4 — kumulativní dávka antracyklinu~~ **doloženo** SPC doxorubicinu:
   celoživotní limit 550 mg/m², u pacienta po ozáření mediastina nebo se
   srdečním onemocněním 400 mg/m².
-- **I3 — korekční faktor a poměr inzulin/sacharidy.** Pravidlo 100 uvádí
-  konsenzuální doporučený postup ISPAD 2022 („The usual 100/TDD for mmol/l
-  (or 1800 for mg/dL)“, Sundberg F, deBeaufort C, Krogvold L, et al.
-  Pediatr Diabetes. 2022;23(8):1496–1511, doi:10.1111/pedi.13427). V SPC
-  inzulinů pravidlo není a být nemůže — je to postup výpočtu dávky, ne údaj
-  o přípravku.
+- ~~I3 — korekční faktor~~ **doloženo** konsenzuálním doporučeným postupem
+  ISPAD 2022: „The usual 100/TDD for mmol/l (or 1800 for mg/dL) often needs
+  to be adjusted…“ (Sundberg F, deBeaufort C, Krogvold L, et al. ISPAD
+  Clinical Practice Consensus Guidelines 2022: Managing diabetes in
+  preschoolers. Pediatr Diabetes. 2022;23(8):1496–1511,
+  doi:10.1111/pedi.13427). V SPC inzulinů pravidlo není a být nemůže — je
+  to postup výpočtu dávky, ne údaj o přípravku. CLAUDE.md proto od 18. 9.
+  2026 připouští i doporučené postupy odborných společností.
 
-  Zbývá rozhodnout, jestli doporučený postup odborné společnosti patří mezi
-  přípustné zdroje; CLAUDE.md dnes uvádí SÚKL, ŠÚKL, SPC, AISLP a BNF.
-  Do rozhodnutí zůstává I3 jediná šablona mimo produkční set.
+  Český doporučený postup (Prázný M, Rušavý Z, Šumník Z, et al. Použití
+  inzulinové pumpy a glukózových senzorů u pacientů s diabetem léčených
+  inzulinem. DMEV. 2019;22(4):152–169) pravidlo 100 neuvádí vůbec: žádá,
+  aby korekční bolus určil lékař individuálně, a plošné užívání bolusových
+  kalkulátorů mimo pumpy a certifikovaná zařízení nedoporučuje. Proto je
+  v šabloně i v citaci napsané, že jde o odhad pro začátek. Cvičí se
+  výpočet, ne ordinace.
+
+  Všech 72 šablon je tím v produkčním setu.

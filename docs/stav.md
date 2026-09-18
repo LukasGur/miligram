@@ -13,9 +13,11 @@ prostředků, deterministický generátor, fond 614 přípravků ze SÚKL,
 tabulky dávkovacích rozmezí, rekonstituce a elektrolytů opsané ze SPC.
 
 **Fáze 2, šablony** — hotovo **72 ze 72** včetně českých a slovenských
-textů. Testů prochází 361. Mimo produkční set zůstává jediná, I3: zdroj
-se našel (ISPAD 2022), ale ISPAD není v seznamu přípustných zdrojů
-v CLAUDE.md a rozšířit ho je rozhodnutí, ne úklid.
+textů, a všech 72 je v produkčním setu. Testů prochází 362. Poslední
+chyběla I3: pravidlo 100 uvádí doporučený postup ISPAD 2022, což je jiný
+druh zdroje než SPC, a CLAUDE.md proto od 18. 9. 2026 doporučené postupy
+odborných společností připouští — s plnou citací a s tím, že odhad pro
+začátek musí být jako odhad napsaný.
 
 | Kategorie | Hotovo | Zbývá |
 |---|---|---|
@@ -27,7 +29,7 @@ v CLAUDE.md a rozšířit ho je rozhodnutí, ne úklid.
 | F rychlost infuze | F1–F6 | — |
 | G vazoaktivní | G1–G7 | — |
 | H převody jednotek | H1–H6 | — |
-| I inzulin | I1–I4 (I3 `needsReview`) | — |
+| I inzulin | I1–I4 | — |
 | J renální dávkování | J1–J5 | — |
 | K pediatrie | K1–K6 | — |
 | L onkologie | L1–L4 | — |
@@ -106,20 +108,16 @@ na stříkačce. Odměna je počítadlo, které doběhne — celé v CSS, bez
    v `src/core/economy.ts` jsou návrh, ne převzaté hodnoty: 2 prášky
    za správný příklad, 10 za bezchybnou lekci, nápověda za 15.
    Všechna jsou na jednom místě.
-2. **Rozhodnout o I3.** Pravidlo 100 uvádí doporučený postup ISPAD 2022,
-   citace je v šabloně i v `docs/zdroje.md`. Otázka je, jestli doporučený
-   postup odborné společnosti patří mezi přípustné zdroje vedle SÚKL,
-   SPC a BNF. Pak je zapnutí jedna řádka.
-3. **Doladit výraz podle zpětné vazby.** Směr je nastavený, čeká se,
+2. **Doladit výraz podle zpětné vazby.** Směr je nastavený, čeká se,
    co bude na telefonu drhnout.
-4. **Zkouška na skutečném iPhonu.** Všechno je zatím ověřené jen
+3. **Zkouška na skutečném iPhonu.** Všechno je zatím ověřené jen
    ve WebKitu na rozměrech telefonu, ne na zařízení.
-5. **Vlastní SMTP.** Přihlašovací kódy chodí přes vestavěné SMTP
+4. **Vlastní SMTP.** Přihlašovací kódy chodí přes vestavěné SMTP
    Supabase, které má tvrdý limit několika e-mailů za hodinu. Na ostrý
    provoz to nestačí.
-6. **Ověřit ligu na skutečném provozu.** Postup a sestup se počítají až
+5. **Ověřit ligu na skutečném provozu.** Postup a sestup se počítají až
    při první lekci v novém týdnu, takže se to pozná nejdřív za týden.
-7. **Revize slovenštiny rodilým mluvčím.** Texty jsou napsané, ne
+6. **Revize slovenštiny rodilým mluvčím.** Texty jsou napsané, ne
    přeložené strojem, ale nikdo je zatím nečetl. Názvy přípravků zůstávají
    české — fond je z české databáze.
 
@@ -179,7 +177,7 @@ na stříkačce. Odměna je počítadlo, které doběhne — celé v CSS, bez
 ## Příkazy
 
 ```bash
-pnpm test        # 361 testů jádra, překladů, sazby, databáze a statistik
+pnpm test        # 362 testů jádra, překladů, sazby, databáze a statistik
 pnpm typecheck
 pnpm lint
 pnpm dev         # https, LAN, pro test na iPhonu

@@ -124,9 +124,9 @@ describe("seznam šablon je hotový", () => {
     expect(ids.sort()).toEqual(["L1", "L2", "L3", "L4"]);
   });
 
-  it("hotových je 72 šablon, z toho 71 v produkčním setu", () => {
+  it("hotových je 72 šablon a všechny jsou v produkčním setu", () => {
     expect(allTemplates()).toHaveLength(72);
-    expect(productionTemplates()).toHaveLength(71);
+    expect(productionTemplates()).toHaveLength(72);
   });
 
   it("každá kategorie z briefu má aspoň jednu šablonu", () => {

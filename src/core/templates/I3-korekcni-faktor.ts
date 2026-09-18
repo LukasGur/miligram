@@ -5,30 +5,30 @@ import { register } from "./registry";
 /**
  * I3 — korekční dávka podle pravidla 100.
  *
- * POZOR: šablona je označená `needsReview` a do produkčního setu nepatří.
+ * Korekční faktor (citlivost na inzulin) říká, o kolik mmol/l srazí jedna
+ * jednotka rychlého inzulinu glykemii. Pravidlo 100 ho odhaduje z celkové
+ * denní dávky a takhle ho uvádí konsenzuální doporučený postup ISPAD 2022.
  *
- * Zdroj se našel: konsenzuální doporučený postup ISPAD z roku 2022 pravidlo
- * uvádí výslovně („The usual 100/TDD for mmol/l (or 1800 for mg/dL)“).
- * V SPC inzulinů pravidlo není a nikdy nebude — je to postup, jak dávku
- * spočítat, ne údaj o přípravku.
- *
- * Zbývá rozhodnutí, které není naše: CLAUDE.md připouští SÚKL, ŠÚKL, SPC,
- * AISLP a BNF, a ISPAD mezi nimi není. Doporučený postup odborné společnosti
- * je jiný druh zdroje než souhrn údajů o přípravku a rozšířit ten seznam
- * má smysl jen vědomě. Do té doby se šablona negeneruje.
+ * Je to odhad pro začátek, ne předpis. Český doporučený postup (Prázný M,
+ * Rušavý Z, Šumník Z, et al. Použití inzulinové pumpy a glukózových
+ * senzorů. DMEV. 2019;22(4):152–169) pravidlo neuvádí vůbec a žádá, aby
+ * korekční bolus určil lékař individuálně; plošné užívání bolusových
+ * kalkulátorů mimo pumpy a certifikovaná zařízení výslovně nedoporučuje.
+ * Zadání proto mluví o pravidle 100, ne o dávce, kterou má student podat
+ * pacientovi — cvičí se výpočet, ne ordinace.
  */
+
 export const I3 = register({
   id: "I3",
   category: "inzulin",
-  needsReview: true,
   source: {
     citation:
       "Sundberg F, deBeaufort C, Krogvold L, et al. ISPAD Clinical Practice Consensus " +
       "Guidelines 2022: Managing diabetes in preschoolers. Pediatr Diabetes. " +
       "2022;23(8):1496–1511. doi:10.1111/pedi.13427 — „The usual 100/TDD for mmol/l " +
-      "(or 1800 for mg/dL) often needs to be adjusted…“. Pravidlo 100 tedy stojí " +
-      "v doporučeném postupu odborné společnosti, ne v SPC. Seznam zdrojů v CLAUDE.md " +
-      "ISPAD zatím neuvádí, proto šablona čeká na rozhodnutí, jestli tam patří.",
+      "(or 1800 for mg/dL) often needs to be adjusted…“. Korekční faktor je odhad " +
+      "pro začátek; podle českého doporučeného postupu (DMEV. 2019;22(4):152–169) " +
+      "ho lékař určuje individuálně.",
     verifiedAt: "2026-09-18",
   },
 
