@@ -65,7 +65,10 @@ export async function syncOutbox(gateway: SyncGateway): Promise<SyncResult> {
 function toRow(event: OutboxEvent): LessonEventRow {
   const payload = event.payload as { lessonId?: string; answers?: unknown };
   return {
-    client_event_id: String(event.id),
+    // Identita je uid, ne pořadové číslo. Server zahazuje duplicity podle
+    // (uživatel, client_event_id) a pořadová čísla se po přeinstalaci i na
+    // druhém zařízení opakují — lekce by tiše zmizela.
+    client_event_id: event.uid,
     lesson_id: String(payload.lessonId ?? ""),
     answers: payload.answers ?? [],
     finished_at: event.createdAt,

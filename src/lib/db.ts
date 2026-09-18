@@ -64,12 +64,29 @@ export type LessonRecord = {
  */
 export type OutboxEvent = {
   id?: number;
+  /**
+   * Identita události pro server. Pořadové číslo z Dexie se k tomu nehodí:
+   * po přeinstalaci i na druhém zařízení začíná zase od jedničky, takže by
+   * server druhou „událost č. 1“ zahodil jako duplicitu a lekce by se tiše
+   * ztratila. Náhodné uid je jedinečné napříč zařízeními i instalacemi.
+   */
+  uid: string;
   type: "lessonFinished" | "pillsSpent";
   payload: Record<string, unknown>;
   createdAt: string;
   /** Doplní se po odeslání; do té doby je událost čekající. */
   syncedAt?: string;
 };
+
+/** Náhodné uid události. Fallback je pro prohlížeče bez `randomUUID`. */
+export function eventUid(): string {
+  if (typeof crypto !== "undefined" && typeof crypto.randomUUID === "function") {
+    return crypto.randomUUID();
+  }
+  const bytes = new Uint8Array(16);
+  crypto.getRandomValues(bytes);
+  return Array.from(bytes, (byte) => byte.toString(16).padStart(2, "0")).join("");
+}
 
 class MiligramDatabase extends Dexie {
   profile!: Table<Profile, number>;
@@ -99,6 +116,22 @@ class MiligramDatabase extends Dexie {
           profile.streakFreezes ??= 0;
         });
     });
+
+    /**
+     * Třetí verze dává každé události vlastní uid. Události uložené starší
+     * verzí se dopočítají; ty už odeslané se znovu neposílají, takže změna
+     * identity nikomu nic nezdvojí.
+     */
+    this.version(3)
+      .stores({ outbox: "++id, &uid, type, syncedAt" })
+      .upgrade(async (transaction) => {
+        await transaction
+          .table<OutboxEvent>("outbox")
+          .toCollection()
+          .modify((event) => {
+            event.uid ??= eventUid();
+          });
+      });
   }
 }
 
@@ -195,6 +228,7 @@ export async function recordLesson(lesson: FinishedLesson, now = new Date()): Pr
       finishedAt: timestamp,
     });
     await database.outbox.add({
+      uid: eventUid(),
       type: "lessonFinished",
       payload: {
         lessonId: lesson.lessonId,
@@ -229,6 +263,7 @@ export async function spendPills(amount: number, reason: string, now = new Date(
 
     await database.profile.put({ ...current, pills: current.pills - amount, updatedAt: timestamp });
     await database.outbox.add({
+      uid: eventUid(),
       type: "pillsSpent",
       payload: { amount, reason },
       createdAt: timestamp,
@@ -262,6 +297,7 @@ export async function buyStreakFreeze(
       updatedAt: timestamp,
     });
     await database.outbox.add({
+      uid: eventUid(),
       type: "pillsSpent",
       payload: { amount: cost, reason: "streakFreeze" },
       createdAt: timestamp,
