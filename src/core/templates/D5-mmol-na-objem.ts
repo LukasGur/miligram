@@ -1,4 +1,4 @@
-import { electrolyte, electrolyteSource, POTASSIUM_LIST, POTASSIUM_LIMIT_SOURCE, POTASSIUM_MAX_MMOL_PER_HOUR } from "../products/electrolytes";
+import { electrolyte, electrolyteSource, MMOL_PER_ML_LIST } from "../products/electrolytes";
 import { syringeFor } from "../devices";
 import * as tolerances from "../tolerances";
 import type { Solution, Vars } from "../types";
@@ -8,27 +8,25 @@ import { ISO_7886, register } from "./registry";
 /**
  * D5 — kolik mililitrů koncentrátu na zadané látkové množství.
  *
- * Draslík se ordinuje v milimolech, ale odměřuje v mililitrech. Obsah
- * iontu v mililitru je v bodě 2 SPC, ne v databázi přípravků — proto
- * má tahle šablona vlastní ověřenou tabulku.
+ * Elektrolyty se ordinují v milimolech, ale odměřují v mililitrech. Obsah
+ * iontu v mililitru je v bodě 2 SPC, ne v databázi přípravků — proto má
+ * tahle šablona vlastní ověřenou tabulku.
+ *
+ * Draselné a sodné koncentráty z ní vypadly: mají 1 mmol/ml, takže počet
+ * mililitrů je roven počtu milimolů a ptát se na něj znamená nechat
+ * studenta opsat číslo ze zadání. Zbývá hořčík, kde přepočet něco stojí.
  */
 export const D5 = register({
   id: "D5",
   category: "redeni",
-  source: [
-    ...POTASSIUM_LIST.map(([id]) => electrolyteSource(id)),
-    POTASSIUM_LIMIT_SOURCE,
-    ISO_7886,
-  ],
+  source: [...MMOL_PER_ML_LIST.map(([id]) => electrolyteSource(id)), ISO_7886],
 
   generate(rng, difficulty) {
-    const [id] = rng.pick(POTASSIUM_LIST);
+    const [id] = rng.pick(MMOL_PER_ML_LIST);
     const item = electrolyte(id);
 
-    // Ordinace nepřekročí hodinový limit z SPC, aby zadání dávalo smysl.
-    const mmol = difficulty === 1
-      ? rng.pick([10, 20] as const)
-      : rng.step(5, POTASSIUM_MAX_MMOL_PER_HOUR, 2.5);
+    // Kolik se ordinuje, je součást zadání, ne tvrzení ze zdroje.
+    const mmol = difficulty === 1 ? rng.pick([4, 8, 12] as const) : rng.step(3, 24, 1);
 
     return {
       code: item.suklCode,
@@ -37,7 +35,6 @@ export const D5 = register({
       percent: item.percent,
       mmolPerMl: item.mmolPerMl,
       mmol,
-      maxPerHour: POTASSIUM_MAX_MMOL_PER_HOUR,
     } satisfies Vars;
   },
 

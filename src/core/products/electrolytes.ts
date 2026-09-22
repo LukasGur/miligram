@@ -122,6 +122,19 @@ export const ELECTROLYTE_LIST = Object.entries(ELECTROLYTES) as ReadonlyArray<
  */
 export const POTASSIUM_LIST = ELECTROLYTE_LIST.filter(([, item]) => item.ion === "K+");
 
+/**
+ * Roztoky, ze kterých se dávka odebírá podle látkového množství a přepočet
+ * na mililitry něco vydá.
+ *
+ * Vypadávají dvě skupiny. Koncentráty s 1 mmol/ml (draslík, sodík) mají
+ * počet mililitrů rovný počtu milimolů — klinicky výhoda, jako příklad
+ * opis zadání. A ředěné infuzní roztoky pod 5 %, ze kterých se dávka
+ * v milimolech neodebírá; fyziologický roztok je nosič, ne zdroj sodíku.
+ */
+export const MMOL_PER_ML_LIST = ELECTROLYTE_LIST.filter(
+  ([, item]) => item.mmolPerMl !== 1 && item.percent >= 5,
+);
+
 /** Koncentráty s molární hmotností doloženou v SPC. */
 export const MOLAR_MASS_LIST = ELECTROLYTE_LIST.filter(([, item]) => item.molarMassGPerMol !== undefined);
 

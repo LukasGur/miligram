@@ -133,10 +133,16 @@ describe("E1 — rekonstituce", () => {
     expect(solution.value).toBe(7.5);
   });
 
-  it("první úroveň podává celý obsah lahvičky", () => {
-    const { vars, solution } = buildExercise("E1", "s3", 1);
-    expect(Number(vars.doseMg)).toBe(Number(vars.vialMg));
-    expect(solution.value).toBeCloseTo(Number(vars.diluentMl), 9);
+  /**
+   * Celá lahvička by znamenala, že odpověď je rozpuštěný objem, který
+   * stojí v zadání. První úroveň proto dělí hezkým číslem, ne jedničkou.
+   */
+  it("první úroveň nepodává celou lahvičku", () => {
+    for (const seed of ["s1", "s2", "s3", "s4", "s5"]) {
+      const { vars, solution } = buildExercise("E1", seed, 1);
+      expect(Number(vars.doseMg)).toBeLessThan(Number(vars.vialMg));
+      expect(solution.value).not.toBeCloseTo(Number(vars.diluentMl), 6);
+    }
   });
 });
 

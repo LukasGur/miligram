@@ -31,9 +31,14 @@ export const H4 = register({
     }
     const iuPerMg = activityIU / product.strength;
 
-    // Zadané množství se losuje jako násobek síly balení, ať zadání odpovídá
-    // tomu, co lze reálně podat.
-    const shareOptions = difficulty === 1 ? [1] : difficulty === 2 ? [0.5, 1, 1.5] : [0.25, 0.75, 1.25, 2];
+    /**
+     * Zadané množství se losuje jako násobek síly balení, ať zadání
+     * odpovídá tomu, co lze reálně podat. Násobek 1 mezi nimi schválně
+     * není: obě čísla celého balení jsou v zadání vedle sebe, takže by
+     * se student neptal na výpočet, ale opisoval ze závorky.
+     */
+    const shareOptions =
+      difficulty === 1 ? [0.5, 2] : difficulty === 2 ? [0.5, 1.5, 2] : [0.25, 0.75, 1.25, 2.5];
     const share = rng.pick(shareOptions);
 
     return {

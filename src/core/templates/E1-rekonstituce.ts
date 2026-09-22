@@ -30,8 +30,12 @@ export const E1 = register({
     });
     const diluentMl = rng.pick(DILUENT_VOLUMES_ML);
 
-    // Na první úrovni se podává celý obsah lahvičky, takže odpadá dělení.
-    const fraction = difficulty === 1 ? 1 : rng.step(0.25, 0.9, 0.05);
+    /**
+     * Celá lahvička se nepodává nikdy: rozpuštěný objem je v zadání, takže
+     * by odpověď byla opsané číslo. Na první úrovni proto aspoň polovina
+     * nebo čtvrtina — dělení hezkým číslem, ale pořád dělení.
+     */
+    const fraction = difficulty === 1 ? rng.pick([0.25, 0.5, 0.75]) : rng.step(0.25, 0.9, 0.05);
     const doseMg = Number((product.strength * fraction).toPrecision(3));
 
     return {
