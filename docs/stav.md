@@ -1,6 +1,6 @@
 # Kde jsme
 
-Poslední aktualizace: **18. 9. 2026** (druhá dávka)
+Poslední aktualizace: **22. 9. 2026**
 
 ## Hotovo
 
@@ -52,6 +52,9 @@ stejnou cestou, jakou k ní sahá aplikace:
 - vyzvat na souboj jde jen potvrzeného kamaráda
 - výsledek souboje si nikdo nepřepíše ani nezapíše za druhého
 - vlastní historie se stáhne celá, cizí ani anonymovi ani přihlášenému ne
+- dar ochrany série pošle jen ten, kdo má odehráno, jednou za týden
+  a jen potvrzenému kamarádovi; vyzvedne ho jen příjemce a nic jiného
+  než vyzvednutí se na daru změnit nedá
 
 **Stahování ze serveru.** Fronta byla jednosměrná: kdo se přihlásil
 na novém telefonu, viděl doma nulu a vedle v lize svoje skutečné XP.
@@ -112,20 +115,16 @@ na stříkačce. Odměna je počítadlo, které doběhne — celé v CSS, bez
 
 ## Co dělat dál
 
-1. **Darování ochrany série kamarádovi.** Vyžaduje přesunout prášky
-   na server (dnes žijí jen v telefonu) a ohlídat, aby si je nikdo
-   nevyrobil sám — vlastní tabulka, vlastní pravidla přístupu, ověření
-   proti živé databázi.
-2. **Doladit výraz podle zpětné vazby.** Směr je nastavený, čeká se,
+1. **Doladit výraz podle zpětné vazby.** Směr je nastavený, čeká se,
    co bude na telefonu drhnout.
-3. **Zkouška na skutečném iPhonu.** Všechno je zatím ověřené jen
+2. **Zkouška na skutečném iPhonu.** Všechno je zatím ověřené jen
    ve WebKitu na rozměrech telefonu, ne na zařízení.
-4. **Vlastní SMTP.** Přihlašovací kódy chodí přes vestavěné SMTP
+3. **Vlastní SMTP.** Přihlašovací kódy chodí přes vestavěné SMTP
    Supabase, které má tvrdý limit několika e-mailů za hodinu. Na ostrý
    provoz to nestačí.
-5. **Ověřit ligu na skutečném provozu.** Postup a sestup se počítají až
+4. **Ověřit ligu na skutečném provozu.** Postup a sestup se počítají až
    při první lekci v novém týdnu, takže se to pozná nejdřív za týden.
-6. **Revize slovenštiny rodilým mluvčím.** Texty jsou napsané, ne
+5. **Revize slovenštiny rodilým mluvčím.** Texty jsou napsané, ne
    přeložené strojem, ale nikdo je zatím nečetl. Názvy přípravků zůstávají
    české — fond je z české databáze.
 
@@ -171,6 +170,19 @@ na stříkačce. Odměna je počítadlo, které doběhne — celé v CSS, bez
 - Odměna se počítá z prvního pokusu. Opakování je na učení, ne na sbírání
   bodů, a na server jde jeden záznam na příklad — kdyby se posílaly
   pokusy, přičetly by XP.
+- Opakovaný příklad přijde s jinými čísly: stejná šablona, stejná
+  obtížnost, nové semínko. Správná hodnota je vidět ve verdiktu hned po
+  chybě, takže se stejnými čísly by se z opravy stal opis. Platí to
+  i pro režim opakování chyb.
+- Zadání nesmí obsahovat odpověď. Hlídá to test nad vykresleným textem
+  všech 72 šablon; hlásí soustavnou shodu, protože u malých čísel se
+  odpověď se zadáním potká i náhodou.
+- Kalkulačka je uvnitř aplikace a u každého příkladu. Systémovou nejde
+  na iOS otevřít a dělit příklady na ty, kde se „smí“ počítat, by byl
+  zákaz, který stejně nejde vynutit. Cvičí se postavení výpočtu.
+- Prášky zůstávají v telefonu i u darů. Dar je událost, ne převod
+  zůstatku; proti podvodu nechrání zůstatek, ale nárok odvozený z práce,
+  kterou server zná.
 - Prášky jsou měna, XP je neutratitelné skóre. Zisk XP: 10 za správný
   příklad, +20 za bezchybnou lekci. Lekce má 7 příkladů.
 - Tolerance se odvozuje z přesnosti prostředku (ISO 7886-1, IEC 60601-2-24,
@@ -203,7 +215,7 @@ na stříkačce. Odměna je počítadlo, které doběhne — celé v CSS, bez
 ## Příkazy
 
 ```bash
-pnpm test        # 410 testů jádra, překladů, sazby, databáze a statistik
+pnpm test        # 425 testů jádra, překladů, sazby, databáze a statistik
 pnpm typecheck
 pnpm lint
 pnpm dev         # https, LAN, pro test na iPhonu
