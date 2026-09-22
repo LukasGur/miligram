@@ -1,225 +1,245 @@
 type IconProps = { className?: string };
 
-export function ShareIosIcon({ className }: IconProps) {
+/**
+ * Ikony rozhraní.
+ *
+ * Kresby pocházejí z knihovny Lucide (licence ISC) a jsou sem opsané, ne
+ * dotažené jako závislost: do balíku se tím nedostane nic, co se
+ * nepoužívá, a domovská obrazovka má na kilobajty nárok. Původ je zapsaný
+ * v docs/zdroje.md.
+ *
+ * Všechny sdílejí jeden tvar: mřížka 24×24, žádná výplň, tah 2 a kulaté
+ * konce. Barvu berou z `currentColor`, takže je nastavuje text kolem nich.
+ */
+const STROKE = {
+  fill: "none",
+  stroke: "currentColor",
+  strokeWidth: 2,
+  strokeLinecap: "round",
+  strokeLinejoin: "round",
+} as const;
+
+function Icon({ className, children }: IconProps & { children: React.ReactNode }) {
   return (
-    <svg viewBox="0 0 24 24" fill="none" aria-hidden className={className}>
-      <path
-        d="M12 3.5v11M12 3.5 8.5 7M12 3.5 15.5 7"
-        stroke="currentColor"
-        strokeWidth="1.8"
-        strokeLinecap="round"
-        strokeLinejoin="round"
-      />
-      <path
-        d="M6.5 11H5.75A1.75 1.75 0 0 0 4 12.75v6.5A1.75 1.75 0 0 0 5.75 21h12.5A1.75 1.75 0 0 0 20 19.25v-6.5A1.75 1.75 0 0 0 18.25 11H17.5"
-        stroke="currentColor"
-        strokeWidth="1.8"
-        strokeLinecap="round"
-      />
+    <svg viewBox="0 0 24 24" aria-hidden className={className}>
+      <g {...STROKE}>{children}</g>
     </svg>
   );
 }
 
+
+/**
+ * Sdílení na iOS. Vlastní kresba: systémový symbol je součást rozhraní
+ * Apple a v Lucide obdobu nemá — tady musí sedět přesně, protože se jím
+ * ukazuje cesta k instalaci.
+ */
+export function ShareIosIcon({ className }: IconProps) {
+  return (
+    <Icon className={className}>
+      <path d="M12 15V3" />
+      <path d="m8 7 4-4 4 4" />
+      <path d="M4 12v7a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2v-7" />
+    </Icon>
+  );
+}
+
+
 export function AddToHomeIcon({ className }: IconProps) {
   return (
-    <svg viewBox="0 0 24 24" fill="none" aria-hidden className={className}>
-      <rect x="3.5" y="3.5" width="17" height="17" rx="4.5" stroke="currentColor" strokeWidth="1.8" />
-      <path d="M12 8.5v7M8.5 12h7" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" />
-    </svg>
+    <Icon className={className}>
+      <rect width="18" height="18" x="3" y="3" rx="2" />
+      <path d="M8 12h8" />
+      <path d="M12 8v8" />
+    </Icon>
   );
 }
 
 export function SettingsIcon({ className }: IconProps) {
   return (
-    <svg viewBox="0 0 24 24" fill="none" aria-hidden className={className}>
-      <path d="M4 7h10M18 7h2M4 17h2M10 17h10" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" />
-      <circle cx="16" cy="7" r="2.4" stroke="currentColor" strokeWidth="1.8" />
-      <circle cx="8" cy="17" r="2.4" stroke="currentColor" strokeWidth="1.8" />
-    </svg>
+    <Icon className={className}>
+      <path d="M10 5H3" />
+      <path d="M12 19H3" />
+      <path d="M14 3v4" />
+      <path d="M16 17v4" />
+      <path d="M21 12h-9" />
+      <path d="M21 19h-5" />
+      <path d="M21 5h-7" />
+      <path d="M8 10v4" />
+      <path d="M8 12H3" />
+    </Icon>
   );
 }
 
 export function CloseIcon({ className }: IconProps) {
   return (
-    <svg viewBox="0 0 24 24" fill="none" aria-hidden className={className}>
-      <path d="M6 6l12 12M18 6 6 18" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" />
-    </svg>
+    <Icon className={className}>
+      <path d="M18 6 6 18" />
+      <path d="m6 6 12 12" />
+    </Icon>
   );
 }
 
 export function CaretDownIcon({ className }: IconProps) {
   return (
-    <svg viewBox="0 0 24 24" fill="none" aria-hidden className={className}>
-      <path d="M12 5v13M12 18l-4.5-4.5M12 18l4.5-4.5" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" />
-    </svg>
+    <Icon className={className}>
+      <path d="M12 5v14" />
+      <path d="m19 12-7 7-7-7" />
+    </Icon>
   );
 }
 
 export function CheckIcon({ className }: IconProps) {
   return (
-    <svg viewBox="0 0 24 24" fill="none" aria-hidden className={className}>
-      <path d="m5 12.5 4.5 4.5L19 7.5" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />
-    </svg>
+    <Icon className={className}>
+      <path d="M20 6 9 17l-5-5" />
+    </Icon>
   );
 }
 
 export function BackspaceIcon({ className }: IconProps) {
   return (
-    <svg viewBox="0 0 24 24" fill="none" aria-hidden className={className}>
-      <path
-        d="M9 5h9.5A1.5 1.5 0 0 1 20 6.5v11a1.5 1.5 0 0 1-1.5 1.5H9l-6-6.4a1.5 1.5 0 0 1 0-2.2L9 5Z"
-        stroke="currentColor"
-        strokeWidth="1.8"
-        strokeLinejoin="round"
-      />
-      <path d="m11 10 4.5 4.5M15.5 10 11 14.5" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" />
-    </svg>
+    <Icon className={className}>
+      <path d="M10 5a2 2 0 0 0-1.344.519l-6.328 5.74a1 1 0 0 0 0 1.481l6.328 5.741A2 2 0 0 0 10 19h10a2 2 0 0 0 2-2V7a2 2 0 0 0-2-2z" />
+      <path d="m12 9 6 6" />
+      <path d="m18 9-6 6" />
+    </Icon>
   );
 }
 
 export function AlertIcon({ className }: IconProps) {
   return (
-    <svg viewBox="0 0 24 24" fill="none" aria-hidden className={className}>
-      <path d="M12 7.5v6" stroke="currentColor" strokeWidth="2" strokeLinecap="round" />
-      <circle cx="12" cy="17" r="1.15" fill="currentColor" />
-      <circle cx="12" cy="12" r="9" stroke="currentColor" strokeWidth="1.8" />
-    </svg>
+    <Icon className={className}>
+      <circle cx="12" cy="12" r="10" />
+      <line x1="12" x2="12" y1="8" y2="12" />
+      <line x1="12" x2="12.01" y1="16" y2="16" />
+    </Icon>
   );
 }
 
 export function PersonIcon({ className }: IconProps) {
   return (
-    <svg viewBox="0 0 24 24" fill="none" aria-hidden className={className}>
-      <circle cx="12" cy="8.5" r="3.75" stroke="currentColor" strokeWidth="1.8" />
-      <path
-        d="M4.5 20c.9-3.6 3.9-5.5 7.5-5.5s6.6 1.9 7.5 5.5"
-        stroke="currentColor"
-        strokeWidth="1.8"
-        strokeLinecap="round"
-      />
-    </svg>
+    <Icon className={className}>
+      <path d="M19 21v-2a4 4 0 0 0-4-4H9a4 4 0 0 0-4 4v2" />
+      <circle cx="12" cy="7" r="4" />
+    </Icon>
   );
 }
 
 export function ChartIcon({ className }: IconProps) {
   return (
-    <svg viewBox="0 0 24 24" fill="none" aria-hidden className={className}>
-      <path
-        d="M5 19V11M12 19V5M19 19v-5"
-        stroke="currentColor"
-        strokeWidth="1.8"
-        strokeLinecap="round"
-      />
-    </svg>
+    <Icon className={className}>
+      <path d="M5 21v-6" />
+      <path d="M12 21V3" />
+      <path d="M19 21V9" />
+    </Icon>
   );
 }
 
 export function ChevronRightIcon({ className }: IconProps) {
   return (
-    <svg viewBox="0 0 24 24" fill="none" aria-hidden className={className}>
-      <path
-        d="M9.5 5.5 16 12l-6.5 6.5"
-        stroke="currentColor"
-        strokeWidth="1.8"
-        strokeLinecap="round"
-        strokeLinejoin="round"
-      />
-    </svg>
+    <Icon className={className}>
+      <path d="m9 18 6-6-6-6" />
+    </Icon>
   );
 }
 
 export function PillIcon({ className }: IconProps) {
   return (
-    <svg viewBox="0 0 24 24" fill="none" aria-hidden className={className}>
-      <g stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round">
-        <rect x="2.4" y="8.4" width="19.2" height="7.2" rx="3.6" transform="rotate(-45 12 12)" />
-        <path d="M9.5 9.5 14.5 14.5" />
-      </g>
-    </svg>
+    <Icon className={className}>
+      <path d="m10.5 20.5 10-10a4.95 4.95 0 1 0-7-7l-10 10a4.95 4.95 0 1 0 7 7Z" />
+      <path d="m8.5 8.5 7 7" />
+    </Icon>
   );
 }
 
 export function ShieldIcon({ className }: IconProps) {
   return (
-    <svg viewBox="0 0 24 24" fill="none" aria-hidden className={className}>
-      <g stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round">
-        <path d="M12 3l7 2.8v5.4c0 4.3-2.9 8.1-7 9.3-4.1-1.2-7-5-7-9.3V5.8z" />
-        <path d="M9 12l2.2 2.2L15.5 10" />
-      </g>
-    </svg>
+    <Icon className={className}>
+      <path d="M20 13c0 5-3.5 7.5-7.66 8.95a1 1 0 0 1-.67-.01C7.5 20.5 4 18 4 13V6a1 1 0 0 1 1-1c2 0 4.5-1.2 6.24-2.72a1.17 1.17 0 0 1 1.52 0C14.51 3.81 17 5 19 5a1 1 0 0 1 1 1z" />
+      <path d="m9 12 2 2 4-4" />
+    </Icon>
   );
 }
 
 export function HomeIcon({ className }: IconProps) {
   return (
-    <svg viewBox="0 0 24 24" fill="none" aria-hidden className={className}>
-      <g stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round">
-        <path d="M4 10.5 12 4l8 6.5V19a1.5 1.5 0 0 1-1.5 1.5h-13A1.5 1.5 0 0 1 4 19z" />
-        <path d="M9.5 20.5v-6h5v6" />
-      </g>
-    </svg>
+    <Icon className={className}>
+      <path d="M15 21v-8a1 1 0 0 0-1-1h-4a1 1 0 0 0-1 1v8" />
+      <path d="M3 10a2 2 0 0 1 .709-1.528l7-6a2 2 0 0 1 2.582 0l7 6A2 2 0 0 1 21 10v9a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z" />
+    </Icon>
   );
 }
 
 export function RepeatIcon({ className }: IconProps) {
   return (
-    <svg viewBox="0 0 24 24" fill="none" aria-hidden className={className}>
-      <g stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round">
-        <path d="M4 12a8 8 0 0 1 13.7-5.6L20 8.5" />
-        <path d="M20 4v4.5h-4.5" />
-        <path d="M20 12a8 8 0 0 1-13.7 5.6L4 15.5" />
-        <path d="M4 20v-4.5h4.5" />
-      </g>
-    </svg>
+    <Icon className={className}>
+      <path d="m17 2 4 4-4 4" />
+      <path d="M3 11v-1a4 4 0 0 1 4-4h14" />
+      <path d="m7 22-4-4 4-4" />
+      <path d="M21 13v1a4 4 0 0 1-4 4H3" />
+    </Icon>
   );
 }
 
 export function UsersIcon({ className }: IconProps) {
   return (
-    <svg viewBox="0 0 24 24" fill="none" aria-hidden className={className}>
-      <g stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round">
-        <circle cx="9" cy="8" r="3.2" />
-        <path d="M3.5 19.5v-1.2a5.5 5.5 0 0 1 11 0v1.2" />
-        <path d="M16.5 5.2a3.2 3.2 0 0 1 0 5.6" />
-        <path d="M17.5 13.2a5.5 5.5 0 0 1 3 4.9v1.4" />
-      </g>
-    </svg>
+    <Icon className={className}>
+      <path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2" />
+      <path d="M16 3.128a4 4 0 0 1 0 7.744" />
+      <path d="M22 21v-2a4 4 0 0 0-3-3.87" />
+      <circle cx="9" cy="7" r="4" />
+    </Icon>
   );
 }
 
 export function VersusIcon({ className }: IconProps) {
   return (
-    <svg viewBox="0 0 24 24" fill="none" aria-hidden className={className}>
-      <g stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round">
-        <path d="M3 8h11" />
-        <path d="M11 5l3 3-3 3" />
-        <path d="M21 16H10" />
-        <path d="M13 13l-3 3 3 3" />
-      </g>
-    </svg>
+    <Icon className={className}>
+      <path d="m13 19 6-6" />
+      <path d="M14.5 17.5 3.586 6.586A2 2 0 013 5.172V3h2.172a2 2 0 011.414.586L17.5 14.5" />
+      <path d="m14.828 6.172 2.586-2.586A2 2 0 0118.828 3H21v2.172a2 2 0 01-.586 1.414l-2.586 2.586" />
+      <path d="m16 16 4 4" />
+      <path d="m19 21 2-2" />
+      <path d="m5 14 4 4" />
+      <path d="m5 21-2-2" />
+      <path d="M7.5 16.5 4 20" />
+    </Icon>
   );
 }
 
 export function LadderIcon({ className }: IconProps) {
   return (
-    <svg viewBox="0 0 24 24" fill="none" aria-hidden className={className}>
-      <g stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round">
-        <path d="M4 20v-5.5h5V20" />
-        <path d="M9.5 20V9h5v11" />
-        <path d="M15 20V4.5h5V20" />
-      </g>
-    </svg>
+    <Icon className={className}>
+      <path d="M5 21v-6" />
+      <path d="M12 21V9" />
+      <path d="M19 21V3" />
+    </Icon>
   );
 }
 
 export function CalculatorIcon({ className }: IconProps) {
   return (
-    <svg viewBox="0 0 24 24" fill="none" aria-hidden className={className}>
-      <g stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round">
-        <rect x="4.5" y="2.8" width="15" height="18.4" rx="2.4" />
-        <path d="M8 6.8h8v3H8z" />
-        <path d="M8.5 13.6h.01M12 13.6h.01M15.5 13.6h.01M8.5 17.4h.01M12 17.4h.01M15.5 17.4h.01" />
-      </g>
-    </svg>
+    <Icon className={className}>
+      <rect width="16" height="20" x="4" y="2" rx="2" />
+      <line x1="8" x2="16" y1="6" y2="6" />
+      <line x1="16" x2="16" y1="14" y2="18" />
+      <path d="M16 10h.01" />
+      <path d="M12 10h.01" />
+      <path d="M8 10h.01" />
+      <path d="M12 14h.01" />
+      <path d="M8 14h.01" />
+      <path d="M12 18h.01" />
+      <path d="M8 18h.01" />
+    </Icon>
+  );
+}
+
+export function HintIcon({ className }: IconProps) {
+  return (
+    <Icon className={className}>
+      <path d="M15 14c.2-1 .7-1.7 1.5-2.5 1-.9 1.5-2.2 1.5-3.5A6 6 0 0 0 6 8c0 1 .2 2.2 1.5 3.5.7.7 1.3 1.5 1.5 2.5" />
+      <path d="M9 18h6" />
+      <path d="M10 22h4" />
+    </Icon>
   );
 }

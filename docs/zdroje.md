@@ -175,3 +175,19 @@ v cvičeních z preskripce a z jednotlivých skupin léčiv.
   ohrožující stavy (14).
 
 Sylaby: <https://www.lf.upol.cz/ustavy-a-kliniky/ustavy/ustav-farmakologie/>
+
+## Ikony
+
+Kresby ikon pocházejí z knihovny **Lucide** (<https://lucide.dev>, licence
+ISC) a jsou opsané do `src/components/icons.tsx`
+a `src/components/ui/CategoryIcon.tsx`. Závislost se nepřidává schválně:
+do balíku by se dostalo i to, co se nepoužívá, a domovská obrazovka má
+na kilobajty nárok.
+
+Dvě ikony Lucide nemá a jsou dokreslené na téže mřížce (24×24, tah 2,
+kulaté konce), aby v sadě nevyčnívaly: **ledvina** pro renální dávkování
+a **sdílení na iOS**, kde musí symbol sedět s tím, co ukazuje systém.
+
+Zvažovaly se i **Healthicons** (<https://healthicons.org>, MIT/CC0) —
+mají bohatší zdravotnickou slovní zásobu včetně ledviny, ale kreslí plné
+siluety na mřížce 48×48. Vedle tahových ikon by to byly dva různé sety.

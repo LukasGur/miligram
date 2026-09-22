@@ -57,7 +57,7 @@ function Key({
       onClick={onPress}
       disabled={disabled}
       aria-label={ariaLabel ?? label}
-      className="bg-surface active:bg-line readout text-ink flex min-h-14 items-center justify-center rounded-control text-title font-medium transition-colors duration-75 disabled:opacity-40"
+      className="bg-surface active:bg-line readout text-ink flex min-h-12 items-center justify-center rounded-control text-title font-medium transition-colors duration-75 disabled:opacity-40"
     >
       {children ?? label}
     </button>

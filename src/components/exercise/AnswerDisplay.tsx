@@ -12,23 +12,19 @@ import { Numeral } from "@/components/ui/Numeral";
  * s příznakem `readonly` a živě se hlásí odečítači.
  *
  * Číslo je strojopisem a zarovnané doprava, jak to má odečet na přístroji:
- * při psaní se nehýbe jednotka, jen přibývají číslice.
+ * při psaní se nehýbe jednotka, jen přibývají číslice. Popisek sedí vedle
+ * hodnoty, ne nad ní — na telefonu nese spodní panel odečet, pomůcky,
+ * klávesnici i hlavní tlačítko a na zadání nahoře pak zbývají tři řádky.
+ * Tlačítka do pole nepatří, pomůcky mají vlastní řádek pod ním.
  */
 export function AnswerDisplay({
   value,
   unit,
   state,
-  action,
 }: {
   value: string;
   unit: string;
   state: "editing" | "correct" | "wrong";
-  /**
-   * Místo pro nabídku nápovědy. Patří sem, a ne pod pole: obrazovku
-   * vyplní zadání s klávesnicí a všechno pod polem se propadne pod okraj,
-   * takže by nabídku nikdo nenašel.
-   */
-  action?: React.ReactNode;
 }) {
   const t = useTranslations("lesson");
   const labelId = useId();
@@ -41,13 +37,10 @@ export function AnswerDisplay({
         : "border-line";
 
   return (
-    <div className={`rounded-readout border px-4 py-3 transition-colors ${tone}`}>
-      <div className="flex min-h-6 items-center justify-between gap-3">
-        <span className="panel-label" id={labelId}>
-          {t("answerLabel")}
-        </span>
-        {action}
-      </div>
+    <div className={`rounded-readout flex items-center gap-3 border px-4 py-2.5 transition-colors ${tone}`}>
+      <span className="panel-label shrink-0" id={labelId}>
+        {t("answerLabel")}
+      </span>
 
       <div
         role="textbox"
@@ -55,16 +48,16 @@ export function AnswerDisplay({
         aria-labelledby={labelId}
         aria-live="polite"
         tabIndex={0}
-        className="mt-1 flex items-baseline justify-end gap-2"
+        className="flex min-w-0 flex-1 items-baseline justify-end gap-2"
       >
         {value === "" ? (
           <span className="text-ink-soft readout text-title">—</span>
         ) : (
-          <span className="readout text-display font-semibold">
+          <span className="readout truncate text-title font-semibold">
             <Numeral value={value} />
           </span>
         )}
-        <span className="text-ink-soft text-heading">{unit}</span>
+        <span className="text-ink-soft shrink-0 text-body">{unit}</span>
       </div>
     </div>
   );

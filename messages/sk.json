@@ -348,7 +348,8 @@
     "summaryScoreLabel": "správne",
     "repeat": "Znova",
     "giveUp": "Rozumiem, idem ďalej",
-    "summaryUnsolved": "{count, plural, one {# príklad zostal nespočítaný} few {# príklady zostali nespočítané} other {# príkladov zostalo nespočítaných}} — vráti sa v opakovaní chýb."
+    "summaryUnsolved": "{count, plural, one {# príklad zostal nespočítaný} few {# príklady zostali nespočítané} other {# príkladov zostalo nespočítaných}} — vráti sa v opakovaní chýb.",
+    "hintPoor": "Na nápovedu potrebuješ {cost, number} práškov."
   },
   "account": {
     "title": "Účet",

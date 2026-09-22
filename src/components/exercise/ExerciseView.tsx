@@ -1,8 +1,8 @@
 "use client";
 
-import { useEffect, useRef, useState } from "react";
+import { useState } from "react";
 import { useTranslations } from "next-intl";
-import { CalculatorIcon, CloseIcon } from "@/components/icons";
+import { CalculatorIcon, CloseIcon, HintIcon } from "@/components/icons";
 import { evaluateAnswer, parseAnswer, type Verdict } from "@/core/answer";
 import { HINT_COST } from "@/core/economy";
 import type { Exercise } from "@/core/types";
@@ -53,16 +53,8 @@ export function ExerciseView({
   const [solutionOpen, setSolutionOpen] = useState(false);
   const [hinted, setHinted] = useState(false);
   const [calculatorOpen, setCalculatorOpen] = useState(false);
-  const answerRef = useRef<HTMLDivElement>(null);
-
-  /**
-   * Kalkulačka vyroste odspodu a zabere půl obrazovky. Bez tohohle by pod
-   * ní zůstalo pole odpovědi napůl useknuté a student by neviděl, co si
-   * do něj přenáší.
-   */
-  useEffect(() => {
-    if (calculatorOpen) answerRef.current?.scrollIntoView({ block: "end", behavior: "smooth" });
-  }, [calculatorOpen]);
+  /** Nápověda se nezneaktivní, ale řekne, proč nejde vzít. */
+  const [poor, setPoor] = useState(false);
 
   const value = parseAnswer(input);
   /**
@@ -79,7 +71,12 @@ export function ExerciseView({
    * o ně nepřijde a nápovědu nedostane.
    */
   async function buyHint() {
-    if (hinted || !canAfford) return;
+    if (hinted) return;
+    if (!canAfford) {
+      setPoor(true);
+      return;
+    }
+    setPoor(false);
     if (await onHint()) setHinted(true);
   }
 
@@ -124,6 +121,9 @@ export function ExerciseView({
         </span>
       </header>
 
+      {/* Nahoře se čte, dole se ovládá. Zadání roluje, přístroj — odečet,
+          pomůcky a klávesnice — zůstává na místě, takže se pod patičku nic
+          neschová a palec ví, kde co hledat. */}
       <main tabIndex={0} className="scroll-y flex-1">
         <div className="mx-auto w-full max-w-md px-5 pb-6">
           {/* Obrazovka potřebuje nadpis, i když ho zrakem nikdo nehledá. */}
@@ -134,47 +134,6 @@ export function ExerciseView({
           {repeat ? <p className="panel-label mb-2">{t("repeat")}</p> : null}
 
           <Prompt text={prompt(exercise)} />
-
-          {/* U chyby displej mizí: správnou hodnotu i zadanou ukazuje panel
-              níž a dvojí výpis téhož čísla jen tříští pozornost. U správné
-              odpovědi zůstává — je to ta věc, která se rozsvítí. */}
-          {verdict?.correct === false ? null : (
-            <div className="mt-6" ref={answerRef}>
-              <AnswerDisplay
-                value={input}
-                unit={answerUnit(exercise)}
-                state={verdict === null ? "editing" : "correct"}
-                action={
-                  verdict === null ? (
-                    <span className="-my-1.5 flex items-center gap-1">
-                      {hinted ? null : (
-                        <button
-                          type="button"
-                          onClick={buyHint}
-                          disabled={!canAfford}
-                          className="text-accent disabled:text-ink-soft flex min-h-11 items-center gap-1.5 px-1 text-label font-medium"
-                        >
-                          {t("hintTitle")}
-                          <span className="readout" data-numeric>
-                            {HINT_COST}
-                          </span>
-                        </button>
-                      )}
-                      <button
-                        type="button"
-                        onClick={() => setCalculatorOpen((open) => !open)}
-                        aria-label={tCalculator("open")}
-                        aria-pressed={calculatorOpen}
-                        className={`flex min-h-11 items-center px-1 ${calculatorOpen ? "text-accent" : "text-ink-soft"}`}
-                      >
-                        <CalculatorIcon className="size-5" />
-                      </button>
-                    </span>
-                  ) : null
-                }
-              />
-            </div>
-          )}
 
           {verdict === null && hinted ? (
             <div className="mt-4">
@@ -198,7 +157,6 @@ export function ExerciseView({
                     {t("giveUp")}
                   </SecondaryAction>
                 ) : null}
-
               </div>
 
               {solutionOpen ? <SolutionSteps exercise={exercise} /> : null}
@@ -207,49 +165,130 @@ export function ExerciseView({
         </div>
       </main>
 
-      {/* Ovládací lišta je landmark: klávesnice i tlačítko odpovědi jsou
-          obsah stránky a nesmějí zůstat mimo orientační body. */}
+      {/* Ovládací lišta je landmark: odečet, pomůcky, klávesnice i tlačítko
+          odpovědi jsou obsah stránky a nesmějí zůstat mimo orientační body. */}
       <footer
         className="bg-paper border-line shrink-0 border-t"
         style={{ paddingBottom: "calc(var(--sa-b) + 0.75rem)" }}
       >
         <div className="mx-auto w-full max-w-md px-5 pt-3">
-          {verdict !== null ? null : calculatorOpen ? (
-            <Calculator
-              onUse={(value) => {
-                setInput(value.slice(0, MAX_INPUT_LENGTH));
-                setCalculatorOpen(false);
-              }}
-              onClose={() => setCalculatorOpen(false)}
-            />
-          ) : (
-            <Keypad
-              onAppend={(character) =>
-                setInput((current) => appendCharacter(current, character))
-              }
-              onBackspace={() => setInput((current) => current.slice(0, -1))}
+          {/* U chyby displej mizí: správnou hodnotu i zadanou ukazuje panel
+              nahoře a dvojí výpis téhož čísla jen tříští pozornost. U správné
+              odpovědi zůstává — je to ta věc, která se rozsvítí. */}
+          {verdict?.correct === false ? null : (
+            <AnswerDisplay
+              value={input}
+              unit={answerUnit(exercise)}
+              state={verdict === null ? "editing" : "correct"}
             />
           )}
 
-          {/* Zatímco se počítá, není co kontrolovat — a tlačítko by z lekce
-              udělalo tři řady tlačítek pod sebou. */}
+          {/* Pomůcky mají vlastní řádek, ne kout displeje. Nalepené v poli
+              odpovědi nevypadaly jako tlačítka a cena nápovědy se pletla
+              s odpovědí. */}
+          {verdict === null ? (
+            <div className="mt-2 flex gap-2 [&>*]:flex-1">
+              <Tool
+                icon={<CalculatorIcon className="size-5 shrink-0" />}
+                label={tCalculator("title")}
+                pressed={calculatorOpen}
+                onPress={() => setCalculatorOpen((open) => !open)}
+              />
+              {hinted ? null : (
+                <Tool
+                  icon={<HintIcon className="size-5 shrink-0" />}
+                  label={t("hintTitle")}
+                  cost={HINT_COST}
+                  onPress={buyHint}
+                />
+              )}
+            </div>
+          ) : null}
+
+          {poor ? (
+            <p className="text-ink-soft mt-2 text-label" role="status">
+              {t("hintPoor", { cost: HINT_COST })}
+            </p>
+          ) : null}
+
+          {verdict !== null ? null : calculatorOpen ? (
+            <div className="mt-2">
+              <Calculator
+                onUse={(value) => {
+                  setInput(value.slice(0, MAX_INPUT_LENGTH));
+                  setCalculatorOpen(false);
+                }}
+                onClose={() => setCalculatorOpen(false)}
+              />
+            </div>
+          ) : (
+            <div className="mt-2">
+              <Keypad
+                onAppend={(character) => setInput((current) => appendCharacter(current, character))}
+                onBackspace={() => setInput((current) => current.slice(0, -1))}
+              />
+            </div>
+          )}
+
+          {/* Zatímco se počítá, není co kontrolovat — a tlačítko by z panelu
+              udělalo čtyři řady pod sebou. */}
           {calculatorOpen && verdict === null ? null : (
-          <button
-            type="button"
-            onClick={verdict === null ? check : () => onAnswered({ correct: verdict.correct, hinted })}
-            disabled={verdict === null && !canCheck}
-            className="bg-accent active:bg-accent-press mt-3 min-h-14 w-full rounded-control text-body font-semibold text-white transition-colors duration-75 disabled:opacity-40"
-          >
-            {verdict === null
-              ? t("check")
-              : verdict.correct && solved + 1 === count
-                ? t("finish")
-                : t("continueLabel")}
-          </button>
+            <button
+              type="button"
+              onClick={verdict === null ? check : () => onAnswered({ correct: verdict.correct, hinted })}
+              disabled={verdict === null && !canCheck}
+              className="bg-accent active:bg-accent-press mt-3 min-h-14 w-full rounded-control text-body font-semibold text-white transition-colors duration-75 disabled:opacity-40"
+            >
+              {verdict === null
+                ? t("check")
+                : verdict.correct && solved + 1 === count
+                  ? t("finish")
+                  : t("continueLabel")}
+            </button>
           )}
         </div>
       </footer>
     </div>
+  );
+}
+
+/**
+ * Pomůcka k příkladu: kalkulačka nebo nápověda.
+ *
+ * Rámeček, ikona a popisek — vypadá to jako tlačítko, protože to tlačítko
+ * je. Cena nápovědy je v barvě prášků, aby se nedala přečíst jako část
+ * odpovědi nebo zadání.
+ */
+function Tool({
+  icon,
+  label,
+  cost,
+  pressed,
+  onPress,
+}: {
+  icon: React.ReactNode;
+  label: string;
+  cost?: number;
+  pressed?: boolean;
+  onPress: () => void;
+}) {
+  return (
+    <button
+      type="button"
+      onClick={onPress}
+      aria-pressed={pressed}
+      className={`flex min-h-11 items-center justify-center gap-2 rounded-control border px-3 text-label font-medium transition-colors duration-75 ${
+        pressed ? "border-accent bg-accent-wash text-accent" : "border-line text-ink active:bg-surface"
+      }`}
+    >
+      {icon}
+      <span className="truncate">{label}</span>
+      {cost === undefined ? null : (
+        <span className="readout text-pill font-semibold" data-numeric>
+          {cost}
+        </span>
+      )}
+    </button>
   );
 }
 
