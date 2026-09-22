@@ -63,7 +63,9 @@
     "about": "O aplikaci",
     "version": "Verze {version}",
     "storage": "Data",
-    "storageHint": "Všechno zůstává v tomhle zařízení. Nic se nikam neodesílá."
+    "storageHint": "Bez účtu zůstává všechno v tomhle zařízení. Nic se nikam neodesílá.",
+    "storageSignedIn": "Jsi přihlášený, takže se na server odesílají dokončené lekce — které příklady padly a jestli byly správně. Z toho se počítá XP, žebříček a souboje.",
+    "storageStays": "V telefonu zůstávají prášky, série, rozehraná lekce a nastavení."
   },
   "locale": {
     "cs": "Čeština",

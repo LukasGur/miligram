@@ -5,7 +5,6 @@ import dynamic from "next/dynamic";
 import { useFormatter, useTranslations } from "next-intl";
 import { InstallBanner } from "@/components/InstallBanner";
 import { NetworkStatus } from "@/components/NetworkStatus";
-import { SettingsSheet } from "@/components/SettingsSheet";
 import { ShopSheet } from "@/components/ShopSheet";
 import { Wordmark } from "@/components/Wordmark";
 import { ChartIcon, ChevronRightIcon, PersonIcon, PillIcon, SettingsIcon } from "@/components/icons";
@@ -33,6 +32,15 @@ const SyncAgent = dynamic(() => import("@/components/SyncAgent").then((module) =
 
 const AccountScreen = dynamic(
   () => import("@/components/account/AccountScreen").then((module) => module.AccountScreen),
+  { ssr: false },
+);
+
+/**
+ * Nastavení se dotahují až při otevření: je v nich stav přihlášení, tedy
+ * klient Supabase, a ten na domovskou obrazovku nepatří.
+ */
+const SettingsSheet = dynamic(
+  () => import("@/components/SettingsSheet").then((module) => module.SettingsSheet),
   { ssr: false },
 );
 
