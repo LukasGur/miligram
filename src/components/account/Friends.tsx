@@ -2,19 +2,24 @@
 
 import { useState } from "react";
 import { useFormatter, useTranslations } from "next-intl";
-import { UsersIcon } from "@/components/icons";
+import { ShieldIcon, UsersIcon } from "@/components/icons";
 import type { SupabaseClient } from "@supabase/supabase-js";
 import {
   acceptFriend,
   createDuel,
   friendScores,
+  giftSentThisWeek,
   pendingRequests,
   requestFriend,
+  sendGift,
   type FriendRequest,
   type ScoreRow,
 } from "@/lib/remote";
+import { STREAK_FREEZE_COST } from "@/core/economy";
 import { newLessonId } from "@/core/lessonPlan";
+import { spendPills } from "@/lib/db";
 import { useRemoteQuery } from "@/lib/remoteQuery";
+import { useProfile } from "@/lib/useProfile";
 import { Field } from "./SignIn";
 
 /**
@@ -40,6 +45,10 @@ export function Friends({
   const [handle, setHandle] = useState("");
   const [notice, setNotice] = useState<string | null>(null);
   const [busy, setBusy] = useState(false);
+  const { profile } = useProfile();
+  const giftUsed = useRemoteQuery<boolean>(`gift:${userId}`, () => giftSentThisWeek(client, userId));
+  const [sentNow, setSentNow] = useState(false);
+  const canGift = giftUsed.data === false && !sentNow;
 
   const board = useRemoteQuery<ScoreRow[]>(`scores:${userId}:${scope}`, () =>
     friendScores(client, userId, scope),
@@ -49,6 +58,39 @@ export function Friends({
   );
   const scores = board.error ? [] : board.data;
   const requests = waiting.data ?? [];
+
+  /**
+   * Dar kamarádovi. Prášky se strhnou až potom, co server dar přijme —
+   * jinak by student zaplatil za dar, který neprošel.
+   */
+  async function gift(recipientId: string) {
+    if (busy) return;
+    setNotice(null);
+
+    if (!canGift) {
+      setNotice(t("giftUsedUp"));
+      return;
+    }
+    if (profile.pills < STREAK_FREEZE_COST) {
+      setNotice(t("giftPoor", { cost: STREAK_FREEZE_COST }));
+      return;
+    }
+
+    setBusy(true);
+    try {
+      const result = await sendGift(client, userId, recipientId);
+      if (!result.ok) {
+        setNotice(t(result.reason === "usedUp" ? "giftUsedUp" : "giftRefused"));
+        setSentNow(result.reason === "usedUp");
+        return;
+      }
+      await spendPills(STREAK_FREEZE_COST, "gift");
+      setSentNow(true);
+      setNotice(t("giftSent"));
+    } finally {
+      setBusy(false);
+    }
+  }
 
   async function add() {
     if (busy) return;
@@ -148,19 +190,32 @@ export function Friends({
                 </span>
                 <span className="readout text-body font-semibold">{format.number(row.xp)}</span>
                 {row.userId === userId ? null : (
-                  <button
-                    type="button"
-                    onClick={async () => {
-                      // Souboj je jen sdílený identifikátor lekce; oba hráči
-                      // si z něj sestaví tytéž příklady.
-                      await createDuel(client, userId, row.userId, newLessonId());
-                      setNotice(t("duelSent"));
-                      onChallenged();
-                    }}
-                    className="text-accent min-h-11 shrink-0 text-label font-medium"
-                  >
-                    {t("duelChallenge")}
-                  </button>
+                  <>
+                    <button
+                      type="button"
+                      onClick={async () => {
+                        // Souboj je jen sdílený identifikátor lekce; oba hráči
+                        // si z něj sestaví tytéž příklady.
+                        await createDuel(client, userId, row.userId, newLessonId());
+                        setNotice(t("duelSent"));
+                        onChallenged();
+                      }}
+                      className="text-accent min-h-11 shrink-0 text-label font-medium"
+                    >
+                      {t("duelChallenge")}
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() => void gift(row.userId)}
+                      disabled={busy}
+                      aria-label={t("giftAction", { handle: row.handle })}
+                      className={`flex size-11 shrink-0 items-center justify-center ${
+                        canGift && profile.pills >= STREAK_FREEZE_COST ? "text-pill" : "text-ink-soft"
+                      }`}
+                    >
+                      <ShieldIcon className="size-5" />
+                    </button>
+                  </>
                 )}
               </li>
             ))}

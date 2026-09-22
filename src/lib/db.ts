@@ -116,6 +116,20 @@ export type LessonProgress = {
   updatedAt: string;
 };
 
+/**
+ * Dar, který si zařízení vyzvedlo.
+ *
+ * Drží se lokálně ze dvou důvodů: aby se tentýž dar nepřipsal dvakrát,
+ * když se zápis na server nepovede, a aby šlo na obrazovce účtu ukázat,
+ * od koho ochrana přišla, bez dalšího dotazu.
+ */
+export type ReceivedGiftRecord = {
+  /** Identifikátor daru ze serveru. */
+  id: string;
+  fromHandle: string;
+  receivedAt: string;
+};
+
 export type LessonAttempt = {
   templateId: string;
   seed: string;
@@ -167,6 +181,7 @@ class MiligramDatabase extends Dexie {
   lessons!: Table<LessonRecord, number>;
   outbox!: Table<OutboxEvent, number>;
   progress!: Table<LessonProgress, number>;
+  gifts!: Table<ReceivedGiftRecord, string>;
 
   constructor() {
     super("miligram");
@@ -245,6 +260,9 @@ class MiligramDatabase extends Dexie {
           delete progress.answers;
         });
     });
+
+    /** Šestá verze si pamatuje vyzvednuté dary, ať se nepřipíšou dvakrát. */
+    this.version(6).stores({ gifts: "id, receivedAt" });
   }
 }
 
@@ -510,4 +528,43 @@ export async function buyStreakFreeze(
     });
     return "ok";
   });
+}
+
+/**
+ * Připíše ochranu série z daru od kamaráda.
+ *
+ * Prášky se nestrhávají — zaplatil je odesílatel na svém telefonu. Zápis
+ * je idempotentní podle identifikátoru daru: kdyby se potvrzení na server
+ * nepovedlo a dar přišel znovu, podruhé se už nepřipíše.
+ *
+ * Vrací `full`, když má příjemce zásobu plnou. Dar pak zůstane nevyzvednutý
+ * a připíše se, až bude místo.
+ */
+export async function claimGift(
+  gift: { id: string; fromHandle: string },
+  max: number,
+  now = new Date(),
+): Promise<"ok" | "full" | "known"> {
+  const timestamp = now.toISOString();
+  const database = db();
+
+  return database.transaction("rw", database.profile, database.gifts, async () => {
+    if ((await database.gifts.get(gift.id)) !== undefined) return "known";
+
+    const current = (await database.profile.get(PROFILE_ID)) ?? emptyProfile(now);
+    if ((current.streakFreezes ?? 0) >= max) return "full";
+
+    await database.profile.put({
+      ...current,
+      streakFreezes: (current.streakFreezes ?? 0) + 1,
+      updatedAt: timestamp,
+    });
+    await database.gifts.put({ id: gift.id, fromHandle: gift.fromHandle, receivedAt: timestamp });
+    return "ok";
+  });
+}
+
+/** Dary, které na tomhle zařízení dorazily. Nejnovější první. */
+export async function receivedGifts(limit = 5): Promise<ReceivedGiftRecord[]> {
+  return db().gifts.orderBy("receivedAt").reverse().limit(limit).toArray();
 }

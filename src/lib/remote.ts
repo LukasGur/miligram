@@ -364,3 +364,81 @@ export async function leagueStanding(
     ),
   };
 }
+
+/* ---------------------------------------------------------------------------
+   Dary
+
+   Prášky zůstávají v telefonu, na server jde jen událost „poslal jsem
+   kamarádovi ochranu série“. Strop jeden dar za týden a podmínku, že
+   odesílatel sám něco odehrál, drží politiky v databázi — aplikace je jen
+   ukazuje, nevynucuje.
+   ------------------------------------------------------------------------ */
+
+export type ReceivedGift = { id: string; fromHandle: string; createdAt: string };
+
+export type GiftResult = { ok: true } | { ok: false; reason: "usedUp" | "refused" };
+
+export async function sendGift(
+  client: SupabaseClient,
+  userId: string,
+  recipientId: string,
+): Promise<GiftResult> {
+  const { error } = await client.from("gifts").insert({ sender: userId, recipient: recipientId });
+  if (!error) return { ok: true };
+  // Jedinečnost (odesílatel, týden): tenhle týden už dar poslal.
+  if (error.code === "23505") return { ok: false, reason: "usedUp" };
+  // Politika odmítla: nepotvrzený kamarád nebo účet bez jediné dohrané lekce.
+  if (error.code === "42501") return { ok: false, reason: "refused" };
+  throw new Error(error.message);
+}
+
+/** Poslal už tenhle týden dar? Podle toho se tlačítko nabídne, nebo ne. */
+export async function giftSentThisWeek(client: SupabaseClient, userId: string): Promise<boolean> {
+  const { data, error } = await client
+    .from("gifts")
+    .select("id")
+    .eq("sender", userId)
+    .eq("week", weekStart())
+    .maybeSingle();
+  if (error) throw new Error(error.message);
+  return data !== null;
+}
+
+/** Dary, které na uživatele čekají. Vyzvednuté se už nevracejí. */
+export async function pendingGifts(client: SupabaseClient, userId: string): Promise<ReceivedGift[]> {
+  const { data, error } = await client
+    .from("gifts")
+    .select("id, sender, created_at")
+    .eq("recipient", userId)
+    .is("claimed_at", null)
+    .order("created_at", { ascending: true });
+  if (error) throw new Error(error.message);
+
+  const rows = data ?? [];
+  if (rows.length === 0) return [];
+
+  const { data: profiles, error: profileError } = await client
+    .from("profiles")
+    .select("id, handle")
+    .in("id", rows.map((row) => row.sender));
+  if (profileError) throw new Error(profileError.message);
+
+  const handles = new Map((profiles ?? []).map((profile) => [profile.id, profile.handle]));
+  return rows.map((row) => ({
+    id: row.id,
+    fromHandle: handles.get(row.sender) ?? "",
+    createdAt: row.created_at,
+  }));
+}
+
+/**
+ * Označí dar za vyzvednutý. Zapisuje se až po tom, co si zařízení ochranu
+ * připsalo — kdyby se to obrátilo, výpadek uprostřed by dar spolkl.
+ */
+export async function claimGift(client: SupabaseClient, giftId: string): Promise<void> {
+  const { error } = await client
+    .from("gifts")
+    .update({ claimed_at: new Date().toISOString() })
+    .eq("id", giftId);
+  if (error) throw new Error(error.message);
+}

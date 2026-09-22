@@ -1,8 +1,10 @@
 "use client";
 
 import { useState } from "react";
-import { useTranslations } from "next-intl";
-import { CloseIcon } from "@/components/icons";
+import { useLiveQuery } from "dexie-react-hooks";
+import { useFormatter, useTranslations } from "next-intl";
+import { CloseIcon, ShieldIcon } from "@/components/icons";
+import { receivedGifts } from "@/lib/db";
 import {
   claimHandle,
   fetchProfile,
@@ -78,6 +80,36 @@ export function AccountScreen({
   );
 }
 
+/**
+ * Dary, které dorazily. Čtou se z místní databáze, ne ze serveru:
+ * ochrana se připisuje na zařízení a záznam o daru vzniká spolu s ní.
+ */
+function Gifts() {
+  const t = useTranslations("account");
+  const format = useFormatter();
+  const gifts = useLiveQuery(() => receivedGifts(), [], []);
+  if (gifts.length === 0) return null;
+
+  return (
+    <section className="mt-8">
+      <h2 className="flex items-center gap-2 text-heading font-semibold">
+        <ShieldIcon className="text-ink-soft size-5 shrink-0" />
+        {t("giftsTitle")}
+      </h2>
+      <ul className="border-line divide-line mt-3 divide-y rounded-control border">
+        {gifts.map((gift) => (
+          <li key={gift.id} className="flex min-h-12 items-center justify-between gap-3 px-4 py-2">
+            <span className="text-body">{t("giftFrom", { handle: gift.fromHandle })}</span>
+            <span className="readout text-ink-soft shrink-0 text-micro" data-numeric>
+              {format.dateTime(new Date(gift.receivedAt), { dateStyle: "short" })}
+            </span>
+          </li>
+        ))}
+      </ul>
+    </section>
+  );
+}
+
 function SignedIn({
   client,
   userId,
@@ -115,6 +147,7 @@ function SignedIn({
           <League standing={league.data ?? null} userId={userId} />
           <Friends client={client} userId={userId} onChallenged={duels.refresh} />
           <Duels duels={duels.data ?? []} loading={duels.loading} onPlay={onPlayDuel} />
+          <Gifts />
         </>
       ) : null}
       <Sync client={client} userId={userId} />

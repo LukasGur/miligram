@@ -65,7 +65,8 @@
     "storage": "Data",
     "storageHint": "Bez účtu zůstává všechno v tomhle zařízení. Nic se nikam neodesílá.",
     "storageSignedIn": "Jsi přihlášený, takže se na server odesílají dokončené lekce — které příklady padly a jestli byly správně. Z toho se počítá XP, žebříček a souboje.",
-    "storageStays": "V telefonu zůstávají prášky, série, rozehraná lekce a nastavení."
+    "storageStays": "V telefonu zůstávají prášky, série, rozehraná lekce a nastavení.",
+    "storageGifts": "Když daruješ ochranu série kamarádovi, server uvidí, kdo komu ji poslal."
   },
   "locale": {
     "cs": "Čeština",
@@ -401,7 +402,14 @@
     "leagueTop": "Postup",
     "leagueBottom": "Sestup",
     "leagueEmpty": "Dohraj tento týden lekci a zařadíme tě do skupiny.",
-    "leagueHint": "Skupina dvaceti lidí, řazeno podle XP za tento týden. První tři postoupí, posledních pět sestoupí."
+    "leagueHint": "Skupina dvaceti lidí, řazeno podle XP za tento týden. První tři postoupí, posledních pět sestoupí.",
+    "giftAction": "Darovat ochranu série kamarádovi {handle}",
+    "giftSent": "Ochrana série je na cestě. Kamarádovi se připíše, až otevře aplikaci.",
+    "giftUsedUp": "Darovat jde jednou za týden. Další dar ti naskočí v pondělí.",
+    "giftPoor": "Na dar potřebuješ {cost, number} prášků.",
+    "giftRefused": "Dar neprošel. Darovat jde jen potvrzenému kamarádovi a až po první dohrané lekci.",
+    "giftsTitle": "Dary",
+    "giftFrom": "Ochrana série od {handle}"
   },
   "shop": {
     "freezeTitle": "Ochrana série",

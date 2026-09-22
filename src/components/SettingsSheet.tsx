@@ -103,7 +103,10 @@ export function SettingsSheet({ open, onClose }: { open: boolean; onClose: () =>
               {session ? t("storageSignedIn") : t("storageHint")}
             </p>
             {session ? (
-              <p className="text-ink-soft mt-2 text-label">{t("storageStays")}</p>
+              <>
+                <p className="text-ink-soft mt-2 text-label">{t("storageStays")}</p>
+                <p className="text-ink-soft mt-2 text-label">{t("storageGifts")}</p>
+              </>
             ) : null}
           </Section>
 
