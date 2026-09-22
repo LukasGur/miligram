@@ -433,7 +433,7 @@
     "rate": "Úspěšnost",
     "empty": "Zatím není z čeho počítat. Dohraj lekci a vrať se.",
     "mistakesTitle": "Opakování chyb",
-    "mistakesBody": "Předloží přesně ty příklady, na kterých jsi pohořel — se stejnými čísly.",
+    "mistakesBody": "Předloží tentýž výpočet, na kterém jsi pohořel — ale s jinými čísly, ať nestačí si zapamatovat výsledek.",
     "mistakesStart": "{count, plural, one {Opakovat # chybu} few {Opakovat # chyby} other {Opakovat # chyb}}",
     "mistakesNone": "Žádná chyba k opakování. Dobrá práce.",
     "categoriesTitle": "Podle látky",

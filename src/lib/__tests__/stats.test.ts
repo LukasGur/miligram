@@ -86,7 +86,7 @@ describe("chyby k opakování", () => {
     });
 
     const mistakes = await mistakesToRepeat(10);
-    expect(mistakes).toEqual([{ templateId: "A2", seed: "s2", difficulty: 1 }]);
+    expect(mistakes).toEqual([{ templateId: "A2", difficulty: 1 }]);
   });
 
   it("drží se zadaného počtu", async () => {

@@ -75,25 +75,41 @@ export function planLesson(lessonId: string, length = LESSON_LENGTH): LessonPlan
 }
 
 /** Sestaví konkrétní příklad lekce. Volá se až ve chvíli, kdy se má zobrazit. */
-export function lessonExercise(plan: LessonPlan, index: number): Exercise {
+/**
+ * Sestaví konkrétní příklad lekce. Volá se až ve chvíli, kdy se má zobrazit.
+ *
+ * `attempt` je pořadí pokusu na téže položce. Vrácený příklad dostane jiné
+ * semínko, takže tentýž typ výpočtu přijde s jinými čísly — jinak by stačilo
+ * opsat správnou hodnotu z verdiktu a nic se tím nenaučil. Identita položky
+ * v plánu zůstává `item.seed`; mění se jen čísla.
+ */
+export function lessonExercise(plan: LessonPlan, index: number, attempt = 0): Exercise {
   const item = plan.items[index];
   if (!item) throw new Error(`Lekce ${plan.id} nemá příklad číslo ${index}.`);
-  return buildExercise(item.templateId, item.seed, item.difficulty);
+  const seed = attempt === 0 ? item.seed : `${item.seed}#${attempt}`;
+  return buildExercise(item.templateId, seed, item.difficulty);
 }
 
 /**
- * Lekce z konkrétního seznamu příkladů.
+ * Lekce z konkrétního seznamu šablon.
  *
- * Používá se na opakování chyb: uložená odpověď nese semínko, takže se dá
- * předložit přesně ten příklad, na kterém uživatel pohořel — ne jiný
- * podobný. Tohle je celý důvod, proč generátor stojí na semínkách.
+ * Používá se na opakování chyb. Bere se šablona a obtížnost, ne uložené
+ * semínko: kdyby přišel tentýž příklad s týmiž čísly, stačilo by si
+ * zapamatovat výsledek. Student má znovu spočítat totéž, ne si vzpomenout.
  */
 export function planFromItems(
   lessonId: string,
-  items: readonly { templateId: string; seed: string; difficulty: Difficulty }[],
+  items: readonly { templateId: string; difficulty: Difficulty }[],
 ): LessonPlan {
   if (items.length === 0) throw new Error("Lekce potřebuje aspoň jeden příklad.");
-  return { id: lessonId, items: [...items] };
+  return {
+    id: lessonId,
+    items: items.map((item, index) => ({
+      templateId: item.templateId,
+      seed: `${lessonId}:${index}`,
+      difficulty: item.difficulty,
+    })),
+  };
 }
 
 /**

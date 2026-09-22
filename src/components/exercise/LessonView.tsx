@@ -61,9 +61,14 @@ export function LessonView({
   const recorded = useRef(false);
 
   const index = nextIndex(plan, attempts);
+  /**
+   * Kolikrát už student na tenhle příklad sáhl. Vrácený příklad dostane
+   * jiná čísla, takže nestačí opsat správnou hodnotu z verdiktu.
+   */
+  const attempt = index === null ? 0 : attemptsOn(attempts, plan.items[index].seed);
   const exercise = useMemo(
-    () => (index === null ? null : lessonExercise(plan, index)),
-    [plan, index],
+    () => (index === null ? null : lessonExercise(plan, index, attempt)),
+    [plan, index, attempt],
   );
   const solved = solvedCount(plan, attempts);
 
@@ -85,34 +90,36 @@ export function LessonView({
        * verdikt i odrolování se tím vynulují samy — bez efektu, který by
        * stav uklízel ručně.
        */
-      key={`${exercise.seed}:${attempts.length}`}
+      key={exercise.seed}
       exercise={exercise}
       solved={solved}
       count={plan.items.length}
       /** Opakování: příklad, na kterém už student jednou pohořel. */
-      repeat={attemptsOn(attempts, exercise.seed) > 0}
-      attempt={attemptsOn(attempts, exercise.seed) + 1}
+      repeat={attempt > 0}
+      attempt={attempt + 1}
       pills={profile.pills}
       onExit={onExit}
       onHint={() => spendPills(HINT_COST, `hint:${exercise.templateId}`)}
       onAnswered={({ correct, hinted, gaveUp }) => {
-        const attempt: LessonAttempt = {
+        // Semínko je identita položky v plánu, ne semínko zobrazeného
+        // příkladu: to se u vráceného příkladu mění, aby přišla jiná čísla.
+        const zapis: LessonAttempt = {
           templateId: exercise.templateId,
-          seed: exercise.seed,
+          seed: plan.items[index].seed,
           difficulty: exercise.difficulty,
           index,
           correct,
           hinted,
           ...(gaveUp ? { gaveUp: true } : {}),
         };
-        const next = [...attempts, attempt];
+        const next = [...attempts, zapis];
         setAttempts(next);
 
         // Zápis pokusu je samostatný od zápisu lekce: lekce se nemusí
         // dohrát, odpověď už padla.
         // Plán se ukládá i u denní lekce: sestavil se ze stavu, který se
         // během lekce mění, takže z předpisu by po návratu vyšel jiný.
-        void recordAnswer(lessonId, attempt, {
+        void recordAnswer(lessonId, zapis, {
           plan: spec || given ? plan : undefined,
           stageId: spec?.stage,
           duelId,

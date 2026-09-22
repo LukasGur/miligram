@@ -72,7 +72,11 @@ export async function overview(): Promise<Overview> {
   };
 }
 
-export type Mistake = { templateId: string; seed: string; difficulty: Difficulty };
+/**
+ * Chyba k opakování. Nese šablonu a obtížnost, ne semínko: opakování má
+ * dát tentýž výpočet s jinými čísly, ať se nedá projít po paměti.
+ */
+export type Mistake = { templateId: string; difficulty: Difficulty };
 
 /**
  * Chyby k opakování.
@@ -96,7 +100,6 @@ export async function mistakesToRepeat(limit: number): Promise<Mistake[]> {
     .slice(0, limit)
     .map((answer) => ({
       templateId: answer.templateId,
-      seed: answer.seed,
       difficulty: answer.difficulty as Difficulty,
     }));
 }

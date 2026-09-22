@@ -68,18 +68,20 @@ describe("sestavení lekce", () => {
 });
 
 describe("tréninkové režimy", () => {
-  it("opakování chyb předloží tytéž příklady, ne podobné", () => {
+  it("opakování chyb předloží tentýž výpočet, ale s jinými čísly", () => {
     const original = planLesson("puvodni");
     const wrong = [original.items[1], original.items[4]];
     const repeat = planFromItems("opakovani", wrong);
 
-    expect(repeat.items).toEqual(wrong);
-    // Semínko určuje zadání, takže se vrátí přesně ten příklad,
-    // na kterém uživatel pohořel.
+    // Šablona i obtížnost sedí, semínko je nové.
+    expect(repeat.items.map((item) => item.templateId)).toEqual(wrong.map((item) => item.templateId));
+    expect(repeat.items.map((item) => item.difficulty)).toEqual(wrong.map((item) => item.difficulty));
+
     const before = lessonExercise(original, 1);
     const after = lessonExercise(repeat, 0);
-    expect(after.vars).toEqual(before.vars);
-    expect(after.solution.value).toBe(before.solution.value);
+    expect(after.templateId).toBe(before.templateId);
+    // Zapamatovat si výsledek nestačí: čísla jsou jiná.
+    expect(after.vars).not.toEqual(before.vars);
   });
 
   it("prázdné opakování je chyba, ne prázdná lekce", () => {
@@ -165,7 +167,7 @@ describe("denní lekce podle programu", () => {
 
 describe("který plán se hraje", () => {
   it("uložený plán má přednost před předpisem i identifikátorem", () => {
-    const ulozeny = planFromItems("x", [{ templateId: "A1", seed: "x:0", difficulty: 1 }]);
+    const ulozeny = planFromItems("x", [{ templateId: "A1", difficulty: 1 }]);
     expect(resolvePlan({ lessonId: "x", plan: ulozeny, spec: DENNI })).toBe(ulozeny);
   });
 
@@ -179,5 +181,24 @@ describe("který plán se hraje", () => {
    */
   it("holý identifikátor dá oběma hráčům souboje tutéž lekci", () => {
     expect(resolvePlan({ lessonId: "souboj" })).toEqual(planLesson("souboj"));
+  });
+});
+
+describe("vrácený příklad", () => {
+  it("dostane jiná čísla než ten, na kterém student pohořel", () => {
+    const plan = planLesson("lekce");
+    const prvni = lessonExercise(plan, 0);
+    const podruhe = lessonExercise(plan, 0, 1);
+    const potreti = lessonExercise(plan, 0, 2);
+
+    expect(podruhe.templateId).toBe(prvni.templateId);
+    expect(podruhe.difficulty).toBe(prvni.difficulty);
+    expect(podruhe.vars).not.toEqual(prvni.vars);
+    expect(potreti.vars).not.toEqual(podruhe.vars);
+  });
+
+  it("tentýž pokus dá pokaždé totéž — jinak by se lekce po návratu rozpadla", () => {
+    const plan = planLesson("lekce");
+    expect(lessonExercise(plan, 3, 2).vars).toEqual(lessonExercise(plan, 3, 2).vars);
   });
 });
