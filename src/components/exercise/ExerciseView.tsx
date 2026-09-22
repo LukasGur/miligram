@@ -1,13 +1,14 @@
 "use client";
 
-import { useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { useTranslations } from "next-intl";
-import { CloseIcon } from "@/components/icons";
+import { CalculatorIcon, CloseIcon } from "@/components/icons";
 import { evaluateAnswer, parseAnswer, type Verdict } from "@/core/answer";
 import { HINT_COST } from "@/core/economy";
 import type { Exercise } from "@/core/types";
 import { useAnswerUnit, useExercisePrompt } from "@/i18n/exerciseText";
 import { AnswerDisplay } from "./AnswerDisplay";
+import { Calculator } from "./Calculator";
 import { Keypad } from "./Keypad";
 import { TickScale } from "@/components/ui/TickScale";
 import { Formula } from "./Formula";
@@ -43,6 +44,7 @@ export function ExerciseView({
   pills: number;
 }) {
   const t = useTranslations("lesson");
+  const tCalculator = useTranslations("calculator");
   const prompt = useExercisePrompt();
   const answerUnit = useAnswerUnit();
 
@@ -50,6 +52,17 @@ export function ExerciseView({
   const [verdict, setVerdict] = useState<Verdict | null>(null);
   const [solutionOpen, setSolutionOpen] = useState(false);
   const [hinted, setHinted] = useState(false);
+  const [calculatorOpen, setCalculatorOpen] = useState(false);
+  const answerRef = useRef<HTMLDivElement>(null);
+
+  /**
+   * Kalkulačka vyroste odspodu a zabere půl obrazovky. Bez tohohle by pod
+   * ní zůstalo pole odpovědi napůl useknuté a student by neviděl, co si
+   * do něj přenáší.
+   */
+  useEffect(() => {
+    if (calculatorOpen) answerRef.current?.scrollIntoView({ block: "end", behavior: "smooth" });
+  }, [calculatorOpen]);
 
   const value = parseAnswer(input);
   /**
@@ -126,24 +139,37 @@ export function ExerciseView({
               níž a dvojí výpis téhož čísla jen tříští pozornost. U správné
               odpovědi zůstává — je to ta věc, která se rozsvítí. */}
           {verdict?.correct === false ? null : (
-            <div className="mt-6">
+            <div className="mt-6" ref={answerRef}>
               <AnswerDisplay
                 value={input}
                 unit={answerUnit(exercise)}
                 state={verdict === null ? "editing" : "correct"}
                 action={
-                  verdict === null && !hinted ? (
-                    <button
-                      type="button"
-                      onClick={buyHint}
-                      disabled={!canAfford}
-                      className="text-accent disabled:text-ink-soft flex items-center gap-1.5 text-label font-medium"
-                    >
-                      {t("hintTitle")}
-                      <span className="readout" data-numeric>
-                        {HINT_COST}
-                      </span>
-                    </button>
+                  verdict === null ? (
+                    <span className="-my-1.5 flex items-center gap-1">
+                      {hinted ? null : (
+                        <button
+                          type="button"
+                          onClick={buyHint}
+                          disabled={!canAfford}
+                          className="text-accent disabled:text-ink-soft flex min-h-11 items-center gap-1.5 px-1 text-label font-medium"
+                        >
+                          {t("hintTitle")}
+                          <span className="readout" data-numeric>
+                            {HINT_COST}
+                          </span>
+                        </button>
+                      )}
+                      <button
+                        type="button"
+                        onClick={() => setCalculatorOpen((open) => !open)}
+                        aria-label={tCalculator("open")}
+                        aria-pressed={calculatorOpen}
+                        className={`flex min-h-11 items-center px-1 ${calculatorOpen ? "text-accent" : "text-ink-soft"}`}
+                      >
+                        <CalculatorIcon className="size-5" />
+                      </button>
+                    </span>
                   ) : null
                 }
               />
@@ -188,15 +214,26 @@ export function ExerciseView({
         style={{ paddingBottom: "calc(var(--sa-b) + 0.75rem)" }}
       >
         <div className="mx-auto w-full max-w-md px-5 pt-3">
-          {verdict === null ? (
+          {verdict !== null ? null : calculatorOpen ? (
+            <Calculator
+              onUse={(value) => {
+                setInput(value.slice(0, MAX_INPUT_LENGTH));
+                setCalculatorOpen(false);
+              }}
+              onClose={() => setCalculatorOpen(false)}
+            />
+          ) : (
             <Keypad
               onAppend={(character) =>
                 setInput((current) => appendCharacter(current, character))
               }
               onBackspace={() => setInput((current) => current.slice(0, -1))}
             />
-          ) : null}
+          )}
 
+          {/* Zatímco se počítá, není co kontrolovat — a tlačítko by z lekce
+              udělalo tři řady tlačítek pod sebou. */}
+          {calculatorOpen && verdict === null ? null : (
           <button
             type="button"
             onClick={verdict === null ? check : () => onAnswered({ correct: verdict.correct, hinted })}
@@ -209,6 +246,7 @@ export function ExerciseView({
                 ? t("finish")
                 : t("continueLabel")}
           </button>
+          )}
         </div>
       </footer>
     </div>

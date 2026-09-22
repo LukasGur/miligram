@@ -461,5 +461,18 @@
       "perfuzory": "Vazoaktívne lieky",
       "povrch": "Povrch tela a onkológia"
     }
+  },
+  "calculator": {
+    "title": "Kalkulačka",
+    "empty": "Zadaj výpočet",
+    "use": "Použiť výsledok",
+    "close": "Zavrieť",
+    "clear": "Vynulovať",
+    "divide": "Delené",
+    "multiply": "Krát",
+    "minus": "Mínus",
+    "plus": "Plus",
+    "equals": "Rovná sa",
+    "open": "Otvoriť kalkulačku"
   }
 }

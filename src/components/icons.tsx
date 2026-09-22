@@ -211,3 +211,15 @@ export function LadderIcon({ className }: IconProps) {
     </svg>
   );
 }
+
+export function CalculatorIcon({ className }: IconProps) {
+  return (
+    <svg viewBox="0 0 24 24" fill="none" aria-hidden className={className}>
+      <g stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round">
+        <rect x="4.5" y="2.8" width="15" height="18.4" rx="2.4" />
+        <path d="M8 6.8h8v3H8z" />
+        <path d="M8.5 13.6h.01M12 13.6h.01M15.5 13.6h.01M8.5 17.4h.01M12 17.4h.01M15.5 17.4h.01" />
+      </g>
+    </svg>
+  );
+}
