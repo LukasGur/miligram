@@ -46,7 +46,7 @@ export const C4 = register({
         intermediate("povrchPrvni", { result: `BSA_A = ${q(bsaA, "m^2", 3)}` }),
         intermediate("povrchDruhy", { result: `BSA_B = ${q(bsaB, "m^2", 3)}` }),
         formula(`\\Delta = \\left( ${frac("BSA_B", "BSA_A")} - 1 \\right) \\times 100`),
-        substitute(`\\Delta = \\left( ${frac(q(bsaB, "", 3), q(bsaA, "", 3))} - 1 \\right) \\times 100`),
+        substitute(`\\Delta = \\left( ${frac(q(bsaB, "m^2", 3), q(bsaA, "m^2", 3))} - 1 \\right) \\times 100`),
         result(percent, "\\%", 1),
       ],
       roundingNoteKey: "zaokrouhleniMezivysledek",

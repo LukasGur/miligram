@@ -2,6 +2,7 @@
 
 import { useTranslations } from "next-intl";
 import { Formula } from "./Formula";
+import { stepEquation } from "@/core/templates/helpers";
 import type { Exercise, Source } from "@/core/types";
 
 /**
@@ -28,8 +29,8 @@ export function SolutionSteps({ exercise }: { exercise: Exercise }) {
             <p className="text-micro text-ink-soft uppercase tracking-wide">{tSteps(step.textKey)}</p>
             <div className="mt-1 space-y-1 overflow-x-auto">
               {step.formula ? <Formula latex={step.formula} display className="block" /> : null}
-              {step.substituted ? <Formula latex={step.substituted} display className="block" /> : null}
-              {step.result ? (
+              {step.substituted ? <Formula latex={stepEquation(step)!} display className="block" /> : null}
+              {step.result && !step.substituted ? (
                 <Formula latex={step.result} className="text-ink block font-medium" />
               ) : null}
             </div>

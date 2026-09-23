@@ -66,7 +66,7 @@ export const K4 = register({
       steps: [
         given(q(weightKg, "kg", 1), `${tex(perKg, 3)}\\ \\mathrm{mg/kg}`),
         formula("D = d_{kg} \\times m"),
-        substitute(`${tex(perKg, 3)} \\times ${tex(weightKg, 1)}`, q(doseMg, "mg", 3)),
+        substitute(`${q(perKg, "mg/kg", 3)} \\times ${q(weightKg, "kg", 1)}`, q(doseMg, "mg", 3)),
         result(doseMg, "mg", 3),
       ],
       roundingNoteKey: "zaokrouhleniDavka",

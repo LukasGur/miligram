@@ -61,7 +61,7 @@ export const A3 = register({
 
     const steps = [
       step("zadani", {
-        result: `${tex(doseMg, 3)}${unit("mg")} \;\\text{@of}\; ${tex(strengthMg)}${unit("mg")} / ${tex(ampouleMl)}${unit("ml")}`,
+        result: `${tex(doseMg, 3)}${unit("mg")} \\;\\text{@of}\\; ${tex(strengthMg)}${unit("mg")} / ${tex(ampouleMl)}${unit("ml")}`,
       }),
       step("vzorec", {
         formula: `V = ${frac("\\text{@dose}", "\\text{@strength}")} \\times V_{\\text{@ampoule}}`,

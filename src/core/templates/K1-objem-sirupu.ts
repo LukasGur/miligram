@@ -62,9 +62,9 @@ export const K1 = register({
     return {
       value: volumeMl,
       steps: [
-        given(q(weightKg, "kg", 1), `${tex(mgPerKgPerDay, 1)}\\ \\mathrm{mg/kg/den}`, `${tex(dosesPerDay, 0)}\\times\\ \\text{@daily}`),
+        given(q(weightKg, "kg", 1), q(mgPerKgPerDay, "mg/kg/@day", 1), `${tex(dosesPerDay, 0)}\\times\\ \\text{@daily}`),
         intermediate("denniDavka", {
-          substituted: `${tex(mgPerKgPerDay, 1)} \\times ${tex(weightKg, 1)}`,
+          substituted: `${q(mgPerKgPerDay, "mg/kg/@day", 1)} \\times ${q(weightKg, "kg", 1)}`,
           result: q(dailyMg, "mg", 1),
         }),
         intermediate("dilciDavka", {

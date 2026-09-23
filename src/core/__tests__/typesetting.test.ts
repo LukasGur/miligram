@@ -4,6 +4,7 @@ import cs from "../../../messages/cs.json";
 import sk from "../../../messages/sk.json";
 import "../templates";
 import { allTemplates, buildExercise } from "../templates";
+import { stepEquation } from "../templates/helpers";
 import { DIFFICULTIES } from "../types";
 
 const SEEDS = Array.from({ length: 10 }, (_, i) => `k${i}`);
@@ -18,7 +19,8 @@ function everyFormula(): { id: string; latex: string }[] {
       for (const seed of SEEDS) {
         const { solution } = buildExercise(template.id, seed, difficulty);
         for (const step of solution.steps) {
-          for (const latex of [step.formula, step.substituted, step.result]) {
+          // Dosazení s mezivýsledkem se sází jako jedna rovnice, tak se tak i testuje.
+          for (const latex of [step.formula, stepEquation(step), step.result]) {
             if (latex) found.push({ id: `${template.id}/${difficulty}/${seed}`, latex });
           }
         }

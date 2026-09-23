@@ -123,8 +123,25 @@ describe("H5 — procenta, mg/ml a g/l", () => {
 
 describe("H6 — mg/ml na mmol/l", () => {
   it("neředěný chlorid draselný 7,45 % je 1000 mmol/l", () => {
-    const solution = getTemplate("H6").solve({ mgPerMl: 74.5, molarMass: 74.5, dilution: 1 }, D);
+    const solution = getTemplate("H6").solve({ code: "0069737", ion: "K+", mgPerMl: 74.5, molarMass: 74.5, dilution: 1 }, D);
     expect(solution.value).toBeCloseTo(1000, 6);
+  });
+
+  it("postup ukáže mol/l, převod na mmol/l i rozpad soli na ionty", () => {
+    // Příklad z hlášení: 0,05 je správně v mol/l, ale ptáme se na mmol/l.
+    // Postup dřív skočil ze zlomku g/l ÷ g/mol rovnou na 50 mmol/l.
+    const { value, steps } = getTemplate("H6").solve(
+      { code: "0055913", ion: "Na+", mgPerMl: 2.925, molarMass: 58.5, dilution: 20 },
+      D,
+    );
+    expect(value).toBeCloseTo(50, 6);
+    expect(steps.map((s) => s.textKey)).toEqual([
+      "zadani", "gramyNaLitr", "vzorec", "dosazeni", "naMilimoly", "disociace", "vysledek",
+    ]);
+    expect(steps[3].result).toBe("0{,}05\\,\\mathrm{mol/l}");
+    expect(steps[4].substituted).toBe("0{,}05\\,\\mathrm{mol/l} \\times 1000\\,\\mathrm{mmol/mol}");
+    expect(steps[4].result).toBe("50\\,\\mathrm{mmol/l}");
+    expect(steps[5].formula).toBe("\\mathrm{NaCl} \\to \\mathrm{Na^{+}} + \\mathrm{Cl^{-}}");
   });
 });
 

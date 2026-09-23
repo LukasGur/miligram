@@ -56,7 +56,7 @@ export const J3 = register({
         intermediate("povrchTela", { result: q(bsa, "m^2", 2) }),
         intermediate("pasmoZeSpc", { result: `${tex(band.dose, 0)}\\ \\mathrm{mg/m^2}` }),
         formula("D = d_{m^2} \\times BSA"),
-        substitute(`${tex(band.dose, 0)} \\times ${tex(bsa, 2)}`, q(doseMg, "mg", 1)),
+        substitute(`${q(band.dose, "mg/m^2", 0)} \\times ${q(bsa, "m^2", 2)}`, q(doseMg, "mg", 1)),
         result(doseMg, "mg", 1),
       ],
       roundingNoteKey: "zaokrouhleniDavka",

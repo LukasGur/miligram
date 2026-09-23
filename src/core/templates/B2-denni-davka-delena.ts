@@ -65,7 +65,7 @@ export const B2 = register({
         given(q(weightKg, "kg", 1), q(perKgPerDay, "mg/kg/@day", 0), `${dosesPerDay}\\times\\text{ @daily}`),
         intermediate("denniDavka", {
           formula: `m_{\\text{@day}} = D_{\\text{kg/@day}} \\times m_{\\text{@body}}`,
-          substituted: `m_{\\text{@day}} = ${q(perKgPerDay, "", 0)} \\times ${q(weightKg, "kg", 1)}`,
+          substituted: `m_{\\text{@day}} = ${q(perKgPerDay, "mg/kg/@day", 0)} \\times ${q(weightKg, "kg", 1)}`,
           result: q(dailyMg, "mg", 1),
         }),
         intermediate("dilciDavka", {

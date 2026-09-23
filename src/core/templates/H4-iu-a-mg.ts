@@ -86,7 +86,7 @@ export const H4 = register({
         given(q(givenMg, "mg", 2)),
         ratioStep,
         formula("\\text{@activity} = m \\times \\text{@iuPerMg}"),
-        substitute(`${tex(givenMg, 2)} \\times ${tex(iuPerMg, 2)}`, q(iu, "IU", 0)),
+        substitute(`${q(givenMg, "mg", 2)} \\times ${tex(iuPerMg, 2)}\\ \\mathrm{IU/mg}`, q(iu, "IU", 0)),
         result(iu, "IU", 0),
       ],
       roundingNoteKey: "zaokrouhleniMezivysledek",

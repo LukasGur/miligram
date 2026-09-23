@@ -51,10 +51,10 @@ export const A6 = register({
         intermediate("odebranyObjem", {
           formula: `V_{\\text{@withdrawn}} = ${frac("\\text{@dose}", "\\text{@content}")} \\times V_{\\text{@ampoule}}`,
           substituted: `V_{\\text{@withdrawn}} = ${frac(q(doseMg, "mg", 3), q(ampouleMg, "mg", 3))} \\times ${q(ampouleMl, "ml", 1)}`,
-          result: q(takenMl, "ml", 2),
+          result: q(takenMl, "ml", 3),
         }),
         formula(`V_{\\text{@remainder}} = V_{\\text{@ampoule}} - V_{\\text{@withdrawn}}`),
-        substitute(`V_{\\text{@remainder}} = ${q(ampouleMl, "ml", 1)} - ${q(takenMl, "ml", 2)}`),
+        substitute(`V_{\\text{@remainder}} = ${q(ampouleMl, "ml", 1)} - ${q(takenMl, "ml", 3)}`),
         result(leftMl, "ml", 2),
       ],
       roundingNoteKey: "zaokrouhleniStrikacka",

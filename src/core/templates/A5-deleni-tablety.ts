@@ -52,7 +52,7 @@ export const A5 = register({
         given(q(doseUg, "µg", 1), `${q(strengthMg, "mg", 3)}\\text{/tbl}`),
         intermediate("prevodJednotek", {
           formula: `1${" "}\\mathrm{mg} = 1000${" "}\\mathrm{\\mu g}`,
-          substituted: `${q(doseUg, "µg", 1)} = ${frac(q(doseUg, "", 1), "1000")}${" "}\\mathrm{mg}`,
+          substituted: `${q(doseUg, "µg", 1)} = ${frac(q(doseUg, "µg", 1), q(1000, "µg/mg", 0))}`,
           result: q(doseMg, "mg", 4),
         }),
         formula(`n = ${frac("\\text{@dose}", "\\text{@tabletStrength}")}`),

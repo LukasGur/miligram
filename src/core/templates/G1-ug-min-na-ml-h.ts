@@ -60,7 +60,7 @@ export const G1 = register({
           result: q(concentration, "mg/ml", 4),
         }),
         formula(`\\text{ml/h} = ${frac("D \\times 60", "c \\times 1000")}`),
-        substitute(`\\text{ml/h} = ${frac(`${q(dose, "", 2)} \\times 60`, `${q(concentration, "", 4)} \\times 1000`)}`),
+        substitute(`\\text{ml/h} = ${frac(`${q(dose, "\\mu g/min", 2)} \\times ${q(60, "min/h", 0)}`, `${q(concentration, "mg/ml", 4)} \\times ${q(1000, "\\mu g/mg", 0)}`)}`),
         result(rate, "ml/h", 2),
       ],
       roundingNoteKey: "zaokrouhleniPumpa",

@@ -48,9 +48,9 @@ export const C5 = register({
       steps: [
         given(q(bsaM2, "m^2", 2), q(perM2, "mg/m^2", 0), `\\max ${q(capMg, "mg", 0)}`),
         formula(`m = D_{\\text{m}^2} \\times BSA`),
-        substitute(`m = ${q(perM2, "", 0)} \\times ${q(bsaM2, "m^2", 2)}`, q(computed, "mg", 1)),
+        substitute(`m = ${q(perM2, "mg/m^2", 0)} \\times ${q(bsaM2, "m^2", 2)}`, q(computed, "mg", 1)),
         intermediate(doseMg < computed ? "stropSeUplatnil" : "stropSeNeuplatnil", {
-          substituted: `\\min(${q(computed, "mg", 1)},\; ${q(capMg, "mg", 0)})`,
+          substituted: `\\min(${q(computed, "mg", 1)},\\; ${q(capMg, "mg", 0)})`,
           result: q(doseMg, "mg", 1),
         }),
         result(doseMg, "mg", 1),

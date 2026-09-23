@@ -44,7 +44,7 @@ export const F4 = register({
       steps: [
         given(q(bagMl, "ml", 0), q(rate, "ml/h", 0)),
         formula(`t = ${frac("V", "v")} \\times 60`),
-        substitute(`t = ${frac(q(bagMl, "ml", 0), q(rate, "ml/h", 0))} \\times 60`),
+        substitute(`t = ${frac(q(bagMl, "ml", 0), q(rate, "ml/h", 0))} \\times ${q(60, "min/h", 0)}`),
         result(minutes, "min", 0),
       ],
       roundingNoteKey: "zaokrouhleniCas",

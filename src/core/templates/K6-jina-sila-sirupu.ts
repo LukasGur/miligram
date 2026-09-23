@@ -2,7 +2,7 @@ import { concentrationOf, selectProducts } from "../products";
 import { syringeFor } from "../devices";
 import * as tolerances from "../tolerances";
 import type { Solution, Vars } from "../types";
-import { formula, frac, given, intermediate, q, result, substitute, tex } from "./helpers";
+import { formula, frac, given, intermediate, q, result, substitute } from "./helpers";
 import { ISO_7886, register, SUKL_DLP } from "./registry";
 
 /** Látky, které se registrují ve dvou silách sirupu a předepisují dětem. */
@@ -73,7 +73,7 @@ export const K6 = register({
       steps: [
         given(q(prescribedMl, "ml", 1), q(fromConcentration, "mg/ml", 0), q(toConcentration, "mg/ml", 0)),
         intermediate("davkaVMg", {
-          substituted: `${tex(prescribedMl, 1)} \\times ${tex(fromConcentration, 0)}`,
+          substituted: `${q(prescribedMl, "ml", 1)} \\times ${q(fromConcentration, "mg/ml", 0)}`,
           result: q(doseMg, "mg", 1),
         }),
         formula(`V = ${frac("\\text{@dose}", "\\text{@newConcentration}")}`),

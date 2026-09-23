@@ -73,7 +73,7 @@ export const B8 = register({
       steps: [
         given(q(weightKg, "kg", 1), q(perKgPerDay, "mg/kg/@day", 0), `${dosesPerDay}\\times\\text{ @daily}`, q(bottleMl, "ml", 0)),
         intermediate("dilciDavka", {
-          substituted: `m_{\\text{@dose}} = ${frac(`${q(perKgPerDay, "", 0)} \\times ${q(weightKg, "kg", 1)}`, String(dosesPerDay))}`,
+          substituted: `m_{\\text{@dose}} = ${frac(`${q(perKgPerDay, "mg/kg/@day", 0)} \\times ${q(weightKg, "kg", 1)}`, String(dosesPerDay))}`,
           result: q(perDoseMg, "mg", 1),
         }),
         intermediate("objemNaDen", {

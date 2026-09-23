@@ -46,6 +46,7 @@ export const J1 = register({
 
     const creatinineMgPerDl = creatinineUmolPerL * CREATININE_MGDL_PER_UMOLL;
     const crCl = creatinineClearance({ ageYears, weightKg, creatinineUmolPerL, female });
+    const crClBeforeCorrection = creatinineClearance({ ageYears, weightKg, creatinineUmolPerL, female: false });
 
     const steps = [
       given(`${tex(ageYears, 0)}\\ \\text{@years}`, q(weightKg, "kg", 0), `${tex(creatinineUmolPerL, 0)}\\ \\mathrm{\\mu mol/l}`),
@@ -57,11 +58,17 @@ export const J1 = register({
       formula(`CrCl = ${frac("(140 - \\text{@age}) \\times m", "72 \\times S_{kr}")}`),
       substitute(
         `CrCl = ${frac(`(140 - ${tex(ageYears, 0)}) \\times ${tex(weightKg, 0)}`, `72 \\times ${tex(creatinineMgPerDl, 3)}`)}`,
+        q(crClBeforeCorrection, "ml/min", 1),
       ),
     ];
 
     if (female) {
-      steps.push(intermediate("korekceZeny", { substituted: `\\times 0{,}85` }));
+      steps.push(
+        intermediate("korekceZeny", {
+          substituted: `CrCl = ${q(crClBeforeCorrection, "ml/min", 1)} \\times 0{,}85`,
+          result: q(crCl, "ml/min", 1),
+        }),
+      );
     }
     steps.push(result(crCl, "ml/min", 1));
 

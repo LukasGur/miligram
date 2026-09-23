@@ -42,7 +42,7 @@ export const G7 = register({
         steps: [
           given(q(perKg, "\\mu g/kg/min", 2), q(weightKg, "kg", 0)),
           formula(`D_{\\text{min}} = D_{\\text{kg,min}} \\times m_{\\text{@body}}`),
-          substitute(`D_{\\text{min}} = ${q(perKg, "", 2)} \\times ${q(weightKg, "kg", 0)}`),
+          substitute(`D_{\\text{min}} = ${q(perKg, "\\mu g/kg/min", 2)} \\times ${q(weightKg, "kg", 0)}`),
           result(total, "\\mu g/min", 2),
         ],
         roundingNoteKey: "zaokrouhleniMezivysledek",
@@ -56,7 +56,7 @@ export const G7 = register({
       steps: [
         given(q(total, "\\mu g/min", 1), q(weightKg, "kg", 0)),
         formula(`D_{\\text{kg,min}} = ${frac("D_{\\text{min}}", "m_{\\text{@body}}")}`),
-        substitute(`D_{\\text{kg,min}} = ${frac(q(total, "", 1), q(weightKg, "kg", 0))}`),
+        substitute(`D_{\\text{kg,min}} = ${frac(q(total, "\\mu g/min", 1), q(weightKg, "kg", 0))}`),
         result(perKg, "\\mu g/kg/min", 3),
       ],
       roundingNoteKey: "zaokrouhleniMezivysledek",

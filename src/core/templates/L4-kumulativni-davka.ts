@@ -1,7 +1,7 @@
 import { dosingRule, dosingSource } from "../products/dosing";
 import * as tolerances from "../tolerances";
 import type { Solution, Vars } from "../types";
-import { formula, frac, given, intermediate, result, substitute, tex } from "./helpers";
+import { formula, frac, given, intermediate, q, result, substitute, tex } from "./helpers";
 import { register } from "./registry";
 
 const RULE = "doxorubicin" as const;
@@ -64,11 +64,11 @@ export const L4 = register({
           `${tex(limit, 0)}\\ \\mathrm{mg/m^2}`,
         ),
         intermediate("zbyvaDoLimitu", {
-          substituted: `${tex(limit, 0)} - ${tex(alreadyGiven, 0)}`,
+          substituted: `${q(limit, "mg/m^2", 0)} - ${q(alreadyGiven, "mg/m^2", 0)}`,
           result: `${tex(remaining, 0)}\\ \\mathrm{mg/m^2}`,
         }),
         formula(`n = \\left\\lfloor ${frac("\\text{@remaining}", "\\text{@dosePerCycle}")} \\right\\rfloor`),
-        substitute(`n = \\left\\lfloor ${frac(tex(remaining, 0), tex(dosePerCycle, 0))} \\right\\rfloor`),
+        substitute(`n = \\left\\lfloor ${frac(q(remaining, "mg/m^2", 0), q(dosePerCycle, "mg/m^2", 0))} \\right\\rfloor`),
         result(cycles, "\\text{@cycles}", 0),
       ],
       roundingNoteKey: "zaokrouhleniDolu",

@@ -72,12 +72,12 @@ export const K3 = register({
     return {
       value: volumeMl,
       steps: [
-        given(q(weightKg, "kg", 1), `${tex(mgPerKgPerDay, 0)}\\ \\mathrm{mg/kg/den}`, q(concentration, "mg/ml", 0)),
+        given(q(weightKg, "kg", 1), q(mgPerKgPerDay, "mg/kg/@day", 0), q(concentration, "mg/ml", 0)),
         formula(
           `V = ${frac("\\text{@amoxicillinDose} \\times m", "\\text{@concentration} \\times \\text{@splitCount}")}`,
         ),
         substitute(
-          `V = ${frac(`${tex(mgPerKgPerDay, 0)} \\times ${tex(weightKg, 1)}`, `${tex(concentration, 0)} \\times ${tex(dosesPerDay, 0)}`)}`,
+          `V = ${frac(`${q(mgPerKgPerDay, "mg/kg/@day", 0)} \\times ${q(weightKg, "kg", 1)}`, `${q(concentration, "mg/ml", 0)} \\times ${tex(dosesPerDay, 0)}`)}`,
         ),
         substitute(`V = ${frac(q(numerator, "mg", 1), q(denominator, "mg/ml", 0))}`),
         result(volumeMl, "ml", 1),

@@ -27,6 +27,13 @@ export type Electrolyte = {
    * zpětně by znamenalo tvrdit přesnost, kterou zdroj nemá.
    */
   molarMassGPerMol?: number;
+  /**
+   * Vzorec soli a ionty, na které se ve vodě rozpadne — každý tolikrát,
+   * kolikrát je ve vzorci. Z toho plyne, kolik milimolů iontu dá milimol
+   * soli. Je to stechiometrie, ne údaj o přípravku; vyplňuje se jen tam,
+   * kde se s molární hmotností soli počítá.
+   */
+  salt?: { formula: string; ions: readonly string[] };
   quote: string;
 };
 
@@ -41,6 +48,7 @@ export const ELECTROLYTES = {
     mmolPerMl: 1,
     valence: 1,
     molarMassGPerMol: 74.5,
+    salt: { formula: "KCl", ions: ["K+", "Cl-"] },
     quote:
       "1000 ml koncentrátu pro infuzní roztok obsahuje kalii chloridum 74,5 g. " +
       "Obsah elektrolytů: K+ 1000 mmol/l, Cl- 1000 mmol/l.",
@@ -56,6 +64,7 @@ export const ELECTROLYTES = {
     mmolPerMl: 1,
     valence: 1,
     molarMassGPerMol: 58.5,
+    salt: { formula: "NaCl", ions: ["Na+", "Cl-"] },
     quote:
       "1 ml koncentrátu pro infuzní roztok obsahuje Natrii chloridum 58,5 mg. " +
       "Elektrolyty: Sodík 1 mol/l, Chlorid 1 mol/l.",

@@ -1,6 +1,6 @@
 # Kde jsme
 
-Poslední aktualizace: **22. 9. 2026**
+Poslední aktualizace: **23. 9. 2026**
 
 ## Hotovo
 
@@ -113,6 +113,17 @@ s velkou správnou hodnotou, postup je stupnice po dílcích jako graduace
 na stříkačce. Odměna je počítadlo, které doběhne — celé v CSS, bez
 časovače.
 
+**Postupy bez skrytých převodů** — H6 ukazovala 2,925 g/l ÷ 58,5 g/mol
+a hned vedle 50 mmol/l. Rozměrově to sedí, ale na kalkulačce z toho vyjde
+0,05 a tisícovka z mol na mmol v postupu chyběla. H6 má teď mezivýsledek
+v mol/l, samostatný krok převodu na mmol/l a krok disociace soli (složení
+soli je u elektrolytů v `salt`). Mezivýsledek dosazení se sází za „=“,
+ne na samostatný řádek. Všechna dosazení nesou jednotky a test
+`dimensions.test.ts` každé přepočítá dvakrát — s jednotkami a jen s čísly
+z obrazovky. Našel tím ještě převod mg → g v D2, zamlčený strop dávky
+v D3, limit v B3 zaokrouhlený na celé a neescapované `\;` v osmi
+šablonách.
+
 ## Co dělat dál
 
 1. **Doladit výraz podle zpětné vazby.** Směr je nastavený, čeká se,
@@ -199,6 +210,10 @@ na stříkačce. Odměna je počítadlo, které doběhne — celé v CSS, bez
 - Ve výpočetním jádře není text v žádném jazyce. Vzorce sázejí tokeny
   (`\text{@dose}`), jazyk se doplní až při zobrazení. Test to vynucuje tím,
   že jádro smí vracet jen ASCII.
+- Čísla v dosazení musí dát mezivýsledek na kalkulačce tak, jak stojí.
+  Převod jednotek je vlastní krok, nikdy není schovaný v rovnítku.
+  Výjimkou jsou empirické vzorce (Mosteller, Cockcroft–Gault), jejichž
+  konstanty rozměr nesou skrytě — test je má vyjmenované.
 - Zadání je klinická situace, ne holá rovnice: hmotnost, věk a nález
   v jedné větě, otázka na samostatném řádku.
 - Faktické údaje pocházejí z DLP a SPC. Výběr účinných látek je kurátorské

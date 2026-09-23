@@ -53,11 +53,11 @@ export const A7 = register({
         given(`${q(perDose, "tbl", 1)} \\times ${timesPerDay}\\text{/@day}`, `${days}\\text{ @days}`, `${packCount}\\text{ tbl/@packShort}`),
         intermediate("celkovaSpotreba", {
           formula: `n_{\\text{tbl}} = \\text{@dose} \\times \\text{@frequency} \\times \\text{@days}`,
-          substituted: `n_{\\text{tbl}} = ${q(perDose, "", 1)} \\times ${timesPerDay} \\times ${days}`,
+          substituted: `n_{\\text{tbl}} = ${q(perDose, "tbl", 1)} \\times ${timesPerDay} \\times ${days}`,
           result: q(totalTablets, "tbl", 1),
         }),
         formula(`n_{\\text{@packShort}} = \\left\\lceil ${frac("n_{\\text{tbl}}", "\\text{@packContent}")} \\right\\rceil`),
-        substitute(`n_{\\text{@packShort}} = \\left\\lceil ${frac(q(totalTablets, "", 1), String(packCount))} \\right\\rceil`),
+        substitute(`n_{\\text{@packShort}} = \\left\\lceil ${frac(q(totalTablets, "tbl", 1), q(packCount, "tbl", 0))} \\right\\rceil`),
         result(packs, "@packShort", 0),
       ],
       roundingNoteKey: "zaokrouhleniBaleni",

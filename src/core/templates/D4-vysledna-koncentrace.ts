@@ -50,7 +50,7 @@ export const D4 = register({
       value: c2,
       steps: [
         given(`c_1 = ${q(c1, "mg/ml", 2)}`, `V_1 = ${q(v1, "ml", 1)}`, `V_2 = ${q(v2, "ml", 0)}`),
-        formula(`c_1 V_1 = c_2 V_2 \;\\Rightarrow\; c_2 = ${frac("c_1 V_1", "V_2")}`),
+        formula(`c_1 V_1 = c_2 V_2 \\;\\Rightarrow\\; c_2 = ${frac("c_1 V_1", "V_2")}`),
         substitute(`c_2 = ${frac(`${q(c1, "mg/ml", 2)} \\times ${q(v1, "ml", 1)}`, q(v2, "ml", 0))}`),
         result(c2, "mg/ml", 3),
       ],

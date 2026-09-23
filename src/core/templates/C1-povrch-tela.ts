@@ -45,7 +45,7 @@ export const C1 = register({
       steps: [
         given(q(heightCm, "cm", 0), q(weightKg, "kg", 0)),
         formula(`BSA = \\sqrt{${frac("v \\times m", "3600")}}`),
-        substitute(`BSA = \\sqrt{${frac(`${q(heightCm, "", 0)} \\times ${q(weightKg, "", 0)}`, "3600")}}`),
+        substitute(`BSA = \\sqrt{${frac(`${q(heightCm, "cm", 0)} \\times ${q(weightKg, "kg", 0)}`, "3600")}}`),
         substitute(`BSA = \\sqrt{${q(product / 3600, "", 4)}}`),
         result(bsa, "m^2", 2),
       ],

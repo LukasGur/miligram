@@ -3,7 +3,7 @@ import { DROP_FACTORS, DROP_FACTOR_SOURCE } from "../devices";
 import { pickProduct } from "../products";
 import * as tolerances from "../tolerances";
 import type { Solution, Vars } from "../types";
-import { frac, step, tex, unit } from "./helpers";
+import { frac, q, step, tex, unit } from "./helpers";
 import { register, SUKL_DLP } from "./registry";
 
 /**
@@ -54,13 +54,13 @@ export const F2 = register({
       value: drops,
       steps: [
         step("zadani", {
-          result: `${tex(bagMl, 0)}${unit("ml")} \;/\; ${tex(minutes, 0)}${unit("min")} \;/\; ${tex(dropFactor, 0)}${unit("gtt/ml")}`,
+          result: `${tex(bagMl, 0)}${unit("ml")} \\;/\\; ${tex(minutes, 0)}${unit("min")} \\;/\\; ${tex(dropFactor, 0)}${unit("gtt/ml")}`,
         }),
         step("vzorec", {
           formula: `\\text{gtt/min} = ${frac("V \\times \\text{@dropFactor}", "t")}`,
         }),
         step("dosazeni", {
-          substituted: `\\text{gtt/min} = ${frac(`${tex(bagMl, 0)} \\times ${tex(dropFactor, 0)}`, `${tex(minutes, 0)}`)}`,
+          substituted: `\\text{gtt/min} = ${frac(`${q(bagMl, "ml", 0)} \\times ${q(dropFactor, "gtt/ml", 0)}`, q(minutes, "min", 0))}`,
         }),
         step("vysledek", { result: `${tex(drops, 1)}${unit("gtt/min")}` }),
       ],

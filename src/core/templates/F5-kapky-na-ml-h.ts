@@ -36,7 +36,7 @@ export const F5 = register({
       steps: [
         given(q(dropsPerMin, "gtt/min", 0), `${dropFactor}${" "}\\mathrm{gtt/ml}`),
         formula(`v = ${frac("\\text{gtt/min} \\times 60", "\\text{@dropFactor}")}`),
-        substitute(`v = ${frac(`${q(dropsPerMin, "", 0)} \\times 60`, String(dropFactor))}`),
+        substitute(`v = ${frac(`${q(dropsPerMin, "gtt/min", 0)} \\times ${q(60, "min/h", 0)}`, q(dropFactor, "gtt/ml", 0))}`),
         result(rate, "ml/h", 1),
       ],
       roundingNoteKey: "zaokrouhleniPumpa",

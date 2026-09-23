@@ -50,7 +50,7 @@ export const C2 = register({
       steps: [
         given(q(bsaM2, "m^2", 2), q(perM2, "mg/m^2", 0)),
         formula(`m = D_{\\text{m}^2} \\times BSA`),
-        substitute(`m = ${q(perM2, "", 0)} \\times ${q(bsaM2, "m^2", 2)}`),
+        substitute(`m = ${q(perM2, "mg/m^2", 0)} \\times ${q(bsaM2, "m^2", 2)}`),
         result(doseMg, "mg", 1),
       ],
       roundingNoteKey: "zaokrouhleniOnkologie",

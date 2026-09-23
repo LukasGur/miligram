@@ -45,19 +45,27 @@ export const D3 = register({
     const maxSingleMg = Number(vars.maxSingleMg);
 
     const concentration = ratioToMgPerMl(ratio);
-    const doseMg = Math.min(weightBasedDose(perKg, weightKg), maxSingleMg);
+    const computedMg = weightBasedDose(perKg, weightKg);
+    const doseMg = Math.min(computedMg, maxSingleMg);
+    const capped = computedMg > maxSingleMg;
     const volumeMl = doseVolume(doseMg, concentration, 1);
 
     return {
       value: volumeMl,
       steps: [
-        given(`1:${ratio}`, q(weightKg, "kg", 0), q(perKg, "mg/kg", 3)),
+        given(`1:${ratio}`, q(weightKg, "kg", 0), q(perKg, "mg/kg", 3), `\\max ${q(maxSingleMg, "mg", 1)}`),
         intermediate("pomerNaKoncentraci", {
           formula: `1:${ratio} = ${frac("1\\,\\mathrm{g}", `${ratio}\\,\\mathrm{ml}`)}`,
           result: q(concentration, "mg/ml", 3),
         }),
         intermediate("davkaVMg", {
-          substituted: `m = ${q(perKg, "", 3)} \\times ${q(weightKg, "kg", 0)}`,
+          substituted: `m = ${q(perKg, "mg/kg", 3)} \\times ${q(weightKg, "kg", 0)}`,
+          result: q(computedMg, "mg", 3),
+        }),
+        // Strop ze zadání. Bez tohoto kroku by postup ukázal
+        // „0,03 mg/kg × 72 kg = 1 mg“ a nebylo by vidět proč.
+        intermediate(capped ? "stropSeUplatnil" : "stropSeNeuplatnil", {
+          substituted: `\\min(${q(computedMg, "mg", 3)},\\; ${q(maxSingleMg, "mg", 1)})`,
           result: q(doseMg, "mg", 3),
         }),
         formula(`V = ${frac("m", "c")}`),

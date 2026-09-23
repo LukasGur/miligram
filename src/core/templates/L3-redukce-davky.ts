@@ -67,11 +67,11 @@ export const L3 = register({
         given(q(heightCm, "cm", 0), q(weightKg, "kg", 0), `${tex(fullDosePerM2, 0)}\\ \\mathrm{mg/m^2}`, `-${tex(reductionPercent, 0)}\\,\\%`),
         intermediate("povrchTela", { result: q(bsa, "m^2", 2) }),
         intermediate("plnaDavka", {
-          substituted: `${tex(fullDosePerM2, 0)} \\times ${tex(bsa, 2)}`,
+          substituted: `${q(fullDosePerM2, "mg/m^2", 0)} \\times ${q(bsa, "m^2", 2)}`,
           result: q(fullDoseMg, "mg", 1),
         }),
         formula(`D_{sn} = D \\times ${frac("100 - p", "100")}`),
-        substitute(`D_{sn} = ${tex(fullDoseMg, 1)} \\times ${frac(`100 - ${tex(reductionPercent, 0)}`, "100")}`),
+        substitute(`D_{sn} = ${q(fullDoseMg, "mg", 1)} \\times ${frac(`100 - ${tex(reductionPercent, 0)}`, "100")}`),
         result(reducedMg, "mg", 1),
       ],
       roundingNoteKey: "zaokrouhleniDavka",

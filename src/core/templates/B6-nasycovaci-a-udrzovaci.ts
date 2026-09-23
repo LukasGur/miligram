@@ -53,11 +53,11 @@ export const B6 = register({
       steps: [
         given(q(weightKg, "kg", 0), `${q(loadingPerKg, "mg/kg", 1)}\\text{ @loadingShort}`, `${q(maintenancePerKg, "mg/kg", 1)}\\text{ @maintenanceShort}`),
         intermediate("nasycovaciDavka", {
-          substituted: `m_{\\text{@loadingShort}} = ${q(loadingPerKg, "", 1)} \\times ${q(weightKg, "kg", 0)}`,
+          substituted: `m_{\\text{@loadingShort}} = ${q(loadingPerKg, "mg/kg", 1)} \\times ${q(weightKg, "kg", 0)}`,
           result: q(loadingMg, "mg", 1),
         }),
         intermediate("udrzovaciDavka", {
-          substituted: `m_{\\text{@maintenanceShort}} = ${q(maintenancePerKg, "", 1)} \\times ${q(weightKg, "kg", 0)}`,
+          substituted: `m_{\\text{@maintenanceShort}} = ${q(maintenancePerKg, "mg/kg", 1)} \\times ${q(weightKg, "kg", 0)}`,
           result: q(maintenanceMg, "mg", 1),
         }),
         formula(`\\Delta m = m_{\\text{@loadingShort}} - m_{\\text{@maintenanceShort}}`),

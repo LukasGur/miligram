@@ -58,10 +58,10 @@ export const B3 = register({
     return {
       value: remainingMg,
       steps: [
-        given(q(weightKg, "kg", 1), q(limitPerKg, "mg/kg/@day", 0), `${dosesGiven} \\times ${q(perDoseMg, "mg", 1)}`),
+        given(q(weightKg, "kg", 1), q(limitPerKg, "mg/kg/@day", 1), `${dosesGiven} \\times ${q(perDoseMg, "mg", 1)}`),
         intermediate("denniStrop", {
           formula: `m_{\\max} = D_{\\max} \\times m_{\\text{@body}}`,
-          substituted: `m_{\\max} = ${q(limitPerKg, "", 0)} \\times ${q(weightKg, "kg", 1)}`,
+          substituted: `m_{\\max} = ${q(limitPerKg, "mg/kg/@day", 1)} \\times ${q(weightKg, "kg", 1)}`,
           result: q(maxDailyMg, "mg", 1),
         }),
         intermediate("jizPodano", {

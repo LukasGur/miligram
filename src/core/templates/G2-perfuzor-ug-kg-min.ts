@@ -3,7 +3,7 @@ import { PUMP_SOURCE } from "../devices";
 import { concentrationOf, vialContentMg } from "../products";
 import * as tolerances from "../tolerances";
 import type { Solution, Vars } from "../types";
-import { frac, step, tex, unit } from "./helpers";
+import { frac, q, step, tex, unit } from "./helpers";
 import { register, SUKL_DLP } from "./registry";
 import { choosePerfusorDilution } from "./perfusor";
 
@@ -55,18 +55,18 @@ export const G2 = register({
       value: rate,
       steps: [
         step("zadani", {
-          result: `${tex(totalMg, 1)}${unit("mg")} / ${tex(syringeMl, 0)}${unit("ml")},\; ${tex(weightKg, 0)}${unit("kg")},\; ${tex(dose, 2)}${unit("\\mu g/kg/min")}`,
+          result: `${tex(totalMg, 1)}${unit("mg")} / ${tex(syringeMl, 0)}${unit("ml")},\\; ${tex(weightKg, 0)}${unit("kg")},\\; ${tex(dose, 2)}${unit("\\mu g/kg/min")}`,
         }),
         step("koncentrace", {
           formula: `c = ${frac("m", "V")}`,
           substituted: `c = ${frac(`${tex(totalMg, 1)}${unit("mg")}`, `${tex(syringeMl, 0)}${unit("ml")}`)}`,
-          result: `c = ${tex(concentration, 3)}${unit("mg/ml")}`,
+          result: `${tex(concentration, 3)}${unit("mg/ml")}`,
         }),
         step("vzorec", {
           formula: `\\text{ml/h} = ${frac("D \\times m_{\\text{@body}} \\times 60", "c \\times 1000")}`,
         }),
         step("dosazeni", {
-          substituted: `\\text{ml/h} = ${frac(`${tex(dose, 2)} \\times ${tex(weightKg, 0)} \\times 60`, `${tex(concentration, 3)} \\times 1000`)}`,
+          substituted: `\\text{ml/h} = ${frac(`${q(dose, "\\mu g/kg/min", 2)} \\times ${q(weightKg, "kg", 0)} \\times ${q(60, "min/h", 0)}`, `${q(concentration, "mg/ml", 3)} \\times ${q(1000, "\\mu g/mg", 0)}`)}`,
         }),
         step("vysledek", { result: `${tex(rate, 2)}${unit("ml/h")}` }),
       ],

@@ -57,8 +57,8 @@ export const G3 = register({
         formula(`D = ${frac("v \\times c \\times 1000", "m_{\\text{@body}} \\times 60")}`),
         substitute(
           `D = ${frac(
-            `${q(rate, "", 1)} \\times ${q(concentration, "", 4)} \\times 1000`,
-            `${q(weightKg, "", 0)} \\times 60`,
+            `${q(rate, "ml/h", 1)} \\times ${q(concentration, "mg/ml", 4)} \\times ${q(1000, "\\mu g/mg", 0)}`,
+            `${q(weightKg, "kg", 0)} \\times ${q(60, "min/h", 0)}`,
           )}`,
         ),
         result(dose, "\\mu g/kg/min", 2),

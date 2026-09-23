@@ -49,7 +49,7 @@ export const D6 = register({
         given(`c_1 = ${q(c1, "mg/ml", 2)}`, `c_2 = ${q(c2, "mg/ml", 3)}`, `V_2 = ${q(v2, "ml", 0)}`),
         intermediate("objemKoncentratu", {
           formula: `V_1 = ${frac("c_2 V_2", "c_1")}`,
-          substituted: `V_1 = ${frac(`${q(c2, "", 3)} \\times ${q(v2, "ml", 0)}`, q(c1, "mg/ml", 2))}`,
+          substituted: `V_1 = ${frac(`${q(c2, "mg/ml", 3)} \\times ${q(v2, "ml", 0)}`, q(c1, "mg/ml", 2))}`,
           result: q(stockMl, "ml", 2),
         }),
         formula(`V_{\\text{@diluent}} = V_2 - V_1`),

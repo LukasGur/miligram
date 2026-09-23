@@ -80,6 +80,18 @@ export function intermediate(
   return step(textKey, parts);
 }
 
+/**
+ * Dosazení a jeho mezivýsledek jako jedna rovnice: c = 2,925 g/l ÷ 58,5 g/mol = 0,05 mol/l.
+ *
+ * Na samostatném řádku pod zlomkem vypadal mezivýsledek jako tvrzení odjinud —
+ * „50 mmol/l“ pod zlomkem, který dává 0,05, nikoho nevaruje. Za rovnítkem
+ * je vidět, že má ze zlomku plynout, a když neplyne, je to chyba na první pohled.
+ */
+export function stepEquation(step: SolutionStep): string | undefined {
+  if (!step.substituted) return undefined;
+  return step.result ? `${step.substituted} = ${step.result}` : step.substituted;
+}
+
 export function result(value: number, symbol: string, decimals = 2): SolutionStep {
   return step("vysledek", { result: q(value, symbol, decimals) });
 }

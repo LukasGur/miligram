@@ -2,7 +2,7 @@ import { electrolyte, electrolyteSource, ELECTROLYTE_LIST, MOLAR_MASS_LIST } fro
 import { massToMillimoles, millimolesToEquivalents, millimolesToMass } from "../units";
 import * as tolerances from "../tolerances";
 import type { AnswerUnit, Solution } from "../types";
-import { formula, frac, given, intermediate, q, result, substitute, tex } from "./helpers";
+import { formula, frac, given, intermediate, q, result, substitute } from "./helpers";
 import { register } from "./registry";
 
 /** Dvojmocné ionty — jen u nich se mmol a mEq číselně rozejdou. */
@@ -67,7 +67,7 @@ export const H2 = register({
         steps: [
           given(q(mmol, "mmol", 2), `${String(vars.ion)},\\ z = ${valence}`),
           formula("n_{\\mathrm{ekv}} = n \\times z"),
-          substitute(`${tex(mmol, 2)} \\times ${valence}`, q(mEq, "mEq", 2)),
+          substitute(`${q(mmol, "mmol", 2)} \\times ${q(valence, "mEq/mmol", 0)}`, q(mEq, "mEq", 2)),
           result(mEq, "mEq", 2),
         ],
         roundingNoteKey: "zaokrouhleniMezivysledek",
@@ -82,7 +82,7 @@ export const H2 = register({
         steps: [
           given(q(mmol, "mmol", 2), `M = ${q(molarMass, "g/mol", 1)}`),
           formula("m = n \\times M"),
-          substitute(`${tex(mmol, 2)} \\times ${tex(molarMass, 1)}`, q(massMg, "mg", 2)),
+          substitute(`${q(mmol, "mmol", 2)} \\times ${q(molarMass, "mg/mmol", 1)}`, q(massMg, "mg", 2)),
           result(massMg, "mg", 2),
         ],
         roundingNoteKey: "zaokrouhleniMezivysledek",
@@ -97,7 +97,7 @@ export const H2 = register({
         given(q(massMg, "mg", 2), `M = ${q(molarMass, "g/mol", 1)}`),
         intermediate("molarniHmotnost", { result: `1\\ \\mathrm{mmol} = ${q(molarMass, "mg", 1)}` }),
         formula(`n = ${frac("m", "M")}`),
-        substitute(`n = ${frac(q(massMg, "mg", 2), q(molarMass, "mg", 1))}`, q(converted, "mmol", 2)),
+        substitute(`n = ${frac(q(massMg, "mg", 2), q(molarMass, "mg/mmol", 1))}`, q(converted, "mmol", 2)),
         result(converted, "mmol", 2),
       ],
       roundingNoteKey: "zaokrouhleniMezivysledek",

@@ -2,7 +2,7 @@ import { massInVolume, percentToMgPerMl } from "../formulas";
 import { concentrationOf, pickProduct } from "../products";
 import * as tolerances from "../tolerances";
 import type { Solution, Vars } from "../types";
-import { formula, given, intermediate, q, result, substitute } from "./helpers";
+import { formula, frac, given, intermediate, q, result, substitute, tex } from "./helpers";
 import { register, SUKL_DLP } from "./registry";
 
 /**
@@ -55,11 +55,23 @@ export const D2 = register({
         given(`${q(percent, "\\%", 2)}`, q(volumeMl, "ml", 0)),
         intermediate("procentaNaKoncentraci", {
           formula: `1\\,\\% = 1\\,\\mathrm{g}/100\\,\\mathrm{ml} = 10\\,\\mathrm{mg/ml}`,
-          substituted: `c = ${q(percent, "", 2)} \\times 10`,
+          substituted: `c = ${tex(percent, 2)} \\times ${q(10, "mg/ml", 0)}`,
           result: q(concentration, "mg/ml", 2),
         }),
         formula(`m = c \\times V`),
-        substitute(`m = ${q(concentration, "mg/ml", 2)} \\times ${q(volumeMl, "ml", 0)}`),
+        substitute(`m = ${q(concentration, "mg/ml", 2)} \\times ${q(volumeMl, "ml", 0)}`, q(massMg, "mg", 1)),
+        // Na nejvyšší obtížnosti se ptáme v gramech. Převod musí stát
+        // v postupu jako krok, jinak by „10 mg/ml × 360 ml = 3,6 g“
+        // na kalkulačce nevyšlo a nebylo by vidět proč.
+        ...(difficulty === 3
+          ? [
+              intermediate("prevodJednotek", {
+                formula: `1\\,\\mathrm{g} = 1000\\,\\mathrm{mg}`,
+                substituted: `m = ${frac(q(massMg, "mg", 1), q(1000, "mg/g", 0))}`,
+                result: q(value, "g", 3),
+              }),
+            ]
+          : []),
         result(value, difficulty === 3 ? "g" : "mg", difficulty === 3 ? 3 : 1),
       ],
       roundingNoteKey: "zaokrouhleniMezivysledek",

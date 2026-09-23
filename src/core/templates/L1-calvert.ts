@@ -38,8 +38,8 @@ export const L1 = register({
       steps: [
         given(`AUC = ${tex(auc, 0)}\\ \\mathrm{mg/ml\\cdot min}`, q(gfr, "ml/min", 0)),
         formula("D = AUC \\times (GFR + 25)"),
-        substitute(`D = ${tex(auc, 0)} \\times (${tex(gfr, 0)} + 25)`),
-        substitute(`D = ${tex(auc, 0)} \\times ${tex(gfr + 25, 0)}`, q(doseMg, "mg", 0)),
+        substitute(`D = ${q(auc, "mg/ml\\cdot min", 0)} \\times (${q(gfr, "ml/min", 0)} + ${q(25, "ml/min", 0)})`),
+        substitute(`D = ${q(auc, "mg/ml\\cdot min", 0)} \\times ${q(gfr + 25, "ml/min", 0)}`, q(doseMg, "mg", 0)),
         result(doseMg, "mg", 0),
       ],
       roundingNoteKey: "zaokrouhleniDavka",

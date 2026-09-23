@@ -45,7 +45,7 @@ export const F3 = register({
       steps: [
         given(q(bagMl, "ml", 0), q(minutes, "min", 0), `${MICRODRIP_FACTOR}${" "}\\mathrm{gtt/ml}`),
         formula(`\\text{gtt/min} = ${frac("V \\times \\text{@dropFactor}", "t")}`),
-        substitute(`\\text{gtt/min} = ${frac(`${q(bagMl, "", 0)} \\times 60`, q(minutes, "min", 0))}`),
+        substitute(`\\text{gtt/min} = ${frac(`${q(bagMl, "ml", 0)} \\times ${q(60, "gtt/ml", 0)}`, q(minutes, "min", 0))}`),
         intermediate("mikrokapkyRovnostMlH", { result: `${q(drops, "gtt/min", 1)} = ${q(rate, "ml/h", 1)}` }),
         result(drops, "gtt/min", 0),
       ],

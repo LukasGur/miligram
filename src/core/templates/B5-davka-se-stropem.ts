@@ -53,9 +53,9 @@ export const B5 = register({
       steps: [
         given(q(weightKg, "kg", 0), q(perKg, "mg/kg", 1), `\\max ${q(maxSingleMg, "mg", 0)}`),
         formula(`m = D_{\\text{kg}} \\times m_{\\text{@body}}`),
-        substitute(`m = ${q(perKg, "", 1)} \\times ${q(weightKg, "kg", 0)}`, q(computedMg, "mg", 1)),
+        substitute(`m = ${q(perKg, "mg/kg", 1)} \\times ${q(weightKg, "kg", 0)}`, q(computedMg, "mg", 1)),
         intermediate(capped ? "stropSeUplatnil" : "stropSeNeuplatnil", {
-          substituted: `\\min(${q(computedMg, "mg", 1)},\; ${q(maxSingleMg, "mg", 0)})`,
+          substituted: `\\min(${q(computedMg, "mg", 1)},\\; ${q(maxSingleMg, "mg", 0)})`,
           result: q(doseMg, "mg", 1),
         }),
         result(doseMg, "mg", 1),

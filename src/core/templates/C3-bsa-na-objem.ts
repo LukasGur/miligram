@@ -58,11 +58,11 @@ export const C3 = register({
         given(q(heightCm, "cm", 0), q(weightKg, "kg", 0), q(perM2, "mg/m^2", 0), q(concentration, "mg/ml", 1)),
         intermediate("povrchTela", {
           formula: `BSA = \\sqrt{${frac("v \\times m", "3600")}}`,
-          substituted: `BSA = \\sqrt{${frac(`${q(heightCm, "", 0)} \\times ${q(weightKg, "", 0)}`, "3600")}}`,
+          substituted: `BSA = \\sqrt{${frac(`${q(heightCm, "cm", 0)} \\times ${q(weightKg, "kg", 0)}`, "3600")}}`,
           result: q(bsa, "m^2", 2),
         }),
         intermediate("celkovaDavka", {
-          substituted: `m = ${q(perM2, "", 0)} \\times ${q(bsa, "m^2", 2)}`,
+          substituted: `m = ${q(perM2, "mg/m^2", 0)} \\times ${q(bsa, "m^2", 2)}`,
           result: q(doseMg, "mg", 1),
         }),
         formula(`V = ${frac("m", "c")}`),

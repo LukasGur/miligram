@@ -1,7 +1,7 @@
 import { bandFor, renalRule, renalSource } from "../products/renal";
 import * as tolerances from "../tolerances";
 import type { Solution, Vars } from "../types";
-import { given, intermediate, result, step, tex } from "./helpers";
+import { given, intermediate, q, result, step, tex } from "./helpers";
 import { register } from "./registry";
 
 const RULE = "vankomycinDeti" as const;
@@ -50,7 +50,7 @@ export const J4 = register({
         given(`${tex(egfr, 0)}\\ \\mathrm{ml/min/1{,}73\\ m^2}`, `${tex(weightKg, 0)}\\,\\mathrm{kg}`),
         step("odectVTabulce", { result: `${tex(band.dose, 0)}\\ \\mathrm{mg/kg}` }),
         intermediate("davkaNaPodani", {
-          substituted: `${tex(band.dose, 0)} \\times ${tex(weightKg, 0)}`,
+          substituted: `${q(band.dose, "mg/kg", 0)} \\times ${q(weightKg, "kg", 0)}`,
           result: `${tex(singleMg, 0)}\\,\\mathrm{mg}`,
         }),
         result(band.intervalHours, "h", 0),

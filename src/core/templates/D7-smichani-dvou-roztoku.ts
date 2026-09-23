@@ -76,8 +76,8 @@ export const D7 = register({
         formula(`c = ${frac("c_A V_A + c_B V_B", "V_A + V_B")}`),
         substitute(
           `c = ${frac(
-            `${q(cA, "", 2)} \\times ${q(vA, "", 0)} + ${q(cB, "", 2)} \\times ${q(vB, "", 0)}`,
-            `${q(vA, "", 0)} + ${q(vB, "", 0)}`,
+            `${q(cA, "mg/ml", 2)} \\times ${q(vA, "ml", 0)} + ${q(cB, "mg/ml", 2)} \\times ${q(vB, "ml", 0)}`,
+            `${q(vA, "ml", 0)} + ${q(vB, "ml", 0)}`,
           )}`,
         ),
         substitute(`c = ${frac(q(cA * vA + cB * vB, "mg", 1), q(total, "ml", 0))}`),

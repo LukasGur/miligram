@@ -78,7 +78,7 @@ export const L2 = register({
 
     steps.push(
       formula("D = AUC \\times (GFR + 25)"),
-      substitute(`D = ${tex(auc, 0)} \\times (${tex(gfr, 1)} + 25)`, q(doseMg, "mg", 1)),
+      substitute(`D = ${q(auc, "mg/ml\\cdot min", 0)} \\times (${q(gfr, "ml/min", 1)} + ${q(25, "ml/min", 0)})`, q(doseMg, "mg", 1)),
       formula(`V = ${frac("D", "c")}`),
       substitute(`V = ${frac(q(doseMg, "mg", 1), q(concentration, "mg/ml", 0))}`),
       result(volumeMl, "ml", 1),

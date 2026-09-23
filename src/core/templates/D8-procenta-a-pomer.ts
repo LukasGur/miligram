@@ -1,7 +1,7 @@
 import { percentToMgPerMl, percentToRatio, ratioToPercent } from "../formulas";
 import * as tolerances from "../tolerances";
 import type { Solution } from "../types";
-import { frac, given, intermediate, q, result, substitute } from "./helpers";
+import { frac, given, intermediate, q, result, substitute, tex } from "./helpers";
 import { register } from "./registry";
 
 /** Koncentrace, se kterými se v praxi pracuje v obou zápisech. */
@@ -48,7 +48,7 @@ export const D8 = register({
           intermediate("definiceProcenta", {
             formula: `x\\,\\% = ${frac("x\\,\\mathrm{g}", "100\\,\\mathrm{ml}")} = ${frac("1\\,\\mathrm{g}", "(100/x)\\,\\mathrm{ml}")}`,
           }),
-          substitute(`1:N,\\quad N = ${frac("100", q(percent, "", 2))}`),
+          substitute(`N = ${frac("100", tex(percent, 2))}`),
           result(ratio, "", 0),
         ],
         roundingNoteKey: "zaokrouhleniPomer",
@@ -64,8 +64,11 @@ export const D8 = register({
         intermediate("definicePomeru", {
           formula: `1:N = ${frac("1\\,\\mathrm{g}", "N\\,\\mathrm{ml}")}`,
         }),
-        substitute(`x = ${frac("100", String(ratio))}`),
-        substitute(`c = ${q(percentToMgPerMl(percent), "mg/ml", 3)}`),
+        substitute(`x = ${frac("100", String(ratio))}`, `${tex(percent, 4)}\\,\\%`),
+        intermediate("koncentrace", {
+          substituted: `c = ${tex(percent, 4)} \\times ${q(10, "mg/ml", 0)}`,
+          result: q(percentToMgPerMl(percent), "mg/ml", 3),
+        }),
         result(percent, "\\%", 4),
       ],
       roundingNoteKey: "zaokrouhleniPomer",

@@ -65,7 +65,7 @@ export const H1 = register({
       steps: [
         given(q(value, from, 3)),
         formula(`1${unit(from)} = ${tex(factor, 6)}${unit(to)}`),
-        substitute(`${tex(value, 3)} \\times ${tex(factor, 6)}`, q(converted, to, 3)),
+        substitute(`${q(value, from, 3)} \\times ${q(factor, `${to}/${from}`, 6)}`, q(converted, to, 3)),
         result(converted, to, 3),
       ],
       roundingNoteKey: "zaokrouhleniPrevod",

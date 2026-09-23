@@ -49,7 +49,7 @@ export const J5 = register({
         intermediate("pasmoZeSpc", { result: `${tex(band.dose, 0)}\\ \\mathrm{mg/m^2}` }),
         intermediate("plnaDavka", { result: `${tex(FULL_DOSE_MG_PER_M2, 0)}\\ \\mathrm{mg/m^2}` }),
         formula(`p = ${frac("d", "d_{100\\,\\%}")} \\times 100`),
-        substitute(`p = ${frac(tex(band.dose, 0), tex(FULL_DOSE_MG_PER_M2, 0))} \\times 100`),
+        substitute(`p = ${frac(q(band.dose, "mg/m^2", 0), q(FULL_DOSE_MG_PER_M2, "mg/m^2", 0))} \\times 100`),
         result(percent, "\\%", 1),
       ],
       roundingNoteKey: "zaokrouhleniProcenta",
