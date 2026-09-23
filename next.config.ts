@@ -9,6 +9,9 @@ const nextConfig: NextConfig = {
   output: "export",
   reactStrictMode: true,
   images: { unoptimized: true },
+  // `next dev` jinak z telefonu v lokální síti zablokuje HMR i chunky —
+  // vývoj na iPhonu přes https://<IP Macu>:3000 by se neobnovoval.
+  allowedDevOrigins: ["192.168.*.*", "10.*.*.*", "*.local"],
 };
 
 export default nextConfig;
