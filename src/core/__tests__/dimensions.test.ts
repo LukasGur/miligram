@@ -2,7 +2,7 @@ import { describe, expect, it } from "vitest";
 import "../templates";
 import { allTemplates, buildExercise } from "../templates";
 import { DIFFICULTIES, type SolutionStep } from "../types";
-import { describeDimension, evaluate, isSymbolic, sameDimension, splitEquals, type Quantity } from "./latexQuantity";
+import { describeDimension, evaluate, isSymbolic, labeledNumbers, sameDimension, splitEquals, type Quantity } from "./latexQuantity";
 
 const SEEDS = Array.from({ length: 12 }, (_, i) => `r${i}`);
 
@@ -128,6 +128,49 @@ describe("rozměry v krocích řešení", () => {
         for (const f of checkStep(id, `${template.id}/${step.textKey}`, ex.solution.steps, index)) {
           const key = `${f.id.split("/")[0]}/${f.id.split("/").at(-1)}`;
           if (!findings.has(key)) findings.set(key, `${f.id}: ${f.problem}`);
+        }
+      });
+    }
+    expect([...findings.values()]).toEqual([]);
+  });
+
+  it("přeznačení jednotky se stejným číslem stojí v postupu jako vlastní krok", () => {
+    // 74,5 g/mol a 74,5 mg/mmol jsou totéž, ale jen pro toho, kdo ví proč.
+    // H2 zadala M v g/mol a v dosazení bez vysvětlení dělila mg/mmol —
+    // student vydělil 447 mg číslem 74,5, vzal výsledek jako mol a odpověděl
+    // 6000 mmol. Když se číslo z dřívějšího kroku objeví v jiné jednotce,
+    // musí někde stát obě podoby vedle sebe.
+    const normalize = (unit: string) => unit.replaceAll("\\mu ", "µ").replaceAll(" ", "");
+    const findings = new Map<string, string>();
+    for (const { template, id, ex } of exercises) {
+      const texts = ex.solution.steps.map((s) =>
+        [s.formula, s.substituted, s.result].filter((l): l is string => !!l),
+      );
+      const labels = texts.map((list) => list.flatMap(labeledNumbers));
+      labels.forEach((current, index) => {
+        const earlier = labels.slice(0, index).flat();
+        for (const later of current) {
+          const before = earlier.find(
+            // Táž hodnota pod jiným jménem: stejné číslo, jiná jednotka, ale po
+            // přepočtu na základ totéž. 90 kg a 90 mg jsou jen shoda čísel.
+            (e) =>
+              e.number === later.number &&
+              normalize(e.unit) !== normalize(later.unit) &&
+              sameDimension(e.dim, later.dim) &&
+              e.counts === later.counts &&
+              Math.abs(e.base - later.base) <= 1e-9 * Math.abs(e.base),
+          );
+          if (!before) continue;
+          const bridged = texts.some((list) =>
+            list.some((latex) => {
+              const here = labeledNumbers(latex).map((l) => `${l.number} ${normalize(l.unit)}`);
+              return here.includes(`${before.number} ${normalize(before.unit)}`) && here.includes(`${later.number} ${normalize(later.unit)}`);
+            }),
+          );
+          const key = `${template.id}/${ex.solution.steps[index].textKey}`;
+          if (!bridged && !findings.has(key)) {
+            findings.set(key, `${id}/${ex.solution.steps[index].textKey}: ${before.number} ${before.unit} → ${later.number} ${later.unit}`);
+          }
         }
       });
     }

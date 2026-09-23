@@ -87,7 +87,12 @@ export const H5 = register({
         steps: [
           given(`${tex(percent, 2)}\\,\\%`),
           definition,
-          intermediate("gramyNaLitr", { formula: `${frac("1\\,\\mathrm{g}", "1\\,\\mathrm{l}")} = ${frac("1\\,\\mathrm{mg}", "1\\,\\mathrm{ml}")}` }),
+          intermediate("gramyNaLitr", {
+            formula: `${frac("1\\,\\mathrm{g}", "1\\,\\mathrm{l}")} = ${frac("1\\,\\mathrm{mg}", "1\\,\\mathrm{ml}")}`,
+            // Definice procenta dala 10 mg/ml, dosazení počítá s 10 g/l —
+            // přechod musí být vidět, ne jen obecné pravidlo nad ním.
+            result: `${q(10, "mg/ml", 0)} = ${q(10, "g/l", 0)}`,
+          }),
           substitute(`${tex(percent, 2)} \\times ${q(10, "g/l", 0)}`, q(gPerL, "g/l", 1)),
           result(gPerL, "g/l", 1),
         ],

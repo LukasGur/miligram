@@ -75,12 +75,27 @@ export const H2 = register({
     }
 
     const molarMass = Number(vars.molarMass);
+    /**
+     * Molární hmotnost je v zadání v g/mol, počítá se s ní v mg/mmol.
+     * Číslo je stejné, a právě proto se to plete: kdo vydělí miligramy
+     * číslem 74,5 a výsledek vezme jako moly, vynásobí tisícem navíc.
+     * Krok ukazuje, že mol i gram se dělí tisícem zároveň — zápisem úpravy
+     * rovnice, jak se učí ve škole.
+     */
+    const molarMassStep = intermediate("molarniHmotnost", {
+      formula:
+        `\\begin{aligned} 1\\,\\mathrm{mol} &= ${q(molarMass, "g", 1)} \\quad \\big|\\ {:}\\,1000 \\\\ ` +
+        `1\\,\\mathrm{mmol} &= ${q(molarMass, "mg", 1)} \\end{aligned}`,
+      result: `M = ${q(molarMass, "g/mol", 1)} = ${q(molarMass, "mg/mmol", 1)}`,
+    });
+
     if (vars.direction === "mmolToMass") {
       const massMg = millimolesToMass(mmol, molarMass);
       return {
         value: massMg,
         steps: [
           given(q(mmol, "mmol", 2), `M = ${q(molarMass, "g/mol", 1)}`),
+          molarMassStep,
           formula("m = n \\times M"),
           substitute(`${q(mmol, "mmol", 2)} \\times ${q(molarMass, "mg/mmol", 1)}`, q(massMg, "mg", 2)),
           result(massMg, "mg", 2),
@@ -95,7 +110,7 @@ export const H2 = register({
       value: converted,
       steps: [
         given(q(massMg, "mg", 2), `M = ${q(molarMass, "g/mol", 1)}`),
-        intermediate("molarniHmotnost", { result: `1\\ \\mathrm{mmol} = ${q(molarMass, "mg", 1)}` }),
+        molarMassStep,
         formula(`n = ${frac("m", "M")}`),
         substitute(`n = ${frac(q(massMg, "mg", 2), q(molarMass, "mg/mmol", 1))}`, q(converted, "mmol", 2)),
         result(converted, "mmol", 2),

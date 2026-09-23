@@ -107,6 +107,36 @@ export function parseUnit(raw: string): Quantity {
 
 /* ---------------------------------------------------------------------- */
 
+/**
+ * Jednotka hned za číslem: \,\mathrm{mg}, \ \mathrm{mmol/l}, \,\text{mg/kg/@day},
+ * \,\% a volitelné pokračování \text{/ml}, jak ho píšou šablony s IU.
+ */
+const UNIT_AFTER_NUMBER = String.raw`(?:\\,|\\ |\s)*(?:\\(?:mathrm|text)\{((?:[^{}]|\{[^{}]*\})*)\}|\\%)(?:\\text\{(\/[^{}]*)\})?`;
+
+export type Labeled = { number: string; unit: string; dim: Dimension; base: number; counts: string };
+
+/** Kusové jednotky v pořadí, jak stojí: „mg/tbl“ → „tbl“. Rozměr nemají, ale smysl mění. */
+function countUnits(unit: string): string {
+  return (unit.match(/tbl|amp|gtt|@\w+|%/g) ?? []).join(",");
+}
+
+/** Všechna čísla s jednotkou, jak v sazbě stojí: „74{,}5“ + „g/mol“. */
+export function labeledNumbers(latex: string): Labeled[] {
+  const found: Labeled[] = [];
+  for (const m of latex.matchAll(new RegExp(String.raw`(\d+(?:\{,\}\d+)?)${UNIT_AFTER_NUMBER}`, "g"))) {
+    const unit = ((m[2] ?? "\\%") + (m[3] ?? "")).trim();
+    if (!unit) continue;
+    try {
+      const parsed = parseUnit(unit);
+      const base = Number(m[1].replace("{,}", ".")) * parsed.value;
+      found.push({ number: m[1], unit, dim: parsed.dim, base, counts: countUnits(unit) });
+    } catch {
+      // Neznámou jednotku ohlásí rozměrový test, tady se jen přeskočí.
+    }
+  }
+  return found;
+}
+
 class Parser {
   private pos = 0;
   constructor(
@@ -220,10 +250,8 @@ class Parser {
     this.pos += match[0].length;
     const value = Number(match[0].replace("{,}", "."));
 
-    // Jednotka hned za číslem: \,\mathrm{mg}, \ \mathrm{mmol/l}, \,\text{mg/kg/@day},
-    // \,\% a volitelné pokračování \text{/ml}, jak ho píšou šablony s IU.
     const rest = this.src.slice(this.pos);
-    const unitMatch = /^(?:\\,|\\ |\s)*(?:\\(?:mathrm|text)\{((?:[^{}]|\{[^{}]*\})*)\}|\\%)(?:\\text\{(\/[^{}]*)\})?/.exec(rest);
+    const unitMatch = new RegExp(`^${UNIT_AFTER_NUMBER}`).exec(rest);
     if (!unitMatch) return { value, dim: NONE };
     this.pos += unitMatch[0].length;
     const symbol = (unitMatch[1] ?? "\\%") + (unitMatch[2] ?? "");
