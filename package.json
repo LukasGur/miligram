@@ -6,6 +6,7 @@
     "dev": "next dev --experimental-https",
     "dev:http": "next dev",
     "build": "next build && node scripts/build-sw.mjs",
+    "build:pages": "pnpm typecheck && pnpm test && pnpm build",
     "preview": "node scripts/serve-out.mjs",
     "icons": "node scripts/make-icons.mjs",
     "katex": "node scripts/build-katex-assets.mjs",
