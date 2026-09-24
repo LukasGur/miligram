@@ -71,7 +71,7 @@ norma; aplikace proto u kapek přijímá zaokrouhlení oběma směry.
 
 ### 6. Fond přípravků
 
-`src/core/products/pool.generated.ts` obsahuje 614 registrovaných balení
+`src/core/products/pool.generated.ts` obsahuje 619 registrovaných balení
 vybraných z DLP. Generuje ho `scripts/sukl/build-pool.mjs`.
 
 Dělba odpovědnosti: **faktické údaje** (síla, koncentrace, balení) pocházejí
@@ -79,6 +79,26 @@ z DLP a jsou dohledatelné podle kódu SÚKL. **Výběr účinných látek** je
 kurátorské rozhodnutí a žije zvlášť v `scripts/sukl/latky-vyber.json`;
 každý název se ověřuje proti číselníku ATC ze SÚKL a při neshodě build
 skončí chybou, takže se do fondu nedostane vymyšlená látka.
+
+### 7. Obvyklé dávky pro dospělé (základní úlohy)
+
+`src/core/products/adultDoses.ts` — 45 přípravků, u každého kód SÚKL,
+soubor SPC a doslovná pasáž z bodu 4.2. Ověřeno **24. 9. 2026**.
+
+Základní úlohy (objem z ampule, počet ampulí, zbytek, zpětný výpočet)
+dřív losovaly dávku jako násobek obsahu ampule a vycházely nereálné
+ordinace (4,8 ampule ketaminu, 2 g zuklopenthixolu naráz). Teď smí zadat
+jen dávku, kterou SPC u dospělého uvádí nebo která leží v citovaném
+rozmezí. Citace SPC se u příkladu zobrazuje spolu s ostatními zdroji.
+
+Záměrně vynechané: přípravky dávkované jen podle hmotnosti nebo povrchu
+těla (cytostatika, aminoglykosidy, myorelaxancia), Paracetamol Kabi 10 ml
+(ampule je podle SPC pro děti do 33 kg), Rivotril 1 mg/ml (ředí se
+rozpouštědlem) a Solu-Medrol (lyofilizát, objem z DLP nevyčteme).
+
+Fond také vylučuje přípravky jen s cestou podání IPT, ITH nebo ICM
+a rozlišuje typ obalu (lahvička, pero, zásobní vložka, předplněná
+stříkačka) — viz `scripts/sukl/README.md`.
 
 ## Co se nepoužívá
 
@@ -96,7 +116,7 @@ a co se z nich bere. Sloupec „SPC“ odkazuje na soubor v archivu SÚKL
 
 | Dokument | Přípravek | Kód SÚKL | Co se z něj bere | Kde |
 |---|---|---|---|---|
-| DLP | 614 registrovaných balení | — | název, síla, koncentrace, velikost balení | `products/pool.generated.ts` |
+| DLP | 619 registrovaných balení | — | název, síla, koncentrace, velikost balení | `products/pool.generated.ts` |
 | SPC224021 | PARALEN 125 mg tablety | 0254422 | 10–15 mg/kg jednotlivě, max. 60 mg/kg/den | `products/dosing.ts` |
 | SPC226792 | Ibalgin Baby 20 mg/ml susp. | 0254306 | 5–10 mg/kg, max. 40 mg/kg/den | `products/dosing.ts` |
 | SPC215152 | Nurofen pro děti 20 mg/ml | 0237380 | 20–30 mg/kg/den ve 3–4 dávkách | `products/dosing.ts` |
@@ -121,6 +141,7 @@ a co se z nich bere. Sloupec „SPC“ odkazuje na soubor v archivu SÚKL
 | SPC123043, SPC123046 | Ardeanutrisol G 5–40 % | 0032348 … 0032360 | 50–400 g glukózy v litru | `products/solutions.ts` |
 | SPC125966 | Heparin Léčiva 5000 IU/ml | 0091915 | 5 000 IU v 1 ml | fond, `templates/H3` |
 | EMA EPAR | Actrapid | 0026481, 0026483 | registrace v koncentraci 40 i 100 IU/ml | fond, `templates/I2` |
+| 45 × SPC, bod 4.2 | ampule a perorální roztoky ve fondu | viz soubor | obvyklé jednotlivé dávky pro dospělého — ordinace v A3, A4, A6, A8 | `products/adultDoses.ts` |
 | ISO 7886-1 | — | — | tolerance objemu odměřeného stříkačkou | `devices.ts` |
 | IEC 60601-2-24 | — | — | přesnost průtoku pumpy ±2 % | `devices.ts` |
 | B. Braun IV109 3/20 | — | — | kapkové faktory 10, 15, 20 a 60 gtt/ml | `devices.ts` |

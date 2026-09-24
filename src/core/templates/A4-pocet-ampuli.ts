@@ -1,7 +1,7 @@
-import { pickProduct, vialContentMg } from "../products";
 import * as tolerances from "../tolerances";
 import type { Solution, Vars } from "../types";
-import { formula, frac, given, intermediate, q, result, substitute, tidy } from "./helpers";
+import { formula, frac, given, intermediate, q, result, substitute } from "./helpers";
+import { doseSourceFor, dosedProducts, moreThanContent, pickDose } from "./ampouleDoses";
 import { register, SUKL_DLP } from "./registry";
 
 /**
@@ -15,27 +15,28 @@ export const A4 = register({
   category: "zaklad",
   source: SUKL_DLP,
 
-  generate(rng, difficulty) {
-    const product = pickProduct(rng, {
-      kind: "ampoule",
-      strengthUnit: "mg",
-      minStrength: 1,
-      maxVolumeMl: 20,
-    });
-    const contentMg = vialContentMg(product);
+  sourceFor: doseSourceFor,
 
-    // Na první úrovni vychází celý počet ampulí, dál zbytek zůstává.
-    const multiple = difficulty === 1
-      ? rng.pick([2, 3, 4] as const)
-      : rng.step(1.2, 4.8, 0.1);
+  generate(rng, difficulty) {
+    // Ordinace ze SPC, která přesahuje jednu ampuli. Na první úrovni
+    // jen celé násobky, na třetí jen dávky, po kterých v poslední
+    // ampuli něco zbude — tam se teprve pozná, kdo zaokrouhluje nahoru.
+    const { item, doseMg } = pickDose(rng, dosedProducts("ampoule"), (dose, candidate) => {
+      if (!moreThanContent(dose, candidate)) return false;
+      const ratio = dose / candidate.contentMg;
+      const whole = Math.abs(ratio - Math.round(ratio)) < 1e-9;
+      if (difficulty === 1) return whole;
+      if (difficulty === 3) return !whole;
+      return true;
+    });
 
     return {
-      code: product.code,
-      productName: product.name,
-      substance: product.substance,
-      ampouleMg: contentMg,
-      ampouleMl: product.packUnitVolumeMl ?? product.volumeMl ?? 1,
-      doseMg: tidy(contentMg * multiple),
+      code: item.product.code,
+      productName: item.product.name,
+      substance: item.product.substance,
+      ampouleMg: item.contentMg,
+      ampouleMl: item.contentMl,
+      doseMg,
     } satisfies Vars;
   },
 

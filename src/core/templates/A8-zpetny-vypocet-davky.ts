@@ -1,8 +1,8 @@
 import { massInVolume } from "../formulas";
-import { concentrationOf, selectProducts } from "../products";
 import * as tolerances from "../tolerances";
 import type { Solution, Vars } from "../types";
 import { formula, given, q, result, substitute } from "./helpers";
+import { doseSourceFor, dosedProducts, pickDose, roundVolume } from "./ampouleDoses";
 import { register, SUKL_DLP } from "./registry";
 
 /**
@@ -17,34 +17,30 @@ export const A8 = register({
   category: "zaklad",
   source: SUKL_DLP,
 
+  sourceFor: doseSourceFor,
+
   generate(rng, difficulty) {
     /**
-     * Na třetí úrovni se odpověď chce v gramech, takže dávka musí být
-     * dost velká, aby v gramech vůbec šla rozumně zapsat. Bez téhle
-     * podmínky vycházely odpovědi typu 0,0005 g.
+     * Podaný objem odpovídá dávce pro dospělého ze SPC — v dokumentaci
+     * se nedohledává 10 ml depotního neuroleptika, ale to, co se skutečně
+     * podává. Na třetí úrovni se odpověď chce v gramech, takže jen dávky
+     * od 100 mg; menší by v gramech vycházely jako 0,0005 g.
      */
     const kind = rng.pick(["ampoule", "oralLiquid"] as const);
-    const candidates = selectProducts({
-      kind,
-      strengthUnit: "mg",
-      minStrength: 1,
-    }).filter((p) => (difficulty === 3 ? concentrationOf(p) >= 20 : true));
-
-    const product = rng.pick(candidates);
-    const concentration = concentrationOf(product);
-    const givenMl = difficulty === 1
-      ? rng.pick([1, 2, 5] as const)
-      : difficulty === 3
-        ? rng.step(5, 10, 0.5)
-        : rng.step(0.5, 10, 0.5);
+    const { item, doseMg } = pickDose(rng, dosedProducts(kind), (dose, candidate) =>
+      roundVolume(dose, candidate, 0.01) &&
+      (difficulty !== 1 || roundVolume(dose, candidate, 0.5)) &&
+      (difficulty !== 3 || dose >= 100),
+    );
+    const givenMl = Number((doseMg / item.concentrationMgPerMl).toFixed(2));
 
     return {
-      code: product.code,
-      productName: product.name,
-      substance: product.substance,
-      strengthMg: product.strength,
-      referenceMl: product.volumeMl ?? 1,
-      concentrationMgPerMl: concentration,
+      code: item.product.code,
+      productName: item.product.name,
+      substance: item.product.substance,
+      strengthMg: item.product.strength,
+      referenceMl: item.product.volumeMl ?? 1,
+      concentrationMgPerMl: item.concentrationMgPerMl,
       givenMl,
       // Na třetí úrovni se odpověď chce v gramech.
       answerUnit: difficulty === 3 ? "g" : "mg",

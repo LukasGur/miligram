@@ -72,9 +72,11 @@ export function buildExercise(templateId: string, seed: string, difficulty: Diff
   if (!Number.isFinite(solution.value)) {
     throw new Error(`Šablona ${templateId} vrátila neplatný výsledek pro semínko ${seed}.`);
   }
+  const extra = template.sourceFor?.(vars) ?? [];
+  const source = [template.source, extra].flat();
   return {
     templateId,
-    source: template.source,
+    source: source.length === 1 ? source[0] : source,
     seed,
     difficulty,
     vars,

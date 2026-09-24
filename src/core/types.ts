@@ -91,6 +91,11 @@ export type Template = {
    */
   source: Source | readonly Source[];
   /**
+   * Zdroj, který závisí na vylosovaném přípravku — typicky SPC, ze kterého
+   * pochází dávka v zadání. Přidá se k `source` u konkrétního příkladu.
+   */
+  sourceFor?(vars: Vars): Source | readonly Source[];
+  /**
    * Šablona s nedohledaným údajem. Generátor ji do produkčního setu
    * nezařadí, dokud se příznak neodstraní.
    */

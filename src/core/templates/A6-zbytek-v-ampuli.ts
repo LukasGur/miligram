@@ -1,9 +1,9 @@
 import { doseVolume } from "../formulas";
 import { syringeFor } from "../devices";
-import { pickProduct, vialContentMg } from "../products";
 import * as tolerances from "../tolerances";
 import type { Solution, Vars } from "../types";
-import { formula, frac, given, intermediate, q, result, substitute, tidy } from "./helpers";
+import { formula, frac, given, intermediate, q, result, substitute } from "./helpers";
+import { doseSourceFor, dosedProducts, lessThanContent, pickDose, roundVolume } from "./ampouleDoses";
 import { ISO_7886, register, SUKL_DLP } from "./registry";
 
 /**
@@ -17,23 +17,21 @@ export const A6 = register({
   category: "zaklad",
   source: [SUKL_DLP, ISO_7886],
 
+  sourceFor: doseSourceFor,
+
   generate(rng, difficulty) {
-    const product = pickProduct(rng, {
-      kind: "ampoule",
-      strengthUnit: "mg",
-      minStrength: 1,
-      maxVolumeMl: 20,
-    });
-    const contentMg = vialContentMg(product);
-    const fraction = difficulty === 1 ? rng.pick([0.25, 0.5, 0.75] as const) : rng.step(0.15, 0.85, 0.05);
+    // Podaná dávka ze SPC, menší než obsah ampule — jinak by nic nezbylo.
+    const { item, doseMg } = pickDose(rng, dosedProducts("ampoule"), (dose, candidate) =>
+      lessThanContent(dose, candidate) && (difficulty !== 1 || roundVolume(dose, candidate)),
+    );
 
     return {
-      code: product.code,
-      productName: product.name,
-      substance: product.substance,
-      ampouleMg: contentMg,
-      ampouleMl: product.packUnitVolumeMl ?? product.volumeMl ?? 1,
-      doseMg: tidy(contentMg * fraction),
+      code: item.product.code,
+      productName: item.product.name,
+      substance: item.product.substance,
+      ampouleMg: item.contentMg,
+      ampouleMl: item.contentMl,
+      doseMg,
     } satisfies Vars;
   },
 

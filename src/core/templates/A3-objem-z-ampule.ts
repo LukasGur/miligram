@@ -1,9 +1,9 @@
 import { doseVolume } from "../formulas";
-import { concentrationOf, pickProduct } from "../products";
 import { syringeFor } from "../devices";
 import * as tolerances from "../tolerances";
 import type { Solution, Vars } from "../types";
 import { frac, step, tex, unit } from "./helpers";
+import { doseSourceFor, dosedProducts, lessThanContent, pickDose, roundVolume } from "./ampouleDoses";
 import { ISO_7886, register, SUKL_DLP } from "./registry";
 
 /**
@@ -18,38 +18,32 @@ export const A3 = register({
   category: "zaklad",
   source: [SUKL_DLP, ISO_7886],
 
+  sourceFor: doseSourceFor,
+
   generate(rng, difficulty) {
-    const product = pickProduct(rng, {
-      kind: "ampoule",
-      strengthUnit: "mg",
-      minStrength: 1,
-      maxStrength: 1000,
-      maxVolumeMl: 20,
-    });
-    const concentration = concentrationOf(product);
-
     /**
-     * Dávka se losuje jako podíl obsahu ampule, ne jako absolutní číslo:
-     * u ampule 2 mg/2 ml a u ampule 500 mg/10 ml vypadá „rozumná dávka“
-     * úplně jinak. Na první úrovni vychází kulatý objem, na dalších ne.
+     * Ordinace je dávka pro dospělého ze SPC, menší než obsah ampule.
+     * Na první úrovni vychází objem na desetiny mililitru, na třetí je
+     * dávka v mikrogramech — proto jen dávky pod 10 mg, u větších by
+     * zápis v µg působil uměle.
      */
-    const fraction = difficulty === 1
-      ? rng.pick([0.25, 0.5, 0.75] as const)
-      : rng.step(0.2, 0.9, 0.05);
-
-    const doseMg = Number((product.strength * fraction).toPrecision(3));
+    const { item, doseMg } = pickDose(rng, dosedProducts("ampoule"), (dose, candidate) =>
+      lessThanContent(dose, candidate) &&
+      (difficulty !== 1 || roundVolume(dose, candidate)) &&
+      (difficulty !== 3 || dose < 10),
+    );
 
     return {
-      code: product.code,
-      productName: product.name,
-      substance: product.substance,
-      strengthMg: product.strength,
-      ampouleMl: product.volumeMl ?? 1,
-      concentrationMgPerMl: concentration,
+      code: item.product.code,
+      productName: item.product.name,
+      substance: item.product.substance,
+      strengthMg: item.contentMg,
+      ampouleMl: item.contentMl,
+      concentrationMgPerMl: item.concentrationMgPerMl,
       doseMg,
       // Na třetí úrovni je dávka zadaná v mikrogramech a je potřeba mezipřevod.
       doseUnit: difficulty === 3 ? "µg" : "mg",
-      doseShown: difficulty === 3 ? doseMg * 1000 : doseMg,
+      doseShown: difficulty === 3 ? Number((doseMg * 1000).toFixed(3)) : doseMg,
     } satisfies Vars;
   },
 
