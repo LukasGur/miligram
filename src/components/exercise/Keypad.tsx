@@ -2,6 +2,7 @@
 
 import { useTranslations } from "next-intl";
 import { BackspaceIcon } from "@/components/icons";
+import { pressable } from "@/lib/press";
 
 /**
  * Numerická klávesnice.
@@ -55,9 +56,10 @@ function Key({
     <button
       type="button"
       onClick={onPress}
+      {...pressable}
       disabled={disabled}
       aria-label={ariaLabel ?? label}
-      className="bg-surface active:bg-line readout text-ink flex min-h-12 items-center justify-center rounded-control text-title font-medium transition-colors duration-75 disabled:opacity-40"
+      className="press bg-surface data-pressed:bg-surface-press readout text-ink flex min-h-12 items-center justify-center rounded-control text-title font-medium disabled:opacity-40"
     >
       {children ?? label}
     </button>

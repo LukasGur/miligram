@@ -2,7 +2,8 @@
 
 import { useState } from "react";
 import { useTranslations } from "next-intl";
-import { CalculatorIcon, CloseIcon, HintIcon } from "@/components/icons";
+import { CalculatorIcon, CloseIcon, HintIcon, PillIcon } from "@/components/icons";
+import { pressable } from "@/lib/press";
 import { evaluateAnswer, parseAnswer, type Verdict } from "@/core/answer";
 import { HINT_COST } from "@/core/economy";
 import type { Exercise } from "@/core/types";
@@ -185,8 +186,9 @@ export function ExerciseView({
 
           {/* Pomůcky mají vlastní řádek, ne kout displeje. Nalepené v poli
               odpovědi nevypadaly jako tlačítka a cena nápovědy se pletla
-              s odpovědí. */}
-          {verdict === null ? (
+              s odpovědí. Otevřená kalkulačka si jejich místo bere pro větší
+              klávesy — zavírá se křížkem na svém displeji. */}
+          {verdict === null && !calculatorOpen ? (
             <div className="mt-2 flex gap-2 [&>*]:flex-1">
               <Tool
                 icon={<CalculatorIcon className="size-5 shrink-0" />}
@@ -199,6 +201,7 @@ export function ExerciseView({
                   icon={<HintIcon className="size-5 shrink-0" />}
                   label={t("hintTitle")}
                   cost={HINT_COST}
+                  costLabel={t("hintPrice", { cost: HINT_COST })}
                   onPress={buyHint}
                 />
               )}
@@ -236,8 +239,9 @@ export function ExerciseView({
             <button
               type="button"
               onClick={verdict === null ? check : () => onAnswered({ correct: verdict.correct, hinted })}
+              {...pressable}
               disabled={verdict === null && !canCheck}
-              className="bg-accent active:bg-accent-press mt-3 min-h-14 w-full rounded-control text-body font-semibold text-white transition-colors duration-75 disabled:opacity-40"
+              className="press press-wide bg-accent data-pressed:bg-accent-press mt-3 min-h-14 w-full rounded-control text-body font-semibold text-white disabled:opacity-40"
             >
               {verdict === null
                 ? t("check")
@@ -256,19 +260,23 @@ export function ExerciseView({
  * Pomůcka k příkladu: kalkulačka nebo nápověda.
  *
  * Rámeček, ikona a popisek — vypadá to jako tlačítko, protože to tlačítko
- * je. Cena nápovědy je v barvě prášků, aby se nedala přečíst jako část
- * odpovědi nebo zadání.
+ * je. Cena nápovědy je cenovka s ikonou prášku — stejný symbol jako
+ * zůstatek na úvodní obrazovce, takže je jasné, v čem se platí, a holé
+ * číslo se nedá přečíst jako část odpovědi nebo zadání.
  */
 function Tool({
   icon,
   label,
   cost,
+  costLabel,
   pressed,
   onPress,
 }: {
   icon: React.ReactNode;
   label: string;
   cost?: number;
+  /** Cena slovy pro odečítač: „15 prášků“. */
+  costLabel?: string;
   pressed?: boolean;
   onPress: () => void;
 }) {
@@ -276,16 +284,23 @@ function Tool({
     <button
       type="button"
       onClick={onPress}
+      {...pressable}
       aria-pressed={pressed}
-      className={`flex min-h-11 items-center justify-center gap-2 rounded-control border px-3 text-label font-medium transition-colors duration-75 ${
-        pressed ? "border-accent bg-accent-wash text-accent" : "border-line text-ink active:bg-surface"
+      className={`press press-wide flex min-h-11 items-center justify-center gap-2 rounded-control border px-3 text-label font-medium ${
+        pressed
+          ? "border-accent bg-accent-wash text-accent data-pressed:bg-accent-wash-press"
+          : "border-line text-ink data-pressed:border-surface-press data-pressed:bg-surface-press"
       }`}
     >
       {icon}
       <span className="truncate">{label}</span>
       {cost === undefined ? null : (
-        <span className="readout text-pill font-semibold" data-numeric>
-          {cost}
+        <span className="bg-pill-wash text-pill inline-flex shrink-0 items-center gap-1 rounded-full py-0.5 pl-1.5 pr-2">
+          <PillIcon className="size-3.5" />
+          <span className="num font-semibold" data-numeric aria-hidden>
+            {cost}
+          </span>
+          <span className="sr-only">{costLabel}</span>
         </span>
       )}
     </button>
@@ -309,8 +324,9 @@ function SecondaryAction({
     <button
       type="button"
       onClick={onClick}
+      {...pressable}
       disabled={disabled}
-      className="border-line text-ink active:bg-surface flex min-h-11 items-center justify-center gap-2 rounded-control border px-3 text-label font-medium transition-colors duration-75 disabled:opacity-40"
+      className="press press-wide border-line text-ink data-pressed:border-surface-press data-pressed:bg-surface-press flex min-h-11 items-center justify-center gap-2 rounded-control border px-3 text-label font-medium disabled:opacity-40"
     >
       {children}
     </button>

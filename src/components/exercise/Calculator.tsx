@@ -3,6 +3,7 @@
 import { useState } from "react";
 import { useTranslations } from "next-intl";
 import { BackspaceIcon, CloseIcon } from "@/components/icons";
+import { pressable } from "@/lib/press";
 import { evaluate, format, parse, render, type Operator, type Token } from "@/core/calculator";
 
 /**
@@ -94,24 +95,25 @@ export function Calculator({
         <button
           type="button"
           onClick={onClose}
+          {...pressable}
           aria-label={t("close")}
-          className="text-ink-soft flex size-11 shrink-0 items-center justify-center"
+          className="press text-ink-soft data-pressed:bg-surface-press flex size-11 shrink-0 items-center justify-center rounded-control"
         >
           <CloseIcon className="size-5" />
         </button>
       </div>
 
       <div className="grid grid-cols-4 gap-2">
-        <Key onPress={clear} ariaLabel={t("clear")} tone="soft">
+        <Key onPress={clear} ariaLabel={t("clear")} tone="edit">
           C
         </Key>
-        <Key onPress={backspace} ariaLabel={tLesson("backspace")} tone="soft">
-          <BackspaceIcon className="size-5" />
+        <Key onPress={backspace} ariaLabel={tLesson("backspace")} tone="edit">
+          <BackspaceIcon className="size-6" />
         </Key>
-        <Key onPress={() => operator("/")} ariaLabel={t("divide")} tone="soft">
+        <Key onPress={() => operator("/")} ariaLabel={t("divide")} tone="operator">
           ÷
         </Key>
-        <Key onPress={() => operator("*")} ariaLabel={t("multiply")} tone="soft">
+        <Key onPress={() => operator("*")} ariaLabel={t("multiply")} tone="operator">
           ×
         </Key>
 
@@ -120,7 +122,7 @@ export function Calculator({
             {key}
           </Key>
         ))}
-        <Key onPress={() => operator("-")} ariaLabel={t("minus")} tone="soft">
+        <Key onPress={() => operator("-")} ariaLabel={t("minus")} tone="operator">
           −
         </Key>
 
@@ -129,7 +131,7 @@ export function Calculator({
             {key}
           </Key>
         ))}
-        <Key onPress={() => operator("+")} ariaLabel={t("plus")} tone="soft">
+        <Key onPress={() => operator("+")} ariaLabel={t("plus")} tone="operator">
           +
         </Key>
 
@@ -138,7 +140,7 @@ export function Calculator({
             {key}
           </Key>
         ))}
-        <Key onPress={equals} ariaLabel={t("equals")} tone="soft" className="row-span-2">
+        <Key onPress={equals} ariaLabel={t("equals")} tone="operator" className="row-span-2">
           =
         </Key>
 
@@ -153,8 +155,9 @@ export function Calculator({
       <button
         type="button"
         onClick={() => result !== null && onUse(format(result))}
+        {...pressable}
         disabled={result === null}
-        className="bg-accent active:bg-accent-press mt-2 flex min-h-12 w-full items-center justify-center rounded-control text-body font-semibold text-white transition-colors duration-75 disabled:opacity-40"
+        className="press press-wide bg-accent data-pressed:bg-accent-press mt-2 flex min-h-13 w-full items-center justify-center rounded-control text-body font-semibold text-white disabled:opacity-40"
       >
         {t("use")}
       </button>
@@ -171,19 +174,29 @@ function Key({
 }: {
   onPress: () => void;
   ariaLabel?: string;
-  tone?: "digit" | "soft";
+  tone?: "digit" | "operator" | "edit";
   className?: string;
   children: React.ReactNode;
 }) {
-  const look = tone === "digit" ? "bg-surface active:bg-line" : "border-line border active:bg-surface";
   return (
     <button
       type="button"
       onClick={onPress}
+      {...pressable}
       aria-label={ariaLabel}
-      className={`${look} ${className} readout text-ink flex min-h-11 items-center justify-center rounded-control text-heading font-medium transition-colors duration-75`}
+      className={`press ${LOOK[tone]} ${className} readout flex min-h-13 items-center justify-center rounded-control text-title font-medium`}
     >
       {children}
     </button>
   );
 }
+
+/**
+ * Tři druhy kláves, ať se v mřížce 4 × 5 dá orientovat bez čtení:
+ * číslice jsou plné, operace v jemné indigové, úpravy zápisu jen obrysem.
+ */
+const LOOK = {
+  digit: "bg-surface text-ink data-pressed:bg-surface-press",
+  operator: "bg-accent-wash text-accent-press data-pressed:bg-accent-wash-press",
+  edit: "border-line text-ink-soft border data-pressed:border-surface-press data-pressed:bg-surface-press",
+} as const;
