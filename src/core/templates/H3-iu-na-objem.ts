@@ -31,9 +31,15 @@ export const H3 = register({
     const perMl = concentrationOf(product);
 
     // Objem se losuje první, aby ordinace vyšla na celé jednotky.
-    const volumeMl = difficulty === 1
-      ? rng.step(0.1, 1, 0.1)
-      : rng.step(0.05, Math.min(2, product.packUnitVolumeMl ?? 2), 0.05);
+    // Přesně 1 ml se vynechává: ordinace by se rovnala síle v zadání
+    // a odpověď by šla opsat bez počítání.
+    const maxMl = Math.min(2, product.packUnitVolumeMl ?? 2);
+    let volumeMl = 1;
+    while (volumeMl === 1) {
+      volumeMl = difficulty === 1
+        ? rng.step(0.1, 0.9, 0.1)
+        : rng.step(0.05, maxMl, 0.05);
+    }
     const doseIU = Number((perMl * volumeMl).toFixed(2));
 
     return {

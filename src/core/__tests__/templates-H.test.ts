@@ -92,6 +92,15 @@ describe("H3 — mezinárodní jednotky na objem", () => {
       }
     }
   });
+
+  it("ordinace se nerovná síle v jednom mililitru", () => {
+    for (const difficulty of DIFFICULTIES) {
+      for (const seed of Array.from({ length: 400 }, (_, i) => `h3-${i}`)) {
+        const { vars } = buildExercise("H3", seed, difficulty);
+        expect(Number(vars.doseIU), `${difficulty}/${seed}`).not.toBe(Number(vars.perMl));
+      }
+    }
+  });
 });
 
 describe("H4 — jednotky a miligramy u enoxaparinu", () => {
