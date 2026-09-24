@@ -2,6 +2,7 @@
 
 import { useEffect } from "react";
 import { MAX_STREAK_FREEZES } from "@/core/economy";
+import { useLocale } from "@/i18n/LocaleProvider";
 import { claimGift as markClaimed, fetchLessons, pendingGifts, remoteGateway } from "@/lib/remote";
 import { claimGift } from "@/lib/db";
 import { pullNews } from "@/lib/restore";
@@ -22,8 +23,10 @@ import { useSession } from "@/lib/useSession";
  */
 export function SyncAgent() {
   const { session } = useSession();
+  const { locale } = useLocale();
   const pending = usePendingEvents();
   const userId = session?.user.id;
+  const accountLocale: unknown = session?.user.user_metadata?.locale;
 
   useEffect(() => {
     const client = supabase();
@@ -97,6 +100,31 @@ export function SyncAgent() {
       window.removeEventListener("online", retry);
     };
   }, [userId]);
+
+  /**
+   * Jazyk přihlašovacích e-mailů. Šablona v Supabase vybírá češtinu nebo
+   * slovenštinu podle `locale` v metadatech účtu (scripts/supabase/auth-emails.mjs).
+   * Při založení účtu ho zapíše přihlášení; tady se srovná po přihlášení
+   * na jiném zařízení a po přepnutí jazyka, aby další kód přišel tak,
+   * jak má uživatel aplikaci nastavenou.
+   */
+  useEffect(() => {
+    const client = supabase();
+    if (!client || !userId || accountLocale === locale) return;
+
+    let cancelled = false;
+    const save = () => {
+      if (cancelled || !navigator.onLine) return;
+      void client.auth.updateUser({ data: { locale } }).catch(() => {});
+    };
+
+    save();
+    window.addEventListener("online", save);
+    return () => {
+      cancelled = true;
+      window.removeEventListener("online", save);
+    };
+  }, [userId, accountLocale, locale]);
 
   return null;
 }

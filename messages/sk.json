@@ -20,17 +20,16 @@
     "confirmedOn": "Potvrdené {date}"
   },
   "install": {
-    "iosTitle": "Pridaj na plochu",
-    "iosBody": "Potom pobeží na celú obrazovku a bez internetu.",
-    "iosStepShare": "Zdieľať",
-    "iosStepAdd": "Pridať na plochu",
-    "androidTitle": "Nainštalovať Miligram",
-    "androidBody": "Aplikácia sa pridá na plochu a funguje bez internetu.",
-    "androidAction": "Nainštalovať",
+    "addTitle": "Pridaj na plochu",
+    "stepShare": "Zdieľať",
+    "stepMenu": "Ponuka",
+    "stepAdd": "Pridať na plochu",
+    "installTitle": "Nainštalovať Miligram",
+    "installBody": "Aplikácia sa pridá na plochu a funguje bez internetu.",
+    "installAction": "Nainštalovať",
     "dismiss": "Teraz nie",
     "installed": "Nainštalované na ploche",
-    "notInstalled": "Beží v prehliadači",
-    "openInSafari": "Otvor túto adresu v Safari — iné prehliadače na iOS pridanie na plochu neponúkajú."
+    "notInstalled": "Beží v prehliadači"
   },
   "network": {
     "offline": "Offline — aplikácia funguje ďalej",

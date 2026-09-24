@@ -25,7 +25,8 @@ export function detectPlatform(): Platform {
   const isIos = /iPad|iPhone|iPod/.test(ua) || isIpadOS;
 
   if (isIos) {
-    // Chrome, Firefox a Edge na iOS nemají „Přidat na plochu“ v nabídce Sdílet.
+    // Od iOS 16.4 přidají na plochu i Chrome a Edge, jen Sdílet mají
+    // nahoře, ne ve spodní liště jako Safari.
     const isOtherBrowser = /CriOS|FxiOS|EdgiOS|OPiOS|Brave/.test(ua);
     return isOtherBrowser ? "ios-other-browser" : "ios-safari";
   }

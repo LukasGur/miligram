@@ -13,8 +13,8 @@ pnpm dev        # https na 0.0.0.0, certifikát do ./certificates
 ```
 
 `next dev --experimental-https` vygeneruje lokální certifikát a vypíše adresu
-v LAN. Tu otevři na iPhonu v Safari — bez HTTPS by service worker ani
-„Přidat na plochu“ nefungovaly správně.
+v LAN. Tu otevři na telefonu (iPhone v Safari, Android v Chromu) — bez
+HTTPS by service worker ani „Přidat na plochu“ nefungovaly správně.
 
 Service worker se registruje **jen v produkčním buildu**. Offline provoz
 se proto testuje takto:

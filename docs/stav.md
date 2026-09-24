@@ -1,11 +1,11 @@
 # Kde jsme
 
-Poslední aktualizace: **23. 9. 2026**
+Poslední aktualizace: **24. 9. 2026**
 
 ## Hotovo
 
 **Fáze 1** — PWA kostra. Statický export, vlastní service worker s precache
-manifestem, iOS instalační lišta, designové tokeny, next-intl. Ověřeno
+manifestem, instalační lišta, designové tokeny, next-intl. Ověřeno
 offline v Chromiu i vizuálně ve WebKitu.
 
 **Fáze 2, jádro** — `src/core`: jednotky, vzorce, tolerance odvozená z norem
@@ -103,7 +103,7 @@ Výkon: první načtení stáhne 849 kB místo 1 295 kB. Fond přípravků
 (309 kB) se vezl na domovskou obrazovku dvěma nenápadnými importy —
 `LESSON_LENGTH` sídlil vedle sestavování lekce a přehled statistik sahá
 přes `categoryOf` na šablony. Klient Supabase (241 kB) se dotahuje až
-při použití. Zbývá zkouška na skutečném iPhonu.
+při použití. Zbývá zkouška na skutečném telefonu (iPhone i Android).
 
 **Vizuální výraz** — rozhraní bylo čisté, ale bez názoru. Zvolený směr je
 klinický přístroj: ostré poloměry, popisky verzálkami, čísla strojopisem
@@ -125,19 +125,29 @@ v D3, limit v B3 zaokrouhlený na celé a neescapované `\;` v osmi
 šablonách.
 
 **Přihlašovací e-maily** — Supabase posílal výchozí šablonu jen s odkazem,
-a ten by na iPhonu otevřel Safari s odděleným úložištěm. Kódy teď chodí
+a ten by z aplikace na ploše otevřel prohlížeč s odděleným úložištěm. Kódy teď chodí
 přes vlastní SMTP (Email Profi, doména lukasgurecky.cz se SPF, DKIM
 a DMARC; ověřeno na cizím serveru: SPF i DKIM pass). Šablony jsou
 v `scripts/supabase/auth-emails.mjs` a nahrávají se odtud, ne v dashboardu.
-Kód má šest číslic, platí 15 minut a stojí i v předmětu, takže ho iPhone
-nabídne nad klávesnicí; pole po šesté číslici přihlásí samo.
+Kód má šest číslic, platí 15 minut a stojí i v předmětu, takže ho telefon
+může nabídnout nad klávesnicí; pole po šesté číslici přihlásí samo.
+E-mail přijde česky nebo slovensky podle `locale` v metadatech účtu —
+zapíše ho přihlášení a srovná `SyncAgent` po přihlášení a přepnutí jazyka.
+
+**Instalace i na Androidu** — lišta dřív dávala ruční postup jen iPhonu;
+Android dostal tlačítko, jen když prohlížeč vyslal `beforeinstallprompt`,
+a jinak nic. Teď Android bez výzvy vidí „⋮ Nabídka › Přidat na plochu“.
+Chrome a Edge na iOS dostanou stejný postup jako Safari (od iOS 16.4
+přidávají na plochu taky) místo odkazu do Safari.
 
 ## Co dělat dál
 
 1. **Doladit výraz podle zpětné vazby.** Směr je nastavený, čeká se,
    co bude na telefonu drhnout.
-2. **Zkouška na skutečném iPhonu.** Všechno je zatím ověřené jen
-   ve WebKitu na rozměrech telefonu, ne na zařízení.
+2. **Zkouška na skutečném telefonu — iPhone i Android.** Všechno je
+   zatím ověřené jen ve WebKitu na rozměrech telefonu, ne na zařízení.
+   Na Androidu hlavně instalace (Chrome, Samsung Internet, Firefox),
+   vlastní klávesnice a vložení kódu z e-mailu.
 3. **Sledovat limity odesílání.** Kódy chodí přes Email Profi
    (smtp.seznam.cz) ze schránky miligram@lukasgurecky.cz. Seznam limity
    pro schránky nezveřejňuje; kdyby kódy přestaly chodit, přesunout
@@ -242,6 +252,6 @@ nabídne nad klávesnicí; pole po šesté číslici přihlásí samo.
 pnpm test        # 425 testů jádra, překladů, sazby, databáze a statistik
 pnpm typecheck
 pnpm lint
-pnpm dev         # https, LAN, pro test na iPhonu
+pnpm dev         # https, LAN, pro test na telefonu
 pnpm build && pnpm preview   # produkční build + offline test
 ```

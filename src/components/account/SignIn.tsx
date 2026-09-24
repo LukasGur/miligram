@@ -3,6 +3,7 @@
 import { useEffect, useState, type FormEvent } from "react";
 import { useTranslations } from "next-intl";
 import type { AuthError } from "@supabase/supabase-js";
+import { useLocale } from "@/i18n/LocaleProvider";
 import { supabase } from "@/lib/supabase";
 
 /**
@@ -42,12 +43,13 @@ function errorKey(error: AuthError): ErrorKey {
  * plochu vytáhne ven, odkud se zpátky nedostane. Šestimístný kód se opíše
  * a přihlášení se dokončí tam, kde začalo.
  *
- * Kód je i v předmětu e-mailu, takže ho iPhone nabídne nad klávesnicí.
- * Po šesté číslici se přihlášení odešle samo — ťuknutí na nabídnutý kód
- * je tak celé přihlášení.
+ * Kód je i v předmětu e-mailu, takže ho telefon může nabídnout nad
+ * klávesnicí. Po šesté číslici se přihlášení odešle samo — ťuknutí na
+ * nabídnutý nebo vložení zkopírovaného kódu je tak celé přihlášení.
  */
 export function SignIn() {
   const t = useTranslations("account");
+  const { locale } = useLocale();
   const [email, setEmail] = useState("");
   const [code, setCode] = useState("");
   const [sent, setSent] = useState(false);
@@ -69,7 +71,9 @@ export function SignIn() {
     setError(null);
     const { error: sendError } = await client.auth.signInWithOtp({
       email: email.trim(),
-      options: { shouldCreateUser: true },
+      // Jazyk e-mailu: nový účet ho dostane rovnou, u stávajícího
+      // Supabase `data` nezapíše a srovná ho až SyncAgent po přihlášení.
+      options: { shouldCreateUser: true, data: { locale } },
     });
     setBusy(false);
     if (sendError) {

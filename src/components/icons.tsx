@@ -44,6 +44,17 @@ export function ShareIosIcon({ className }: IconProps) {
 }
 
 
+/** Nabídka prohlížeče na Androidu (tři svislé tečky). */
+export function MenuDotsIcon({ className }: IconProps) {
+  return (
+    <Icon className={className}>
+      <circle cx="12" cy="12" r="1" />
+      <circle cx="12" cy="5" r="1" />
+      <circle cx="12" cy="19" r="1" />
+    </Icon>
+  );
+}
+
 export function AddToHomeIcon({ className }: IconProps) {
   return (
     <Icon className={className}>

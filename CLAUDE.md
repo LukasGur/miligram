@@ -57,7 +57,7 @@ Aktuální stav a co dělat dál je v `docs/stav.md`.
 5. Účet a sociální vrstva — Supabase, sync, přátelé, ligy, souboje
 6. Lokalizace — dokončení SK
 7. Statistiky a tréninkové režimy
-8. Leštění — přístupnost, výkon, Lighthouse, test na iPhonu
+8. Leštění — přístupnost, výkon, Lighthouse, test na iPhonu a Androidu
 
 <!-- BEGIN:nextjs-agent-rules -->
 

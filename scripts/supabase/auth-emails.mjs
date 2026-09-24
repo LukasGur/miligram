@@ -57,9 +57,9 @@ const MONO = "'IBM Plex Mono',ui-monospace,SFMono-Regular,Menlo,Consolas,monospa
  * obsahovat mezery, které by se vložily s ním. Oddělení číslic dělá jen
  * prostrkání písma.
  */
-function codeEmail({ eyebrow, heading, lead, preheader }) {
+function codeEmail({ lang, eyebrow, heading, lead, preheader, validity, ignore, sentTo, question }) {
   return `<!doctype html>
-<html lang="cs">
+<html lang="${lang}">
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1">
@@ -112,19 +112,19 @@ function codeEmail({ eyebrow, heading, lead, preheader }) {
         </td>
       </tr></table>
 
-      <p class="soft" style="margin:14px 0 0;font-family:${SANS};font-size:14px;line-height:1.5;color:${C.inkSoft};text-align:center;">Platí ${OTP_MINUTES}&nbsp;minut a&nbsp;použít jde jen jednou.</p>
+      <p class="soft" style="margin:14px 0 0;font-family:${SANS};font-size:14px;line-height:1.5;color:${C.inkSoft};text-align:center;">${validity}</p>
 
       <!-- Mezera řádkem tabulky: okraje buněk poštovní klienti nedrží. -->
       <table role="presentation" width="100%" cellpadding="0" cellspacing="0" border="0">
         <tr><td style="height:28px;font-size:0;line-height:0;">&nbsp;</td></tr>
         <tr><td class="rule" style="border-top:1px solid ${C.line};height:1px;font-size:0;line-height:0;">&nbsp;</td></tr>
       </table>
-      <p class="soft" style="margin:20px 0 0;font-family:${SANS};font-size:14px;line-height:1.55;color:${C.inkSoft};">Kód nepotřebuješ? Tak e-mail klidně smaž. Bez kódu se do účtu nikdo nedostane.</p>
+      <p class="soft" style="margin:20px 0 0;font-family:${SANS};font-size:14px;line-height:1.55;color:${C.inkSoft};">${ignore}</p>
     </td></tr>
 
     <tr><td style="padding:22px 4px 0;">
-      <p class="soft" style="margin:0 0 6px;font-family:${SANS};font-size:12px;line-height:1.6;color:${C.inkSoft};">Kód jsme poslali na {{ .Email }}, protože tahle adresa byla zadaná v&nbsp;aplikaci <a href="${APP_URL}" style="color:${C.accent};text-decoration:none;">Miligram</a>.</p>
-      <p class="soft" style="margin:0;font-family:${SANS};font-size:12px;line-height:1.6;color:${C.inkSoft};">Máš otázku? Stačí odpovědět na tenhle e-mail.</p>
+      <p class="soft" style="margin:0 0 6px;font-family:${SANS};font-size:12px;line-height:1.6;color:${C.inkSoft};">${sentTo(`<a href="${APP_URL}" style="color:${C.accent};text-decoration:none;">Miligram</a>`)}</p>
+      <p class="soft" style="margin:0;font-family:${SANS};font-size:12px;line-height:1.6;color:${C.inkSoft};">${question}</p>
     </td></tr>
 
   </table>
@@ -135,32 +135,88 @@ function codeEmail({ eyebrow, heading, lead, preheader }) {
 `;
 }
 
-/** Předmět nese kód, aby byl vidět už v notifikaci a iPhone ho nabídl nad klávesnicí. */
-const SUBJECT = "{{ .Token }} je tvůj kód do Miligramu";
+/**
+ * Jazyk e-mailu podle účtu. Supabase má na každý druh e-mailu jednu
+ * šablonu, takže obě jazykové verze jsou v ní a vybírá mezi nimi
+ * `locale` z metadat uživatele. Aplikace ho zapíše při založení účtu
+ * a srovná po přihlášení i při přepnutí jazyka (src/components/SyncAgent.tsx).
+ * Účet bez údaje dostane češtinu.
+ */
+const LOCALES = ["cs", "sk"];
+const byLocale = (render) => `{{ if eq .Data.locale "sk" }}${render("sk")}{{ else }}${render("cs")}{{ end }}`;
+
+/** Předmět nese kód, aby byl vidět už v notifikaci a telefon ho mohl nabídnout sám. */
+const SUBJECTS = {
+  cs: "{{ .Token }} je tvůj kód do Miligramu",
+  sk: "{{ .Token }} je tvoj kód do Miligramu",
+};
+
+const COMMON = {
+  cs: {
+    validity: `Platí ${OTP_MINUTES}&nbsp;minut a&nbsp;použít jde jen jednou.`,
+    ignore: "Kód nepotřebuješ? Tak e-mail klidně smaž. Bez kódu se do účtu nikdo nedostane.",
+    sentTo: (app) => `Kód jsme poslali na {{ .Email }}, protože tahle adresa byla zadaná v&nbsp;aplikaci ${app}.`,
+    question: "Máš otázku? Stačí odpovědět na tenhle e-mail.",
+  },
+  sk: {
+    validity: `Platí ${OTP_MINUTES}&nbsp;minút a&nbsp;použiť sa dá len raz.`,
+    ignore: "Kód nepotrebuješ? Tak e-mail pokojne zmaž. Bez kódu sa do účtu nikto nedostane.",
+    sentTo: (app) => `Kód sme poslali na {{ .Email }}, pretože táto adresa bola zadaná v&nbsp;aplikácii ${app}.`,
+    question: "Máš otázku? Stačí odpovedať na tento e-mail.",
+  },
+};
 
 // Stávající účet dostane šablonu „magic link“, nový „confirmation“ —
 // signInWithOtp mezi nimi rozhoduje sám podle toho, jestli účet existuje.
-const EMAILS = {
-  magic_link: codeEmail({
-    eyebrow: "Přihlášení",
-    heading: "Tvůj přihlašovací kód",
-    lead: "Opiš ho do aplikace Miligram. Na iPhonu ho stačí ťuknout nad klávesnicí.",
-    preheader: `Kód platí ${OTP_MINUTES} minut. Opiš ho do aplikace Miligram.`,
-  }),
-  confirmation: codeEmail({
-    eyebrow: "Nový účet",
-    heading: "Vítej v Miligramu",
-    lead: "Zbývá opsat kód do aplikace a účet je hotový. Na iPhonu ho stačí ťuknout nad klávesnicí.",
-    preheader: `Kód platí ${OTP_MINUTES} minut. Opiš ho do aplikace a účet je hotový.`,
-  }),
+const TEXTS = {
+  magic_link: {
+    cs: {
+      eyebrow: "Přihlášení",
+      heading: "Tvůj přihlašovací kód",
+      lead: "Opiš ho do aplikace Miligram.",
+      preheader: `Kód platí ${OTP_MINUTES} minut. Opiš ho do aplikace Miligram.`,
+    },
+    sk: {
+      eyebrow: "Prihlásenie",
+      heading: "Tvoj prihlasovací kód",
+      lead: "Prepíš ho do aplikácie Miligram.",
+      preheader: `Kód platí ${OTP_MINUTES} minút. Prepíš ho do aplikácie Miligram.`,
+    },
+  },
+  confirmation: {
+    cs: {
+      eyebrow: "Nový účet",
+      heading: "Vítej v Miligramu",
+      lead: "Zbývá opsat kód do aplikace a účet je hotový.",
+      preheader: `Kód platí ${OTP_MINUTES} minut. Opiš ho do aplikace a účet je hotový.`,
+    },
+    sk: {
+      eyebrow: "Nový účet",
+      heading: "Vitaj v Miligrame",
+      lead: "Zostáva prepísať kód do aplikácie a účet je hotový.",
+      preheader: `Kód platí ${OTP_MINUTES} minút. Prepíš ho do aplikácie a účet je hotový.`,
+    },
+  },
 };
+
+const render = (kind, lang) => codeEmail({ lang, ...COMMON[lang], ...TEXTS[kind][lang] });
+
+const EMAILS = {
+  magic_link: byLocale((lang) => render("magic_link", lang)),
+  confirmation: byLocale((lang) => render("confirmation", lang)),
+};
+const SUBJECT = byLocale((lang) => SUBJECTS[lang]);
 
 async function preview() {
   const dir = path.join(ROOT, "out-emails");
   await mkdir(dir, { recursive: true });
-  for (const [name, html] of Object.entries(EMAILS)) {
-    const sample = html.replaceAll("{{ .Token }}", "482915").replaceAll("{{ .Email }}", "student@example.cz");
-    await writeFile(path.join(dir, `${name}.html`), sample, "utf8");
+  for (const kind of Object.keys(TEXTS)) {
+    for (const lang of LOCALES) {
+      const sample = render(kind, lang)
+        .replaceAll("{{ .Token }}", "482915")
+        .replaceAll("{{ .Email }}", "student@example.cz");
+      await writeFile(path.join(dir, `${kind}.${lang}.html`), sample, "utf8");
+    }
   }
   console.log(`Náhledy v ${path.relative(ROOT, dir)}/`);
 }
