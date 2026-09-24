@@ -24,6 +24,7 @@ import { Field, Primary, SignIn } from "./SignIn";
 import { Friends } from "./Friends";
 import { Duels } from "./Duels";
 import { League } from "./League";
+import { SignOut } from "./SignOut";
 
 /**
  * Účet, přátelé a žebříček.
@@ -119,7 +120,7 @@ function SignedIn({
   userId: string;
   onPlayDuel: (duel: { id: string; lessonId: string }) => void;
 }) {
-  const t = useTranslations("account");
+  const { session } = useSession();
   const profile = useRemoteQuery<RemoteProfile | null>(`profile:${userId}`, () =>
     fetchProfile(client, userId),
   );
@@ -151,13 +152,7 @@ function SignedIn({
         </>
       ) : null}
       <Sync client={client} userId={userId} />
-      <button
-        type="button"
-        onClick={() => client.auth.signOut()}
-        className="text-ink-soft mt-10 min-h-11 text-label font-medium"
-      >
-        {t("signOut")}
-      </button>
+      <SignOut client={client} userId={userId} email={session?.user.email} />
     </>
   );
 }

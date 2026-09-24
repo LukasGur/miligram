@@ -243,3 +243,41 @@ export function HintIcon({ className }: IconProps) {
     </Icon>
   );
 }
+
+export function ChevronDownIcon({ className }: IconProps) {
+  return (
+    <Icon className={className}>
+      <path d="m6 9 6 6 6-6" />
+    </Icon>
+  );
+}
+
+/** Zdroje údajů — kniha, ne „info“: jde o to, odkud číslo pochází. */
+export function BookIcon({ className }: IconProps) {
+  return (
+    <Icon className={className}>
+      <path d="M12 7v14" />
+      <path d="M3 18a1 1 0 0 1-1-1V4a1 1 0 0 1 1-1h5a4 4 0 0 1 4 4 4 4 0 0 1 4-4h5a1 1 0 0 1 1 1v13a1 1 0 0 1-1 1h-6a3 3 0 0 0-3 3 3 3 0 0 0-3-3z" />
+    </Icon>
+  );
+}
+
+/** Odkaz ven z aplikace. */
+export function ArrowUpRightIcon({ className }: IconProps) {
+  return (
+    <Icon className={className}>
+      <path d="M7 7h10v10" />
+      <path d="M7 17 17 7" />
+    </Icon>
+  );
+}
+
+export function LogOutIcon({ className }: IconProps) {
+  return (
+    <Icon className={className}>
+      <path d="m16 17 5-5-5-5" />
+      <path d="M21 12H9" />
+      <path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4" />
+    </Icon>
+  );
+}
