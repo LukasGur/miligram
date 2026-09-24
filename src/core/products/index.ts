@@ -1,9 +1,9 @@
 import type { Rng } from "../random";
 import { PRODUCTS, DLP_RELEASE } from "./pool.generated";
-import type { Product, ProductKind } from "./types";
+import type { Container, Product, ProductKind } from "./types";
 
 export { PRODUCTS, DLP_RELEASE };
-export type { Product, ProductKind };
+export type { Container, Product, ProductKind };
 
 export type ProductFilter = {
   kind: ProductKind;
@@ -19,6 +19,12 @@ export type ProductFilter = {
   atcPrefixes?: readonly string[];
   /** Vyloučení konkrétních přípravků podle kódu SÚKL. */
   excludeCodes?: readonly string[];
+  /**
+   * Typ obalu u ampulí. Bez uvedení jen lahvičky a ampule: většina
+   * šablon se ptá, kolik natáhnout stříkačkou, a to z pera, vložky ani
+   * předplněné stříkačky nejde.
+   */
+  containers?: readonly Container[];
 };
 
 export function selectProducts(filter: ProductFilter): Product[] {
@@ -36,6 +42,10 @@ export function selectProducts(filter: ProductFilter): Product[] {
 
     if (filter.atcPrefixes && !filter.atcPrefixes.some((p) => product.atc.startsWith(p))) return false;
     if (filter.excludeCodes?.includes(product.code)) return false;
+    if (filter.kind === "ampoule") {
+      const allowed = filter.containers ?? ["vial"];
+      if (!product.container || !allowed.includes(product.container)) return false;
+    }
     return true;
   });
 }

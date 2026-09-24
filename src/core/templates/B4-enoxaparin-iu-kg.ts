@@ -31,6 +31,7 @@ export const B4 = register({
       .filter((p) =>
         p.substance === "ENOXAPARIN" &&
         p.kind === "ampoule" &&
+        p.container === "prefilledSyringe" &&
         p.volumeMl !== undefined &&
         p.volumeMl <= 1,
       )

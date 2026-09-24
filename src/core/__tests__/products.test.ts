@@ -97,3 +97,38 @@ describe("fond přípravků", () => {
     expect(() => concentrationOf(tablet)).toThrow(/nemá uvedený objem/);
   });
 });
+
+/**
+ * Úlohy „kolik natáhnete“ musí losovat jen z obalu, ze kterého se
+ * stříkačkou natahuje. Pero, zásobní vložka ani předplněná stříkačka
+ * mezi ně nepatří — SPC koncentrovaných inzulinů natahování z pera
+ * výslovně zakazuje.
+ */
+describe("typ obalu u ampulí", () => {
+  it("každá ampule má typ obalu, ostatní skupiny ho nemají", () => {
+    for (const p of PRODUCTS) {
+      if (p.kind === "ampoule") expect(p.container, p.name).toBeDefined();
+      else expect(p.container, p.name).toBeUndefined();
+    }
+  });
+
+  it("bez uvedení obalu vybírá jen lahvičky a ampule", () => {
+    const picked = selectProducts({ kind: "ampoule" });
+    expect(picked.length).toBeGreaterThan(50);
+    expect(picked.every((p) => p.container === "vial")).toBe(true);
+  });
+
+  it("pera a vložky jdou vybrat jen výslovně", () => {
+    const pens = selectProducts({ kind: "ampoule", containers: ["pen", "cartridge"], atcPrefixes: ["A10A"] });
+    expect(pens.length).toBeGreaterThan(5);
+    expect(pens.every((p) => p.container === "pen" || p.container === "cartridge")).toBe(true);
+  });
+
+  it("ve fondu nejsou přípravky mimo rozsah tréninku", () => {
+    // Koncentrát s rozpouštědlem: uvedená síla není koncentrace, ze které se natahuje.
+    expect(PRODUCTS.filter((p) => /CSL LQF/.test(p.form))).toEqual([]);
+    // Implantabilní pumpa (IPT) a intratekální baklofen (ITH) — vyřazeno podle cesty podání v DLP.
+    const outOfScope = ["0194813", "0221560", "0221561"];
+    expect(PRODUCTS.filter((p) => outOfScope.includes(p.code))).toEqual([]);
+  });
+});

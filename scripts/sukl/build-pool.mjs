@@ -11,6 +11,7 @@
  *  - jen jednosložkové přípravky; kombinace mají nejednoznačnou sílu
  *  - jen síly, které jdou přečíst bez dohadů
  *  - jedna reprezentace na účinnou látku a sílu, ať fond nezaplní generika
+ *  - jen přípravky, které se podávají cestou, na kterou se u lůžka počítá
  */
 
 import { readFileSync, writeFileSync, existsSync, mkdirSync } from "node:fs";
@@ -82,8 +83,43 @@ if (unknownNames.size > 0) {
 }
 
 const COL = {
-  code: 0, name: 2, strength: 3, form: 4, pack: 5, reg: 13, atc: 18,
+  code: 0, name: 2, strength: 3, form: 4, pack: 5, route: 6, container: 8, reg: 13, atc: 18,
 };
+
+/**
+ * Cesty podání, na které se trénink nevztahuje. Přípravek, který má
+ * v DLP jen tyhle cesty, do fondu nepatří: jde o implantabilní pumpy
+ * (IPT — Insuman Implantable), intratekální podání (ITH — baklofen do
+ * pumpy) a intrakamerální podání do oka (ICM). Dávka se u nich nepočítá
+ * natažením stříkačkou u lůžka a v obecném příkladu by působila jako
+ * chyba — u intratekálního baklofenu nebezpečná.
+ */
+const ROUTES_OUT_OF_SCOPE = new Set(["IPT", "ITH", "ICM"]);
+
+function routeInScope(raw) {
+  const routes = raw.trim().split("/").filter(Boolean);
+  // Prázdná cesta v DLP je u starších registrací; o přípravku nic neříká.
+  if (routes.length === 0) return true;
+  return routes.some((route) => !ROUTES_OUT_OF_SCOPE.has(route));
+}
+
+/**
+ * Z čeho se dávka odměřuje. Rozhoduje typ obalu podle DLP, ne léková
+ * forma: INJ SOL je lahvička, pero i předplněná stříkačka zároveň.
+ *  - vial: ampule nebo lahvička, obsah se natahuje stříkačkou
+ *  - prefilledSyringe: předplněná stříkačka nebo autoinjektor
+ *  - pen: předplněné pero
+ *  - cartridge: zásobní vložka do pera (u Scandonestu zubní cartridge)
+ * Z pera ani z vložky se stříkačkou nenatahuje — SPC koncentrovaných
+ * inzulinů (Toujeo, Tresiba 200) to výslovně zakazuje kvůli předávkování.
+ */
+function containerOf(raw) {
+  const code = raw.trim().toUpperCase();
+  if (code === "ISP") return "prefilledSyringe";
+  if (code === "PEP") return "pen";
+  if (code === "ZVL") return "cartridge";
+  return "vial";
+}
 
 /** Rozdělí sílu na číslo a jednotku, případně i na objem, ve kterém je uvedená. */
 function parseStrength(raw) {
@@ -160,6 +196,10 @@ function classify(form, strength, pack) {
   if (/^POR/.test(f) && /SUS|SOL/.test(f)) {
     return strength.volumeMl !== null ? "oralLiquid" : null;
   }
+  // Koncentrát s dodaným rozpouštědlem (Taxotere 20 mg/0,5 ml): uvedená
+  // síla je před smícháním s rozpouštědlem, natahuje se až z premixu
+  // o jiné koncentraci. Bez SPC by příklad počítal se špatným číslem.
+  if (/CSL LQF/.test(f)) return null;
   if (isParenteral && isPowder) {
     return strength.volumeMl === null ? "powderVial" : null;
   }
@@ -185,6 +225,7 @@ for (const line of rows) {
   const atc = (cells[COL.atc] ?? "").trim();
   if (!atc) continue;
   if (ATC_DENY.some((prefix) => atc.startsWith(prefix))) continue;
+  if (!routeInScope(cells[COL.route] ?? "")) continue;
 
   const strength = parseStrength(cells[COL.strength] ?? "");
   if (!strength) continue;
@@ -207,6 +248,7 @@ for (const line of rows) {
     atc,
     substance: ATC_NAMES.get(atc) ?? "",
     kind,
+    container: kind === "ampoule" ? containerOf(cells[COL.container] ?? "") : null,
     strength: Number(amountBase.toFixed(6)),
     strengthUnit: strength.unit.unit,
     volumeMl: strength.volumeMl,
@@ -219,13 +261,13 @@ for (const line of rows) {
 }
 
 /**
- * Jedna reprezentace na (účinná látka, síla, objem, skupina).
+ * Jedna reprezentace na (účinná látka, síla, objem, skupina, obal).
  * Z duplicit vyhrává nejkratší název — bývá to původní značka
  * bez marketingových přívlastků.
  */
 const byKey = new Map();
 for (const item of candidates) {
-  const key = [item.atc, item.kind, item.strength, item.volumeMl ?? "-"].join("|");
+  const key = [item.atc, item.kind, item.container ?? "-", item.strength, item.volumeMl ?? "-"].join("|");
   const current = byKey.get(key);
   if (!current || item.name.length < current.name.length) byKey.set(key, item);
 }
@@ -238,7 +280,7 @@ for (const item of [...byKey.values()].sort((a, b) => a.atc.localeCompare(b.atc)
     pool.push(item);
     continue;
   }
-  const key = `${item.atc}|${item.kind}`;
+  const key = `${item.atc}|${item.kind}|${item.container ?? "-"}`;
   const used = perSubstance.get(key) ?? 0;
   if (used >= 2) continue;
   perSubstance.set(key, used + 1);
@@ -275,6 +317,7 @@ const lines = pool.map((p) => {
     `substance: ${JSON.stringify(p.substance)}`,
     `atc: ${JSON.stringify(p.atc)}`,
     `kind: ${JSON.stringify(p.kind)}`,
+    p.container !== null ? `container: ${JSON.stringify(p.container)}` : null,
     `strength: ${p.strength}`,
     `strengthUnit: ${JSON.stringify(p.strengthUnit)}`,
     p.volumeMl !== null ? `volumeMl: ${p.volumeMl}` : null,

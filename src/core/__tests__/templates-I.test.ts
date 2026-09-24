@@ -1,6 +1,7 @@
 import { describe, expect, it } from "vitest";
 import "../templates";
 import { allTemplates, buildExercise, getTemplate, productionTemplates } from "../templates";
+import { PRODUCTS } from "../products";
 import { DIFFICULTIES, type Difficulty } from "../types";
 
 const SEEDS = Array.from({ length: 40 }, (_, i) => `i${i}`);
@@ -95,5 +96,26 @@ describe("kategorie I je kompletní", () => {
   it("registrovány jsou všechny čtyři šablony", () => {
     const ids = allTemplates().map((t) => t.id).filter((id) => id.startsWith("I"));
     expect(ids.sort()).toEqual(["I1", "I2", "I3", "I4"]);
+  });
+});
+
+describe("obal u inzulinů", () => {
+  const seeds = Array.from({ length: 200 }, (_, i) => `obal-${i}`);
+
+  it("I1, I2 a H3 natahují jen z lahvičky", () => {
+    for (const id of ["I1", "I2", "H3"]) {
+      for (const seed of seeds) {
+        const { vars } = buildExercise(id, seed, D);
+        const product = PRODUCTS.find((p) => p.code === vars.code);
+        expect(product?.container, `${id}/${seed} ${product?.name}`).toBe("vial");
+      }
+    }
+  });
+
+  it("I4 počítá jen s perem nebo zásobní vložkou", () => {
+    for (const seed of seeds) {
+      const { vars } = buildExercise("I4", seed, D);
+      expect(["pen", "cartridge"], `${seed} ${vars.productName}`).toContain(vars.container);
+    }
   });
 });

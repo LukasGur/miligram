@@ -20,6 +20,13 @@ export type ProductKind =
   /** Hotový infuzní vak od 50 ml. */
   | "infusionBag";
 
+/**
+ * Z čeho se u ampulí dávka odměřuje — podle typu obalu v DLP.
+ * Natahovat stříkačkou jde jen z lahvičky nebo ampule; z pera a vložky
+ * se podává perem, předplněná stříkačka se nanejvýš upouští.
+ */
+export type Container = "vial" | "prefilledSyringe" | "pen" | "cartridge";
+
 export type Product = {
   /** Kód SÚKL — jednoznačně identifikuje registrované balení. */
   code: string;
@@ -29,6 +36,8 @@ export type Product = {
   substance: string;
   atc: string;
   kind: ProductKind;
+  /** Typ obalu. Uvedený jen u skupiny „ampoule“. */
+  container?: Container;
   /** Obsah účinné látky v mg, u biologických přípravků v IU. */
   strength: number;
   strengthUnit: "mg" | "IU";

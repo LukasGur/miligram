@@ -23,6 +23,7 @@ export const I4 = register({
       minStrength: 100,
       maxStrength: 300,
       atcPrefixes: ["A10A"],
+      containers: ["pen", "cartridge"],
     });
     const contentIU = vialContentMg(product);
 
@@ -39,6 +40,7 @@ export const I4 = register({
       code: product.code,
       productName: product.name,
       substance: product.substance,
+      container: product.container ?? "cartridge",
       perMl: product.strength,
       cartridgeMl: product.packUnitVolumeMl ?? product.volumeMl ?? 1,
       contentIU,

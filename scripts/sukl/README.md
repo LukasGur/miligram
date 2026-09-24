@@ -24,6 +24,25 @@ python3 -m venv .venv
 Výstup: `kód SÚKL | název | síla | forma | balení | ATC`.
 Vypisují se **jen** položky se stavem registrace `R`.
 
+### Fond přípravků pro generátor
+
+```bash
+node build-pool.mjs      # zapíše src/core/products/pool.generated.ts
+```
+
+Ověřená fakta o přípravku ještě neznamenají, že se hodí do příkladu.
+Skript proto kromě síly a balení čte i cestu podání (`CESTA`) a typ obalu
+(`OBAL`):
+
+- **Cesta mimo trénink** — přípravky jen s cestou `IPT` (implantabilní
+  pumpa), `ITH` (intratekálně) nebo `ICM` (do oka) do fondu nepatří.
+- **Koncentrát s rozpouštědlem** (`CSL LQF`) se vynechává: uvedená síla
+  je před smícháním, natahuje se až z premixu o jiné koncentraci.
+- **Typ obalu** u ampulí: `vial` (ampule, lahvička), `pen` (`PEP`),
+  `cartridge` (`ZVL`), `prefilledSyringe` (`ISP`). Úlohy „kolik natáhnete“
+  losují jen z `vial`; pera a vložky jen úloha na výdrž pera,
+  předplněné stříkačky jen enoxaparin podle hmotnosti.
+
 ## 2. Souhrny údajů o přípravku (SPC)
 
 Archiv SPC má přes 2,5 GB, takže se nestahuje celý. `spc_stahni.py`
