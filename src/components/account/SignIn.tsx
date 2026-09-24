@@ -1,8 +1,39 @@
 "use client";
 
-import { useState } from "react";
+import { useEffect, useState, type FormEvent } from "react";
 import { useTranslations } from "next-intl";
+import type { AuthError } from "@supabase/supabase-js";
 import { supabase } from "@/lib/supabase";
+
+/**
+ * Délka a platnost kódu. Musí sedět s nastavením v Supabase, které nahrává
+ * scripts/supabase/auth-emails.mjs — tam je stejné číslo i v textu e-mailu.
+ */
+const CODE_LENGTH = 6;
+const CODE_VALID_MINUTES = 15;
+/** Supabase pošle na stejnou adresu nejvýš jeden kód za minutu. */
+const RESEND_AFTER_SECONDS = 60;
+
+type ErrorKey = "errorCode" | "errorTooMany" | "errorEmail" | "errorGeneric";
+
+/**
+ * Chyby Supabase jsou anglické a technické („Token has expired or is
+ * invalid“). Student potřebuje vědět, co dál: opsat kód znovu, počkat,
+ * nebo opravit adresu.
+ */
+function errorKey(error: AuthError): ErrorKey {
+  switch (error.code) {
+    case "otp_expired":
+      return "errorCode";
+    case "over_email_send_rate_limit":
+    case "over_request_rate_limit":
+      return "errorTooMany";
+    case "email_address_invalid":
+    case "validation_failed":
+      return "errorEmail";
+  }
+  return error.status === 429 ? "errorTooMany" : "errorGeneric";
+}
 
 /**
  * Přihlášení kódem z e-mailu.
@@ -10,6 +41,10 @@ import { supabase } from "@/lib/supabase";
  * Ne odkazem: odkaz otevře prohlížeč a uživatele z aplikace přidané na
  * plochu vytáhne ven, odkud se zpátky nedostane. Šestimístný kód se opíše
  * a přihlášení se dokončí tam, kde začalo.
+ *
+ * Kód je i v předmětu e-mailu, takže ho iPhone nabídne nad klávesnicí.
+ * Po šesté číslici se přihlášení odešle samo — ťuknutí na nabídnutý kód
+ * je tak celé přihlášení.
  */
 export function SignIn() {
   const t = useTranslations("account");
@@ -17,11 +52,19 @@ export function SignIn() {
   const [code, setCode] = useState("");
   const [sent, setSent] = useState(false);
   const [busy, setBusy] = useState(false);
-  const [error, setError] = useState<string | null>(null);
+  const [error, setError] = useState<ErrorKey | null>(null);
+  const [resendIn, setResendIn] = useState(0);
 
-  async function send() {
+  useEffect(() => {
+    if (resendIn <= 0) return;
+    const timer = setTimeout(() => setResendIn((seconds) => seconds - 1), 1000);
+    return () => clearTimeout(timer);
+  }, [resendIn]);
+
+  async function send(event?: FormEvent) {
+    event?.preventDefault();
     const client = supabase();
-    if (!client || busy) return;
+    if (!client || busy || !email.includes("@")) return;
     setBusy(true);
     setError(null);
     const { error: sendError } = await client.auth.signInWithOtp({
@@ -29,22 +72,34 @@ export function SignIn() {
       options: { shouldCreateUser: true },
     });
     setBusy(false);
-    if (sendError) setError(sendError.message);
-    else setSent(true);
+    if (sendError) {
+      setError(errorKey(sendError));
+      return;
+    }
+    setSent(true);
+    setCode("");
+    setResendIn(RESEND_AFTER_SECONDS);
   }
 
-  async function verify() {
+  async function verify(token: string) {
     const client = supabase();
-    if (!client || busy) return;
+    if (!client || busy || token.length !== CODE_LENGTH) return;
     setBusy(true);
     setError(null);
-    const { error: verifyError } = await client.auth.verifyOtp({
-      email: email.trim(),
-      token: code.trim(),
-      type: "email",
-    });
+    const { error: verifyError } = await client.auth.verifyOtp({ email: email.trim(), token, type: "email" });
     setBusy(false);
-    if (verifyError) setError(verifyError.message);
+    if (verifyError) setError(errorKey(verifyError));
+  }
+
+  /**
+   * Jen číslice a nejvýš šest. Vložený kód „482 915“ nebo s tečkou za ním
+   * se tak nerozbije a po poslední číslici se rovnou ověří.
+   */
+  function changeCode(value: string) {
+    const digits = value.replace(/\D/g, "").slice(0, CODE_LENGTH);
+    setCode(digits);
+    if (error === "errorCode") setError(null);
+    if (digits.length === CODE_LENGTH) void verify(digits);
   }
 
   return (
@@ -53,28 +108,46 @@ export function SignIn() {
       <p className="text-ink-soft mt-1.5 text-label">{t("signedOutBody")}</p>
 
       {sent ? (
-        <div className="mt-5">
-          <p className="text-label">{t("codeSent", { email })}</p>
+        <form
+          className="mt-5"
+          onSubmit={(event) => {
+            event.preventDefault();
+            void verify(code);
+          }}
+        >
+          <p className="text-label">{t("codeSent", { email: email.trim() })}</p>
+          <p className="text-ink-soft mt-1 mb-4 text-label">{t("codeHint", { minutes: CODE_VALID_MINUTES })}</p>
           <Field
             label={t("code")}
             value={code}
-            onChange={setCode}
+            onChange={changeCode}
             inputMode="numeric"
             autoComplete="one-time-code"
+            autoFocus
           />
-          <Primary onClick={verify} disabled={busy || code.trim().length < 6}>
+          <Primary onClick={() => void verify(code)} disabled={busy || code.length !== CODE_LENGTH}>
             {t("verify")}
           </Primary>
-          <button
-            type="button"
-            onClick={() => { setSent(false); setCode(""); }}
-            className="text-accent mt-3 min-h-11 text-label font-medium"
-          >
-            {t("otherEmail")}
-          </button>
-        </div>
+          <div className="mt-3 flex flex-wrap justify-between gap-x-4">
+            <button
+              type="button"
+              onClick={() => void send()}
+              disabled={busy || resendIn > 0}
+              className="text-accent min-h-11 text-label font-medium disabled:text-ink-soft"
+            >
+              {resendIn > 0 ? t("resendIn", { seconds: resendIn }) : t("resend")}
+            </button>
+            <button
+              type="button"
+              onClick={() => { setSent(false); setCode(""); setError(null); }}
+              className="text-accent min-h-11 text-label font-medium"
+            >
+              {t("otherEmail")}
+            </button>
+          </div>
+        </form>
       ) : (
-        <div className="mt-5">
+        <form className="mt-5" onSubmit={send}>
           <Field
             label={t("email")}
             value={email}
@@ -82,13 +155,17 @@ export function SignIn() {
             inputMode="email"
             autoComplete="email"
           />
-          <Primary onClick={send} disabled={busy || !email.includes("@")}>
+          <Primary onClick={() => void send()} disabled={busy || !email.includes("@")}>
             {t("sendCode")}
           </Primary>
-        </div>
+        </form>
       )}
 
-      {error ? <p className="text-danger mt-3 text-label">{error}</p> : null}
+      {error ? (
+        <p role="alert" className="text-danger mt-3 text-label">
+          {t(error)}
+        </p>
+      ) : null}
     </section>
   );
 }
@@ -100,6 +177,7 @@ export function Field({
   inputMode,
   autoComplete,
   placeholder,
+  autoFocus,
 }: {
   label: string;
   value: string;
@@ -107,6 +185,7 @@ export function Field({
   inputMode?: "email" | "numeric" | "text";
   autoComplete?: string;
   placeholder?: string;
+  autoFocus?: boolean;
 }) {
   return (
     <label className="block">
@@ -117,6 +196,8 @@ export function Field({
         inputMode={inputMode}
         autoComplete={autoComplete}
         placeholder={placeholder}
+        autoFocus={autoFocus}
+        type={inputMode === "email" ? "email" : "text"}
         autoCapitalize="none"
         autoCorrect="off"
         spellCheck={false}

@@ -124,15 +124,24 @@ z obrazovky. Našel tím ještě převod mg → g v D2, zamlčený strop dávky
 v D3, limit v B3 zaokrouhlený na celé a neescapované `\;` v osmi
 šablonách.
 
+**Přihlašovací e-maily** — Supabase posílal výchozí šablonu jen s odkazem,
+a ten by na iPhonu otevřel Safari s odděleným úložištěm. Kódy teď chodí
+přes vlastní SMTP (Email Profi, doména lukasgurecky.cz se SPF, DKIM
+a DMARC; ověřeno na cizím serveru: SPF i DKIM pass). Šablony jsou
+v `scripts/supabase/auth-emails.mjs` a nahrávají se odtud, ne v dashboardu.
+Kód má šest číslic, platí 15 minut a stojí i v předmětu, takže ho iPhone
+nabídne nad klávesnicí; pole po šesté číslici přihlásí samo.
+
 ## Co dělat dál
 
 1. **Doladit výraz podle zpětné vazby.** Směr je nastavený, čeká se,
    co bude na telefonu drhnout.
 2. **Zkouška na skutečném iPhonu.** Všechno je zatím ověřené jen
    ve WebKitu na rozměrech telefonu, ne na zařízení.
-3. **Vlastní SMTP.** Přihlašovací kódy chodí přes vestavěné SMTP
-   Supabase, které má tvrdý limit několika e-mailů za hodinu. Na ostrý
-   provoz to nestačí.
+3. **Sledovat limity odesílání.** Kódy chodí přes Email Profi
+   (smtp.seznam.cz) ze schránky miligram@lukasgurecky.cz. Seznam limity
+   pro schránky nezveřejňuje; kdyby kódy přestaly chodit, přesunout
+   odesílání na transakční službu (Resend) — mění se jen SMTP údaje.
 4. **Ověřit ligu na skutečném provozu.** Postup a sestup se počítají až
    při první lekci v novém týdnu, takže se to pozná nejdřív za týden.
 5. **Revize slovenštiny rodilým mluvčím.** Texty jsou napsané, ne
