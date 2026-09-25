@@ -363,7 +363,7 @@
     "signedOutBody": "Bez něj funguje všechno kromě žebříčku a soubojů. Postup zůstává v telefonu i tak.",
     "email": "E-mail",
     "sendCode": "Poslat kód",
-    "codeSent": "Poslali jsme šestimístný kód na {email}.",
+    "codeSent": "Šestimístný kód jsme poslali na <strong>{email}</strong>.",
     "code": "Kód z e-mailu",
     "verify": "Přihlásit",
     "codeHint": "Platí {minutes} minut. Když do minuty nepřijde, podívej se i do spamu.",

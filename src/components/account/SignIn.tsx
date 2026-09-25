@@ -5,6 +5,8 @@ import { useTranslations } from "next-intl";
 import type { AuthError } from "@supabase/supabase-js";
 import { useLocale } from "@/i18n/LocaleProvider";
 import { supabase } from "@/lib/supabase";
+import { MailCheckIcon } from "@/components/icons";
+import { CodeInput } from "./CodeInput";
 
 /**
  * Délka a platnost kódu. Musí sedět s nastavením v Supabase, které nahrává
@@ -56,6 +58,7 @@ export function SignIn() {
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState<ErrorKey | null>(null);
   const [resendIn, setResendIn] = useState(0);
+  const [failedAttempts, setFailedAttempts] = useState(0);
 
   useEffect(() => {
     if (resendIn <= 0) return;
@@ -92,7 +95,10 @@ export function SignIn() {
     setError(null);
     const { error: verifyError } = await client.auth.verifyOtp({ email: email.trim(), token, type: "email" });
     setBusy(false);
-    if (verifyError) setError(errorKey(verifyError));
+    if (verifyError) {
+      setError(errorKey(verifyError));
+      setFailedAttempts((count) => count + 1);
+    }
   }
 
   /**
@@ -119,16 +125,31 @@ export function SignIn() {
             void verify(code);
           }}
         >
-          <p className="text-label">{t("codeSent", { email: email.trim() })}</p>
-          <p className="text-ink-soft mt-1 mb-4 text-label">{t("codeHint", { minutes: CODE_VALID_MINUTES })}</p>
-          <Field
-            label={t("code")}
-            value={code}
-            onChange={changeCode}
-            inputMode="numeric"
-            autoComplete="one-time-code"
-            autoFocus
-          />
+          <div className="animate-tick bg-accent-wash rounded-panel flex gap-3 p-4">
+            <MailCheckIcon className="text-accent mt-0.5 size-6 shrink-0" />
+            <div className="min-w-0">
+              <p className="text-label">
+                {t.rich("codeSent", {
+                  email: email.trim(),
+                  strong: (chunks) => <strong className="font-semibold [overflow-wrap:anywhere]">{chunks}</strong>,
+                })}
+              </p>
+              <p className="text-ink-soft mt-1 text-label">{t("codeHint", { minutes: CODE_VALID_MINUTES })}</p>
+            </div>
+          </div>
+          <div className="mt-6">
+            <CodeInput
+              label={t("code")}
+              value={code}
+              onChange={changeCode}
+              length={CODE_LENGTH}
+              invalid={error === "errorCode"}
+              pending={busy}
+              attempt={failedAttempts}
+              describedBy={error ? "sign-in-error" : undefined}
+            />
+            {error ? <ErrorMessage text={t(error)} /> : null}
+          </div>
           <Primary onClick={() => void verify(code)} disabled={busy || code.length !== CODE_LENGTH}>
             {t("verify")}
           </Primary>
@@ -165,12 +186,17 @@ export function SignIn() {
         </form>
       )}
 
-      {error ? (
-        <p role="alert" className="text-danger mt-3 text-label">
-          {t(error)}
-        </p>
-      ) : null}
+      {error && !sent ? <ErrorMessage text={t(error)} /> : null}
     </section>
+  );
+}
+
+/** Hláška patří k poli, kterého se týká — u kódu hned pod políčka. */
+function ErrorMessage({ text }: { text: string }) {
+  return (
+    <p id="sign-in-error" role="alert" className="text-danger mt-3 text-label">
+      {text}
+    </p>
   );
 }
 
@@ -186,7 +212,7 @@ export function Field({
   label: string;
   value: string;
   onChange: (value: string) => void;
-  inputMode?: "email" | "numeric" | "text";
+  inputMode?: "email" | "text";
   autoComplete?: string;
   placeholder?: string;
   autoFocus?: boolean;
@@ -205,11 +231,7 @@ export function Field({
         autoCapitalize="none"
         autoCorrect="off"
         spellCheck={false}
-        /* Číselný kód se píše strojopisem — číslice mají stejnou šířku,
-           takže se dá při opisování z e-mailu hlídat pozice. */
-        className={`border-line bg-paper rounded-readout mt-1.5 min-h-12 w-full border px-3 text-body ${
-          inputMode === "numeric" ? "readout tracking-[0.3em]" : ""
-        }`}
+        className="border-line bg-paper rounded-readout mt-1.5 min-h-12 w-full border px-3 text-body"
       />
     </label>
   );

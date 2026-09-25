@@ -249,7 +249,40 @@
   to { opacity: 1; transform: none; }
 }
 
+/* Kurzor v políčku kódu. Skokem, ne plynule — tak bliká textový kurzor. */
+@keyframes caret-blink {
+  0%, 50% { opacity: 1; }
+  50.01%, 100% { opacity: 0; }
+}
+
+/* Špatný kód: krátké zavrtění, jak to dělá zamčený telefon. */
+@keyframes code-shake {
+  0%, 100% { transform: none; }
+  20% { transform: translateX(-6px); }
+  40% { transform: translateX(5px); }
+  60% { transform: translateX(-3px); }
+  80% { transform: translateX(2px); }
+}
+
+/* Ověřování: políčka tiše pulzují, dokud server neodpoví. */
+@keyframes code-pending {
+  0%, 100% { border-color: var(--color-accent); }
+  50% { border-color: var(--color-accent-wash-press); }
+}
+
 @layer utilities {
+  .animate-caret {
+    animation: caret-blink 1s infinite;
+  }
+
+  .animate-shake {
+    animation: code-shake 320ms var(--ease-standard);
+  }
+
+  .animate-pending {
+    animation: code-pending 900ms var(--ease-standard) infinite;
+  }
+
   .animate-accept {
     animation: readout-accept 220ms var(--ease-decel) both;
   }

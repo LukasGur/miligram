@@ -363,7 +363,7 @@
     "signedOutBody": "Bez neho funguje všetko okrem rebríčka a súbojov. Postup zostáva v telefóne aj tak.",
     "email": "E-mail",
     "sendCode": "Poslať kód",
-    "codeSent": "Poslali sme šesťmiestny kód na {email}.",
+    "codeSent": "Šesťmiestny kód sme poslali na <strong>{email}</strong>.",
     "code": "Kód z e-mailu",
     "verify": "Prihlásiť",
     "codeHint": "Platí {minutes} minút. Keď do minúty nepríde, pozri sa aj do spamu.",
