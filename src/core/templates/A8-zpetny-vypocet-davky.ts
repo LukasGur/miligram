@@ -25,9 +25,13 @@ export const A8 = register({
      * se nedohledává 10 ml depotního neuroleptika, ale to, co se skutečně
      * podává. Na třetí úrovni se odpověď chce v gramech, takže jen dávky
      * od 100 mg; menší by v gramech vycházely jako 0,0005 g.
+     *
+     * Dávka se nesmí rovnat síle v referenčním objemu — „10 mg v 1 ml,
+     * podán 1 ml“ má odpověď přímo v zadání a nic se nepočítá.
      */
     const kind = rng.pick(["ampoule", "oralLiquid"] as const);
     const { item, doseMg } = pickDose(rng, dosedProducts(kind), (dose, candidate) =>
+      Math.abs(dose - candidate.product.strength) > 1e-9 &&
       roundVolume(dose, candidate, 0.01) &&
       (difficulty !== 1 || roundVolume(dose, candidate, 0.5)) &&
       (difficulty !== 3 || dose >= 100),
@@ -57,9 +61,9 @@ export const A8 = register({
     return {
       value,
       steps: [
-        given(`${q(Number(vars.strengthMg), "mg", 3)} / ${q(Number(vars.referenceMl), "ml", 1)}`, q(givenMl, "ml", 1)),
+        given(`${q(Number(vars.strengthMg), "mg", 3)} / ${q(Number(vars.referenceMl), "ml", 1)}`, q(givenMl, "ml", 2)),
         formula(`m = c \\times V`),
-        substitute(`m = ${q(concentration, "mg/ml", 3)} \\times ${q(givenMl, "ml", 1)}`, q(doseMg, "mg", 2)),
+        substitute(`m = ${q(concentration, "mg/ml", 3)} \\times ${q(givenMl, "ml", 2)}`, q(doseMg, "mg", 2)),
         ...(difficulty === 3
           ? [substitute(`m = ${q(doseMg, "mg", 2)} = ${q(value, "g", 4)}`)]
           : []),

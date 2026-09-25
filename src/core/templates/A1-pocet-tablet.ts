@@ -5,11 +5,14 @@ import type { Solution, Vars } from "../types";
 import { formula, frac, given, q, result, substitute, tex, unit } from "./helpers";
 import { register, SUKL_DLP } from "./registry";
 
-/** Násobky síly tablety, které dávají dělitelnou dávku. */
+/**
+ * Násobky síly tablety, které dávají dělitelnou dávku. Jednička mezi nimi
+ * není: „tablety po 550 mg, ordinace 550 mg“ má odpověď přímo v zadání.
+ */
 const MULTIPLES = {
-  1: [1, 2] as const,
+  1: [2, 3] as const,
   2: [0.5, 1.5, 2, 3] as const,
-  3: [0.5, 1, 1.5, 2] as const,
+  3: [0.5, 1.5, 2, 3] as const,
 };
 
 /**

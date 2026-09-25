@@ -85,3 +85,25 @@ describe("A — základní dávkování", () => {
     }
   });
 });
+
+/**
+ * „Tablety po 550 mg, ordinace 550 mg“ nebo „10 mg v 1 ml, podán 1 ml“
+ * mají odpověď přímo v zadání. Obecný test na prozrazený výsledek hlásí
+ * až soustavnou shodu, tady nesmí projít ani jedno semínko.
+ */
+describe("A — žádný příklad bez počítání", () => {
+  const ALL = Array.from({ length: 200 }, (_, i) => `t${i}`);
+
+  it.each([1, 2, 3] as Difficulty[])("A1 na obtížnosti %i není jedna celá tableta", (difficulty) => {
+    for (const seed of ALL) {
+      expect(buildExercise("A1", seed, difficulty).solution.value).not.toBe(1);
+    }
+  });
+
+  it.each([1, 2, 3] as Difficulty[])("A8 na obtížnosti %i nepodává přesně referenční objem", (difficulty) => {
+    for (const seed of ALL) {
+      const { vars } = buildExercise("A8", seed, difficulty);
+      expect(Number(vars.givenMl)).not.toBe(Number(vars.referenceMl));
+    }
+  });
+});
