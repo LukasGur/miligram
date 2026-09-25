@@ -3,10 +3,11 @@
 import { useEffect, useRef } from "react";
 import { useTranslations } from "next-intl";
 import { useLocale } from "@/i18n/LocaleProvider";
-import { useLocalValue, useStandalone } from "@/lib/clientState";
+import { useLocalValue } from "@/lib/clientState";
 import { STORAGE_KEYS, writeLocal } from "@/lib/localStore";
 import { primeSound, chime } from "@/lib/sound";
 import { CheckIcon, CloseIcon } from "./icons";
+import { InstallSteps, useInstallOffer } from "./InstallBanner";
 
 const APP_VERSION = "0.1.0";
 
@@ -16,7 +17,7 @@ export function SettingsSheet({ open, onClose }: { open: boolean; onClose: () =>
   const tLocale = useTranslations("locale");
   const tInstall = useTranslations("install");
   const { locale, setLocale, available } = useLocale();
-  const standalone = useStandalone();
+  const installOffer = useInstallOffer();
   const acceptedAt = useLocalValue(STORAGE_KEYS.disclaimerAcceptedAt);
   const soundOn = useLocalValue(STORAGE_KEYS.sound) !== "off";
   const closeRef = useRef<HTMLButtonElement>(null);
@@ -121,11 +122,29 @@ export function SettingsSheet({ open, onClose }: { open: boolean; onClose: () =>
             </button>
           </Section>
 
-          <Section title={t("install")}>
-            <p className="text-ink-soft text-label">
-              {standalone ? tInstall("installed") : tInstall("notInstalled")}
-            </p>
-          </Section>
+          {/* Jen v prohlížeči: z plochy není co nabízet. Lišta se po zavření
+              na dva týdny schová, tady je postup k nalezení pořád. */}
+          {installOffer ? (
+            <Section title={t("install")}>
+              {installOffer.prompt ? (
+                <>
+                  <p className="text-ink-soft text-label">{tInstall("installBody")}</p>
+                  <button
+                    type="button"
+                    onClick={() => void installOffer.install()}
+                    className="bg-accent active:bg-accent-press mt-3 min-h-11 rounded-control px-4 text-label font-semibold text-white"
+                  >
+                    {tInstall("installAction")}
+                  </button>
+                </>
+              ) : (
+                <>
+                  <p className="text-ink-soft text-label">{tInstall("installBody")}</p>
+                  <InstallSteps platform={installOffer.platform} className="mt-2 text-label" />
+                </>
+              )}
+            </Section>
+          ) : null}
 
           <Section title={t("legal")}>
             <p className="text-body font-medium">{tDisclaimer("lead")}</p>

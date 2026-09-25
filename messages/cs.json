@@ -27,9 +27,7 @@
     "installTitle": "Nainstalovat Miligram",
     "installBody": "Aplikace se přidá na plochu a funguje bez internetu.",
     "installAction": "Nainstalovat",
-    "dismiss": "Teď ne",
-    "installed": "Nainstalováno na ploše",
-    "notInstalled": "Běží v prohlížeči"
+    "dismiss": "Teď ne"
   },
   "network": {
     "offline": "Offline — aplikace funguje dál",
