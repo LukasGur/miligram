@@ -9,6 +9,13 @@
 export const XP_PER_CORRECT = 10;
 export const XP_FLAWLESS_BONUS = 20;
 
+/**
+ * Druh lekce. Opakování chyb ze statistik je často jediný příklad —
+ * s bonusem za lekci bez chyby by vyneslo skoro tolik co celá lekce.
+ * Počítá se mu proto jen XP za příklady, bonus ne.
+ */
+export type LessonKind = "lesson" | "review";
+
 export type LessonResult = {
   count: number;
   correct: number;
@@ -16,7 +23,7 @@ export type LessonResult = {
   xp: number;
 };
 
-export function scoreLesson(answers: readonly boolean[]): LessonResult {
+export function scoreLesson(answers: readonly boolean[], kind: LessonKind = "lesson"): LessonResult {
   const correct = answers.filter(Boolean).length;
   // Bonus je za lekci bez chyby, ne za plný počet bodů — na tom záleží
   // ve chvíli, kdy lekce skončí předčasně.
@@ -25,6 +32,6 @@ export function scoreLesson(answers: readonly boolean[]): LessonResult {
     count: answers.length,
     correct,
     flawless,
-    xp: correct * XP_PER_CORRECT + (flawless ? XP_FLAWLESS_BONUS : 0),
+    xp: correct * XP_PER_CORRECT + (flawless && kind === "lesson" ? XP_FLAWLESS_BONUS : 0),
   };
 }

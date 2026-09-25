@@ -56,7 +56,7 @@ export async function fetchLessons(
   for (let from = 0; ; from += PAGE) {
     let query = client
       .from("lesson_events")
-      .select("lesson_id, answers, finished_at")
+      .select("lesson_id, kind, answers, finished_at")
       .eq("user_id", userId);
     // Hranice je včetně: lekce se stejným časem by při ostrém větším
     // propadla. Znovu stažená lekce nevadí, slučuje se podle lessonId.
@@ -72,6 +72,7 @@ export async function fetchLessons(
       ...page.map((row) => ({
         lessonId: row.lesson_id,
         finishedAt: row.finished_at,
+        kind: row.kind === "review" ? ("review" as const) : ("lesson" as const),
         answers: (row.answers as RemoteLesson["answers"]) ?? [],
       })),
     );

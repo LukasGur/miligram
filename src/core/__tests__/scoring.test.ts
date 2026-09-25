@@ -19,6 +19,12 @@ describe("skóre lekce", () => {
     expect(scoreLesson(answers).xp).toBe(6 * XP_PER_CORRECT);
   });
 
+  it("opakování chyb bonus nedostane, i když je bez chyby", () => {
+    const result = scoreLesson([true], "review");
+    expect(result.flawless).toBe(true);
+    expect(result.xp).toBe(XP_PER_CORRECT);
+  });
+
   it("prázdná lekce není bezchybná", () => {
     expect(scoreLesson([])).toEqual({ count: 0, correct: 0, flawless: false, xp: 0 });
   });

@@ -28,6 +28,7 @@ function lekce(lessonId: string, den: string, correct = 7): RemoteLesson {
   return {
     lessonId,
     finishedAt: poledne(den),
+    kind: "lesson",
     answers: Array.from({ length: 7 }, (_, index) => odpoved(index < correct, index)),
   };
 }
@@ -128,6 +129,14 @@ describe("obnova historie", () => {
 
     expect(result.xp).toBe(30);
     expect((await db().lessons.toArray())[0]).toMatchObject({ count: 1, correct: 1, flawless: true });
+  });
+
+  it("opakování chyb se obnoví bez bonusu, stejně jak ho počítá server", async () => {
+    const result = await restoreLessons(
+      gateway([{ ...lekce("a", "2026-09-10"), kind: "review", answers: [odpoved(true)] }]),
+    );
+
+    expect(result.xp).toBe(10);
   });
 });
 

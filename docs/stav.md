@@ -102,8 +102,15 @@ událost do fronty `outbox`, ze které bude čerpat synchronizace.
 
 **Fáze 7, statistiky a tréninkové režimy** — přehled z uložených
 odpovědí, úspěšnost podle látky, opakování chyb a trénink jedné
-kategorie. Opakování předloží tentýž příklad se stejnými čísly; to je
-celý důvod, proč generátor stojí na semínkách.
+kategorie. Opakování předloží tentýž výpočet s jinými čísly, ať nestačí
+si zapamatovat výsledek.
+
+**Opakování chyb bez bonusu** (25. 9. 2026) — opakování ze statistik
+bývá jediný příklad a s bonusem za lekci bez chyby vyneslo 30 XP
+a 12 pastilek, skoro jako celá lekce. Plán lekce teď nese `kind: "review"`
+a bonus se mu nepočítá, jen 10 XP a 2 pastilky za příklad. Série a počet
+lekcí se nemění. Server to ví ze sloupce `lesson_events.kind` (migrace
+0007); starší verze aplikace ho neposílají a počítají se jako dosud.
 
 **Program** — učivo v osmi stupních v pořadí opsaném z praktických
 cvičení Ústavu farmakologie LF UP (Farmakologie 1 a 2; sylaby

@@ -1,4 +1,4 @@
-import { scoreLesson, type LessonResult } from "./scoring";
+import { scoreLesson, type LessonKind, type LessonResult } from "./scoring";
 
 /**
  * Ekonomika: pastilky a série.
@@ -91,10 +91,10 @@ export function currentStreak(state: StreakState, today = localDay()): number {
 
 export type LessonReward = LessonResult & { pills: number };
 
-export function rewardForLesson(answers: readonly boolean[]): LessonReward {
-  const result = scoreLesson(answers);
+export function rewardForLesson(answers: readonly boolean[], kind: LessonKind = "lesson"): LessonReward {
+  const result = scoreLesson(answers, kind);
   return {
     ...result,
-    pills: result.correct * PILLS_PER_CORRECT + (result.flawless ? PILLS_FLAWLESS_BONUS : 0),
+    pills: result.correct * PILLS_PER_CORRECT + (result.flawless && kind === "lesson" ? PILLS_FLAWLESS_BONUS : 0),
   };
 }

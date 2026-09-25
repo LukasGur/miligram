@@ -2,6 +2,7 @@ import Dexie, { type Table } from "dexie";
 import type { StageId } from "@/core/curriculum";
 import { PILLS_PER_CORRECT, advanceStreak, localDay, type StreakState } from "@/core/economy";
 import type { LessonPlan } from "@/core/lessonPlan";
+import type { LessonKind } from "@/core/scoring";
 
 /**
  * Lokální databáze.
@@ -304,6 +305,8 @@ export async function readProfile(): Promise<Profile> {
 
 export type FinishedLesson = {
   lessonId: string;
+  /** Opakování chyb jde na server označené — bez toho by mu přičetl bonus. */
+  kind?: LessonKind;
   /** Odpovědi v pořadí, v jakém se příklady zobrazily. */
   answers: readonly AnsweredItem[];
   reward: { xp: number; pills: number; correct: number; count: number; flawless: boolean };
@@ -476,6 +479,7 @@ export async function recordLesson(lesson: FinishedLesson, now = new Date()): Pr
       type: "lessonFinished",
       payload: {
         lessonId: lesson.lessonId,
+        kind: lesson.kind ?? "lesson",
         answers: lesson.answers.map((answer) => ({
           templateId: answer.templateId,
           seed: answer.seed,

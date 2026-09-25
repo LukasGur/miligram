@@ -1,5 +1,5 @@
 import { advanceStreak, localDay, type StreakState } from "@/core/economy";
-import { scoreLesson } from "@/core/scoring";
+import { scoreLesson, type LessonKind } from "@/core/scoring";
 import { db, PROFILE_ID, emptyProfile, type AnswerRecord, type LessonRecord } from "./db";
 
 /**
@@ -20,6 +20,7 @@ import { db, PROFILE_ID, emptyProfile, type AnswerRecord, type LessonRecord } fr
 export type RemoteLesson = {
   lessonId: string;
   finishedAt: string;
+  kind: LessonKind;
   answers: readonly {
     templateId: string;
     seed: string;
@@ -62,7 +63,10 @@ export async function restoreLessons(gateway: RestoreGateway, since?: string): P
     const answers: AnswerRecord[] = [];
     const lessons: LessonRecord[] = [];
     for (const lesson of fresh) {
-      const score = scoreLesson(lesson.answers.map((answer) => answer.correct));
+      const score = scoreLesson(
+        lesson.answers.map((answer) => answer.correct),
+        lesson.kind,
+      );
       lessons.push({
         lessonId: lesson.lessonId,
         count: score.count,

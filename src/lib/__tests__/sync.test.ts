@@ -52,8 +52,29 @@ describe("odeslání fronty", () => {
     const { gateway, received } = fakeGateway();
 
     expect(await syncOutbox(gateway)).toEqual({ sent: 1, pending: 0 });
-    expect(received[0][0]).toMatchObject({ lesson_id: "abc" });
+    expect(received[0][0]).toMatchObject({ lesson_id: "abc", kind: "lesson" });
     expect(received[0][0].answers).toHaveLength(1);
+  });
+
+  it("opakování chyb jde na server označené, ať mu nepřičte bonus", async () => {
+    await recordLesson({ ...LESSON, kind: "review" });
+    const { gateway, received } = fakeGateway();
+
+    await syncOutbox(gateway);
+    expect(received[0][0]).toMatchObject({ kind: "review" });
+  });
+
+  it("událost z doby před druhy lekcí se pošle jako lekce", async () => {
+    await db().outbox.add({
+      uid: "stara",
+      type: "lessonFinished",
+      payload: { lessonId: "stara", answers: LESSON.answers },
+      createdAt: new Date().toISOString(),
+    });
+    const { gateway, received } = fakeGateway();
+
+    await syncOutbox(gateway);
+    expect(received[0][0]).toMatchObject({ kind: "lesson" });
   });
 
   it("podruhé už nemá co poslat", async () => {

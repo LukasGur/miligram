@@ -1,3 +1,4 @@
+import type { LessonKind } from "./scoring";
 import type { Difficulty } from "./types";
 
 /**
@@ -32,6 +33,12 @@ export const REVIEW_SLOTS: readonly number[] = [2, 5];
 
 export type LessonPlan = {
   id: string;
+  /**
+   * Opakování chyb ze statistik nedostává bonus za lekci bez chyby.
+   * Drží se v plánu, aby to platilo i po návratu k rozehrané lekci.
+   * Chybí-li, je to běžná lekce.
+   */
+  kind?: LessonKind;
   items: readonly {
     templateId: string;
     seed: string;

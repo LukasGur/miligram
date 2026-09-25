@@ -4,6 +4,7 @@ import { useEffect, useMemo, useRef, useState, type Ref } from "react";
 import { useFormatter, useTranslations } from "next-intl";
 import { HINT_COST, PILLS_PER_CORRECT, rewardForLesson } from "@/core/economy";
 import { lessonExercise, resolvePlan, type LessonPlan } from "@/core/lesson";
+import type { LessonKind } from "@/core/scoring";
 import type { DailySpec } from "@/core/curriculum";
 import { attemptsOn, firstTryOutcomes, nextIndex, solvedCount } from "@/core/lessonRun";
 import { recordAnswer, recordLesson, spendPills, type LessonAttempt } from "@/lib/db";
@@ -94,6 +95,7 @@ export function LessonView({
     return (
       <LessonSummary
         outcomes={firstTryOutcomes(plan, attempts)}
+        kind={plan.kind}
         unsolved={plan.items.length - solved}
         walletBefore={walletBefore}
         onExit={onExit}
@@ -155,9 +157,10 @@ export function LessonView({
           recorded.current = true;
           setWalletBefore(profile.pills + pending + credit);
           const outcomes = firstTryOutcomes(plan, next);
-          const reward = rewardForLesson(outcomes);
+          const reward = rewardForLesson(outcomes, plan.kind);
           void recordLesson({
             lessonId,
+            kind: plan.kind,
             // Na server jde jeden záznam na příklad a v něm první pokus.
             // Opakování je na učení; kdyby se posílalo, přičetlo by XP.
             answers: plan.items.map((item, position) => ({
@@ -239,6 +242,7 @@ const PER_FLYER = 2;
 
 function LessonSummary({
   outcomes,
+  kind,
   unsolved,
   walletBefore,
   onExit,
@@ -246,6 +250,7 @@ function LessonSummary({
 }: {
   /** Jak dopadl první pokus u každého příkladu. Odměna je z toho. */
   outcomes: readonly boolean[];
+  kind?: LessonKind;
   /** Kolik příkladů student vzdal. Bez toho nedává denní cíl smysl. */
   unsolved: number;
   /**
@@ -260,7 +265,7 @@ function LessonSummary({
   const tHome = useTranslations("home");
   const format = useFormatter();
   const { profile } = useProfile();
-  const reward = useMemo(() => rewardForLesson(outcomes), [outcomes]);
+  const reward = useMemo(() => rewardForLesson(outcomes, kind), [outcomes, kind]);
   const earned = reward.correct * PILLS_PER_CORRECT;
   const bonus = reward.pills - earned;
 

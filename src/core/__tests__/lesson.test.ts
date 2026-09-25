@@ -82,6 +82,9 @@ describe("tréninkové režimy", () => {
     expect(after.templateId).toBe(before.templateId);
     // Zapamatovat si výsledek nestačí: čísla jsou jiná.
     expect(after.vars).not.toEqual(before.vars);
+    // Bez bonusu za lekci bez chyby — jediný příklad by vynesl skoro jako celá lekce.
+    expect(repeat.kind).toBe("review");
+    expect(original.kind).toBeUndefined();
   });
 
   it("prázdné opakování je chyba, ne prázdná lekce", () => {

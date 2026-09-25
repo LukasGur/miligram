@@ -1,3 +1,4 @@
+import type { LessonKind } from "@/core/scoring";
 import { db, type OutboxEvent } from "./db";
 
 /**
@@ -13,6 +14,7 @@ import { db, type OutboxEvent } from "./db";
 export type LessonEventRow = {
   client_event_id: string;
   lesson_id: string;
+  kind: LessonKind;
   answers: unknown;
   finished_at: string;
 };
@@ -63,13 +65,15 @@ export async function syncOutbox(gateway: SyncGateway): Promise<SyncResult> {
  * kupovat něco, co má platit napříč zařízeními.
  */
 function toRow(event: OutboxEvent): LessonEventRow {
-  const payload = event.payload as { lessonId?: string; answers?: unknown };
+  // Události z doby před opakováním chyb druh nemají — byly to lekce.
+  const payload = event.payload as { lessonId?: string; kind?: LessonKind; answers?: unknown };
   return {
     // Identita je uid, ne pořadové číslo. Server zahazuje duplicity podle
     // (uživatel, client_event_id) a pořadová čísla se po přeinstalaci i na
     // druhém zařízení opakují — lekce by tiše zmizela.
     client_event_id: event.uid,
     lesson_id: String(payload.lessonId ?? ""),
+    kind: payload.kind ?? "lesson",
     answers: payload.answers ?? [],
     finished_at: event.createdAt,
   };

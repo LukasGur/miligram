@@ -104,4 +104,10 @@ describe("prášky za lekci", () => {
     expect(reward.pills).toBe(6 * PILLS_PER_CORRECT);
     expect(reward.xp).toBe(60);
   });
+
+  it("opakování chyb dá jen pastilky za příklady, bonus ne", () => {
+    const reward = rewardForLesson([true], "review");
+    expect(reward.pills).toBe(PILLS_PER_CORRECT);
+    expect(reward.xp).toBe(10);
+  });
 });

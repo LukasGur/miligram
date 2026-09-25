@@ -103,6 +103,7 @@ export function planFromItems(
   if (items.length === 0) throw new Error("Lekce potřebuje aspoň jeden příklad.");
   return {
     id: lessonId,
+    kind: "review",
     items: items.map((item, index) => ({
       templateId: item.templateId,
       seed: `${lessonId}:${index}`,
