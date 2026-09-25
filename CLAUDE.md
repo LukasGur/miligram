@@ -27,20 +27,22 @@ export, offline-first. Podrobnosti k příkazům a struktuře jsou v README.md.
 
 ## Ekonomika: dvě veličiny, ne jedna
 
-- **Prášky** — měna. Utrácejí se za nápovědy a ochranu série.
+- **Pastilky** — měna. Utrácejí se za nápovědy a ochranu série. V kódu
+  a v databázi se pořád jmenují `pills` (dřív „prášky“); přejmenovaly se
+  jen texty a ikona, data zůstala.
 - **XP** — skóre. Nedá se utratit, slouží k řazení týdenní ligy
   a žebříčku přátel (celkové i týdenní XP).
 
-Důvod pro rozdělení: kdyby se liga řadila podle prášků, každá vzatá
+Důvod pro rozdělení: kdyby se liga řadila podle pastilek, každá vzatá
 nápověda by uživatele srazila v žebříčku a lidé by se vysvětlením
 vyhýbali. XP drží záznam odvedené práce nezávisle na útratě.
 
 Zisk XP: **10 za příklad správně napoprvé, +20 za lekci bez chyby.**
 Chybný příklad se v lekci vrací, dokud ho student nespočítá — lekce je
 hotová, až vyjde všech sedm. Opakování se ale do odměny nepočítá: XP
-i prášky jsou za první pokus, jinak by se skóre dalo nasbírat chybováním.
+i pastilky jsou za první pokus, jinak by se skóre dalo nasbírat chybováním.
 
-Zisk prášků: **2 za příklad správně napoprvé, +10 za lekci bez chyby.**
+Zisk pastilek: **2 za příklad správně napoprvé, +10 za lekci bez chyby.**
 Útrata: nápověda 15, ochrana série 60 (nejvýš dvě naráz).
 
 ## Kde jsme
@@ -53,7 +55,7 @@ Aktuální stav a co dělat dál je v `docs/stav.md`.
 2. Výpočetní jádro — hotové `src/core` (jednotky, vzorce, tolerance,
    generátor, 59 testů); šablony čekají na schválení seznamu
 3. Design systém — klávesnice, obrazovka příkladu, moment vyhodnocení
-4. Gamifikace lokálně — Dexie, prášky, série, XP, nápovědy, odbytek
+4. Gamifikace lokálně — Dexie, pastilky, série, XP, nápovědy, odbytek
 5. Účet a sociální vrstva — Supabase, sync, přátelé, ligy, souboje
 6. Lokalizace — dokončení SK
 7. Statistiky a tréninkové režimy

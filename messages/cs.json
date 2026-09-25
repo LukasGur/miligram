@@ -40,7 +40,7 @@
     "start": "Začít lekci",
     "streak": "Série",
     "streakUnit": "{days, plural, =0 {dní} one {den} few {dny} other {dní}}",
-    "pills": "Prášky",
+    "pills": "Pastilky",
     "xp": "XP",
     "dailyGoal": "Dnešní cíl",
     "dailyDone": "Cíl splněn",
@@ -51,7 +51,7 @@
     "startFresh": "Začít novou lekci",
     "mix": "{stage, number} z tématu · {review, number} opakování",
     "mixOnly": "{stage, number} příkladů z tématu",
-    "supplies": "Zásoby"
+    "wallet": "{count, plural, one {# pastilka} few {# pastilky} other {# pastilek}} · otevřít zásoby"
   },
   "settings": {
     "title": "Nastavení",
@@ -64,8 +64,11 @@
     "storage": "Data",
     "storageHint": "Bez účtu zůstává všechno v tomhle zařízení. Nic se nikam neodesílá.",
     "storageSignedIn": "Jsi přihlášený, takže se na server odesílají dokončené lekce — které příklady padly a jestli byly správně. Z toho se počítá XP, žebříček a souboje.",
-    "storageStays": "V telefonu zůstávají prášky, série, rozehraná lekce a nastavení.",
-    "storageGifts": "Když daruješ ochranu série kamarádovi, server uvidí, kdo komu ji poslal."
+    "storageStays": "V telefonu zůstávají pastilky, série, rozehraná lekce a nastavení.",
+    "storageGifts": "Když daruješ ochranu série kamarádovi, server uvidí, kdo komu ji poslal.",
+    "sound": "Zvuk",
+    "soundToggle": "Zvuk pastilek při správné úloze",
+    "soundHint": "Cinkne, když spočítáš příklad napoprvé. Na iPhonu mlčí, když máš vypnuté zvonění."
   },
   "locale": {
     "cs": "Čeština",
@@ -353,8 +356,11 @@
     "fromMistake": "Opakování chyby",
     "giveUp": "Rozumím, jdu dál",
     "summaryUnsolved": "{count, plural, one {# příklad zůstal nespočítaný} few {# příklady zůstaly nespočítané} other {# příkladů zůstalo nespočítaných}} — vrátí se v opakování chyb.",
-    "hintPrice": "{cost, plural, one {# prášek} few {# prášky} other {# prášků}}",
-    "hintPoor": "Na nápovědu potřebuješ {cost, number} prášků."
+    "hintPrice": "{cost, plural, one {# pastilka} few {# pastilky} other {# pastilek}}",
+    "hintPoor": "Na nápovědu potřebuješ {cost, number} pastilek.",
+    "earned": "{count, plural, one {Získáváš # pastilku} few {Získáváš # pastilky} other {Získáváš # pastilek}}",
+    "flawlessBonus": "Za lekci bez chyby",
+    "walletAfter": "{count, plural, one {Máš # pastilku} few {Máš # pastilky} other {Máš # pastilek}}"
   },
   "account": {
     "title": "Účet",
@@ -426,7 +432,7 @@
     "giftAction": "Darovat ochranu série kamarádovi {handle}",
     "giftSent": "Ochrana série je na cestě. Kamarádovi se připíše, až otevře aplikaci.",
     "giftUsedUp": "Darovat jde jednou za týden. Další dar ti naskočí v pondělí.",
-    "giftPoor": "Na dar potřebuješ {cost, number} prášků.",
+    "giftPoor": "Na dar potřebuješ {cost, number} pastilek.",
     "giftRefused": "Dar neprošel. Darovat jde jen potvrzenému kamarádovi a až po první dohrané lekci.",
     "giftsTitle": "Dary",
     "giftFrom": "Ochrana série od {handle}"
@@ -435,7 +441,7 @@
     "freezeTitle": "Ochrana série",
     "freezeBody": "Pokryje jeden vynechaný den. Uplatní se sama, až se vrátíš.",
     "freezeOwned": "{count, plural, =0 {Žádná v zásobě} one {# v zásobě} other {# v zásobě}}",
-    "freezePoor": "Nemáš dost prášků",
+    "freezePoor": "Nemáš dost pastilek",
     "freezeFull": "Víc než {max, number} si držet nejde",
     "title": "Zásoby",
     "freezeBuyShort": "Koupit ochranu série"

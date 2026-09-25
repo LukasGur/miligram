@@ -2,10 +2,12 @@
 
 import { useState } from "react";
 import { useTranslations } from "next-intl";
-import { CalculatorIcon, CloseIcon, HintIcon, PillIcon } from "@/components/icons";
+import { CalculatorIcon, CloseIcon, HintIcon } from "@/components/icons";
+import { Pastille } from "@/components/ui/Pastille";
 import { pressable } from "@/lib/press";
 import { evaluateAnswer, parseAnswer, type Verdict } from "@/core/answer";
-import { HINT_COST } from "@/core/economy";
+import { HINT_COST, PILLS_PER_CORRECT } from "@/core/economy";
+import { chime, primeSound } from "@/lib/sound";
 import type { Exercise } from "@/core/types";
 import { useAnswerUnit, useExercisePrompt } from "@/i18n/exerciseText";
 import { AnswerDisplay } from "./AnswerDisplay";
@@ -70,7 +72,7 @@ export function ExerciseView({
   const canAfford = pills >= HINT_COST;
 
   /**
-   * Nápověda odkryje první krok řešení, ne výsledek. Prášky se strhnou
+   * Nápověda odkryje první krok řešení, ne výsledek. Pastilky se strhnou
    * až po potvrzení zápisu — kdyby se transakce nepovedla, uživatel
    * o ně nepřijde a nápovědu nedostane.
    */
@@ -86,8 +88,11 @@ export function ExerciseView({
 
   function check() {
     if (value === null) return;
+    // Zvuk se probouzí tady, v obsluze klepnutí — jinak ho iOS nepustí.
+    primeSound();
     const result = evaluateAnswer(value, exercise.solution.value, exercise.answer.tolerance);
     setVerdict(result);
+    if (result.correct && !repeat) chime();
     // Postup se u chyby otevře sám. Kdo se splete, potřebuje ho vidět,
     // ne po něm ještě sahat.
     setSolutionOpen(!result.correct);
@@ -153,7 +158,12 @@ export function ExerciseView({
 
           {verdict ? (
             <div className="mt-5">
-              <VerdictPanel exercise={exercise} verdict={verdict} unit={answerUnit(exercise)} answer={value} />
+              <div className="relative">
+                <VerdictPanel exercise={exercise} verdict={verdict} unit={answerUnit(exercise)} answer={value} />
+                {/* Odměna je za první pokus, takže u vráceného příkladu
+                    nevystoupá nic — ani „+0“, které by působilo jako trest. */}
+                {verdict.correct && !repeat ? <Earned count={PILLS_PER_CORRECT} /> : null}
+              </div>
 
               {/* Dvě akce vedle sebe, jedna přes celou šířku — mřížka s prázdným
                   místem po pravé straně vypadá jako chybějící tlačítko. */}
@@ -266,10 +276,28 @@ export function ExerciseView({
 }
 
 /**
+ * Pastilky za příklad. Vystoupají u „Správně“ a odezní: je to potvrzení,
+ * ne druhý verdikt, a hlavní signál musí zůstat „Správně“. Při vypnutém
+ * pohybu zůstanou stát.
+ */
+function Earned({ count }: { count: number }) {
+  const t = useTranslations("lesson");
+  return (
+    <span role="status" className="text-pill animate-rise absolute top-0 right-0 flex h-7 items-center gap-1 text-heading font-semibold">
+      <span className="readout" data-numeric aria-hidden>
+        +{count}
+      </span>
+      <Pastille className="size-6" />
+      <span className="sr-only">{t("earned", { count })}</span>
+    </span>
+  );
+}
+
+/**
  * Pomůcka k příkladu: kalkulačka nebo nápověda.
  *
  * Rámeček, ikona a popisek — vypadá to jako tlačítko, protože to tlačítko
- * je. Cena nápovědy je cenovka s ikonou prášku — stejný symbol jako
+ * je. Cena nápovědy je cenovka s pastilkou — stejný symbol jako
  * zůstatek na úvodní obrazovce, takže je jasné, v čem se platí, a holé
  * číslo se nedá přečíst jako část odpovědi nebo zadání.
  */
@@ -284,7 +312,7 @@ function Tool({
   icon: React.ReactNode;
   label: string;
   cost?: number;
-  /** Cena slovy pro odečítač: „15 prášků“. */
+  /** Cena slovy pro odečítač: „15 pastilek“. */
   costLabel?: string;
   pressed?: boolean;
   onPress: () => void;
@@ -305,7 +333,7 @@ function Tool({
       <span className="truncate">{label}</span>
       {cost === undefined ? null : (
         <span className="bg-pill-wash text-pill inline-flex shrink-0 items-center gap-1 rounded-full py-0.5 pl-1.5 pr-2">
-          <PillIcon className="size-3.5" />
+          <Pastille className="size-4" />
           <span className="num font-semibold" data-numeric aria-hidden>
             {cost}
           </span>

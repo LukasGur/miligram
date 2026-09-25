@@ -39,4 +39,6 @@ export const STORAGE_KEYS = {
   disclaimerAcceptedAt: "miligram.disclaimer.acceptedAt",
   installBannerDismissedAt: "miligram.install.dismissedAt",
   locale: "miligram.locale",
+  /** Cinknutí pastilky. Chybí-li, zvuk hraje; vypíná se hodnotou „off“. */
+  sound: "miligram.sound",
 } as const;

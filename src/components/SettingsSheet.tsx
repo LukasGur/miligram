@@ -5,7 +5,8 @@ import { useTranslations } from "next-intl";
 import { useLocale } from "@/i18n/LocaleProvider";
 import { useLocalValue, useStandalone } from "@/lib/clientState";
 import { useSession } from "@/lib/useSession";
-import { STORAGE_KEYS } from "@/lib/localStore";
+import { STORAGE_KEYS, writeLocal } from "@/lib/localStore";
+import { primeSound, chime } from "@/lib/sound";
 import { CheckIcon, CloseIcon } from "./icons";
 
 const APP_VERSION = "0.1.0";
@@ -19,6 +20,7 @@ export function SettingsSheet({ open, onClose }: { open: boolean; onClose: () =>
   const standalone = useStandalone();
   const { session } = useSession();
   const acceptedAt = useLocalValue(STORAGE_KEYS.disclaimerAcceptedAt);
+  const soundOn = useLocalValue(STORAGE_KEYS.sound) !== "off";
   const closeRef = useRef<HTMLButtonElement>(null);
 
   useEffect(() => {
@@ -88,6 +90,37 @@ export function SettingsSheet({ open, onClose }: { open: boolean; onClose: () =>
                 </button>
               ))}
             </div>
+          </Section>
+
+          <Section title={t("sound")} hint={t("soundHint")}>
+            <button
+              type="button"
+              role="switch"
+              aria-checked={soundOn}
+              onClick={() => {
+                writeLocal(STORAGE_KEYS.sound, soundOn ? "off" : "on");
+                // Zapnutí se hned předvede, ať je slyšet, co se zapnulo.
+                if (!soundOn) {
+                  primeSound();
+                  window.setTimeout(() => chime(), 60);
+                }
+              }}
+              className="border-line flex min-h-12 w-full items-center justify-between gap-4 rounded-control border px-4 text-left text-body"
+            >
+              {t("soundToggle")}
+              <span
+                aria-hidden
+                className={`relative h-7 w-12 shrink-0 rounded-full transition-colors duration-200 ${
+                  soundOn ? "bg-accent" : "bg-surface-press"
+                }`}
+              >
+                <span
+                  className={`bg-paper absolute top-0.5 left-0.5 size-6 rounded-full shadow-sm transition-transform duration-200 ${
+                    soundOn ? "translate-x-5" : ""
+                  }`}
+                />
+              </span>
+            </button>
           </Section>
 
           <Section title={t("install")}>

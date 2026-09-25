@@ -5,7 +5,8 @@ import { useFormatter, useTranslations } from "next-intl";
 import { MAX_STREAK_FREEZES, STREAK_FREEZE_COST } from "@/core/economy";
 import { buyStreakFreeze } from "@/lib/db";
 import { useProfile } from "@/lib/useProfile";
-import { CloseIcon, PillIcon, ShieldIcon } from "./icons";
+import { CloseIcon, ShieldIcon } from "./icons";
+import { Pastille } from "./ui/Pastille";
 import { Readout } from "./ui/Readout";
 
 /**
@@ -81,7 +82,7 @@ export function ShopSheet({ open, onClose }: { open: boolean; onClose: () => voi
 
         <div className="px-5 py-5">
           <div className="flex items-center gap-3">
-            <PillIcon className="text-pill size-7 shrink-0" />
+            <Pastille className="size-9 shrink-0" />
             <Readout label={tHome("pills")} value={format.number(profile.pills)} />
           </div>
 
@@ -104,7 +105,8 @@ export function ShopSheet({ open, onClose }: { open: boolean; onClose: () => voi
               className="border-line text-ink active:bg-surface mt-4 flex min-h-12 w-full items-center justify-between rounded-control border px-4 text-body font-semibold transition-colors duration-75 disabled:opacity-40"
             >
               <span>{t("freezeBuyShort")}</span>
-              <span className="readout text-pill" data-numeric>
+              <span className="readout text-pill inline-flex items-center gap-1.5" data-numeric>
+                <Pastille className="size-5 shrink-0" />
                 {format.number(STREAK_FREEZE_COST)}
               </span>
             </button>

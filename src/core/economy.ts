@@ -1,11 +1,13 @@
 import { scoreLesson, type LessonResult } from "./scoring";
 
 /**
- * Ekonomika: prášky a série.
+ * Ekonomika: pastilky a série.
  *
- * Prášky jsou měna — utrácejí se za nápovědy, ochranu série a opravy.
+ * Pastilky jsou měna — utrácejí se za nápovědy, ochranu série a opravy.
+ * V kódu a v databázi se jmenují `pills`: dřív se jim říkalo prášky
+ * a přejmenovaly se jen texty a ikona, data zůstala.
  * XP je skóre a nedá se utratit; ta část je ve scoring.ts. Rozdělení má
- * důvod: kdyby se liga řadila podle prášků, každá vzatá nápověda by
+ * důvod: kdyby se liga řadila podle pastilek, každá vzatá nápověda by
  * uživatele srazila v žebříčku a lidé by se vysvětlením vyhýbali.
  *
  * POZOR: konkrétní částky níže jsou návrh, ne převzatá čísla. Brief má

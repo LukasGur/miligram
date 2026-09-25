@@ -1,8 +1,8 @@
 "use client";
 
-import { useMemo, useRef, useState } from "react";
+import { useEffect, useEffectEvent, useMemo, useRef, useState, type Ref } from "react";
 import { useFormatter, useTranslations } from "next-intl";
-import { HINT_COST, rewardForLesson } from "@/core/economy";
+import { HINT_COST, PILLS_PER_CORRECT, rewardForLesson } from "@/core/economy";
 import { lessonExercise, resolvePlan, type LessonPlan } from "@/core/lesson";
 import type { DailySpec } from "@/core/curriculum";
 import { attemptsOn, firstTryOutcomes, nextIndex, solvedCount } from "@/core/lessonRun";
@@ -10,6 +10,9 @@ import { recordAnswer, recordLesson, spendPills, type LessonAttempt } from "@/li
 import { useProfile } from "@/lib/useProfile";
 import { HomeIcon, RepeatIcon } from "@/components/icons";
 import { Numeral } from "@/components/ui/Numeral";
+import { Pastille } from "@/components/ui/Pastille";
+import { Wallet } from "@/components/ui/Wallet";
+import { chime } from "@/lib/sound";
 import { Tally } from "@/components/ui/Tally";
 import { ExerciseView } from "./ExerciseView";
 
@@ -59,6 +62,8 @@ export function LessonView({
    * lekce připsaná dvakrát by uživateli nadělila dvojnásobek prášků.
    */
   const recorded = useRef(false);
+  /** Zůstatek před odměnou. Shrnutí z něj přičítá, co přiletí. */
+  const [walletBefore, setWalletBefore] = useState<number>();
 
   const index = nextIndex(plan, attempts);
   /**
@@ -77,6 +82,7 @@ export function LessonView({
       <LessonSummary
         outcomes={firstTryOutcomes(plan, attempts)}
         unsolved={plan.items.length - solved}
+        walletBefore={walletBefore}
         onExit={onExit}
         onAgain={onAgain}
       />
@@ -131,6 +137,7 @@ export function LessonView({
         // jednou.
         if (nextIndex(plan, next) === null && !recorded.current) {
           recorded.current = true;
+          setWalletBefore(profile.pills);
           const outcomes = firstTryOutcomes(plan, next);
           const reward = rewardForLesson(outcomes);
           void recordLesson({
@@ -180,21 +187,83 @@ async function reportDuel(duelId: string, correct: number, count: number): Promi
   }
 }
 
-/** Řádek odměny. Číslo doběhne od nuly, ať je vidět, že něco přibylo. */
-function Award({ label, value }: { label: string; value: number }) {
+/**
+ * Řádek odměny. Číslo doběhne od nuly, ať je vidět, že něco přibylo.
+ * Pastilky mají u čísla svou ikonu a z ní vyletí do peněženky.
+ */
+function Award({
+  label,
+  value,
+  pastille,
+  iconRef,
+}: {
+  label: string;
+  value: number;
+  pastille?: boolean;
+  iconRef?: Ref<SVGSVGElement>;
+}) {
   return (
-    <div className="flex items-baseline justify-between gap-3 py-3">
+    <div className="flex items-center justify-between gap-3 py-3">
       <dt className="panel-label">{label}</dt>
-      <dd className="text-title font-semibold">
+      <dd className={`flex items-center gap-1.5 text-title font-semibold ${pastille ? "text-pill" : ""}`}>
         <Tally value={value} prefix="+" />
+        {pastille ? <Pastille ref={iconRef} className="size-7 shrink-0" /> : null}
       </dd>
     </div>
   );
 }
 
+/** Jedna pastilka v letu: dráha a kdy vyrazí. */
+type Flight = { id: number; from: DOMRect; to: DOMRect; delay: number };
+
+/**
+ * Pastilka letí obloukem z řádku odměny do peněženky. Letí nad vším
+ * a mimo tok stránky, takže nic neodsune; po dopadu zmizí.
+ */
+function Flyer({ flight, onLand }: { flight: Flight; onLand: () => void }) {
+  const ref = useRef<HTMLSpanElement>(null);
+  const land = useEffectEvent(onLand);
+
+  useEffect(() => {
+    const el = ref.current;
+    if (!el) return;
+    const { from, to, delay, id } = flight;
+    const x0 = from.left + from.width / 2 - 12;
+    const y0 = from.top + from.height / 2 - 12;
+    const x1 = to.left + to.width / 2 - 12;
+    const y1 = to.top + to.height / 2 - 12;
+    // Střídavě vlevo a vpravo od přímky, ať pastilky neletí v zástupu.
+    const bend = id % 2 ? 36 : -28;
+    const animation = el.animate(
+      [
+        { transform: `translate(${x0}px, ${y0}px) scale(0.6)`, opacity: 0 },
+        {
+          transform: `translate(${(x0 + x1) / 2 + bend}px, ${Math.min(y0, y1) + (y0 - y1) * 0.35}px) scale(1.15)`,
+          opacity: 1,
+          offset: 0.45,
+        },
+        { transform: `translate(${x1}px, ${y1}px) scale(0.9)`, opacity: 1 },
+      ],
+      { duration: 620, delay, easing: "cubic-bezier(0.4, 0, 0.2, 1)", fill: "both" },
+    );
+    animation.onfinish = () => land();
+    return () => animation.cancel();
+  }, [flight]);
+
+  return (
+    <span ref={ref} className="pointer-events-none fixed top-0 left-0 z-10 size-6" aria-hidden>
+      <Pastille className="size-6" />
+    </span>
+  );
+}
+
+/** Kolik pastilek nese jedna letící. Víc letících by splynulo v šmouhu. */
+const PER_FLYER = PILLS_PER_CORRECT;
+
 function LessonSummary({
   outcomes,
   unsolved,
+  walletBefore,
   onExit,
   onAgain,
 }: {
@@ -202,23 +271,91 @@ function LessonSummary({
   outcomes: readonly boolean[];
   /** Kolik příkladů student vzdal. Bez toho nedává denní cíl smysl. */
   unsolved: number;
+  /**
+   * Zůstatek těsně před připsáním odměny. Chybí u lekce, která se otevřela
+   * už dohraná — tam se nic nepřipisuje a peněženka jen ukáže stav.
+   */
+  walletBefore?: number;
   onExit: () => void;
   onAgain: () => void;
 }) {
   const t = useTranslations("lesson");
   const tHome = useTranslations("home");
   const format = useFormatter();
+  const { profile } = useProfile();
   const reward = useMemo(() => rewardForLesson(outcomes), [outcomes]);
+  const earned = reward.correct * PILLS_PER_CORRECT;
+  const bonus = reward.pills - earned;
+
+  const walletRef = useRef<HTMLElement>(null);
+  const targetRef = useRef<SVGSVGElement>(null);
+  const earnedRef = useRef<SVGSVGElement>(null);
+  const bonusRef = useRef<SVGSVGElement>(null);
+  const [landed, setLanded] = useState(0);
+  const [flights, setFlights] = useState<Flight[]>([]);
+
+  const animate = walletBefore !== undefined && reward.pills > 0;
+  const shown = walletBefore === undefined ? profile.pills : walletBefore + Math.min(landed, reward.pills);
+
+  useEffect(() => {
+    if (!animate) return;
+    const still = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
+    // Nejdřív doběhnou čísla v řádcích, pak se pastilky vydají na cestu.
+    // Bonus letí druhou vlnou, ať je vidět, že je navíc. Bez pohybu se
+    // jen přepíše zůstatek.
+    const timer = window.setTimeout(() => {
+      if (still) {
+        setLanded(reward.pills);
+        return;
+      }
+      const to = targetRef.current?.getBoundingClientRect();
+      if (!to) return;
+      const waves: Flight[] = [];
+      let id = 0;
+      const wave = (source: SVGSVGElement | null, amount: number, start: number) => {
+        const from = source?.getBoundingClientRect();
+        if (!from) return;
+        for (let i = 0; i < Math.ceil(amount / PER_FLYER); i++) {
+          waves.push({ id: id++, from, to, delay: start + i * 70 });
+        }
+      };
+      wave(earnedRef.current, earned, 0);
+      wave(bonusRef.current, bonus, Math.ceil(earned / PER_FLYER) * 70 + 450);
+      setFlights(waves);
+    }, still ? 0 : 800);
+    return () => window.clearTimeout(timer);
+  }, [animate, reward.pills, earned, bonus]);
+
+  function onLand(index: number) {
+    setFlights((all) => all.filter((flight) => flight.id !== index));
+    setLanded((value) => value + PER_FLYER);
+    chime(index);
+    walletRef.current?.animate(
+      [{ transform: "scale(1)" }, { transform: "scale(1.12)" }, { transform: "scale(1)" }],
+      { duration: 220, easing: "cubic-bezier(0.16, 1, 0.3, 1)" },
+    );
+  }
 
   return (
     <div className="bg-paper flex h-dvh flex-col overflow-hidden">
+      <header
+        className="app-chrome flex shrink-0 justify-end px-5 pb-2"
+        style={{ paddingTop: "calc(var(--sa-t) + 0.75rem)" }}
+      >
+        <div className="mx-auto flex w-full max-w-md justify-end">
+          <Wallet
+            ref={walletRef}
+            iconRef={targetRef}
+            value={format.number(shown)}
+            label={t("walletAfter", { count: walletBefore === undefined ? profile.pills : walletBefore + reward.pills })}
+          />
+        </div>
+      </header>
+
       <main tabIndex={0} className="scroll-y flex-1">
         {/* Zpráva se drží ve středu, ne u horní hrany — jinak pod ní zůstane
             půl obrazovky prázdna. */}
-        <div
-          className="mx-auto flex h-full w-full max-w-md flex-col justify-center px-5"
-          style={{ paddingTop: "var(--sa-t)" }}
-        >
+        <div className="mx-auto flex h-full w-full max-w-md flex-col justify-center px-5">
           <h1 className="panel-label">{t("summaryTitle")}</h1>
 
           <p className="readout text-display mt-3 font-semibold" data-numeric>
@@ -238,10 +375,17 @@ function LessonSummary({
 
           <dl className="border-line divide-line mt-8 divide-y border-y">
             <Award label={tHome("xp")} value={reward.xp} />
-            <Award label={tHome("pills")} value={reward.pills} />
+            <Award label={tHome("pills")} value={earned} pastille iconRef={earnedRef} />
+            {bonus > 0 ? (
+              <Award label={t("flawlessBonus")} value={bonus} pastille iconRef={bonusRef} />
+            ) : null}
           </dl>
         </div>
       </main>
+
+      {flights.map((flight) => (
+        <Flyer key={flight.id} flight={flight} onLand={() => onLand(flight.id)} />
+      ))}
 
       <footer
         className="bg-paper border-line shrink-0 border-t"

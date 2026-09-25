@@ -1,6 +1,6 @@
 # Kde jsme
 
-Poslední aktualizace: **24. 9. 2026**
+Poslední aktualizace: **25. 9. 2026**
 
 ## Hotovo
 
@@ -73,7 +73,25 @@ ne útratu.
 
 Zkušební účty po testech smazané, databáze je prázdná.
 
-**Fáze 4, gamifikace lokálně** — Dexie, prášky, XP, série, nápovědy,
+**Měna: z prášků pastilky.** Prášky nepůsobily jako odměna: obrysová
+ikona vypadala jako ovládání, hnědá nesvítila, zisk nebyl vidět
+a zůstatek se schovával pod „Zásoby“. Pastilka je lék i bonbón a kulatý
+medový kotouč se čte jako mince. Změnilo se:
+
+- `Pastille` — jediná plná barevná kresba v sadě, `--color-pill` #a14f06
+- peněženka vpravo v hlavičce domovské obrazovky, klepnutím do obchodu;
+  řádek „Zásoby“ zmizel
+- u správné odpovědi napoprvé vystoupá „+2“ s pastilkou, u vráceného
+  příkladu nic
+- na konci lekce je bonus za lekci bez chyby zvlášť a pastilky přiletí
+  obloukem do peněženky, dvěma vlnami
+- cinknutí (Web Audio, relace „ambient“ — na iPhonu při vypnutém zvonění
+  mlčí), vypíná se v Nastavení; klíč `miligram.sound`
+
+V kódu a v databázi zůstává `pills`, žádná migrace. Ověřeno ve WebKitu
+na rozměru iPhonu celou lekcí 7/7.
+
+**Fáze 4, gamifikace lokálně** — Dexie, pastilky, XP, série, nápovědy,
 oprava chybného příkladu a ochrana série. Každá odpověď se ukládá hned,
 ne až po dohrané lekci: rozehraná lekce přežije odchod z obrazovky
 i zavření aplikace a domovská obrazovka nabídne „Pokračovat · 3/7“.
