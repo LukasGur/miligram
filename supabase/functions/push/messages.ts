@@ -1,0 +1,50 @@
+// Generuje scripts/build-push-messages.mjs z messages/*.json. Needitovat ručně.
+
+export const MESSAGES = {
+  "cs": {
+    "streakTitle": "{days, plural, =0 {Dnešní dávka čeká 💊} one {# den v kuse 🔥} few {# dny v kuse 🔥} other {# dní v kuse 🔥}}",
+    "streakBody": "{fresh, select, yes {{variant, select, a {Pět minut výpočtů a dnešek je odškrtnutý.} b {Sedm příkladů čeká. Začni novou sérii ještě dnes.} other {Mililitry se samy nespočítají. Jdeme na to?}}} other {{variant, select, a {Dnes to přece nepokazíš? Jedna lekce a série roste.} b {Pět minut, sedm příkladů. Série ti poděkuje.} other {Kalkulačka je nachystaná. A ty?}}}}",
+    "lastChanceTitle": "{days, plural, one {Série # den visí na vlásku ⏳} few {Série # dny visí na vlásku ⏳} other {Série # dní visí na vlásku ⏳}}",
+    "lastChanceBody": "Do půlnoci stačí jedna lekce. Zvládneš to.",
+    "duelChallengeTitle": "⚔️ Výzva na souboj",
+    "duelChallengeBody": "{handle} tě vyzývá. Ukaž, kdo líp počítá kapky!",
+    "duelPlayedTitle": "Jsi na tahu 👀",
+    "duelPlayedBody": "{handle} má odehráno {correct}/{count}. Překonáš to?",
+    "duelFinishedTitle": "{outcome, select, won {Vítězství! 🏆} lost {Tentokrát prohra} other {Remíza 🤝}}",
+    "duelFinishedBody": "{outcome, select, lost {Souboj s {handle} skončil {mine}:{theirs}. Odveta?} other {Souboj s {handle} skončil {mine}:{theirs}.}}",
+    "friendRequestTitle": "Nová žádost o přátelství 👋",
+    "friendRequestBody": "{handle} si tě chce přidat mezi kamarády.",
+    "friendAcceptedTitle": "Nové přátelství 🤝",
+    "friendAcceptedBody": "{handle} přijímá tvou žádost. Čas na souboj?",
+    "giftTitle": "Dárek! 🎁",
+    "giftBody": "{handle} ti posílá ochranu série. Připíše se, až otevřeš aplikaci.",
+    "leagueLastDayTitle": "Poslední den ligy 🔥",
+    "leagueLastDayBody": "{zone, select, up {Jsi {rank}. a v postupu. Udrž to!} chase {Jsi {rank}. a na postup chybí {gap} XP.} other {Jsi {rank}. z {size}. Dnes ještě můžeš přidat.}}",
+    "leagueResultTitle": "{move, select, up {Postup! 🏆} down {Týden skončil} other {Nový týden ligy}}",
+    "leagueResultBody": "{move, select, up {Minulý týden {rank}. místo. Vítej v {tier}. divizi.} down {{rank}. místo znamená {tier}. divizi. Tenhle týden to otočíš 💪} other {Minulý týden {rank}. místo z {size}. Jdeme znovu?}}",
+    "actionLesson": "Spustit lekci"
+  },
+  "sk": {
+    "streakTitle": "{days, plural, =0 {Dnešná dávka čaká 💊} one {# deň po sebe 🔥} few {# dni po sebe 🔥} other {# dní po sebe 🔥}}",
+    "streakBody": "{fresh, select, yes {{variant, select, a {Päť minút počítania a dnešok je odškrtnutý.} b {Sedem príkladov čaká. Začni novú sériu ešte dnes.} other {Mililitre sa samy nespočítajú. Ideme na to?}}} other {{variant, select, a {Dnes to predsa nepokazíš? Jedna lekcia a séria rastie.} b {Päť minút, sedem príkladov. Séria sa ti poďakuje.} other {Kalkulačka je pripravená. A ty?}}}}",
+    "lastChanceTitle": "{days, plural, one {Séria # deň visí na vlásku ⏳} few {Séria # dni visí na vlásku ⏳} other {Séria # dní visí na vlásku ⏳}}",
+    "lastChanceBody": "Do polnoci stačí jedna lekcia. Zvládneš to.",
+    "duelChallengeTitle": "⚔️ Výzva na súboj",
+    "duelChallengeBody": "{handle} ťa vyzýva. Ukáž, kto lepšie počíta kvapky!",
+    "duelPlayedTitle": "Si na ťahu 👀",
+    "duelPlayedBody": "{handle} má odohrané {correct}/{count}. Prekonáš to?",
+    "duelFinishedTitle": "{outcome, select, won {Víťazstvo! 🏆} lost {Tentoraz prehra} other {Remíza 🤝}}",
+    "duelFinishedBody": "{outcome, select, lost {Súboj s {handle} skončil {mine}:{theirs}. Odveta?} other {Súboj s {handle} skončil {mine}:{theirs}.}}",
+    "friendRequestTitle": "Nová žiadosť o priateľstvo 👋",
+    "friendRequestBody": "{handle} si ťa chce pridať medzi kamarátov.",
+    "friendAcceptedTitle": "Nové priateľstvo 🤝",
+    "friendAcceptedBody": "{handle} prijíma tvoju žiadosť. Čas na súboj?",
+    "giftTitle": "Darček! 🎁",
+    "giftBody": "{handle} ti posiela ochranu série. Pripíše sa, keď otvoríš aplikáciu.",
+    "leagueLastDayTitle": "Posledný deň ligy 🔥",
+    "leagueLastDayBody": "{zone, select, up {Si {rank}. a postupuješ. Udrž to!} chase {Si {rank}. a na postup chýba {gap} XP.} other {Si {rank}. z {size}. Dnes ešte môžeš pridať.}}",
+    "leagueResultTitle": "{move, select, up {Postup! 🏆} down {Týždeň skončil} other {Nový týždeň ligy}}",
+    "leagueResultBody": "{move, select, up {Minulý týždeň {rank}. miesto. Vitaj v {tier}. divízii.} down {{rank}. miesto znamená {tier}. divíziu. Tento týždeň to otočíš 💪} other {Minulý týždeň {rank}. miesto z {size}. Ideme znova?}}",
+    "actionLesson": "Spustiť lekciu"
+  }
+} as const;

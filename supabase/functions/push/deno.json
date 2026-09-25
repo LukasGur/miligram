@@ -1,0 +1,5 @@
+{
+  "imports": {
+    "intl-messageformat": "npm:intl-messageformat@12.1.2"
+  }
+}

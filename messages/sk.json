@@ -513,5 +513,28 @@
     "plus": "Plus",
     "equals": "Rovná sa",
     "open": "Otvoriť kalkulačku"
+  },
+  "push": {
+    "streakTitle": "{days, plural, =0 {Dnešná dávka čaká 💊} one {# deň po sebe 🔥} few {# dni po sebe 🔥} other {# dní po sebe 🔥}}",
+    "streakBody": "{fresh, select, yes {{variant, select, a {Päť minút počítania a dnešok je odškrtnutý.} b {Sedem príkladov čaká. Začni novú sériu ešte dnes.} other {Mililitre sa samy nespočítajú. Ideme na to?}}} other {{variant, select, a {Dnes to predsa nepokazíš? Jedna lekcia a séria rastie.} b {Päť minút, sedem príkladov. Séria sa ti poďakuje.} other {Kalkulačka je pripravená. A ty?}}}}",
+    "lastChanceTitle": "{days, plural, one {Séria # deň visí na vlásku ⏳} few {Séria # dni visí na vlásku ⏳} other {Séria # dní visí na vlásku ⏳}}",
+    "lastChanceBody": "Do polnoci stačí jedna lekcia. Zvládneš to.",
+    "duelChallengeTitle": "⚔️ Výzva na súboj",
+    "duelChallengeBody": "{handle} ťa vyzýva. Ukáž, kto lepšie počíta kvapky!",
+    "duelPlayedTitle": "Si na ťahu 👀",
+    "duelPlayedBody": "{handle} má odohrané {correct}/{count}. Prekonáš to?",
+    "duelFinishedTitle": "{outcome, select, won {Víťazstvo! 🏆} lost {Tentoraz prehra} other {Remíza 🤝}}",
+    "duelFinishedBody": "{outcome, select, lost {Súboj s {handle} skončil {mine}:{theirs}. Odveta?} other {Súboj s {handle} skončil {mine}:{theirs}.}}",
+    "friendRequestTitle": "Nová žiadosť o priateľstvo 👋",
+    "friendRequestBody": "{handle} si ťa chce pridať medzi kamarátov.",
+    "friendAcceptedTitle": "Nové priateľstvo 🤝",
+    "friendAcceptedBody": "{handle} prijíma tvoju žiadosť. Čas na súboj?",
+    "giftTitle": "Darček! 🎁",
+    "giftBody": "{handle} ti posiela ochranu série. Pripíše sa, keď otvoríš aplikáciu.",
+    "leagueLastDayTitle": "Posledný deň ligy 🔥",
+    "leagueLastDayBody": "{zone, select, up {Si {rank}. a postupuješ. Udrž to!} chase {Si {rank}. a na postup chýba {gap} XP.} other {Si {rank}. z {size}. Dnes ešte môžeš pridať.}}",
+    "leagueResultTitle": "{move, select, up {Postup! 🏆} down {Týždeň skončil} other {Nový týždeň ligy}}",
+    "leagueResultBody": "{move, select, up {Minulý týždeň {rank}. miesto. Vitaj v {tier}. divízii.} down {{rank}. miesto znamená {tier}. divíziu. Tento týždeň to otočíš 💪} other {Minulý týždeň {rank}. miesto z {size}. Ideme znova?}}",
+    "actionLesson": "Spustiť lekciu"
   }
 }
