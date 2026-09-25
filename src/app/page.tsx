@@ -11,7 +11,7 @@ import { ChartIcon, ChevronRightIcon, PersonIcon, SettingsIcon } from "@/compone
 import { LogoMark } from "@/components/ui/Logo";
 import { ProgressRing } from "@/components/ui/ProgressRing";
 import { Readout } from "@/components/ui/Readout";
-import { Wallet } from "@/components/ui/Wallet";
+import { Pastille } from "@/components/ui/Pastille";
 import { DAILY_REVIEW_ITEMS, LESSON_LENGTH, newLessonId, type LessonPlan } from "@/core/lessonPlan";
 import { useLocale } from "@/i18n/LocaleProvider";
 import type { WeekDay } from "@/lib/today";
@@ -199,15 +199,6 @@ export default function HomePage() {
           <Wordmark className="text-heading" />
         </div>
         <div className="-mr-3 flex items-center">
-          {/* Peněženka je tlačítko do obchodu. Stojí první, protože je
-              jediná barevná a oko ji tu hledá. */}
-          <div className="mr-1">
-            <Wallet
-              value={format.number(profile.pills)}
-              label={t("wallet", { count: profile.pills })}
-              onClick={() => setShopOpen(true)}
-            />
-          </div>
           <IconButton label={tStats("title")} onClick={() => setStatsOpen(true)}>
             <ChartIcon className="size-6" />
           </IconButton>
@@ -261,6 +252,23 @@ export default function HomePage() {
                 <Readout label={t("xp")} value={format.number(profile.xp)} size="small" />
               </div>
             </div>
+
+            {/* Pastilky jsou naproti tomu ovládací prvek, a tak musí i vypadat:
+                řádek s rámečkem a šipkou jako výběr tématu dole, klepnutím
+                do obchodu. Samotné číslo v mřížce nikdo za tlačítko neměl. */}
+            <button
+              type="button"
+              onClick={() => setShopOpen(true)}
+              aria-label={t("wallet", { count: profile.pills })}
+              className="border-line mt-3 flex min-h-11 w-full items-center gap-2.5 rounded-control border px-3 text-left"
+            >
+              <Pastille className="size-5 shrink-0" />
+              <span className="panel-label flex-1">{t("pills")}</span>
+              <span className="readout text-ink text-body font-semibold" data-numeric>
+                {format.number(profile.pills)}
+              </span>
+              <ChevronRightIcon className="text-ink-soft size-5 shrink-0" />
+            </button>
           </div>
         </section>
       </main>

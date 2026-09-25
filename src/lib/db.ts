@@ -1,6 +1,6 @@
 import Dexie, { type Table } from "dexie";
 import type { StageId } from "@/core/curriculum";
-import { advanceStreak, localDay, type StreakState } from "@/core/economy";
+import { PILLS_PER_CORRECT, advanceStreak, localDay, type StreakState } from "@/core/economy";
 import type { LessonPlan } from "@/core/lessonPlan";
 
 /**
@@ -59,8 +59,15 @@ export type AnswerRecord = {
   difficulty: number;
   /** Vyřešeno, byť napodruhé. */
   correct: boolean;
-  /** Správně hned napoprvé. Z tohohle je XP a prášky. */
+  /** Správně hned napoprvé. Z tohohle je XP a pastilky. */
   firstTry: boolean;
+  /**
+   * Pastilky za tenhle příklad už jsou v profilu. Připisují se hned po
+   * odpovědi; dokončení lekce pak přidá jen zbytek, tedy bonus. Odpovědi
+   * zapsané dřív, než se začalo připisovat hned, pole nemají — ty se
+   * doplatí s lekcí jako dřív.
+   */
+  credited?: boolean;
   /** Kolikrát si na příklad student sáhl. */
   attempts: number;
   /** Zda si uživatel u příkladu koupil nápovědu. */
@@ -317,9 +324,10 @@ export async function readProgress(): Promise<LessonProgress | undefined> {
  * a bude chtít lekci dohrát. Dřív odpovědi žily jen v paměti obrazovky
  * a odchod je zahodil.
  *
- * XP a prášky se tu nepřipisují. Odměna patří lekci jako celku: je v ní
- * bonus za bezchybný průchod a server ji počítá z celé lekce. Rozpad
- * na jednotlivé odpovědi by se s ním rozešel.
+ * Pastilky za správný první pokus se připisují tady, hned. Zůstatek
+ * v lekci se tak hýbe a „+2“ u odpovědi je pravda, ne slib na konec.
+ * Kdo lekci nedohraje, co vydělal, má. XP se naopak připisuje až s celou
+ * lekcí: server ho počítá z lekce a rozpad na odpovědi by se s ním rozešel.
  */
 export async function recordAnswer(
   lessonId: string,
@@ -330,7 +338,7 @@ export async function recordAnswer(
   const timestamp = now.toISOString();
   const database = db();
 
-  await database.transaction("rw", database.answers, database.progress, async () => {
+  await database.transaction("rw", database.answers, database.progress, database.profile, async () => {
     const current = await database.progress.get(PROGRESS_ID);
     // Jiná lekce než rozehraná znamená, že uživatel mezitím začal jinou.
     // Pokusy té předchozí zůstávají uložené, jen se v ní už nepokračuje.
@@ -346,6 +354,12 @@ export async function recordAnswer(
     const existing = stored.find((answer) => answer.seed === attempt.seed);
 
     if (existing?.id === undefined) {
+      // Odměna je jen za první pokus: opakování ani vzdání nic nepřipíše.
+      const earned = attempt.correct && !attempt.gaveUp;
+      if (earned) {
+        const profile = (await database.profile.get(PROFILE_ID)) ?? emptyProfile(now);
+        await database.profile.put({ ...profile, pills: profile.pills + PILLS_PER_CORRECT, updatedAt: timestamp });
+      }
       await database.answers.add({
         lessonId,
         index: attempt.index,
@@ -356,6 +370,7 @@ export async function recordAnswer(
         firstTry: attempt.correct,
         attempts: 1,
         hinted: attempt.hinted,
+        ...(earned ? { credited: true } : {}),
         answeredAt: timestamp,
       });
     } else {
@@ -406,9 +421,16 @@ export async function recordLesson(lesson: FinishedLesson, now = new Date()): Pr
       today,
     );
 
+    // Co už připsaly jednotlivé odpovědi, se podruhé nepřičítá.
+    const credited = await database.answers
+      .where("lessonId")
+      .equals(lesson.lessonId)
+      .filter((answer) => answer.credited === true)
+      .count();
+
     const updated: Profile = {
       ...current,
-      pills: current.pills + lesson.reward.pills,
+      pills: current.pills + Math.max(0, lesson.reward.pills - credited * PILLS_PER_CORRECT),
       xp: current.xp + lesson.reward.xp,
       streakDays: streak.days,
       lastLessonDay: streak.lastDay,

@@ -43,6 +43,8 @@ hotová, až vyjde všech sedm. Opakování se ale do odměny nepočítá: XP
 i pastilky jsou za první pokus, jinak by se skóre dalo nasbírat chybováním.
 
 Zisk pastilek: **2 za příklad správně napoprvé, +10 za lekci bez chyby.**
+Pastilky za příklad se připisují hned po odpovědi (zůstatek je vidět
+v hlavičce lekce), bonus a XP až s dokončenou lekcí.
 Útrata: nápověda 15, ochrana série 60 (nejvýš dvě naráz).
 
 ## Kde jsme

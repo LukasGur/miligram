@@ -42,39 +42,65 @@ export function primeSound(): void {
   if (ctx && ctx.state !== "running") void ctx.resume().catch(() => {});
 }
 
+/** Tón o `semitones` půltónů nad komorním a¹ (440 Hz). */
+const tone = (semitones: number) => 440 * 2 ** (semitones / 12);
+
 /**
- * Jeden cink. `step` zvedá tón po stupních pentatoniky, takže řada
- * pastilek padajících do peněženky stoupá a nezní jako jeden zvuk
- * opakovaný dokola. Nad sedmým stupněm už nestoupá — výš by pištěl.
+ * Jedna nota: trojúhelníková vlna, rychlý náběh a doznění, obroušená
+ * dolní propustí. Trojúhelník zní jako mince, sinus by byl plochý
+ * a obdélník by pištěl.
+ */
+function note(ctx: AudioContext, semitones: number, at: number, length: number, peak: number, overtone = false) {
+  const gain = ctx.createGain();
+  gain.gain.setValueAtTime(0.0001, at);
+  gain.gain.exponentialRampToValueAtTime(peak, at + 0.005);
+  gain.gain.exponentialRampToValueAtTime(0.0001, at + length);
+  const filter = ctx.createBiquadFilter();
+  filter.type = "lowpass";
+  filter.frequency.value = 5200;
+  gain.connect(filter).connect(ctx.destination);
+
+  const voices: [OscillatorType, number, number][] = [["triangle", semitones, 1]];
+  // Tichá sinusová oktáva nad tónem mu dodá třpyt.
+  if (overtone) voices.push(["sine", semitones + 12, 0.25]);
+  for (const [type, pitch, level] of voices) {
+    const osc = ctx.createOscillator();
+    const voice = ctx.createGain();
+    osc.type = type;
+    osc.frequency.setValueAtTime(tone(pitch), at);
+    voice.gain.value = level;
+    osc.connect(voice).connect(gain);
+    osc.start(at);
+    osc.stop(at + length + 0.05);
+  }
+}
+
+function running(): AudioContext | null {
+  if (!soundEnabled()) return null;
+  const ctx = audio();
+  return ctx && ctx.state === "running" ? ctx : null;
+}
+
+/**
+ * Mince: dva rychlé tóny o kvartu nahoru (h² → e³). Takhle zní sebraná
+ * mince ve hrách a každý ji pozná jako „něco přibylo“.
+ *
+ * `step` celou dvojici posouvá výš, takže řada pastilek padajících
+ * do zůstatku stoupá. Nad šestým stupněm už nestoupá — výš by pištěla.
  */
 export function chime(step = 0): void {
-  if (!soundEnabled()) return;
-  const ctx = audio();
-  if (!ctx || ctx.state !== "running") return;
+  const ctx = running();
+  if (!ctx) return;
+  const base = [14, 16, 19, 21, 23, 26][Math.min(step, 5)];
+  const now = ctx.currentTime + 0.01;
+  note(ctx, base, now, 0.42, 0.11);
+  note(ctx, base + 5, now + 0.07, 0.5, 0.12, true);
+}
 
-  const scale = [0, 2, 4, 7, 9, 12, 14];
-  const semitones = scale[Math.min(step, scale.length - 1)];
-  const base = 1318.5 * 2 ** (semitones / 12);
-  const now = ctx.currentTime;
-
-  const gain = ctx.createGain();
-  gain.gain.setValueAtTime(0.0001, now);
-  gain.gain.exponentialRampToValueAtTime(0.09, now + 0.006);
-  gain.gain.exponentialRampToValueAtTime(0.0001, now + 0.32);
-  gain.connect(ctx.destination);
-
-  // Základ a o kvintu výš tišeji — kovový, ale ne ostrý tón.
-  for (const [ratio, level] of [
-    [1, 1],
-    [1.5, 0.35],
-  ] as const) {
-    const osc = ctx.createOscillator();
-    const partial = ctx.createGain();
-    osc.type = "sine";
-    osc.frequency.setValueAtTime(base * ratio, now);
-    partial.gain.value = level;
-    osc.connect(partial).connect(gain);
-    osc.start(now);
-    osc.stop(now + 0.34);
-  }
+/** Tečka za odměnou: krátký rozložený akord po posledním dopadu. */
+export function flourish(): void {
+  const ctx = running();
+  if (!ctx) return;
+  const now = ctx.currentTime + 0.01;
+  [26, 30, 33, 38].forEach((pitch, index) => note(ctx, pitch, now + index * 0.05, 0.9, 0.08));
 }

@@ -360,7 +360,9 @@
     "hintPoor": "Na nápovedu potrebuješ {cost, number} pastiliek.",
     "earned": "{count, plural, one {Získavaš # pastilku} few {Získavaš # pastilky} other {Získavaš # pastiliek}}",
     "flawlessBonus": "Za lekciu bez chyby",
-    "walletAfter": "{count, plural, one {Máš # pastilku} few {Máš # pastilky} other {Máš # pastiliek}}"
+    "balance": "{count, plural, one {Máš # pastilku} few {Máš # pastilky} other {Máš # pastiliek}}",
+    "earnedDuring": "Pastilky za príklady",
+    "earnedDuringNote": "pripísané počas lekcie"
   },
   "account": {
     "title": "Účet",

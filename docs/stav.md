@@ -73,23 +73,22 @@ ne útratu.
 
 Zkušební účty po testech smazané, databáze je prázdná.
 
-**Měna: z prášků pastilky.** Prášky nepůsobily jako odměna: obrysová
-ikona vypadala jako ovládání, hnědá nesvítila, zisk nebyl vidět
-a zůstatek se schovával pod „Zásoby“. Pastilka je lék i bonbón a kulatý
-medový kotouč se čte jako mince. Změnilo se:
+**Měna: z prášků pastilky.** Prášky nepůsobily jako odměna. První
+pokus (lesklá mince v kulatém čipu) se do aplikace nehodil, druhý
+vychází z jejího vlastního jazyka:
 
-- `Pastille` — jediná plná barevná kresba v sadě, `--color-pill` #a14f06
-- peněženka vpravo v hlavičce domovské obrazovky, klepnutím do obchodu;
-  řádek „Zásoby“ zmizel
-- u správné odpovědi napoprvé vystoupá „+2“ s pastilkou, u vráceného
-  příkladu nic
-- na konci lekce je bonus za lekci bez chyby zvlášť a pastilky přiletí
-  obloukem do peněženky, dvěma vlnami
-- cinknutí (Web Audio, relace „ambient“ — na iPhonu při vypnutém zvonění
-  mlčí), vypíná se v Nastavení; klíč `miligram.sound`
+- `Pastille` — kresba loga (tableta s rýhou, 24°) v medu, plochá
+- doma řádek „Pastilky“ pod sérií a XP, klepnutím do obchodu
+- v lekci zůstatek v hlavičce místo počítadla „3/7“, vedle ceny nápovědy
+- pastilky za příklad se připisují hned (`recordAnswer`, pole
+  `credited`); „+2“ u verdiktu doletí do zůstatku. Lekce na konci přidá
+  jen bonus a ten přiletí do zůstatku ve shrnutí
+- zvuk „mince“ (dva tóny o kvartu nahoru, Web Audio, relace „ambient“ —
+  na iPhonu při vypnutém zvonění mlčí), vypíná se v Nastavení
 
-V kódu a v databázi zůstává `pills`, žádná migrace. Ověřeno ve WebKitu
-na rozměru iPhonu celou lekcí 7/7.
+V kódu a v databázi zůstává `pills`, žádná migrace. Lekce rozehrané
+před změnou se doplatí celé. Ověřeno ve WebKitu na rozměru iPhonu celou
+lekcí 7/7 (14 za příklady + 10 bonus = 24).
 
 **Fáze 4, gamifikace lokálně** — Dexie, pastilky, XP, série, nápovědy,
 oprava chybného příkladu a ochrana série. Každá odpověď se ukládá hned,

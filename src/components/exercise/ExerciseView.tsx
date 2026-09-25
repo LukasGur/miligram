@@ -1,8 +1,10 @@
 "use client";
 
-import { useState } from "react";
-import { useTranslations } from "next-intl";
+import { useEffect, useRef, useState } from "react";
+import { useFormatter, useTranslations } from "next-intl";
 import { CalculatorIcon, CloseIcon, HintIcon } from "@/components/icons";
+import { Balance } from "@/components/ui/Balance";
+import { Flyer, bump, reducedMotion, type Flight } from "@/components/ui/Flyer";
 import { Pastille } from "@/components/ui/Pastille";
 import { pressable } from "@/lib/press";
 import { evaluateAnswer, parseAnswer, type Verdict } from "@/core/answer";
@@ -61,6 +63,20 @@ export function ExerciseView({
   const [calculatorOpen, setCalculatorOpen] = useState(false);
   /** Nápověda se nezneaktivní, ale řekne, proč nejde vzít. */
   const [poor, setPoor] = useState(false);
+  const format = useFormatter();
+
+  /**
+   * Pastilky za příklad. Připisují se hned — do zůstatku v hlavičce
+   * doletí, jakmile odpověď sedne, a v databázi jsou po klepnutí
+   * na Pokračovat. Tady se jen přičtou k zobrazenému stavu.
+   */
+  const [landed, setLanded] = useState(false);
+  const [flight, setFlight] = useState<Flight | null>(null);
+  const earnedRef = useRef<SVGSVGElement>(null);
+  const balanceRef = useRef<HTMLSpanElement>(null);
+  const balanceIconRef = useRef<SVGSVGElement>(null);
+  const launch = useRef<number | undefined>(undefined);
+  useEffect(() => () => window.clearTimeout(launch.current), []);
 
   const value = parseAnswer(input);
   /**
@@ -70,6 +86,7 @@ export function ExerciseView({
   const shown = solved + (verdict?.correct ? 1 : 0);
   const canCheck = value !== null && verdict === null;
   const canAfford = pills >= HINT_COST;
+  const balance = pills + (landed ? PILLS_PER_CORRECT : 0);
 
   /**
    * Nápověda odkryje první krok řešení, ne výsledek. Pastilky se strhnou
@@ -92,7 +109,20 @@ export function ExerciseView({
     primeSound();
     const result = evaluateAnswer(value, exercise.solution.value, exercise.answer.tolerance);
     setVerdict(result);
-    if (result.correct && !repeat) chime();
+    if (result.correct && !repeat) {
+      chime();
+      if (reducedMotion()) {
+        setLanded(true);
+      } else {
+        // Nejdřív se „+2“ ukáže u verdiktu, pak pastilka odletí nahoru.
+        launch.current = window.setTimeout(() => {
+          const from = earnedRef.current?.getBoundingClientRect();
+          const to = balanceIconRef.current?.getBoundingClientRect();
+          if (from && to) setFlight({ id: 0, from, to, delay: 0 });
+          else setLanded(true);
+        }, 380);
+      }
+    }
     // Postup se u chyby otevře sám. Kdo se splete, potřebuje ho vidět,
     // ne po něm ještě sahat.
     setSolutionOpen(!result.correct);
@@ -125,10 +155,26 @@ export function ExerciseView({
           current={shown}
           label={t("progress", { current: shown, count })}
         />
-        <span className="readout text-ink-soft w-12 shrink-0 text-right text-label" data-numeric>
-          {t("progress", { current: shown, count })}
-        </span>
+        {/* Místo počítadla „3/7“ zůstatek: postup ukazují dílky vedle,
+            a kdo vidí cenu nápovědy, má vidět i to, na co mu zbývá. */}
+        <Balance
+          ref={balanceRef}
+          iconRef={balanceIconRef}
+          value={format.number(balance)}
+          label={t("balance", { count: balance })}
+        />
       </header>
+
+      {flight ? (
+        <Flyer
+          flight={flight}
+          onLand={() => {
+            setFlight(null);
+            setLanded(true);
+            bump(balanceRef.current);
+          }}
+        />
+      ) : null}
 
       {/* Nahoře se čte, dole se ovládá. Zadání roluje, přístroj — odečet,
           pomůcky a klávesnice — zůstává na místě, takže se pod patičku nic
@@ -162,7 +208,7 @@ export function ExerciseView({
                 <VerdictPanel exercise={exercise} verdict={verdict} unit={answerUnit(exercise)} answer={value} />
                 {/* Odměna je za první pokus, takže u vráceného příkladu
                     nevystoupá nic — ani „+0“, které by působilo jako trest. */}
-                {verdict.correct && !repeat ? <Earned count={PILLS_PER_CORRECT} /> : null}
+                {verdict.correct && !repeat ? <Earned count={PILLS_PER_CORRECT} iconRef={earnedRef} /> : null}
               </div>
 
               {/* Dvě akce vedle sebe, jedna přes celou šířku — mřížka s prázdným
@@ -276,18 +322,20 @@ export function ExerciseView({
 }
 
 /**
- * Pastilky za příklad. Vystoupají u „Správně“ a odezní: je to potvrzení,
- * ne druhý verdikt, a hlavní signál musí zůstat „Správně“. Při vypnutém
- * pohybu zůstanou stát.
+ * Pastilky za příklad, u „Správně“. Zůstávají stát jako potvrzení toho,
+ * co odletělo do zůstatku — hlavním signálem ale zůstává „Správně“.
  */
-function Earned({ count }: { count: number }) {
+function Earned({ count, iconRef }: { count: number; iconRef: React.Ref<SVGSVGElement> }) {
   const t = useTranslations("lesson");
   return (
-    <span role="status" className="text-pill animate-rise absolute top-0 right-0 flex h-7 items-center gap-1 text-heading font-semibold">
+    <span
+      role="status"
+      className="text-pill animate-tick absolute top-0 right-0 flex h-7 items-center gap-1.5 text-body font-semibold"
+    >
       <span className="readout" data-numeric aria-hidden>
         +{count}
       </span>
-      <Pastille className="size-6" />
+      <Pastille ref={iconRef} className="size-5" />
       <span className="sr-only">{t("earned", { count })}</span>
     </span>
   );

@@ -113,11 +113,54 @@ describe("rozehraná lekce", () => {
     expect(await solvedToday()).toBe(1);
   });
 
-  it("odpověď sama o sobě nepřipisuje XP ani prášky — odměna patří lekci", async () => {
+  it("správná odpověď napoprvé připíše pastilky hned, XP až lekce", async () => {
     await recordAnswer("l", pokus("l:0"));
 
     const profile = await db().profile.get(1);
     expect(profile?.xp ?? 0).toBe(0);
-    expect(profile?.pills ?? 0).toBe(0);
+    expect(profile?.pills).toBe(2);
+  });
+
+  it("opakování ani vzdání pastilky nepřipíše — odměna je za první pokus", async () => {
+    await recordAnswer("l", pokus("l:0", false));
+    await recordAnswer("l", pokus("l:0", true));
+    await recordAnswer("l", { ...pokus("l:1", true, 1), gaveUp: true });
+
+    expect((await db().profile.get(1))?.pills ?? 0).toBe(0);
+  });
+
+  it("dokončení lekce přičte jen to, co odpovědi ještě nepřipsaly", async () => {
+    await recordAnswer("l", pokus("l:0", true, 0));
+    await recordAnswer("l", pokus("l:1", true, 1));
+
+    const profile = await recordLesson({
+      lessonId: "l",
+      answers: [odpoved("l:0"), odpoved("l:1")],
+      reward: { xp: 40, pills: 14, correct: 2, count: 2, flawless: true },
+    });
+    expect(profile.pills).toBe(14);
+    expect(profile.xp).toBe(40);
+  });
+
+  it("lekce rozehraná před připisováním po odpovědích se doplatí celá", async () => {
+    await db().answers.add({
+      lessonId: "stara",
+      index: 0,
+      templateId: "A1",
+      seed: "stara:0",
+      difficulty: 1,
+      correct: true,
+      firstTry: true,
+      attempts: 1,
+      hinted: false,
+      answeredAt: new Date().toISOString(),
+    });
+
+    const profile = await recordLesson({
+      lessonId: "stara",
+      answers: [odpoved("stara:0")],
+      reward: { xp: 30, pills: 12, correct: 1, count: 1, flawless: true },
+    });
+    expect(profile.pills).toBe(12);
   });
 });

@@ -251,14 +251,6 @@
   to { opacity: 1; transform: none; }
 }
 
-/* Pastilky za příklad: vystoupají u „Správně“, chvíli zůstanou a odezní. */
-@keyframes pastille-rise {
-  0% { opacity: 0; transform: translateY(0.5rem) scale(0.9); }
-  30% { opacity: 1; transform: translateY(-0.25rem) scale(1); }
-  75% { opacity: 1; transform: translateY(-0.5rem); }
-  100% { opacity: 0; transform: translateY(-1.25rem); }
-}
-
 /* Kurzor v políčku kódu. Skokem, ne plynule — tak bliká textový kurzor. */
 @keyframes caret-blink {
   0%, 50% { opacity: 1; }
@@ -295,14 +287,6 @@
 
   .animate-accept {
     animation: readout-accept 220ms var(--ease-decel) both;
-  }
-
-  /* Jen při povoleném pohybu. Globální vypnutí níž by animaci zkrátilo
-     na konec, a ten je průhledný — pastilky by vůbec nebyly vidět. */
-  @media (prefers-reduced-motion: no-preference) {
-    .animate-rise {
-      animation: pastille-rise 1100ms var(--ease-decel) both;
-    }
   }
 
   .animate-tick {
