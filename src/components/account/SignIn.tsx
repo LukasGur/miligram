@@ -7,6 +7,7 @@ import { useLocale } from "@/i18n/LocaleProvider";
 import { supabase } from "@/lib/supabase";
 import { MailCheckIcon } from "@/components/icons";
 import { CodeInput } from "./CodeInput";
+import { Perks, riseDelay } from "./Perks";
 
 /**
  * Délka a platnost kódu. Musí sedět s nastavením v Supabase, které nahrává
@@ -114,8 +115,20 @@ export function SignIn() {
 
   return (
     <section>
-      <h2 className="text-heading font-semibold">{t("signedOutTitle")}</h2>
-      <p className="text-ink-soft mt-1.5 text-label">{t("signedOutBody")}</p>
+      {/* Výhody jen do chvíle, než odejde kód. Pak už je rozhodnuto a obrazovka
+          patří políčkům kódu, která musí zůstat vidět nad klávesnicí. */}
+      {sent ? (
+        <h2 className="text-heading font-semibold">{t("codeTitle")}</h2>
+      ) : (
+        <>
+          <div className="animate-rise pt-2" style={riseDelay(0)}>
+            <p className="panel-label !text-accent">{t("pitchEyebrow")}</p>
+            <h2 className="text-title mt-1.5 font-semibold">{t("pitchTitle")}</h2>
+            <p className="text-ink-soft mt-2 text-body">{t("pitchBody")}</p>
+          </div>
+          <Perks first={1} />
+        </>
+      )}
 
       {sent ? (
         <form
@@ -172,7 +185,7 @@ export function SignIn() {
           </div>
         </form>
       ) : (
-        <form className="mt-5" onSubmit={send}>
+        <form className="animate-rise mt-8" style={riseDelay(4)} onSubmit={send}>
           <Field
             label={t("email")}
             value={email}
@@ -183,6 +196,7 @@ export function SignIn() {
           <Primary onClick={() => void send()} disabled={busy || !email.includes("@")}>
             {t("sendCode")}
           </Primary>
+          <p className="text-ink-soft mt-3 text-center text-label">{t("signInNote")}</p>
         </form>
       )}
 
