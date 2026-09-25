@@ -1,5 +1,5 @@
 data/
-spc/
+spc
 spc_index.json
-.venv/
+.venv
 pool-report.json
