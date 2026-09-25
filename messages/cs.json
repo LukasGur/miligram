@@ -443,7 +443,7 @@
     "freezeTitle": "Ochrana série",
     "freezeBody": "Pokryje jeden vynechaný den. Uplatní se sama, až se vrátíš.",
     "freezeOwned": "{count, plural, =0 {Žádná v zásobě} one {# v zásobě} other {# v zásobě}}",
-    "freezePoor": "Nemáš dost pastilek",
+    "freezePoor": "Smůla, na ochranu série ti {missing, plural, one {chybí # pastilka} few {chybí # pastilky} other {chybí # pastilek}}.",
     "freezeFull": "Víc než {max, number} si držet nejde",
     "title": "Zásoby",
     "freezeBuyShort": "Koupit ochranu série"

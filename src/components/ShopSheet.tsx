@@ -14,7 +14,7 @@ import { Readout } from "./ui/Readout";
  *
  * Dřív to byla karta na domovské obrazovce a byla to tam nejnápadnější věc
  * po hlavním tlačítku — aplikace o učení měla nejhlasitější prvek na prodej.
- * Teď se otevře klepnutím na počet prášků, tedy přesně tehdy, když na ně
+ * Teď se otevře klepnutím na řádek s pastilkami, tedy přesně tehdy, když na ně
  * někdo myslí.
  */
 export function ShopSheet({ open, onClose }: { open: boolean; onClose: () => void }) {
@@ -49,7 +49,7 @@ export function ShopSheet({ open, onClose }: { open: boolean; onClose: () => voi
       result === "ok"
         ? null
         : result === "poor"
-          ? t("freezePoor")
+          ? t("freezePoor", { missing: Math.max(0, STREAK_FREEZE_COST - profile.pills) })
           : t("freezeFull", { max: MAX_STREAK_FREEZES }),
     );
   }
@@ -98,20 +98,27 @@ export function ShopSheet({ open, onClose }: { open: boolean; onClose: () => voi
             </div>
             <p className="text-ink-soft mt-1 text-label">{t("freezeBody")}</p>
 
+            {/* Tlačítko je vidět vždycky, i když na nákup nezbývá. Zašedlé
+                se přehlédlo a neřeklo proč; takhle po klepnutí řekne,
+                kolik chybí. */}
             <button
               type="button"
               onClick={buy}
-              disabled={busy || owned >= MAX_STREAK_FREEZES || profile.pills < STREAK_FREEZE_COST}
-              className="border-line text-ink active:bg-surface mt-4 flex min-h-12 w-full items-center justify-between rounded-control border px-4 text-body font-semibold transition-colors duration-75 disabled:opacity-40"
+              disabled={busy}
+              className="bg-accent active:bg-accent-press mt-4 flex min-h-12 w-full items-center justify-between rounded-control px-4 text-body font-semibold text-white transition-colors duration-75"
             >
               <span>{t("freezeBuyShort")}</span>
-              <span className="readout text-pill inline-flex items-center gap-1.5" data-numeric>
+              <span className="readout inline-flex items-center gap-1.5" data-numeric>
                 <Pastille className="size-5 shrink-0" />
                 {format.number(STREAK_FREEZE_COST)}
               </span>
             </button>
 
-            {notice ? <p className="text-ink-soft mt-2 text-label">{notice}</p> : null}
+            {notice ? (
+              <p className="text-ink mt-2 text-label" role="status">
+                {notice}
+              </p>
+            ) : null}
           </section>
         </div>
       </div>
