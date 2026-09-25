@@ -4,7 +4,6 @@ import { useEffect, useRef } from "react";
 import { useTranslations } from "next-intl";
 import { useLocale } from "@/i18n/LocaleProvider";
 import { useLocalValue, useStandalone } from "@/lib/clientState";
-import { useSession } from "@/lib/useSession";
 import { STORAGE_KEYS, writeLocal } from "@/lib/localStore";
 import { primeSound, chime } from "@/lib/sound";
 import { CheckIcon, CloseIcon } from "./icons";
@@ -18,7 +17,6 @@ export function SettingsSheet({ open, onClose }: { open: boolean; onClose: () =>
   const tInstall = useTranslations("install");
   const { locale, setLocale, available } = useLocale();
   const standalone = useStandalone();
-  const { session } = useSession();
   const acceptedAt = useLocalValue(STORAGE_KEYS.disclaimerAcceptedAt);
   const soundOn = useLocalValue(STORAGE_KEYS.sound) !== "off";
   const closeRef = useRef<HTMLButtonElement>(null);
@@ -127,20 +125,6 @@ export function SettingsSheet({ open, onClose }: { open: boolean; onClose: () =>
             <p className="text-ink-soft text-label">
               {standalone ? tInstall("installed") : tInstall("notInstalled")}
             </p>
-          </Section>
-
-          {/* Text o datech se řídí skutečností, ne přáním: přihlášenému se
-              dokončené lekce na server odesílají a tvrdit opak by byla lež. */}
-          <Section title={t("storage")}>
-            <p className="text-ink-soft text-label">
-              {session ? t("storageSignedIn") : t("storageHint")}
-            </p>
-            {session ? (
-              <>
-                <p className="text-ink-soft mt-2 text-label">{t("storageStays")}</p>
-                <p className="text-ink-soft mt-2 text-label">{t("storageGifts")}</p>
-              </>
-            ) : null}
           </Section>
 
           <Section title={t("legal")}>

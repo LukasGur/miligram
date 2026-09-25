@@ -10,15 +10,12 @@ import {
   fetchProfile,
   leagueStanding,
   listDuels,
-  remoteGateway,
   type Duel,
   type LeagueStanding,
   type RemoteProfile,
 } from "@/lib/remote";
 import { useRemoteQuery } from "@/lib/remoteQuery";
 import { supabase, isRemoteConfigured } from "@/lib/supabase";
-import { syncOutbox } from "@/lib/sync";
-import { usePendingEvents } from "@/lib/useProfile";
 import { useSession } from "@/lib/useSession";
 import { Field, Primary, SignIn } from "./SignIn";
 import { Friends } from "./Friends";
@@ -151,7 +148,6 @@ function SignedIn({
           <Gifts />
         </>
       ) : null}
-      <Sync client={client} userId={userId} />
       <SignOut client={client} userId={userId} email={session?.user.email} />
     </>
   );
@@ -201,45 +197,6 @@ function HandleForm({
         {t("handleSave")}
       </Primary>
       {error ? <p className="text-danger mt-2 text-label">{error}</p> : null}
-    </section>
-  );
-}
-
-/**
- * Odeslání fronty. Ručně, ne na pozadí — dokud není jasné, jak se aplikace
- * chová na slabé síti, je lepší, aby uživatel viděl, co se posílá a kdy.
- */
-function Sync({ client, userId }: { client: ReturnType<typeof supabase> & object; userId: string }) {
-  const t = useTranslations("account");
-  const pending = usePendingEvents();
-  const [busy, setBusy] = useState(false);
-  const [failed, setFailed] = useState(false);
-
-  async function send() {
-    if (busy) return;
-    setBusy(true);
-    setFailed(false);
-    try {
-      await syncOutbox(remoteGateway(client, userId));
-    } catch {
-      setFailed(true);
-    } finally {
-      setBusy(false);
-    }
-  }
-
-  return (
-    <section className="mt-8">
-      <h2 className="text-heading font-semibold">{t("syncTitle")}</h2>
-      <p className="text-ink-soft mt-1.5 text-label" data-numeric>
-        {t("syncPending", { count: pending })}
-      </p>
-      {pending > 0 ? (
-        <Primary onClick={send} disabled={busy}>
-          {t("syncNow")}
-        </Primary>
-      ) : null}
-      {failed ? <p className="text-danger mt-2 text-label">{t("syncFailed")}</p> : null}
     </section>
   );
 }

@@ -19,7 +19,7 @@ import { useSession } from "@/lib/useSession";
  *
  * Chyby se tady zamlčují schválně. Fronta zůstane nedotčená a zkusí se
  * znovu; hlásit výpadek sítě uprostřed jiné práce by uživateli k ničemu
- * nebylo. Kdo chce vědět, kolik čeká, najde to na obrazovce účtu.
+ * nebylo.
  */
 export function SyncAgent() {
   const { session } = useSession();
