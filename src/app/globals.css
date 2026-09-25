@@ -274,6 +274,25 @@
   to { opacity: 1; transform: none; }
 }
 
+/* Nabídka připomínek: list vyjede zespodu, jako když se telefon probudí. */
+@keyframes sheet-up {
+  from { transform: translateY(100%); }
+  to { transform: none; }
+}
+
+@keyframes scrim-in {
+  from { opacity: 0; }
+  to { opacity: 1; }
+}
+
+/* Notifikace v náhledu dopadne shora s lehkým dosednutím — tak ji kreslí
+   systém, a proto se tu smí pohnout víc než zbytek přístroje. */
+@keyframes notice-drop {
+  0% { opacity: 0; transform: translateY(-0.75rem) scale(0.96); }
+  60% { opacity: 1; transform: translateY(0.125rem) scale(1); }
+  100% { opacity: 1; transform: none; }
+}
+
 /* Kurzor v políčku kódu. Skokem, ne plynule — tak bliká textový kurzor. */
 @keyframes caret-blink {
   0%, 50% { opacity: 1; }
@@ -318,6 +337,19 @@
 
   .animate-rise {
     animation: rise-in 480ms var(--ease-decel) both;
+  }
+
+  .animate-sheet {
+    animation: sheet-up 420ms var(--ease-decel) both;
+  }
+
+  .animate-scrim {
+    animation: scrim-in 300ms var(--ease-standard) both;
+  }
+
+  /* Až list dojede, aby dopad nezanikl v jeho pohybu. */
+  .animate-notice {
+    animation: notice-drop 560ms var(--ease-decel) 380ms both;
   }
 
   /* Prohození začne, až karta ligy dojede — jinak by ho nikdo neviděl. */

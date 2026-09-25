@@ -440,7 +440,9 @@
     "previewXp": "{xp} XP",
     "previewGiftWhen": "dnes",
     "signInNote": "Rovnakým kódom sa prihlásiš aj zaregistruješ.",
-    "codeTitle": "Zadaj kód z e-mailu"
+    "codeTitle": "Zadaj kód z e-mailu",
+    "perkRemindersTitle": "Pripomienky série",
+    "perkRemindersBody": "Večer ti pripomenieme lekciu — len keď ešte nemáš hotovo."
   },
   "shop": {
     "freezeTitle": "Ochrana série",
@@ -536,5 +538,40 @@
     "leagueResultTitle": "{move, select, up {Postup! 🏆} down {Týždeň skončil} other {Nový týždeň ligy}}",
     "leagueResultBody": "{move, select, up {Minulý týždeň {rank}. miesto. Vitaj v {tier}. divízii.} down {{rank}. miesto znamená {tier}. divíziu. Tento týždeň to otočíš 💪} other {Minulý týždeň {rank}. miesto z {size}. Ideme znova?}}",
     "actionLesson": "Spustiť lekciu"
+  },
+  "notifications": {
+    "offerLabel": "Pripomienky",
+    "offerTitle": "Nech ti séria neujde",
+    "offerBody": "Večer sa ozveme, len keď ešte nebudeš mať hotovo. A dáme vedieť, keď ťa niekto vyzve.",
+    "offerTimeHint": "Ťukni na čas a zmeň ho",
+    "offerEnable": "Zapnúť pripomienky",
+    "offerLater": "Teraz nie",
+    "offerFoot": "Vypnúť alebo preladiť sa dajú kedykoľvek v Nastaveniach.",
+    "offerDone": "Hotovo. Ozveme sa o {time}.",
+    "offerClose": "Zavrieť",
+    "previewApp": "Miligram",
+    "welcomeTitle": "Takto to bude vyzerať 👋",
+    "welcomeBody": "Pripomienka príde o {time}, len keď ešte nebudeš mať hotovo.",
+    "deniedTitle": "Upozornenia sú zablokované",
+    "deniedIos": "Povolíš ich v Nastaveniach iPhonu › Hlásenia › Miligram.",
+    "deniedAndroid": "Povolíš ich v Nastaveniach telefónu › Aplikácie › Miligram › Upozornenia.",
+    "deniedDesktop": "Povolíš ich cez ikonu vľavo od adresy stránky.",
+    "deniedOk": "Rozumiem",
+    "failed": "Zapnúť sa to nepodarilo. Skús to znova, keď budeš online.",
+    "settingsTitle": "Upozornenia",
+    "settingsMaster": "Pripomienky a správy",
+    "settingsHint": "Pripomienka série nepríde, keď už máš dnes hotovo. V noci mlčíme.",
+    "settingsStreak": "Pripomienka série",
+    "settingsTime": "Čas pripomienky",
+    "settingsLastChance": "Posledná šanca o 21:30",
+    "settingsLastChanceHint": "Len keď máš sériu aspoň 3 dni a lekcia stále chýba.",
+    "settingsSocial": "Kamaráti a súboje",
+    "settingsLeague": "Liga",
+    "settingsSignedOut": "Upozornenia chodia prihláseným — len tak vieme, či máš dnes hotovo.",
+    "settingsSignIn": "Prihlásiť sa",
+    "settingsInstall": "Na iPhone chodia upozornenia len aplikácii pridanej na plochu.",
+    "settingsUnsupported": "Tento prehliadač upozornenia nevie.",
+    "settingsLoading": "Načítavam…",
+    "saveFailed": "Uložiť sa to nepodarilo. Skús to znova."
   }
 }

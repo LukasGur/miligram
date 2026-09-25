@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useEffect, useEffectEvent, useState } from "react";
 import dynamic from "next/dynamic";
 import { useFormatter, useTranslations } from "next-intl";
 import { InstallBanner } from "@/components/InstallBanner";
@@ -19,6 +19,7 @@ import type { DailySpec, StageId } from "@/core/curriculum";
 import { clearProgress, type LessonAttempt } from "@/lib/db";
 import { dailySpec } from "@/lib/curriculum";
 import { useCurriculum, useLessonProgress, useProfile, useToday } from "@/lib/useProfile";
+import { onOpenIntent, type OpenIntent } from "@/lib/openIntent";
 
 const LESSON_MINUTES = "4–6";
 
@@ -113,6 +114,42 @@ export default function HomePage() {
     setProgramOpen(false);
     setLesson({ id: newLessonId(), spec: dailySpec(curriculum, stage) });
   }
+
+  /** Denní lekce z domovské obrazovky: rozehraná, jinak nová. */
+  function startDaily() {
+    if (unfinished) {
+      setLesson({
+        id: unfinished.lessonId,
+        plan: unfinished.plan,
+        duelId: unfinished.duelId,
+        attempts: unfinished.attempts,
+      });
+    } else {
+      startStage();
+    }
+  }
+
+  /**
+   * Klepnutí na notifikaci: připomínka série otevře rovnou lekci, zprávy
+   * od kamarádů a z ligy obrazovku účtu. Rozehraná lekce má přednost —
+   * notifikace ji nesmí zahodit.
+   */
+  const handleIntent = useEffectEvent((intent: OpenIntent): boolean => {
+    if (lesson !== null) return false;
+    if (intent === "account") {
+      setAccountOpen(true);
+      return true;
+    }
+    // Lekce se dá sestavit, až je načtený program.
+    if (!curriculum || progress === undefined) return false;
+    setStatsOpen(false);
+    setAccountOpen(false);
+    startDaily();
+    return true;
+  });
+  // Znovu se přihlásí, když se změní, jestli se dá cíl splnit — čekající
+  // cíl se tím nabídne ještě jednou.
+  useEffect(() => onOpenIntent(handleIntent), [lesson, curriculum, progress]);
 
   if (lesson !== null) {
     return (
@@ -299,16 +336,7 @@ export default function HomePage() {
 
           <button
             type="button"
-            onClick={() =>
-              unfinished
-                ? setLesson({
-                    id: unfinished.lessonId,
-                    plan: unfinished.plan,
-                    duelId: unfinished.duelId,
-                    attempts: unfinished.attempts,
-                  })
-                : startStage()
-            }
+            onClick={startDaily}
             className="bg-accent active:bg-accent-press min-h-14 w-full rounded-control text-body font-semibold text-white transition-colors duration-75"
           >
             {unfinished
@@ -334,7 +362,11 @@ export default function HomePage() {
       </div>
 
       <ShopSheet open={shopOpen} onClose={() => setShopOpen(false)} />
-      <SettingsSheet open={settingsOpen} onClose={() => setSettingsOpen(false)} />
+      <SettingsSheet
+        open={settingsOpen}
+        onClose={() => setSettingsOpen(false)}
+        onOpenAccount={() => setAccountOpen(true)}
+      />
     </div>
   );
 }

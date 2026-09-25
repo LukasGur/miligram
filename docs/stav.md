@@ -164,7 +164,23 @@ a jinak nic. Teď Android bez výzvy vidí „⋮ Nabídka › Přidat na plochu
 Chrome a Edge na iOS dostanou stejný postup jako Safari (od iOS 16.4
 přidávají na plochu taky) místo odkazu do Safari.
 
+**Notifikace** (25. 9. 2026) — Web Push pro přihlášené, plán a rozhodnutí
+v `docs/notifikace.md`. Připomínka série ve zvolený čas (výchozí 19:00),
+poslední šance ve 21:30, výzvy a výsledky soubojů, přátelé, dary a liga.
+Texty jsou hravé, v `messages/*.json` pod `push`; Edge Function si z nich
+bere výtah (`node scripts/build-push-messages.mjs` po každé změně, test
+hlídá, že se nerozešly). Komu a kdy rozhoduje databáze (migrace 0008,
+pg_cron každou minutu), odesílá Edge Function `push`. Soukromý klíč VAPID,
+heslo cronu a adresa funkce jsou ve Vaultu. Nabídka přijde ve shrnutí
+lekce jako list s náhledem zamčené obrazovky; vypínač a volby jsou
+v Nastavení. Ověřeno v Chromiu: odběr, uvítací notifikace a doručení
+z fronty přes FCM až do service workeru.
+
 ## Co dělat dál
+
+0. **Notifikace na iPhonu a Androidu.** Na iPhonu jen z plochy (iOS 16.4+).
+   Zkusit: nabídku po lekci, uvítací notifikaci, klepnutí na připomínku
+   (má otevřít lekci), přepnutí času v Nastavení.
 
 1. **Doladit výraz podle zpětné vazby.** Směr je nastavený, čeká se,
    co bude na telefonu drhnout.

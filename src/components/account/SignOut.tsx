@@ -4,6 +4,7 @@ import { useEffect, useRef, useState } from "react";
 import { useTranslations } from "next-intl";
 import { LogOutIcon } from "@/components/icons";
 import { pressable } from "@/lib/press";
+import { detachPushDevice } from "@/lib/push";
 import { remoteGateway } from "@/lib/remote";
 import type { supabase } from "@/lib/supabase";
 import { syncOutbox } from "@/lib/sync";
@@ -11,6 +12,15 @@ import { usePendingEvents } from "@/lib/useProfile";
 import { Primary } from "./SignIn";
 
 type Client = ReturnType<typeof supabase> & object;
+
+/**
+ * Odhlášení. Zařízení se nejdřív odpojí od notifikací účtu — jinak by
+ * na telefon dál chodily připomínky někoho, kdo už na něm přihlášený není.
+ */
+async function signOut(client: Client): Promise<void> {
+  await detachPushDevice(client);
+  await client.auth.signOut();
+}
 
 /**
  * Odhlášení.
@@ -33,7 +43,7 @@ export function SignOut({ client, userId, email }: { client: Client; userId: str
       <button
         type="button"
         {...pressable}
-        onClick={() => (pending > 0 ? setConfirming(true) : void client.auth.signOut())}
+        onClick={() => (pending > 0 ? setConfirming(true) : void signOut(client))}
         className="press press-wide border-line text-ink data-pressed:border-surface-press data-pressed:bg-surface-press flex min-h-12 w-full items-center justify-center gap-2 rounded-control border px-3 text-label font-medium"
       >
         <LogOutIcon className="text-ink-soft size-5" />
@@ -78,7 +88,7 @@ function ConfirmSheet({
     setFailed(false);
     try {
       await syncOutbox(remoteGateway(client, userId));
-      await client.auth.signOut();
+      await signOut(client);
     } catch {
       // Bez spojení se nic neodešle. Odhlásit jde i tak, ale ať o tom ví.
       setFailed(true);
@@ -115,7 +125,7 @@ function ConfirmSheet({
         <button
           type="button"
           {...pressable}
-          onClick={() => void client.auth.signOut()}
+          onClick={() => void signOut(client)}
           disabled={busy}
           className="press press-wide border-line text-ink data-pressed:border-surface-press data-pressed:bg-surface-press mt-2 flex min-h-12 w-full items-center justify-center rounded-control border px-3 text-label font-medium disabled:opacity-40"
         >

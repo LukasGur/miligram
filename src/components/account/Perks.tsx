@@ -2,7 +2,8 @@
 
 import type { CSSProperties, ReactNode } from "react";
 import { useFormatter, useTranslations } from "next-intl";
-import { CaretDownIcon, LadderIcon, ShieldIcon, VersusIcon } from "@/components/icons";
+import { BellIcon, CaretDownIcon, LadderIcon, ShieldIcon, VersusIcon } from "@/components/icons";
+import { Notice } from "@/components/push/ReminderPreview";
 
 /** Rozestup nástupu jednotlivých karet. Dost na to, aby šel vidět sled, ne čekání. */
 const STAGGER_MS = 70;
@@ -45,6 +46,14 @@ export function Perks({ first = 0 }: { first?: number }) {
         body={t("perkGiftsBody")}
       >
         <GiftPreview />
+      </Perk>
+      <Perk
+        index={first + 3}
+        icon={<BellIcon className="size-5" />}
+        title={t("perkRemindersTitle")}
+        body={t("perkRemindersBody")}
+      >
+        <ReminderPerkPreview />
       </Perk>
     </ul>
   );
@@ -171,5 +180,21 @@ function GiftPreview() {
       <span className="flex-1 text-label">{t("giftFrom", { handle: t("previewFriend") })}</span>
       <span className="text-ink-soft text-micro">{t("previewGiftWhen")}</span>
     </div>
+  );
+}
+
+/** Připomínka série, jak přijde na zamčenou obrazovku. */
+function ReminderPerkPreview() {
+  const t = useTranslations("notifications");
+  const tPush = useTranslations("push");
+
+  return (
+    <Notice
+      className="mx-auto max-w-72"
+      app={t("previewApp")}
+      time="19:00"
+      title={tPush("streakTitle", { days: 12 })}
+      body={tPush("streakBody", { fresh: "no", variant: "a" })}
+    />
   );
 }

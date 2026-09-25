@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useMemo, useRef, useState, type Ref } from "react";
+import dynamic from "next/dynamic";
 import { useFormatter, useTranslations } from "next-intl";
 import { HINT_COST, PILLS_PER_CORRECT, rewardForLesson } from "@/core/economy";
 import { lessonExercise, resolvePlan, type LessonPlan } from "@/core/lesson";
@@ -17,6 +18,14 @@ import { Flyer, bump, reducedMotion, type Flight } from "@/components/ui/Flyer";
 import { chime, flourish } from "@/lib/sound";
 import { Tally } from "@/components/ui/Tally";
 import { ExerciseView } from "./ExerciseView";
+
+/**
+ * Nabídka připomínek se dotahuje až ve shrnutí. Je v ní stav přihlášení,
+ * tedy klient Supabase, a lekce sama ho nepotřebuje.
+ */
+const PushOffer = dynamic(() => import("@/components/push/PushOffer").then((module) => module.PushOffer), {
+  ssr: false,
+});
 
 /**
  * Průběh lekce.
@@ -264,7 +273,7 @@ function LessonSummary({
   const t = useTranslations("lesson");
   const tHome = useTranslations("home");
   const format = useFormatter();
-  const { profile } = useProfile();
+  const { profile, streak } = useProfile();
   const reward = useMemo(() => rewardForLesson(outcomes, kind), [outcomes, kind]);
   const earned = reward.correct * PILLS_PER_CORRECT;
   const bonus = reward.pills - earned;
@@ -363,6 +372,18 @@ function LessonSummary({
       {flights.map((flight) => (
         <Flyer key={flight.id} flight={flight} onLand={() => onLand(flight.id)} />
       ))}
+
+      {/* Jen po čerstvě dohrané lekci, ne u lekce otevřené už hotové. */}
+      {walletBefore !== undefined ? (
+        <PushOffer
+          streak={streak}
+          facts={{
+            streakDays: profile.streakDays,
+            streakFreezes: profile.streakFreezes ?? 0,
+            lastLessonDay: profile.lastLessonDay,
+          }}
+        />
+      ) : null}
 
       <footer
         className="bg-paper border-line shrink-0 border-t"

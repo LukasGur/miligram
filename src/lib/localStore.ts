@@ -41,4 +41,13 @@ export const STORAGE_KEYS = {
   locale: "miligram.locale",
   /** Cinknutí pastilky. Chybí-li, zvuk hraje; vypíná se hodnotou „off“. */
   sound: "miligram.sound",
+  /**
+   * Účet, který na tomhle zařízení zapnul notifikace. Prázdné = vypnuto.
+   * Po odhlášení a přihlášení téhož účtu se odběr obnoví sám, jinému ne.
+   */
+  pushOwner: "miligram.push.owner",
+  /** Kdy naposledy uživatel odmítl nabídku notifikací po lekci. */
+  pushOfferDismissedAt: "miligram.push.offerDismissedAt",
+  /** Kolikrát ji odmítl. Po třetím odmítnutí se nabídka už neukáže. */
+  pushOfferDismissals: "miligram.push.offerDismissals",
 } as const;

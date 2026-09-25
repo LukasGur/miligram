@@ -5,10 +5,11 @@ import { MAX_STREAK_FREEZES } from "@/core/economy";
 import { useLocale } from "@/i18n/LocaleProvider";
 import { claimGift as markClaimed, fetchLessons, pendingGifts, remoteGateway } from "@/lib/remote";
 import { claimGift } from "@/lib/db";
+import { pushOnFor, restorePushDevice, savePrefs, usePushStatus } from "@/lib/push";
 import { pullNews } from "@/lib/restore";
 import { supabase } from "@/lib/supabase";
 import { syncOutbox } from "@/lib/sync";
-import { usePendingEvents } from "@/lib/useProfile";
+import { usePendingEvents, useProfile } from "@/lib/useProfile";
 import { useSession } from "@/lib/useSession";
 
 /**
@@ -27,6 +28,11 @@ export function SyncAgent() {
   const pending = usePendingEvents();
   const userId = session?.user.id;
   const accountLocale: unknown = session?.user.user_metadata?.locale;
+  const pushStatus = usePushStatus();
+  const pushOn = pushOnFor(pushStatus, userId);
+  const { profile } = useProfile();
+  const { streakDays, lastLessonDay } = profile;
+  const streakFreezes = profile.streakFreezes ?? 0;
 
   useEffect(() => {
     const client = supabase();
@@ -125,6 +131,39 @@ export function SyncAgent() {
       window.removeEventListener("online", save);
     };
   }, [userId, accountLocale, locale]);
+
+  /**
+   * Odběr notifikací tohoto zařízení. Push služba ho občas vymění a po
+   * odhlášení se od účtu odpojí; kdo je zapnul, dostane ho zpátky sám.
+   */
+  useEffect(() => {
+    const client = supabase();
+    if (!client || !userId) return;
+    void restorePushDevice(client, userId).catch(() => {});
+  }, [userId]);
+
+  /**
+   * Co server potřebuje do textů notifikací: jazyk a sérii, jak ji vidí
+   * telefon (ochrany série server nezná). Srovná se po každé lekci, po
+   * přepnutí jazyka a po návratu sítě.
+   */
+  useEffect(() => {
+    const client = supabase();
+    if (!client || !userId || !pushOn) return;
+
+    let cancelled = false;
+    const save = () => {
+      if (cancelled || !navigator.onLine) return;
+      void savePrefs(client, userId, { locale, streakDays, streakFreezes, lastLessonDay }).catch(() => {});
+    };
+
+    save();
+    window.addEventListener("online", save);
+    return () => {
+      cancelled = true;
+      window.removeEventListener("online", save);
+    };
+  }, [userId, pushOn, locale, streakDays, streakFreezes, lastLessonDay]);
 
   return null;
 }

@@ -2,6 +2,11 @@
 
 Založeno 25. 9. 2026. Web Push pro přihlášené, odesílá Supabase.
 
+**Stav (25. 9. 2026):** body 1–7 z pořadí prací hotové, ověřené
+v Chromiu včetně doručení přes FCM. Chybí zkouška na iPhonu a Androidu.
+Oproti plánu nevznikla tabulka `push_log` — záznamem o odeslaném je
+sama fronta (`sent_at`, `outcome`), cron ji čistí po třiceti dnech.
+
 ## Rozhodnutí
 
 - **Jen pro přihlášené.** Server zná jejich lekce, takže připomínka přijde
@@ -71,7 +76,6 @@ pg_cron každou minutu ─ (fronta neprázdná / je čas připomínek) ─▶ pg
 - `push_queue` — `id`, `user_id`, `kind`, `params` (jsonb), `tag`,
   `not_before`, `created_at`, `sent_at`, `attempts`. Plní ji spouštěče
   a naplánovaná funkce, vybírá Edge Function.
-- `push_log` — kdo co kdy dostal. Hlídá strop a „jednou denně“.
 - Spouštěče `after insert` na `duels`, `duel_results`, `friendships`
   (insert i update na `accepted`), `gifts` → řádek do `push_queue`.
 - `enqueue_reminders()` — každou minutu vybere uživatele, jejichž místní

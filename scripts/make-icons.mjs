@@ -108,5 +108,23 @@ export const appleSplashLinks: SplashLink[] = ${JSON.stringify(entries, null, 2)
   console.log(`splash: ${entries.length} souborů`);
 }
 
+/**
+ * Ikona do stavového řádku Androidu (`badge` u notifikace). Android z ní
+ * bere jen průhlednost a obarví si ji sám — plná ikona aplikace by tam
+ * vyšla jako bílý kruh. Tableta se zářezem, zářez je díra.
+ */
+async function renderBadge() {
+  const svg = `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24">
+    <defs><mask id="cut"><rect width="24" height="24" fill="white"/>
+      <rect x="10.9" y="2" width="2.2" height="20" fill="black" transform="rotate(24 12 12)"/></mask></defs>
+    <circle cx="12" cy="12" r="10" fill="white" mask="url(#cut)"/>
+  </svg>`;
+  await sharp(Buffer.from(svg), { density: 600 })
+    .resize(96, 96)
+    .png({ compressionLevel: 9 })
+    .toFile(path.join(ICONS_DIR, "badge-96.png"));
+}
+
 await renderIcons();
+await renderBadge();
 await renderSplash();

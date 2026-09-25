@@ -93,3 +93,67 @@ self.addEventListener("fetch", (event) => {
     })(),
   );
 });
+
+// ---------------------------------------------------------------------------
+// Notifikace
+// ---------------------------------------------------------------------------
+
+// Tvar zprávy skládá supabase/functions/push/compose.ts (typ Notice).
+// Každý push musí notifikaci opravdu ukázat: iOS po několika tichých
+// odběr zruší a Chrome místo ní ukáže vlastní „stránka se aktualizovala“.
+self.addEventListener("push", (event) => {
+  let notice = {};
+  try {
+    notice = event.data ? event.data.json() : {};
+  } catch {
+    // Poškozená zpráva pořád musí něco ukázat — viz výše.
+  }
+
+  event.waitUntil(
+    self.registration.showNotification(notice.title || "Miligram", {
+      body: notice.body || "",
+      icon: "/icons/icon-192.png",
+      badge: "/icons/badge-96.png",
+      tag: notice.tag,
+      // Nová zpráva se stejnou značkou (další výzva od téhož kamaráda)
+      // stávající nahradí, ale ozve se znovu.
+      renotify: Boolean(notice.tag),
+      timestamp: Date.now(),
+      data: { url: notice.url || "/", kind: notice.kind },
+      actions: Array.isArray(notice.actions) ? notice.actions : [],
+    }),
+  );
+});
+
+// Klepnutí otevře aplikaci tam, kam zpráva míří. Běžící okno se jen
+// vytáhne dopředu a cíl dostane zprávou — přenačtení by zahodilo
+// rozehranou lekci.
+self.addEventListener("notificationclick", (event) => {
+  event.notification.close();
+  const target = event.action === "lesson" ? "/?lesson=daily" : event.notification.data?.url || "/";
+  const url = new URL(target, self.location.origin).href;
+
+  event.waitUntil(
+    (async () => {
+      const windows = await self.clients.matchAll({ type: "window", includeUncontrolled: true });
+      const open = windows.find((client) => new URL(client.url).origin === self.location.origin);
+      if (open) {
+        await open.focus();
+        open.postMessage({ type: "miligram:navigate", url });
+        return;
+      }
+      await self.clients.openWindow(url);
+    })(),
+  );
+});
+
+// Push služba odběr občas vymění. Nový se tady jen založí se stejným
+// klíčem; na server ho zapíše aplikace při příštím spuštění (src/lib/push.ts),
+// protože service worker přihlášení nevidí.
+self.addEventListener("pushsubscriptionchange", (event) => {
+  const key = event.oldSubscription?.options?.applicationServerKey;
+  if (!key) return;
+  event.waitUntil(
+    self.registration.pushManager.subscribe({ userVisibleOnly: true, applicationServerKey: key }).catch(() => {}),
+  );
+});
