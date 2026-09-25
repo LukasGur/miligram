@@ -25,6 +25,7 @@ export function ExerciseView({
   solved,
   count,
   repeat,
+  mistake = false,
   attempt,
   onExit,
   onAnswered,
@@ -37,6 +38,8 @@ export function ExerciseView({
   count: number;
   /** Příklad, který se vrátil, protože poprvé nevyšel. */
   repeat: boolean;
+  /** Příklad přišel do lekce kvůli chybě z dřívějška. */
+  mistake?: boolean;
   /** Kolikátý pokus tohle je. Od druhého se nabídne jít dál. */
   attempt: number;
   onExit: () => void;
@@ -132,7 +135,13 @@ export function ExerciseView({
 
           {/* Vrácený příklad se označí. Bez toho vypadá jako chyba aplikace,
               že se totéž zadání objevilo podruhé. */}
-          {repeat ? <p className="panel-label mb-2">{t("repeat")}</p> : null}
+          {repeat ? (
+            <p className="panel-label mb-2">{t("repeat")}</p>
+          ) : mistake ? (
+            // Typ výpočtu, který dřív nevyšel. Student má vědět, proč
+            // se mu v lekci objevil, a že ho tu čeká záměrně.
+            <p className="panel-label mb-2">{t("fromMistake")}</p>
+          ) : null}
 
           <Prompt text={prompt(exercise)} />
 

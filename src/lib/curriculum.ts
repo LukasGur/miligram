@@ -12,7 +12,9 @@ import {
 } from "@/core/curriculum";
 import { categoryOfId } from "@/core/templateCategories";
 import type { Category } from "@/core/types";
+import { DAILY_REVIEW_ITEMS } from "@/core/lessonPlan";
 import { db } from "./db";
+import { mistakesToRepeat, type Mistake } from "./stats";
 
 /**
  * Kde student v programu stojí.
@@ -29,6 +31,8 @@ export type CurriculumState = {
   scores: Scores;
   standings: StageStanding[];
   current: StageId;
+  /** Neopravené chyby, nejstarší první. Denní lekce z nich bere na opakování. */
+  mistakes: Mistake[];
 };
 
 /**
@@ -56,8 +60,8 @@ export async function categoryScores(): Promise<Scores> {
 }
 
 export async function curriculumState(): Promise<CurriculumState> {
-  const scores = await categoryScores();
-  return { scores, standings: allStandings(scores), current: currentStage(scores) };
+  const [scores, mistakes] = await Promise.all([categoryScores(), mistakesToRepeat(DAILY_REVIEW_ITEMS)]);
+  return { scores, standings: allStandings(scores), current: currentStage(scores), mistakes };
 }
 
 /**
@@ -70,6 +74,7 @@ export function dailySpec(state: CurriculumState, stage: StageId = state.current
     stage,
     review: reviewCategories(state.scores, stage),
     ramp: rampFor(stageStanding(stage, state.scores)),
+    mistakes: state.mistakes,
   };
 }
 

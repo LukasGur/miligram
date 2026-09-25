@@ -47,6 +47,17 @@ describe("program z uložených odpovědí", () => {
     expect([...dailySpec(state).review].sort()).toEqual(["prevody", "zaklad"]);
   });
 
+  it("neopravené chyby jdou do předpisu denní lekce, nejvýš dvě", async () => {
+    await recordAnswer("l1", pokus("A1", 0, false));
+    await recordAnswer("l1", pokus("A2", 1, false));
+    await recordAnswer("l1", pokus("A3", 2, false));
+
+    expect(dailySpec(await curriculumState()).mistakes).toEqual([
+      { templateId: "A1", difficulty: 1 },
+      { templateId: "A2", difficulty: 1 },
+    ]);
+  });
+
   it("počítá první pokus, ne to, co student doklepal", async () => {
     // Dvanáct příkladů, každý napodruhé správně: vyřešeno je všechno,
     // ale napoprvé nic.

@@ -171,10 +171,17 @@ export default function HomePage() {
 
   /** Stupeň, na který se kouká tlačítko: rozehraná lekce má svůj vlastní. */
   const stageId = unfinished?.stageId ?? curriculum?.current;
-  const review = curriculum && stageId ? dailySpec(curriculum, stageId).review.length : 0;
+  const spec = curriculum && stageId ? dailySpec(curriculum, stageId) : null;
+  // Opakování plní nejdřív chyby, zbytek zvládnutá látka. Bez ní zůstanou
+  // jen místa, která chyby obsadí.
+  const review = !spec
+    ? 0
+    : spec.review.length > 0
+      ? DAILY_REVIEW_ITEMS
+      : Math.min(spec.mistakes?.length ?? 0, DAILY_REVIEW_ITEMS);
   const mix =
     review > 0
-      ? t("mix", { stage: LESSON_LENGTH - DAILY_REVIEW_ITEMS, review: DAILY_REVIEW_ITEMS })
+      ? t("mix", { stage: LESSON_LENGTH - review, review })
       : t("mixOnly", { stage: LESSON_LENGTH });
 
   return (

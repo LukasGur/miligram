@@ -196,4 +196,10 @@ export type DailySpec = {
   /** Kategorie, ze kterých se losuje opakování. Prázdné u nováčka. */
   review: readonly Category[];
   ramp: RampId;
+  /**
+   * Typy výpočtu, ve kterých student chyboval a dosud je napoprvé nespočítal.
+   * Mají v lekci přednost před opakováním: látku, která nesedí, nesmí
+   * přebít náhoda losu z látky, která sedí.
+   */
+  mistakes?: readonly { templateId: string; difficulty: Difficulty }[];
 };

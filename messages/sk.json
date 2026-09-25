@@ -350,6 +350,7 @@
     "solutionShort": "Postup",
     "summaryScoreLabel": "správne",
     "repeat": "Znova",
+    "fromMistake": "Opakovanie chyby",
     "giveUp": "Rozumiem, idem ďalej",
     "summaryUnsolved": "{count, plural, one {# príklad zostal nespočítaný} few {# príklady zostali nespočítané} other {# príkladov zostalo nespočítaných}} — vráti sa v opakovaní chýb.",
     "hintPrice": "{cost, plural, one {# prášok} few {# prášky} other {# práškov}}",

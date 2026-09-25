@@ -92,10 +92,70 @@ describe("chyby k opakování", () => {
   it("drží se zadaného počtu", async () => {
     await recordLesson({
       lessonId: "l",
-      answers: Array.from({ length: 9 }, (_, i) => answer("A1", `s${i}`, false)),
-      reward: { xp: 0, pills: 0, correct: 0, count: 9, flawless: false },
+      answers: Array.from({ length: 8 }, (_, i) => answer(`A${i + 1}`, `s${i}`, false)),
+      reward: { xp: 0, pills: 0, correct: 0, count: 8, flawless: false },
     });
     expect(await mistakesToRepeat(7)).toHaveLength(7);
+  });
+
+  /**
+   * Opakování dává tentýž typ s novým semínkem. Kdyby se chyba párovala
+   * se semínkem, správná odpověď v opakování by ji nesmazala nikdy.
+   */
+  it("chybu smaže správná odpověď na tentýž typ, i s jiným semínkem", async () => {
+    await recordLesson({
+      lessonId: "l1",
+      answers: [answer("A1", "l1:0", false), answer("A2", "l1:1", false)],
+      reward: { xp: 0, pills: 0, correct: 0, count: 2, flawless: false },
+    });
+    await recordLesson({
+      lessonId: "l2",
+      answers: [answer("A1", "l2:0", true)],
+      reward: { xp: 10, pills: 2, correct: 1, count: 1, flawless: true },
+    });
+
+    expect(await mistakesToRepeat(10)).toEqual([{ templateId: "A2", difficulty: 1 }]);
+  });
+
+  it("stejný typ vrací jednou, i když v něm padlo víc chyb", async () => {
+    await recordLesson({
+      lessonId: "l",
+      answers: [answer("A1", "s1", false), answer("A1", "s2", false)],
+      reward: { xp: 0, pills: 0, correct: 0, count: 2, flawless: false },
+    });
+    expect(await mistakesToRepeat(10)).toEqual([{ templateId: "A1", difficulty: 1 }]);
+  });
+
+  it("snadnější verze nesmaže chybu z těžší", async () => {
+    await recordLesson({
+      lessonId: "l1",
+      answers: [{ ...answer("A1", "s1", false), difficulty: 3 }],
+      reward: { xp: 0, pills: 0, correct: 0, count: 1, flawless: false },
+    });
+    await recordLesson({
+      lessonId: "l2",
+      answers: [answer("A1", "s2", true)],
+      reward: { xp: 10, pills: 2, correct: 1, count: 1, flawless: true },
+    });
+    expect(await mistakesToRepeat(10)).toEqual([{ templateId: "A1", difficulty: 3 }]);
+  });
+
+  it("chyba po opravě se vrátí, když typ znovu nevyjde", async () => {
+    await recordLesson({
+      lessonId: "l1",
+      answers: [answer("A1", "s1", false), answer("A2", "s2", false)],
+      reward: { xp: 0, pills: 0, correct: 0, count: 2, flawless: false },
+    });
+    await recordLesson({
+      lessonId: "l2",
+      answers: [answer("A1", "s3", true), answer("A1", "s4", false)],
+      reward: { xp: 10, pills: 2, correct: 1, count: 2, flawless: false },
+    });
+    // A1 je teď novější chyba než A2, proto až za ní.
+    expect(await mistakesToRepeat(10)).toEqual([
+      { templateId: "A2", difficulty: 1 },
+      { templateId: "A1", difficulty: 1 },
+    ]);
   });
 });
 

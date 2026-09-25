@@ -96,6 +96,7 @@ export function LessonView({
       count={plan.items.length}
       /** Opakování: příklad, na kterém už student jednou pohořel. */
       repeat={attempt > 0}
+      mistake={plan.items[index].origin === "mistake"}
       attempt={attempt + 1}
       pills={profile.pills}
       onExit={onExit}

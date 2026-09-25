@@ -165,6 +165,57 @@ describe("denní lekce podle programu", () => {
   });
 });
 
+describe("chyby v denní lekci", () => {
+  /** Šablona z rozepsaného stupně: přesně ten případ, kdy ji los mohl minout. */
+  const zeStupne = productionTemplates().find((template) => template.category === "rekonstituce")!.id;
+  const odjinud = productionTemplates().find((template) => template.category === "zaklad")!.id;
+
+  it("obsadí místa opakování tímtéž typem v téže obtížnosti", () => {
+    const plan = planDailyLesson("den", {
+      ...DENNI,
+      mistakes: [
+        { templateId: zeStupne, difficulty: 3 },
+        { templateId: odjinud, difficulty: 1 },
+      ],
+    });
+
+    expect(REVIEW_SLOTS.map((slot) => plan.items[slot])).toMatchObject([
+      { templateId: zeStupne, difficulty: 3, origin: "mistake" },
+      { templateId: odjinud, difficulty: 1, origin: "mistake" },
+    ]);
+    // Typ, který přišel jako chyba, se ze stupně podruhé nelosuje.
+    expect(plan.items.filter((item) => item.templateId === zeStupne)).toHaveLength(1);
+    expect(plan.items.filter((item) => item.origin === "mistake")).toHaveLength(2);
+  });
+
+  it("jedna chyba nechá druhé místo zvládnuté látce", () => {
+    const plan = planDailyLesson("den", { ...DENNI, mistakes: [{ templateId: odjinud, difficulty: 2 }] });
+    const [prvni, druhe] = REVIEW_SLOTS.map((slot) => plan.items[slot]);
+
+    expect(prvni).toMatchObject({ templateId: odjinud, origin: "mistake" });
+    expect(druhe.origin).toBeUndefined();
+    expect(DENNI.review).toContain(categoryOf(druhe.templateId));
+  });
+
+  it("dostane se do lekce i bez zvládnuté látky", () => {
+    const plan = planDailyLesson("den", {
+      ...DENNI,
+      review: [],
+      mistakes: [{ templateId: odjinud, difficulty: 2 }],
+    });
+    const vestupni = new Set(stageById("priprava").categories);
+
+    expect(plan.items).toHaveLength(LESSON_LENGTH);
+    expect(plan.items[REVIEW_SLOTS[0]]).toMatchObject({ templateId: odjinud, origin: "mistake" });
+    expect(kategorie(plan).filter((category) => !vestupni.has(category))).toEqual(["zaklad"]);
+  });
+
+  it("šablonu, která z produkce vypadla, přeskočí", () => {
+    const plan = planDailyLesson("den", { ...DENNI, mistakes: [{ templateId: "ZZ9", difficulty: 1 }] });
+    expect(plan).toEqual(planDailyLesson("den", DENNI));
+  });
+});
+
 describe("který plán se hraje", () => {
   it("uložený plán má přednost před předpisem i identifikátorem", () => {
     const ulozeny = planFromItems("x", [{ templateId: "A1", difficulty: 1 }]);

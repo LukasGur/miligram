@@ -32,7 +32,13 @@ export const REVIEW_SLOTS: readonly number[] = [2, 5];
 
 export type LessonPlan = {
   id: string;
-  items: readonly { templateId: string; seed: string; difficulty: Difficulty }[];
+  items: readonly {
+    templateId: string;
+    seed: string;
+    difficulty: Difficulty;
+    /** Příklad se do lekce dostal kvůli dřívější chybě. Ukáže se to u zadání. */
+    origin?: "mistake";
+  }[];
 };
 
 /**

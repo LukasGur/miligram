@@ -2,7 +2,6 @@ import { createRng, type Rng } from "./random";
 import { RAMPS, stageById, type DailySpec } from "./curriculum";
 import {
   DAILY_REVIEW_ITEMS,
-  DAILY_STAGE_ITEMS,
   DIFFICULTY_RAMP,
   LESSON_LENGTH,
   newLessonId,
@@ -146,9 +145,14 @@ export function planCategoryLesson(
 /**
  * Denní lekce podle programu.
  *
- * Pět příkladů z rozepsaného stupně a dva z látky, kterou už student
- * zvládl — nové se učí, staré se udržuje. Opakování sedí na pozicích
- * z `REVIEW_SLOTS`, ne na konci.
+ * Pět příkladů z rozepsaného stupně a dva na opakování — nové se učí,
+ * staré se udržuje. Opakování sedí na pozicích z `REVIEW_SLOTS`, ne na
+ * konci.
+ *
+ * Na opakování mají přednost neopravené chyby, a to tentýž typ výpočtu
+ * v téže obtížnosti. Bez nich by student, kterému nesedí jeden typ, mohl
+ * lekcí projít na typech, které umí — los ze stupně na chyby nehledí.
+ * Zbylá místa se doplní ze zvládnuté látky.
  *
  * Losuje se ze dvou nezávislých semínek, aby změna stupně nepřeskládala
  * opakování a naopak. Délka lekce se nemění nikdy: ekonomika i kruh
@@ -157,35 +161,57 @@ export function planCategoryLesson(
  */
 export function planDailyLesson(lessonId: string, spec: DailySpec): LessonPlan {
   const ramp = RAMPS[spec.ramp];
-  const reviewing = spec.review.length > 0;
-  const slots = new Set(reviewing ? REVIEW_SLOTS : []);
+  const production = productionTemplates();
+  const known = new Set(production.map((template) => template.id));
 
-  const inStage = new Set(stageById(spec.stage).categories);
-  const stagePool = productionTemplates()
-    .filter((template) => inStage.has(template.category))
-    .map((template) => template.id);
-  const stageIds = drawTemplates(
-    createRng(`stage:${spec.stage}:${lessonId}`),
-    stagePool,
-    reviewing ? DAILY_STAGE_ITEMS : LESSON_LENGTH,
-  );
+  // Chyba ze šablony, která mezitím z produkce vypadla, se sestavit nedá.
+  const mistakes = (spec.mistakes ?? [])
+    .filter((mistake) => known.has(mistake.templateId))
+    .slice(0, DAILY_REVIEW_ITEMS);
 
   const inReview = new Set(spec.review);
-  const reviewPool = productionTemplates()
+  const reviewPool = production
     .filter((template) => inReview.has(template.category))
     .map((template) => template.id);
-  const reviewIds = reviewing
-    ? drawTemplates(createRng(`review:${lessonId}`), reviewPool, DAILY_REVIEW_ITEMS)
-    : [];
+  const reviewCount = reviewPool.length > 0 ? DAILY_REVIEW_ITEMS - mistakes.length : 0;
+  const reviewIds =
+    reviewCount > 0 ? drawTemplates(createRng(`review:${lessonId}`), reviewPool, reviewCount) : [];
+
+  const extra: { templateId: string; difficulty?: Difficulty; origin?: "mistake" }[] = [
+    ...mistakes.map((mistake) => ({ ...mistake, origin: "mistake" as const })),
+    ...reviewIds.map((templateId) => ({ templateId })),
+  ];
+  const slots = new Set(REVIEW_SLOTS.slice(0, extra.length));
+
+  // Typ, který přijde jako chyba, se ze stupně znovu nelosuje — dokud je
+  // z čeho brát. Dvakrát totéž v jedné lekci by opakování jen zdvojilo.
+  const inStage = new Set(stageById(spec.stage).categories);
+  const repeated = new Set(mistakes.map((mistake) => mistake.templateId));
+  const stageAll = production
+    .filter((template) => inStage.has(template.category))
+    .map((template) => template.id);
+  const stageFresh = stageAll.filter((id) => !repeated.has(id));
+  const stageIds = drawTemplates(
+    createRng(`stage:${spec.stage}:${lessonId}`),
+    stageFresh.length > 0 ? stageFresh : stageAll,
+    LESSON_LENGTH - slots.size,
+  );
 
   let fromStage = 0;
-  let fromReview = 0;
+  let fromExtra = 0;
   const items = Array.from({ length: LESSON_LENGTH }, (_, index) => {
-    const templateId = slots.has(index) ? reviewIds[fromReview++] : stageIds[fromStage++];
+    const seed = `${lessonId}:${index}`;
+    if (!slots.has(index)) {
+      return { templateId: stageIds[fromStage++], seed, difficulty: ramp[index % ramp.length] };
+    }
+    const item = extra[fromExtra++];
     return {
-      templateId,
-      seed: `${lessonId}:${index}`,
-      difficulty: ramp[index % ramp.length],
+      templateId: item.templateId,
+      seed,
+      // Chyba se opakuje v obtížnosti, ve které padla. Snadnější verze
+      // by ji „opravila“, aniž by student spočítal to, co mu nešlo.
+      difficulty: item.difficulty ?? ramp[index % ramp.length],
+      ...(item.origin ? { origin: item.origin } : {}),
     };
   });
 

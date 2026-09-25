@@ -4,7 +4,7 @@ import type { LessonPlan } from "./lessonPlan";
  * Průběh lekce: co předložit dál.
  *
  * Lekce není hotová po sedmi odpovědích, ale po sedmi uzavřených
- * příkladech. Kdo se splete, dostane tentýž příklad — se stejnými čísly —
+ * příkladech. Kdo se splete, dostane tentýž typ výpočtu — s jinými čísly —
  * znovu na konci, a lekce končí, až je všechno správně. Sedm chyb ze sedmi
  * proto nemůže znamenat splněný denní cíl.
  *

@@ -1,6 +1,6 @@
 import { categoryOfId } from "@/core/templateCategories";
 import type { Category, Difficulty } from "@/core/types";
-import { db, type AnswerRecord } from "./db";
+import { db } from "./db";
 
 /**
  * Statistika z uložených odpovědí.
@@ -81,26 +81,34 @@ export type Mistake = { templateId: string; difficulty: Difficulty };
 /**
  * Chyby k opakování.
  *
- * Bere se poslední odpověď na každý příklad: co uživatel podruhé zvládl,
- * už mu předkládat nemá smysl. Řadí se od nejstarší chyby, aby se
- * nezapomnělo na to, co leží nejdéle.
+ * Chyba patří typu výpočtu — šabloně v dané obtížnosti —, ne jednomu
+ * konkrétnímu příkladu. Opakování totiž dává tentýž výpočet s novými
+ * čísly, takže nové semínko by staré chybě nikdy nemohlo odpovídat
+ * a opravená chyba by v seznamu visela navždy.
+ *
+ * Chyba zmizí, jakmile student tentýž typ spočítá správně napoprvé —
+ * v opakování, v denní lekci, kdekoli. Příklad, který napoprvé nevyšel,
+ * stojí za zopakování i tehdy, když ho v téže lekci nakonec spočítal:
+ * sedlo mu to až po chybě.
+ *
+ * Řadí se od nejstarší neopravené chyby, aby se nezapomnělo na to, co
+ * leží nejdéle.
  */
 export async function mistakesToRepeat(limit: number): Promise<Mistake[]> {
   const answers = await db().answers.orderBy("id").toArray();
 
-  const latest = new Map<string, AnswerRecord>();
+  const open = new Map<string, Mistake>();
   for (const answer of answers) {
-    latest.set(`${answer.templateId}:${answer.seed}`, answer);
+    // Šablona, kterou aplikace už nezná, se opakovat nedá.
+    if (categoryOfId(answer.templateId) === null) continue;
+
+    const key = `${answer.templateId}:${answer.difficulty}`;
+    if (answer.firstTry) {
+      open.delete(key);
+    } else if (!open.has(key)) {
+      open.set(key, { templateId: answer.templateId, difficulty: answer.difficulty as Difficulty });
+    }
   }
 
-  return [...latest.values()]
-    // Příklad, který napoprvé nevyšel, stojí za zopakování i tehdy, když
-    // ho student v téže lekci nakonec spočítal — sedlo mu to až po chybě.
-    .filter((answer) => !answer.firstTry)
-    .slice(0, limit)
-    .map((answer) => ({
-      templateId: answer.templateId,
-      difficulty: answer.difficulty as Difficulty,
-    }));
+  return [...open.values()].slice(0, limit);
 }
-
