@@ -1,17 +1,13 @@
 "use client";
 
 import { useState } from "react";
-import { useLiveQuery } from "dexie-react-hooks";
 import { useFormatter, useTranslations } from "next-intl";
 import { ShieldIcon } from "@/components/icons";
 import { Monogram } from "@/components/ui/Monogram";
 import { Pastille } from "@/components/ui/Pastille";
-import { MASTERY_MIN_ANSWERS } from "@/core/curriculum";
+import { badgeStatesFromLevels, type BadgeLevels } from "@/core/badges";
 import { localDay, STREAK_FREEZE_COST } from "@/core/economy";
 import { displayTier } from "@/core/league";
-import { categoryOfId } from "@/core/templateCategories";
-import { CATEGORIES, type Category } from "@/core/types";
-import { categoryScores } from "@/lib/curriculum";
 import { spendPills } from "@/lib/db";
 import {
   duelRecord,
@@ -19,23 +15,22 @@ import {
   giftSentThisWeek,
   removeFriend,
   sendGift,
-  templateStats,
   type Duel,
 } from "@/lib/remote";
 import { useRemoteQuery } from "@/lib/remoteQuery";
 import { outcomeFor } from "@/lib/social";
 import { useProfile } from "@/lib/useProfile";
+import { BadgeGlyph } from "./BadgeGlyph";
 import type { Social } from "./data";
 import { PrimaryButton, Screen, SectionTitle, TextButton } from "./Screen";
-
-type Rate = { answered: number; correct: number };
 
 /**
  * Profil přítele.
  *
- * Vzájemná bilance jako hlavní číslo, pod ní ty vedle kamaráda.
- * Srovnání kategorií je zrcadlový graf: kde je tvůj pruh delší, tam ho
- * vyzvi. Odebrat je dole jako text a s potvrzením, ať se netrefí omylem.
+ * Vzájemná bilance jako hlavní číslo, pod ní ty vedle kamaráda a jeho
+ * odznaky. Úspěšnost napoprvé tu schválně není: kamarádi vidí snahu,
+ * chyby patří tomu, kdo se učí (migrace 0012). Odebrat je dole jako text
+ * a s potvrzením, ať se netrefí omylem.
  */
 export function FriendProfile({
   social,
@@ -60,10 +55,7 @@ export function FriendProfile({
   const recent = useRemoteQuery(`duelsWith:${social.userId}:${friendId}`, () =>
     duelsWith(social.client, social.userId, friendId),
   );
-  const theirStats = useRemoteQuery(`templateStats:${friendId}`, () => templateStats(social.client, friendId));
-  const mine = useLiveQuery(() => categoryScores(), []);
   const myWeek = social.friendWeek.data?.find((row) => row.userId === social.userId)?.xp ?? 0;
-  const [showAll, setShowAll] = useState(false);
   const [confirmRemove, setConfirmRemove] = useState(false);
 
   if (!friend) {
@@ -77,16 +69,6 @@ export function FriendProfile({
   const open = (social.duels.data ?? []).some(
     (duel) => duel.opponentId === friendId && (duel.status === "offered" || duel.status === "accepted"),
   );
-  const theirs = byCategory(theirStats.data ?? []);
-  const compared = CATEGORIES.map((category) => ({
-    category,
-    mine: mine?.get(category),
-    theirs: theirs.get(category),
-  }))
-    // Nejdřív, kde mají dost odpovědí oba: jen tam srovnání něco říká.
-    .sort((a, b) => weight(b) - weight(a));
-  const shown = showAll ? compared : compared.slice(0, 4);
-
   return (
     <Screen
       onBack={onBack}
@@ -140,20 +122,7 @@ export function FriendProfile({
         <CompareRow label={t("xpTotal")} mine={local.xp} theirs={friend.xpTotal} />
       </dl>
 
-      <SectionTitle>{t("byCategory")}</SectionTitle>
-      <p className="text-ink-soft mb-3 flex justify-between text-micro">
-        <span className="text-accent font-semibold">{t("you")}</span>
-        <span>{t("firstTryRate")}</span>
-        <span>{friend.handle}</span>
-      </p>
-      <div className="flex flex-col gap-3">
-        {shown.map((row) => (
-          <CategoryBars key={row.category} category={row.category} mine={row.mine} theirs={row.theirs} />
-        ))}
-      </div>
-      <TextButton className="mt-1" onClick={() => setShowAll((value) => !value)}>
-        {showAll ? t("showFewer") : t("showAllCategories", { count: CATEGORIES.length })}
-      </TextButton>
+      <FriendBadges levels={friend.badges} />
 
       {(recent.data ?? []).length > 0 ? (
         <>
@@ -241,27 +210,36 @@ function CompareRow({ label, mine, theirs }: { label: string; mine: number; thei
   );
 }
 
-function CategoryBars({ category, mine, theirs }: { category: Category; mine?: Rate; theirs?: Rate }) {
-  const tCategory = useTranslations("categories");
-  const left = percent(mine);
-  const right = percent(theirs);
+/**
+ * Kamarádovy odznaky: dosažené barevně a první, zbytek šedě. Bez průběhu
+ * a bez podmínek — kolik mu chybí, je jeho věc.
+ */
+function FriendBadges({ levels }: { levels: BadgeLevels }) {
+  const t = useTranslations("social");
+  const badges = badgeStatesFromLevels(levels).sort((a, b) => Number(b.level > 0) - Number(a.level > 0));
+  const unlocked = badges.filter((badge) => badge.level > 0).length;
   return (
-    <div>
-      <div className="flex justify-between gap-2 text-label">
-        <span className="truncate">{tCategory(category)}</span>
-        <span className="readout text-ink-soft shrink-0 text-micro" data-numeric>
-          {left === null ? "—" : left} · {right === null ? "—" : right}
-        </span>
-      </div>
-      <div className="mt-1 grid grid-cols-2 gap-[3px]" aria-hidden>
-        <span className="bg-surface relative h-1.5">
-          <span className="bg-accent absolute inset-y-0 right-0" style={{ width: `${left ?? 0}%` }} />
-        </span>
-        <span className="bg-surface relative h-1.5">
-          <span className="bg-ink-soft/60 absolute inset-y-0 left-0" style={{ width: `${right ?? 0}%` }} />
-        </span>
-      </div>
-    </div>
+    <>
+      <SectionTitle
+        aside={
+          <span className="readout text-ink-soft text-label" data-numeric>
+            {t("badgesCount", { unlocked, total: badges.length })}
+          </span>
+        }
+      >
+        {t("badgesTitle")}
+      </SectionTitle>
+      <ul className="grid grid-cols-4 gap-x-1 gap-y-4">
+        {badges.map((badge) => (
+          <li key={badge.id} className="flex flex-col items-center gap-1 text-center">
+            <BadgeGlyph id={badge.id} level={badge.level} levels={badge.levels} />
+            <span className={`text-micro leading-tight ${badge.level > 0 ? "font-semibold" : "text-ink-soft"}`}>
+              {t(`badge.${badge.id}.name`)}
+            </span>
+          </li>
+        ))}
+      </ul>
+    </>
   );
 }
 
@@ -322,30 +300,6 @@ function Gift({ social, friendId, handle }: { social: Social; friendId: string; 
       ) : null}
     </div>
   );
-}
-
-function byCategory(rows: readonly { templateId: string; answered: number; correct: number }[]): Map<Category, Rate> {
-  const result = new Map<Category, Rate>();
-  for (const row of rows) {
-    const category = categoryOfId(row.templateId);
-    if (!category) continue;
-    const bucket = result.get(category) ?? { answered: 0, correct: 0 };
-    bucket.answered += row.answered;
-    bucket.correct += row.correct;
-    result.set(category, bucket);
-  }
-  return result;
-}
-
-function percent(rate: Rate | undefined): number | null {
-  if (!rate || rate.answered < MASTERY_MIN_ANSWERS) return null;
-  return Math.round((rate.correct / rate.answered) * 100);
-}
-
-function weight(row: { mine?: Rate; theirs?: Rate }): number {
-  const a = row.mine?.answered ?? 0;
-  const b = row.theirs?.answered ?? 0;
-  return Math.min(a, b) * 1000 + a + b;
 }
 
 /**

@@ -56,6 +56,15 @@ vyhrál, rozhoduje server (`duel_outcome`, migrace 0010); pastilky si
 připíše zařízení samo, jednou za souboj. Pravidla souboje jsou
 v `src/core/duel.ts` a musí souhlasit s migrací — test to hlídá.
 
+## Co vidí kamarádi
+
+Snahu ano, výsledky ne. Veřejné je to, co se dá vypracovat tréninkem:
+série, XP, liga, odznaky, souboje. Úspěšnost napoprvé, chyby a nápovědy
+vidí jen student — v učící se aplikaci je chyba způsob učení a kdyby byla
+vidět, lidi by se vyhýbali nápovědě i těžším tématům. Výjimka je souboj
+(oba dobrovolně, stejných sedm příkladů), ale i tam soupeř vidí nápovědu
+jen jako „bez bodu“. Server úspěšnost nikomu jinému nevydá (migrace 0012).
+
 ## Kde jsme
 
 Aktuální stav a co dělat dál je v `docs/stav.md`.

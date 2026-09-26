@@ -86,6 +86,9 @@ export const BADGES: readonly Definition[] = [
   { id: "colleague", thresholds: [5], value: (f) => f.giftsSent, local: false },
 ];
 
+/** Dosažené stupně podle odznaku; chybějící = zamčeno. */
+export type BadgeLevels = Partial<Record<BadgeId, number>>;
+
 export type BadgeState = {
   id: BadgeId;
   /** Dosažený stupeň, 0 = zamčeno. */
@@ -180,4 +183,30 @@ export function leagueFacts(
     reachedTopLeague: history.some((week) => week.tier >= topTier),
     wonWeek: history.some((week) => week.rank === 1 && week.size >= zonesFrom),
   };
+}
+
+/**
+ * Stupně odznaků z profilu kamaráda. Zapsalo je jeho zařízení, takže se
+ * nevěří ničemu: neznámý odznak se zahodí, stupeň se ořízne na rozsah.
+ */
+export function parseBadgeLevels(raw: unknown): BadgeLevels {
+  const result: BadgeLevels = {};
+  if (typeof raw !== "object" || raw === null || Array.isArray(raw)) return result;
+  for (const badge of BADGES) {
+    const value = (raw as Record<string, unknown>)[badge.id];
+    if (typeof value !== "number" || !Number.isFinite(value)) continue;
+    const level = Math.min(Math.max(Math.floor(value), 0), badge.thresholds.length);
+    if (level > 0) result[badge.id] = level;
+  }
+  return result;
+}
+
+/** Stav odznaků kamaráda: jen dosažené stupně, bez průběhu (ten je jeho). */
+export function badgeStatesFromLevels(levels: BadgeLevels): BadgeState[] {
+  return BADGES.map((badge) => ({
+    id: badge.id,
+    level: levels[badge.id] ?? 0,
+    levels: badge.thresholds.length,
+    progress: null,
+  }));
 }

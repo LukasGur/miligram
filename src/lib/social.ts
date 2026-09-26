@@ -1,7 +1,16 @@
 "use client";
 
 import type { SupabaseClient } from "@supabase/supabase-js";
-import { BADGES, evaluateBadges, longestRun, mergeLevels, newlyEarned, type BadgeFacts, type BadgeState } from "@/core/badges";
+import {
+  BADGES,
+  evaluateBadges,
+  longestRun,
+  mergeLevels,
+  newlyEarned,
+  parseBadgeLevels,
+  type BadgeFacts,
+  type BadgeState,
+} from "@/core/badges";
 import { MASTERY_MIN_ANSWERS, MASTERY_MIN_RATE, STAGES, masteredStages } from "@/core/curriculum";
 import { duelOutcome, duelPhase, duelPills } from "@/core/duel";
 import { localDay } from "@/core/economy";
@@ -9,7 +18,7 @@ import { LESSON_LENGTH } from "@/core/lessonPlan";
 import { CATEGORIES } from "@/core/types";
 import { categoryScores } from "./curriculum";
 import { creditDuelReward, db, PROFILE_ID, saveBadgeLevels, storedBadgeLevels } from "./db";
-import { recordDuelResult, type Duel, type DuelResult } from "./remote";
+import { publishBadges, recordDuelResult, type Duel, type DuelResult } from "./remote";
 
 /* ---------------------------------------------------------------------------
    Pozvánky
@@ -189,4 +198,28 @@ export async function freshLocalBadges(): Promise<BadgeState[]> {
   const fresh = newlyEarned(states, stored).filter((state) => local_.has(state.id));
   await saveBadgeLevels(mergeLevels(states, stored));
   return fresh;
+}
+
+const BADGES_PUBLISHED = "miligram:badgesPublished";
+
+/**
+ * Pošle na server dosažené stupně odznaků, když se od minula změnily.
+ * Kamarádi je vidí v profilu; úspěšnost, ze které některé vznikly, ne.
+ */
+export async function publishBadgesIfChanged(client: SupabaseClient, userId: string): Promise<void> {
+  const levels = parseBadgeLevels(await storedBadgeLevels());
+  const stamp = `${userId}:${JSON.stringify(levels)}`;
+  let published: string | null = null;
+  try {
+    published = localStorage.getItem(BADGES_PUBLISHED);
+  } catch {
+    // Bez úložiště se pošle pokaždé; je to jeden malý zápis.
+  }
+  if (published === stamp) return;
+  await publishBadges(client, userId, levels);
+  try {
+    localStorage.setItem(BADGES_PUBLISHED, stamp);
+  } catch {
+    // Viz výše.
+  }
 }

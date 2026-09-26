@@ -15,7 +15,7 @@ import {
   weekStart,
 } from "@/lib/remote";
 import { updatePulse } from "@/lib/pulse";
-import { collectDuelRewards, duelsNeedingMe, flushDuelResults } from "@/lib/social";
+import { collectDuelRewards, duelsNeedingMe, flushDuelResults, publishBadgesIfChanged } from "@/lib/social";
 import { unseenWeek } from "@/components/social/WeekResult";
 import { claimGift } from "@/lib/db";
 import { pushOnFor, restorePushDevice, savePrefs, usePushStatus } from "@/lib/push";
@@ -145,6 +145,8 @@ export function SyncAgent() {
         ]);
         if (cancelled) return;
         await collectDuelRewards(userId, duels);
+        // Odznak ze shrnutí lekce se tak kamarádům ukáže i bez otevření profilu.
+        await publishBadgesIfChanged(client, userId).catch(() => {});
         const week = unseenWeek(history, weekStart(), userId) ? 1 : 0;
         updatePulse(userId, {
           handle: profile?.handle ?? null,

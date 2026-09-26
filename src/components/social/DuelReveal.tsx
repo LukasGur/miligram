@@ -15,9 +15,10 @@ import { PrimaryButton, Screen, TextButton } from "./Screen";
  * Odhalení výsledku.
  *
  * Moment, kvůli kterému se souboj hraje. Řádky se odkrývají po jednom,
- * příklad vedle příkladu. Chyba soupeře je šedý obrys, ne červená —
- * tady nejde o chybu v tvém výpočtu, ale o srovnání. Nápověda má vlastní
- * značku N: bod nedá, ale chyba to nebyla.
+ * příklad vedle příkladu. Příklad bez bodu je šedý obrys, ne červená —
+ * tady nejde o chybu v tvém výpočtu, ale o srovnání. Nápověda má značku N
+ * jen u tebe; soupeř ji vidí jako „bez bodu“, ať si nikdo nebojí v souboji
+ * nechat poradit.
  */
 export function DuelReveal({
   duel,
@@ -115,7 +116,7 @@ export function DuelReveal({
                   : " "}
             </span>
             <Mark mark={duel.mine?.items?.[index]} />
-            <Mark mark={duel.theirs?.items?.[index]} />
+            <Mark mark={sealHint(duel.theirs?.items?.[index])} />
           </div>
         ))}
         {duel.mine?.durationMs != null ? (
@@ -136,9 +137,11 @@ export function DuelReveal({
         <span className="flex items-center gap-1.5">
           <Mark mark="miss" small /> {t("legendMiss")}
         </span>
-        <span className="flex items-center gap-1.5">
-          <Mark mark="hint" small /> {t("legendHint")}
-        </span>
+        {duel.mine?.items?.includes("hint") ? (
+          <span className="flex items-center gap-1.5">
+            <Mark mark="hint" small /> {t("legendHint")}
+          </span>
+        ) : null}
       </p>
     </Screen>
   );
@@ -193,6 +196,11 @@ function Mark({ mark, small = false }: { mark: DuelMark | undefined; small?: boo
       )}
     </span>
   );
+}
+
+/** Nápověda soupeře se ukazuje jen jako příklad bez bodu. */
+function sealHint(mark: DuelMark | undefined): DuelMark | undefined {
+  return mark === "hint" ? "miss" : mark;
 }
 
 /** Minuty a sekundy. */

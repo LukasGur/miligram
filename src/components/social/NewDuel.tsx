@@ -7,11 +7,9 @@ import { Monogram } from "@/components/ui/Monogram";
 import { MASTERY_MIN_ANSWERS } from "@/core/curriculum";
 import { DIFFICULTY_RAMP } from "@/core/lessonPlan";
 import { DUEL_TOPICS, DUEL_WIN_PILLS, type DuelTopic } from "@/core/duel";
-import { categoryOfId } from "@/core/templateCategories";
 import type { Category } from "@/core/types";
 import { categoryScores } from "@/lib/curriculum";
-import { templateStats, type Duel, type FriendSummary } from "@/lib/remote";
-import { useRemoteQuery } from "@/lib/remoteQuery";
+import type { Duel, FriendSummary } from "@/lib/remote";
 import type { Social } from "./data";
 import { PrimaryButton, Screen, TextButton } from "./Screen";
 
@@ -20,8 +18,8 @@ type Rate = { answered: number; correct: number };
 /**
  * Nová výzva.
  *
- * Téma se volí s daty: u každé kategorie tvoje a soupeřova úspěšnost
- * napoprvé. Podmínky souboje stojí pod výběrem jako ordinace — žádné
+ * Téma se volí s daty: u každé kategorie tvoje úspěšnost napoprvé.
+ * Soupeřova tu není — úspěšnost je soukromá (migrace 0012). Podmínky souboje stojí pod výběrem jako ordinace — žádné
  * překvapení, co se počítá.
  */
 export function NewDuel({
@@ -49,10 +47,6 @@ export function NewDuel({
   const openWith = (id: string) => duels.some((duel) => duel.opponentId === id && (duel.status === "offered" || duel.status === "accepted"));
 
   const mine = useLiveQuery(() => categoryScores(), []);
-  const theirs = useRemoteQuery(friendId ? `templateStats:${friendId}` : null, () =>
-    templateStats(social.client, friendId as string),
-  );
-  const theirRates = byCategory(theirs.data ?? []);
 
   async function create(playNow: boolean) {
     if (!friend || busy) return;
@@ -126,12 +120,7 @@ export function NewDuel({
         </>
       ) : null}
 
-      <div className="mt-5 mb-2 flex items-baseline justify-between gap-3">
-        <p className="panel-label">{t("pickTopic")}</p>
-        <p className="text-ink-soft text-micro">
-          <span className="text-accent font-semibold">{t("you")}</span> · {friend?.handle ?? t("opponent")}
-        </p>
-      </div>
+      <p className="panel-label mt-5 mb-2">{t("pickTopic")}</p>
       <div className="grid grid-cols-2 gap-2">
         {DUEL_TOPICS.map((value) => (
           <TopicButton
@@ -140,7 +129,6 @@ export function NewDuel({
             selected={topic === value}
             onSelect={() => setTopic(value)}
             mine={value === "mix" ? total(mine) : mine?.get(value)}
-            theirs={value === "mix" ? total(theirRates) : theirRates.get(value)}
           />
         ))}
       </div>
@@ -158,13 +146,11 @@ function TopicButton({
   selected,
   onSelect,
   mine,
-  theirs,
 }: {
   topic: DuelTopic;
   selected: boolean;
   onSelect: () => void;
   mine: Rate | undefined;
-  theirs: Rate | undefined;
 }) {
   const t = useTranslations("social");
   const tCategory = useTranslations("categories");
@@ -179,8 +165,8 @@ function TopicButton({
       } ${selected ? "border-accent bg-accent-wash shadow-[inset_0_0_0_1px_var(--color-accent)]" : "border-line"}`}
     >
       <span className="text-label leading-snug font-semibold">{mix ? t("topicMixLong") : tCategory(topic)}</span>
-      <span className="readout text-ink-soft flex gap-1.5 text-micro" data-numeric>
-        <span className="text-accent">{formatRate(mine)}</span>·<span>{formatRate(theirs)}</span>
+      <span className="readout text-ink-soft text-micro" data-numeric>
+        {formatRate(mine)}
       </span>
     </button>
   );
@@ -211,19 +197,6 @@ function Terms() {
       ))}
     </dl>
   );
-}
-
-function byCategory(rows: readonly { templateId: string; answered: number; correct: number }[]): Map<Category, Rate> {
-  const result = new Map<Category, Rate>();
-  for (const row of rows) {
-    const category = categoryOfId(row.templateId);
-    if (!category) continue;
-    const bucket = result.get(category) ?? { answered: 0, correct: 0 };
-    bucket.answered += row.answered;
-    bucket.correct += row.correct;
-    result.set(category, bucket);
-  }
-  return result;
 }
 
 function total(rates: ReadonlyMap<Category, Rate> | undefined): Rate | undefined {

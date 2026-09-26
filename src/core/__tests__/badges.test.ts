@@ -1,5 +1,15 @@
 import { describe, expect, it } from "vitest";
-import { evaluateBadges, leagueFacts, longestRun, mergeLevels, newlyEarned, type BadgeFacts } from "../badges";
+import {
+  BADGES,
+  badgeStatesFromLevels,
+  evaluateBadges,
+  leagueFacts,
+  longestRun,
+  mergeLevels,
+  newlyEarned,
+  parseBadgeLevels,
+  type BadgeFacts,
+} from "../badges";
 
 const facts: BadgeFacts = {
   streak: 12,
@@ -78,5 +88,28 @@ describe("pomocníci", () => {
     ).toEqual({ promoted: true, reachedTopLeague: false, wonWeek: true });
     // vítězství v malé skupině se nepočítá
     expect(leagueFacts([{ tier: 1, rank: 1, size: 3 }], 5, 9).wonWeek).toBe(false);
+  });
+});
+
+describe("parseBadgeLevels", () => {
+  it("nechá jen známé odznaky a stupeň ořízne na rozsah", () => {
+    expect(parseBadgeLevels({ streak: 2, duelist: 9, flawless: 0, bogus: 3, solved: "2", colleague: 1.7 })).toEqual({
+      streak: 2,
+      duelist: 3,
+      colleague: 1,
+    });
+  });
+
+  it("nesmysl ze serveru je prázdný seznam", () => {
+    expect(parseBadgeLevels(null)).toEqual({});
+    expect(parseBadgeLevels([1, 2])).toEqual({});
+    expect(parseBadgeLevels("streak")).toEqual({});
+  });
+
+  it("stav kamaráda nese stupně bez průběhu", () => {
+    const states = badgeStatesFromLevels({ streak: 1 });
+    expect(states).toHaveLength(BADGES.length);
+    expect(states.find((state) => state.id === "streak")).toEqual({ id: "streak", level: 1, levels: 3, progress: null });
+    expect(states.every((state) => state.progress === null)).toBe(true);
   });
 });

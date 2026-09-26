@@ -10,7 +10,7 @@ import { displayTier, weekEndsAt, ZONES_FROM, TOP_TIER } from "@/core/league";
 import { leagueFacts } from "@/core/badges";
 import { db, receivedGifts } from "@/lib/db";
 import { claimHandle } from "@/lib/remote";
-import { badgeStates, duelsNeedingMe } from "@/lib/social";
+import { badgeStates, duelsNeedingMe, publishBadgesIfChanged } from "@/lib/social";
 import { useProfile } from "@/lib/useProfile";
 import { Field, Primary } from "@/components/account/SignIn";
 import { SignOut } from "@/components/account/SignOut";
@@ -252,11 +252,13 @@ export function useBadges(social: Social): BadgeState[] | undefined {
       giftsSent: gifts ?? null,
     }).then((next) => {
       if (!cancelled) setStates(next);
+      // Ligové a soubojové odznaky se dopočítají až tady.
+      void publishBadgesIfChanged(social.client, social.userId).catch(() => {});
     });
     return () => {
       cancelled = true;
     };
-  }, [history, record, gifts]);
+  }, [history, record, gifts, social.client, social.userId]);
 
   return states;
 }

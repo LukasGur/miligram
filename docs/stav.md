@@ -212,6 +212,13 @@ Ověřeno ve WebKitu na rozměru iPhonu s podvrženými odpověďmi serveru;
 pravidla proti živé databázi dotazem (`duel_outcome`, `resolve_duels`).
 Na telefonu se dvěma účty to ještě nikdo nehrál.
 
+**Soukromí úspěšnosti** (26. 9. 2026) — kamarádi vidí snahu (série, XP,
+liga, odznaky), úspěšnost napoprvé a chyby ne. Srovnání podle kategorií
+v profilu přítele nahradily jeho odznaky; výběr tématu v nové výzvě ukazuje
+jen vlastní procenta; v odhalení souboje se soupeřova nápověda ukazuje jako
+„bez bodu“. Server funkci `friend_template_stats` zrušil (migrace 0012)
+a profil nese `badges` — dosažené stupně, které si zapíše zařízení.
+
 ## Co dělat dál
 
 0a. **Souboj naostro na dvou telefonech.** Výzva, přijetí, hraní obou,

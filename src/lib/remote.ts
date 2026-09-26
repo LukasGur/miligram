@@ -1,6 +1,7 @@
 "use client";
 
 import type { SupabaseClient } from "@supabase/supabase-js";
+import { parseBadgeLevels, type BadgeLevels } from "@/core/badges";
 import { isDuelTopic, type DuelMark, type DuelStatus, type DuelTopic } from "@/core/duel";
 import { rankLeague, type RankedEntry } from "@/core/league";
 import type { RemoteLesson } from "./restore";
@@ -568,9 +569,9 @@ export async function claimGift(client: SupabaseClient, giftId: string): Promise
 /* ---------------------------------------------------------------------------
    Přátelé: profil, odebrání
 
-   Skóre (`stats`, `weekly_xp`) a přezdívky jsou mezi přihlášenými veřejné,
-   úspěšnost podle šablon ne — tu pustí jen funkce, a jen potvrzeným
-   přátelům.
+   Skóre (`stats`, `weekly_xp`), přezdívky a odznaky jsou mezi přihlášenými
+   veřejné. Úspěšnost napoprvé ne: tu server nikomu jinému nevydá
+   (migrace 0012) — kamarádi vidí snahu, chyby patří studentovi.
    ------------------------------------------------------------------------ */
 
 export type FriendSummary = {
@@ -584,6 +585,8 @@ export type FriendSummary = {
   xpWeek: number;
   /** Vnitřní číslo ligy (1 nejnižší). */
   tier: number;
+  /** Dosažené stupně odznaků, jak si je zapsalo kamarádovo zařízení. */
+  badges: BadgeLevels;
 };
 
 export async function friendSummaries(client: SupabaseClient, userId: string): Promise<FriendSummary[]> {
@@ -600,7 +603,7 @@ export async function friendSummaries(client: SupabaseClient, userId: string): P
   if (ids.length === 0) return [];
 
   const [profiles, stats, weekly] = await Promise.all([
-    client.from("profiles").select("id, handle").in("id", ids),
+    client.from("profiles").select("id, handle, badges").in("id", ids),
     client.from("stats").select("user_id, xp_total, streak_days, last_lesson_day, league_tier").in("user_id", ids),
     client.from("weekly_xp").select("user_id, xp").eq("week_start", weekStart()).in("user_id", ids),
   ]);
@@ -621,23 +624,16 @@ export async function friendSummaries(client: SupabaseClient, userId: string): P
         xpTotal: row?.xp_total ?? 0,
         xpWeek: weekBy.get(profile.id) ?? 0,
         tier: row?.league_tier ?? 1,
+        badges: parseBadgeLevels(profile.badges),
       };
     })
     .sort((a, b) => a.handle.localeCompare(b.handle));
 }
 
-/** Úspěšnost podle šablon (sebe nebo potvrzeného kamaráda). */
-export async function templateStats(
-  client: SupabaseClient,
-  userId: string,
-): Promise<{ templateId: string; answered: number; correct: number }[]> {
-  const { data, error } = await client.rpc("friend_template_stats", { p_friend: userId });
+/** Zapíše do profilu dosažené stupně odznaků, ať je kamarádi vidí. */
+export async function publishBadges(client: SupabaseClient, userId: string, levels: BadgeLevels): Promise<void> {
+  const { error } = await client.from("profiles").update({ badges: levels }).eq("id", userId);
   if (error) throw new Error(error.message);
-  return ((data ?? []) as { template_id: string; answered: number; correct: number }[]).map((row) => ({
-    templateId: row.template_id,
-    answered: row.answered,
-    correct: row.correct,
-  }));
 }
 
 export async function removeFriend(client: SupabaseClient, userId: string, otherId: string): Promise<void> {
