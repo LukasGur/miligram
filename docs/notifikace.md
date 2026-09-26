@@ -18,9 +18,16 @@ sama fronta (`sent_at`, `outcome`), cron ji čistí po třiceti dnech.
 - **Připomínka série ve zvolený čas** (výchozí 19:00) a **poslední šance
   ve 21:30**, když série má aspoň 3 dny a lekce pořád chybí. Poslední
   šance má vlastní vypínač. Víc než dvě připomínky série za den nikdy.
-- **Nabídka po první dohrané lekci**, ve shrnutí lekce. Systémový dotaz
-  na povolení až po klepnutí na kartu. Kdo kartu zavře, uvidí ji znovu
-  nejdřív za týden, nejvýš třikrát. V Nastavení je vypínač vždycky.
+- **Nabídka hned po registraci** (26. 9. 2026), jako poslední krok po
+  zvolení první přezdívky: celá obrazovka s náhledem a volbou času.
+  Zapnout rovnou bez ptaní nejde — prohlížeč posílá jen po povolení
+  a iOS ukáže dotaz jen po klepnutí. Krok se neukáže tam, kde zapnout
+  nejdou (iPhone v prohlížeči, zablokované povolení). „Teď ne“ se počítá
+  jako první odmítnutí.
+- **Nabídka po dohrané lekci** zůstává jako záloha, ve shrnutí lekce.
+  Systémový dotaz na povolení až po klepnutí. Kdo nabídku odmítne, uvidí
+  ji znovu nejdřív za týden, nejvýš třikrát celkem (včetně kroku po
+  registraci). V Nastavení je vypínač vždycky.
 - **Backend v Supabase**: tabulky, `pg_cron`, `pg_net` a jedna Edge
   Function. Žádná další služba.
 

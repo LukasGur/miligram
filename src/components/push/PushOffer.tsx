@@ -3,35 +3,20 @@
 import { useEffect, useRef, useState } from "react";
 import { useTranslations } from "next-intl";
 import { CheckIcon } from "@/components/icons";
-import { useLocale } from "@/i18n/LocaleProvider";
-import { useLocalValue, usePlatform, useSnoozed } from "@/lib/clientState";
-import { STORAGE_KEYS, writeLocal } from "@/lib/localStore";
-import {
-  DEFAULT_PREFS,
-  enablePush,
-  pushOnFor,
-  showWelcomeNotice,
-  usePushStatus,
-  type DeviceFacts,
-} from "@/lib/push";
-import { supabase } from "@/lib/supabase";
+import type { DeviceFacts } from "@/lib/push";
 import { useSession } from "@/lib/useSession";
 import { ReminderPreview } from "./ReminderPreview";
+import { usePushPrompt } from "./usePushPrompt";
 
-/** Odmítnutá nabídka se vrátí nejdřív za týden… */
-const SNOOZE_MS = 7 * 24 * 60 * 60 * 1000;
-/** …a po třetím odmítnutí už ne. Vypínač v Nastavení zůstává. */
-const MAX_DISMISSALS = 3;
 /** Až doběhne odměna ve shrnutí — nabídka nesmí přebít radost z lekce. */
 const APPEAR_AFTER_MS = 1600;
 /** Jak dlouho zůstane potvrzení, než se list sám zavře. */
 const DONE_MS = 1800;
 
-type Phase = "offer" | "busy" | "done" | "denied" | "failed";
-
 /**
  * Nabídka připomínek po dohrané lekci.
  *
+ * Záloha pro toho, kdo krok po registraci přeskočil (PushOnboarding).
  * Systémový dotaz na povolení přijde až po klepnutí na „Zapnout“, nikdy
  * sám od sebe: kdo ho dostane bez vysvětlení, odmítne, a odmítnutí se
  * na iOS ani v Chromu z aplikace vrátit nedá. Proto nejdřív náhled toho,
@@ -40,37 +25,19 @@ type Phase = "offer" | "busy" | "done" | "denied" | "failed";
 export function PushOffer({ streak, facts }: { streak: number; facts: DeviceFacts }) {
   const t = useTranslations("notifications");
   const { session } = useSession();
-  const { locale } = useLocale();
-  const status = usePushStatus();
-  const platform = usePlatform();
-  const snoozed = useSnoozed(STORAGE_KEYS.pushOfferDismissedAt, SNOOZE_MS);
-  const dismissals = Number(useLocalValue(STORAGE_KEYS.pushOfferDismissals) ?? 0) || 0;
+  const prompt = usePushPrompt(session?.user.id, facts);
+  const { phase, time } = prompt;
 
   const [due, setDue] = useState(false);
   const [closed, setClosed] = useState(false);
-  const [phase, setPhase] = useState<Phase>("offer");
-  const [time, setTime] = useState(DEFAULT_PREFS.reminderTime);
   const primaryRef = useRef<HTMLButtonElement>(null);
-
-  const userId = session?.user.id;
-  const eligible =
-    Boolean(userId) &&
-    status.ready &&
-    status.availability === "available" &&
-    status.permission !== "denied" &&
-    !pushOnFor(status, userId) &&
-    !snoozed &&
-    dismissals < MAX_DISMISSALS;
 
   // Jakmile se na nabídku klepne, zůstává otevřená, i když se mezitím
   // změní stav, podle kterého se nabízela (po zapnutí už „nesplňuje“).
-  const open = due && !closed && (phase !== "offer" || eligible);
+  const open = due && !closed && (phase !== "offer" || (prompt.possible && prompt.welcome));
 
   function later() {
-    if (phase === "offer") {
-      writeLocal(STORAGE_KEYS.pushOfferDismissedAt, String(Date.now()));
-      writeLocal(STORAGE_KEYS.pushOfferDismissals, String(dismissals + 1));
-    }
+    prompt.dismiss();
     setClosed(true);
   }
 
@@ -96,25 +63,8 @@ export function PushOffer({ streak, facts }: { streak: number; facts: DeviceFact
   if (!open) return null;
 
   async function enable() {
-    const client = supabase();
-    if (!client || !userId) return;
-    setPhase("busy");
-    const result = await enablePush(client, userId, { reminderTime: time, locale, ...facts });
-    if (result === "enabled") {
-      await showWelcomeNotice(t("welcomeTitle"), t("welcomeBody", { time }));
-      setPhase("done");
-      window.setTimeout(() => setClosed(true), DONE_MS);
-    } else {
-      setPhase(result);
-    }
+    if ((await prompt.enable()) === "done") window.setTimeout(() => setClosed(true), DONE_MS);
   }
-
-  const deniedHow =
-    platform === "ios-safari" || platform === "ios-other-browser"
-      ? t("deniedIos")
-      : platform === "android"
-        ? t("deniedAndroid")
-        : t("deniedDesktop");
 
   return (
     <div className="fixed inset-0 z-50 flex flex-col justify-end">
@@ -134,7 +84,7 @@ export function PushOffer({ streak, facts }: { streak: number; facts: DeviceFact
       >
         <ReminderPreview
           time={time}
-          onTimeChange={phase === "offer" || phase === "failed" ? setTime : undefined}
+          onTimeChange={phase === "offer" || phase === "failed" ? prompt.setTime : undefined}
           streak={streak}
         />
 
@@ -152,7 +102,7 @@ export function PushOffer({ streak, facts }: { streak: number; facts: DeviceFact
             <h2 id="push-offer-title" className="mt-5 text-title font-semibold">
               {t("deniedTitle")}
             </h2>
-            <p className="text-ink-soft mt-2 text-label">{deniedHow}</p>
+            <p className="text-ink-soft mt-2 text-label">{prompt.deniedHow}</p>
             <button
               ref={primaryRef}
               type="button"
@@ -183,7 +133,7 @@ export function PushOffer({ streak, facts }: { streak: number; facts: DeviceFact
               aria-busy={phase === "busy"}
               className="bg-accent active:bg-accent-press mt-6 flex min-h-14 w-full items-center justify-center rounded-control text-body font-semibold text-white transition-opacity disabled:opacity-60"
             >
-              {t("offerEnable")}
+              {phase === "busy" ? t("enabling") : t("offerEnable")}
             </button>
             <button
               type="button"

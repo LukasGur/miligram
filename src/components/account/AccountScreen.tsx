@@ -14,9 +14,12 @@ import {
   type LeagueStanding,
   type RemoteProfile,
 } from "@/lib/remote";
+import { pushOnFor, usePushStatus } from "@/lib/push";
 import { useRemoteQuery } from "@/lib/remoteQuery";
 import { supabase, isRemoteConfigured } from "@/lib/supabase";
+import { useProfile } from "@/lib/useProfile";
 import { useSession } from "@/lib/useSession";
+import { PushOnboarding } from "@/components/push/PushOnboarding";
 import { Field, Primary, SignIn } from "./SignIn";
 import { Friends } from "./Friends";
 import { Duels } from "./Duels";
@@ -126,8 +129,35 @@ function SignedIn({
     leagueStanding(client, userId),
   );
 
+  /**
+   * Poslední krok registrace: připomínky. Jen u nového účtu, hned po první
+   * přezdívce — a jen tam, kde se upozornění dají zapnout. iPhone
+   * v prohlížeči nebo zablokované povolení krok přeskočí; nabízet
+   * něco, co nejde, by registraci jen zdrželo.
+   */
+  const [onboarding, setOnboarding] = useState(false);
+  const pushStatus = usePushStatus();
+  const { profile: local, streak } = useProfile();
+  const canEnablePush =
+    pushStatus.ready &&
+    pushStatus.availability === "available" &&
+    pushStatus.permission !== "denied" &&
+    !pushOnFor(pushStatus, userId);
+
   return (
     <>
+      {onboarding ? (
+        <PushOnboarding
+          userId={userId}
+          streak={streak}
+          facts={{
+            streakDays: local.streakDays,
+            streakFreezes: local.streakFreezes ?? 0,
+            lastLessonDay: local.lastLessonDay,
+          }}
+          onDone={() => setOnboarding(false)}
+        />
+      ) : null}
       <HandleForm
         /**
          * Klíč vynutí novou instanci, jakmile profil dorazí ze serveru.
@@ -138,7 +168,12 @@ function SignedIn({
         client={client}
         userId={userId}
         current={profile.data ?? null}
-        onSaved={profile.refresh}
+        onSaved={(created) => {
+          profile.refresh();
+          // Rozhoduje se teď, ne při každém vykreslení: po zapnutí už
+          // „nejde zapnout“ a krok by zmizel dřív, než ukáže potvrzení.
+          if (created && canEnablePush) setOnboarding(true);
+        }}
       />
       {profile.data ? (
         <>
@@ -166,7 +201,8 @@ function HandleForm({
   client: ReturnType<typeof supabase> & object;
   userId: string;
   current: RemoteProfile | null;
-  onSaved: () => void;
+  /** `created` je true u první přezdívky, tedy u právě založeného účtu. */
+  onSaved: (created: boolean) => void;
 }) {
   const t = useTranslations("account");
   const [handle, setHandle] = useState(current?.handle ?? "");
@@ -179,7 +215,7 @@ function HandleForm({
     setError(null);
     try {
       const result = await claimHandle(client, userId, handle);
-      if (result.ok) onSaved();
+      if (result.ok) onSaved(current === null);
       else setError(t(result.reason === "taken" ? "handleTaken" : "handleInvalid"));
     } finally {
       setBusy(false);

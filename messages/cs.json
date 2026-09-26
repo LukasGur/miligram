@@ -572,6 +572,14 @@
     "settingsInstall": "Na iPhonu chodí upozornění jen aplikaci přidané na plochu.",
     "settingsUnsupported": "Tenhle prohlížeč upozornění neumí.",
     "settingsLoading": "Načítám…",
-    "saveFailed": "Uložit se to nepovedlo. Zkus to znovu."
+    "saveFailed": "Uložit se to nepovedlo. Zkus to znovu.",
+    "onboardingLabel": "Poslední krok",
+    "onboardingProgress": "Krok {step} z {total}",
+    "onboardingPointStreak": "Připomínka série jen ve dny, kdy ještě nemáš hotovo",
+    "onboardingPointFriends": "Zpráva, když tě kamarád vyzve na souboj",
+    "onboardingPointNight": "V noci mlčíme, nejvýš pár zpráv denně",
+    "onboardingContinue": "Pokračovat",
+    "enabling": "Zapínám…",
+    "onboardingDoneBody": "Ukázková notifikace už je v telefonu. Čas i druhy upozornění změníš v Nastavení."
   }
 }

@@ -171,8 +171,9 @@ Texty jsou hravé, v `messages/*.json` pod `push`; Edge Function si z nich
 bere výtah (`node scripts/build-push-messages.mjs` po každé změně, test
 hlídá, že se nerozešly). Komu a kdy rozhoduje databáze (migrace 0008,
 pg_cron každou minutu), odesílá Edge Function `push`. Soukromý klíč VAPID,
-heslo cronu a adresa funkce jsou ve Vaultu. Nabídka přijde ve shrnutí
-lekce jako list s náhledem zamčené obrazovky; vypínač a volby jsou
+heslo cronu a adresa funkce jsou ve Vaultu. Nabídka přijde jako poslední
+krok registrace (po první přezdívce) a jako záloha ve shrnutí lekce,
+obojí s náhledem zamčené obrazovky; vypínač a volby jsou
 v Nastavení. Ověřeno v Chromiu: odběr, uvítací notifikace a doručení
 z fronty přes FCM až do service workeru.
 
