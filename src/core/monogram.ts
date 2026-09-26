@@ -3,10 +3,14 @@
  *
  * Fotky se nenahrávají — bez nich není co moderovat a není co chránit.
  * Tón se z přezdívky odvozuje stabilně, takže kamarád má na každém
- * telefonu tutéž barvu a nikdo ji nemusí nastavovat.
+ * telefonu tutéž barvu a nikdo ji nemusí nastavovat. Kdo chce jinou,
+ * vybere si ji z týchž tónů a uloží do profilu (migrace 0013).
  */
 
-/** Počet tónů. Musí souhlasit s `--color-tone-*` v globals.css. */
+/**
+ * Počet tónů. Musí souhlasit s `--color-tone-*` v globals.css
+ * a s rozsahem v migraci 0013.
+ */
 export const TONES = 8;
 
 /**
@@ -31,4 +35,13 @@ export function toneOf(handle: string): number {
     hash = Math.imul(hash, 0x01000193) >>> 0;
   }
   return hash % TONES;
+}
+
+export function isTone(value: unknown): value is number {
+  return Number.isInteger(value) && (value as number) >= 0 && (value as number) < TONES;
+}
+
+/** Vybraný tón, jinak ten z přezdívky. */
+export function resolveTone(handle: string, chosen?: number | null): number {
+  return isTone(chosen) ? chosen : toneOf(handle);
 }

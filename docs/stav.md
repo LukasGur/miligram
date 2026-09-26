@@ -219,6 +219,23 @@ jen vlastní procenta; v odhalení souboje se soupeřova nápověda ukazuje jako
 „bez bodu“. Server funkci `friend_template_stats` zrušil (migrace 0012)
 a profil nese `badges` — dosažené stupně, které si zapíše zařízení.
 
+**Výzva na jedno klepnutí.** Vyzvat kamaráda stálo pět klepnutí přes
+seznam soubojů a obrazovku s tabulkou podmínek, a tak se skoro nevyzývalo.
+Obrazovka `NewDuel` je pryč a místo ní je `ChallengeSheet`, spodní list
+se soupeřem, tématem jako čipem a podmínkami na jednom řádku (celé pod
+odkazem). Otevírá se tam, kde chuť vzniká:
+
+- po dohrané lekci karta s řadou kamarádů, téma je převažující kategorie
+  lekce (`lessonTopic`), jinak mix; kdo kamarády nemá, dostane pozvánku
+- „Odveta“ na odhalení výsledku, stejný soupeř i téma
+- v profilu karta Soubojů s řadou monogramů, klepnutí rovnou vyzve
+
+**Monogramy.** Kruh všude, tlumený podklad a tmavé iniciály téhož tónu
+místo sytých plných barev. Tón si každý vybere klepnutím na vlastní
+monogram v profilu (`profiles.tone`, migrace 0013, v živé databázi);
+kdo nevybral, má dál ten z přezdívky. Tóny cizích profilů si pamatuje
+`src/lib/tones.ts`, takže se nemusí protahovat každým seznamem.
+
 ## Co dělat dál
 
 0a. **Souboj naostro na dvou telefonech.** Výzva, přijetí, hraní obou,

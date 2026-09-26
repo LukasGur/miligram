@@ -5,6 +5,7 @@ import { parseBadgeLevels, type BadgeLevels } from "@/core/badges";
 import { isDuelTopic, type DuelMark, type DuelStatus, type DuelTopic } from "@/core/duel";
 import { rankLeague, type RankedEntry } from "@/core/league";
 import type { RemoteLesson } from "./restore";
+import { rememberTones } from "./tones";
 import type { LessonEventRow, SyncGateway } from "./sync";
 
 /**
@@ -15,7 +16,14 @@ import type { LessonEventRow, SyncGateway } from "./sync";
  * server, kde by šla vynutit.
  */
 
-export type RemoteProfile = { id: string; handle: string; displayName: string; createdAt: string };
+export type RemoteProfile = {
+  id: string;
+  handle: string;
+  displayName: string;
+  createdAt: string;
+  /** Vybraný tón monogramu; null = z přezdívky. */
+  tone: number | null;
+};
 
 export type ScoreRow = {
   userId: string;
@@ -85,13 +93,24 @@ export async function fetchLessons(
 export async function fetchProfile(client: SupabaseClient, userId: string): Promise<RemoteProfile | null> {
   const { data, error } = await client
     .from("profiles")
-    .select("id, handle, display_name, created_at")
+    .select("id, handle, display_name, created_at, tone")
     .eq("id", userId)
     .maybeSingle();
   if (error) throw new Error(error.message);
+  if (data) rememberTones([data]);
   return data
-    ? { id: data.id, handle: data.handle, displayName: data.display_name, createdAt: data.created_at }
+    ? { id: data.id, handle: data.handle, displayName: data.display_name, createdAt: data.created_at, tone: data.tone }
     : null;
+}
+
+/** Tón monogramu. Null vrátí ten z přezdívky. */
+export async function saveTone(client: SupabaseClient, userId: string, handle: string, tone: number | null): Promise<void> {
+  const { error } = await client
+    .from("profiles")
+    .update({ tone, updated_at: new Date().toISOString() })
+    .eq("id", userId);
+  if (error) throw new Error(error.message);
+  rememberTones([{ handle, tone }]);
 }
 
 /** Přezdívka se zabírá zápisem — o jedinečnost se stará index, ne kontrola předem. */
@@ -134,7 +153,7 @@ export async function friendScores(
   const ids = [...friends, userId];
 
   const [profiles, scores] = await Promise.all([
-    client.from("profiles").select("id, handle, display_name").in("id", ids),
+    client.from("profiles").select("id, handle, display_name, tone").in("id", ids),
     scope === "week"
       ? client.from("weekly_xp").select("user_id, xp").eq("week_start", weekStart()).in("user_id", ids)
       : client.from("stats").select("user_id, xp_total").in("user_id", ids),
@@ -142,6 +161,7 @@ export async function friendScores(
 
   if (profiles.error) throw new Error(profiles.error.message);
   if (scores.error) throw new Error(scores.error.message);
+  rememberTones(profiles.data ?? []);
 
   const xpByUser = new Map<string, number>();
   for (const row of scores.data ?? []) {
@@ -182,9 +202,10 @@ export async function pendingRequests(client: SupabaseClient, userId: string): P
 
   const { data: profiles, error: profileError } = await client
     .from("profiles")
-    .select("id, handle")
+    .select("id, handle, tone")
     .in("id", (data ?? []).map((row) => row.requester));
   if (profileError) throw new Error(profileError.message);
+  rememberTones(profiles ?? []);
 
   const handles = new Map((profiles ?? []).map((profile) => [profile.id, profile.handle]));
   return (data ?? []).map((row) => ({
@@ -347,10 +368,11 @@ async function hydrateDuels(client: SupabaseClient, userId: string, rows: DuelRo
 
   const [results, profiles] = await Promise.all([
     client.from("duel_results").select("duel_id, user_id, correct, count, points, duration_ms, items").in("duel_id", ids),
-    client.from("profiles").select("id, handle").in("id", opponents),
+    client.from("profiles").select("id, handle, tone").in("id", opponents),
   ]);
   if (results.error) throw new Error(results.error.message);
   if (profiles.error) throw new Error(profiles.error.message);
+  rememberTones(profiles.data ?? []);
 
   const handles = new Map((profiles.data ?? []).map((profile) => [profile.id, profile.handle]));
   type ResultRow = {
@@ -472,9 +494,10 @@ export async function leagueStanding(
   const ids = (members.data ?? []).map((row) => row.user_id);
   const { data: profiles, error: profileError } = await client
     .from("profiles")
-    .select("id, handle")
+    .select("id, handle, tone")
     .in("id", ids);
   if (profileError) throw new Error(profileError.message);
+  rememberTones(profiles ?? []);
 
   const handles = new Map((profiles ?? []).map((profile) => [profile.id, profile.handle]));
   const xpByUser = new Map((scores.data ?? []).map((row) => [row.user_id, Number(row.xp ?? 0)]));
@@ -542,9 +565,10 @@ export async function pendingGifts(client: SupabaseClient, userId: string): Prom
 
   const { data: profiles, error: profileError } = await client
     .from("profiles")
-    .select("id, handle")
+    .select("id, handle, tone")
     .in("id", rows.map((row) => row.sender));
   if (profileError) throw new Error(profileError.message);
+  rememberTones(profiles ?? []);
 
   const handles = new Map((profiles ?? []).map((profile) => [profile.id, profile.handle]));
   return rows.map((row) => ({
@@ -603,11 +627,12 @@ export async function friendSummaries(client: SupabaseClient, userId: string): P
   if (ids.length === 0) return [];
 
   const [profiles, stats, weekly] = await Promise.all([
-    client.from("profiles").select("id, handle, badges").in("id", ids),
+    client.from("profiles").select("id, handle, badges, tone").in("id", ids),
     client.from("stats").select("user_id, xp_total, streak_days, last_lesson_day, league_tier").in("user_id", ids),
     client.from("weekly_xp").select("user_id, xp").eq("week_start", weekStart()).in("user_id", ids),
   ]);
   for (const result of [profiles, stats, weekly]) if (result.error) throw new Error(result.error.message);
+  rememberTones(profiles.data ?? []);
 
   const statsBy = new Map((stats.data ?? []).map((row) => [row.user_id, row]));
   const weekBy = new Map((weekly.data ?? []).map((row) => [row.user_id, Number(row.xp ?? 0)]));

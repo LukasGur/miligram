@@ -3,7 +3,7 @@
 import { useEffect, useState } from "react";
 import { useLiveQuery } from "dexie-react-hooks";
 import { useFormatter, useTranslations } from "next-intl";
-import { ChevronRightIcon, ShieldIcon } from "@/components/icons";
+import { ChevronRightIcon, PencilIcon, PlusIcon, ShieldIcon, VersusIcon } from "@/components/icons";
 import { Monogram } from "@/components/ui/Monogram";
 import type { BadgeState } from "@/core/badges";
 import { displayTier, weekEndsAt, ZONES_FROM, TOP_TIER } from "@/core/league";
@@ -15,6 +15,7 @@ import { useProfile } from "@/lib/useProfile";
 import { Field, Primary } from "@/components/account/SignIn";
 import { SignOut } from "@/components/account/SignOut";
 import { BadgeGlyph } from "./BadgeGlyph";
+import { duelOpenWith } from "./ChallengeSheet";
 import { splitDuration, useNow, type Social } from "./data";
 import { SectionTitle } from "./Screen";
 
@@ -22,17 +23,23 @@ export type ProfileRoute = "league" | "duels" | "friends" | "badges";
 
 /**
  * Profil: nahoře „já“ — monogram s odznakem ligy a čtyři odečty. Pod tím
- * dlaždice, které vedou dál, a každá říká, co se v ní právě děje. Nastavení
- * účtu je až dole: mění se jednou, dívá se na ně málokdo.
+ * souboje s řadou kamarádů, na které stačí klepnout, a dlaždice, které
+ * vedou dál. Nastavení účtu je až dole: mění se jednou, dívá se na ně
+ * málokdo.
  */
 export function ProfileHome({
   social,
   email,
   onOpen,
+  onChallenge,
+  onEditTone,
 }: {
   social: Social;
   email?: string;
   onOpen: (route: ProfileRoute) => void;
+  /** Otevře výzvu; bez kamaráda s výběrem soupeře. */
+  onChallenge: (friendId?: string) => void;
+  onEditTone: () => void;
 }) {
   const t = useTranslations("social");
   const format = useFormatter();
@@ -60,7 +67,19 @@ export function ProfileHome({
     <>
       <section className="pt-1 pb-6">
         <div className="flex items-center gap-5">
-          <Monogram handle={handle || "?"} size="lg" tier={league?.tier ?? 1} />
+          {/* Vlastní monogram je zároveň volba barvy. Tužka říká, že na něj
+              jde sáhnout; odznak ligy zůstává v opačném rohu. */}
+          <button
+            type="button"
+            onClick={onEditTone}
+            aria-label={t("toneOpen")}
+            className="relative shrink-0 rounded-full"
+          >
+            <Monogram handle={handle || "?"} size="lg" tier={league?.tier ?? 1} />
+            <span className="bg-paper border-line text-ink-soft absolute -top-0.5 -right-0.5 grid size-6 place-items-center rounded-full border">
+              <PencilIcon className="size-3.5" />
+            </span>
+          </button>
           <div className="min-w-0">
             <p className="truncate text-title font-semibold">{handle}</p>
             {remote ? (
@@ -86,7 +105,16 @@ export function ProfileHome({
         </dl>
       </section>
 
-      <div className="grid grid-cols-2 gap-2.5">
+      <DuelsCard
+        social={social}
+        needMe={needMe}
+        incoming={incoming?.opponentHandle}
+        onOpen={() => onOpen("duels")}
+        onChallenge={onChallenge}
+        onInvite={() => onOpen("friends")}
+      />
+
+      <div className="mt-2.5 grid grid-cols-2 gap-2.5">
         <Tile label={t("leagueTitle")} onClick={() => onOpen("league")}>
           {me && league ? (
             <>
@@ -102,48 +130,32 @@ export function ProfileHome({
           )}
         </Tile>
 
-        <Tile label={t("duelsTitle")} onClick={() => onOpen("duels")} dot={needMe > 0}>
-          <span className="readout text-[1.75rem] leading-none font-semibold" data-numeric>
-            {format.number(needMe)}
-          </span>
-          <span className="text-ink-soft text-label">
-            {incoming
-              ? t("tileDuelsIncoming", { handle: incoming.opponentHandle })
-              : needMe > 0
-                ? t("tileDuelsWaiting", { count: needMe })
-                : t("tileDuelsNone")}
+        <Tile label={t("friendsTitle")} onClick={() => onOpen("friends")} dot={requests.length > 0}>
+          {friends.length > 0 ? (
+            <span className="flex items-center">
+              {friends.slice(0, 4).map((friend, index) => (
+                <Monogram
+                  key={friend.userId}
+                  handle={friend.handle}
+                  size="sm"
+                  className={`ring-paper ring-2 ${index > 0 ? "-ml-2" : ""}`}
+                />
+              ))}
+              {friends.length > 4 ? (
+                <span className="readout bg-surface text-ink-soft ring-paper -ml-2 flex size-8 items-center justify-center rounded-full text-micro ring-2">
+                  +{friends.length - 4}
+                </span>
+              ) : null}
+            </span>
+          ) : null}
+          <span className={`text-label ${requests.length > 0 ? "text-accent font-medium" : "text-ink-soft"}`} data-numeric>
+            {requests.length > 0
+              ? t("tileFriendsRequests", { count: requests.length })
+              : friends.length > 0
+                ? t("tileFriendsCount", { count: friends.length })
+                : t("tileFriendsEmpty")}
           </span>
         </Tile>
-
-        <button
-          type="button"
-          onClick={() => onOpen("friends")}
-          className="border-line active:bg-surface relative col-span-2 flex min-h-16 items-center gap-3 rounded-panel border px-4 py-3 text-left transition-colors duration-75"
-        >
-          {requests.length > 0 ? <Dot /> : null}
-          <span className="min-w-0 flex-1">
-            <span className="panel-label block" data-numeric>
-              {t("tileFriends", { count: friends.length })}
-            </span>
-            {friends.length > 0 ? (
-              <span className="mt-1.5 flex gap-1">
-                {friends.slice(0, 6).map((friend) => (
-                  <Monogram key={friend.userId} handle={friend.handle} size="sm" />
-                ))}
-                {friends.length > 6 ? (
-                  <span className="readout bg-surface text-ink-soft flex size-8 items-center justify-center rounded-[0.375rem] text-micro">
-                    +{friends.length - 6}
-                  </span>
-                ) : null}
-              </span>
-            ) : (
-              <span className="text-ink-soft mt-0.5 block text-label">{t("tileFriendsEmpty")}</span>
-            )}
-          </span>
-          <span className="text-accent text-label font-medium">
-            {requests.length > 0 ? t("tileFriendsRequests", { count: requests.length }) : t("invite")}
-          </span>
-        </button>
       </div>
 
       <SectionTitle
@@ -188,6 +200,98 @@ export function ProfileHome({
       ) : null}
       <SignOut client={social.client} userId={social.userId} email={undefined} />
     </>
+  );
+}
+
+/**
+ * Souboje. Hlavička vede na seznam, pod ní řada kamarádů: klepnutí
+ * na monogram rovnou otevře výzvu. Dřív vedla výzva přes seznam soubojů
+ * a výběr soupeře — pět klepnutí, a tak se skoro nevyzývalo.
+ */
+function DuelsCard({
+  social,
+  needMe,
+  incoming,
+  onOpen,
+  onChallenge,
+  onInvite,
+}: {
+  social: Social;
+  needMe: number;
+  incoming: string | undefined;
+  onOpen: () => void;
+  onChallenge: (friendId?: string) => void;
+  onInvite: () => void;
+}) {
+  const t = useTranslations("social");
+  const format = useFormatter();
+  const friends = social.friends.data ?? [];
+  const duels = social.duels.data ?? [];
+  // Volní napřed: s kým souboj běží, toho teď vyzvat nejde.
+  const ordered = friends
+    .map((friend) => ({ friend, busy: duelOpenWith(duels, friend.userId) }))
+    .sort((a, b) => Number(a.busy) - Number(b.busy));
+
+  return (
+    <section className="border-line rounded-panel border">
+      <button
+        type="button"
+        onClick={onOpen}
+        className="active:bg-surface relative flex min-h-14 w-full items-center gap-3 rounded-t-panel px-3.5 py-3 text-left transition-colors duration-75"
+      >
+        <span className="bg-accent-wash text-accent grid size-9 shrink-0 place-items-center rounded-full">
+          <VersusIcon className="size-[1.125rem]" />
+        </span>
+        <span className="min-w-0 flex-1">
+          <span className="panel-label block">{t("duelsTitle")}</span>
+          <span className={`block truncate text-label ${needMe > 0 ? "text-ink font-medium" : "text-ink-soft"}`}>
+            {incoming
+              ? t("tileDuelsIncoming", { handle: incoming })
+              : needMe > 0
+                ? t("tileDuelsWaiting", { count: needMe })
+                : t("tileDuelsNone")}
+          </span>
+        </span>
+        {needMe > 0 ? (
+          <span className="readout bg-accent grid h-6 min-w-6 place-items-center rounded-full px-1.5 text-micro font-semibold text-white" data-numeric>
+            {format.number(needMe)}
+          </span>
+        ) : null}
+        <ChevronRightIcon className="text-ink-soft size-5 shrink-0" />
+      </button>
+
+      <div className="border-line border-t px-1.5 pt-2.5 pb-2">
+        <p className="panel-label px-2">{t("challengeRow")}</p>
+        <div className="mt-1 flex gap-0.5 overflow-x-auto">
+          {ordered.map(({ friend, busy }) => (
+            <button
+              key={friend.userId}
+              type="button"
+              onClick={() => (busy ? onOpen() : onChallenge(friend.userId))}
+              aria-label={busy ? t("duelRunningWith", { handle: friend.handle }) : t("challengeTitle", { handle: friend.handle })}
+              className="flex w-[4.25rem] shrink-0 flex-col items-center gap-1 rounded-control py-1.5 active:bg-surface"
+            >
+              <span className={`relative ${busy ? "opacity-45" : ""}`}>
+                <Monogram handle={friend.handle} />
+              </span>
+              <span className={`w-full truncate px-0.5 text-center text-micro ${busy ? "text-ink-soft" : "font-medium"}`}>
+                {busy ? t("duelRunning") : friend.handle}
+              </span>
+            </button>
+          ))}
+          <button
+            type="button"
+            onClick={onInvite}
+            className="flex w-[4.25rem] shrink-0 flex-col items-center gap-1 rounded-control py-1.5 active:bg-surface"
+          >
+            <span className="border-line text-ink-soft grid size-12 place-items-center rounded-full border border-dashed">
+              <PlusIcon className="size-5" />
+            </span>
+            <span className="text-ink-soft w-full truncate text-center text-micro">{t("invite")}</span>
+          </button>
+        </div>
+      </div>
+    </section>
   );
 }
 

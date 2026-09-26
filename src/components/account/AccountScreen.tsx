@@ -4,9 +4,8 @@ import { useEffect, useState } from "react";
 import { useTranslations } from "next-intl";
 import { CloseIcon } from "@/components/icons";
 import type { DuelTopic } from "@/core/duel";
-import { newLessonId } from "@/core/lessonPlan";
 import { pushOnFor, usePushStatus } from "@/lib/push";
-import { cancelDuel, createDuel, requestFriend, respondDuel, weekStart, type Duel } from "@/lib/remote";
+import { cancelDuel, requestFriend, respondDuel, weekStart, type Duel } from "@/lib/remote";
 import { updatePulse } from "@/lib/pulse";
 import { collectDuelRewards, duelsNeedingMe } from "@/lib/social";
 import { supabase, isRemoteConfigured } from "@/lib/supabase";
@@ -14,6 +13,7 @@ import { useProfile } from "@/lib/useProfile";
 import { useSession } from "@/lib/useSession";
 import { PushOnboarding } from "@/components/push/PushOnboarding";
 import { BadgesScreen } from "@/components/social/BadgesScreen";
+import { ChallengeSheet, SentNotice } from "@/components/social/ChallengeSheet";
 import { useSocial, type Social } from "@/components/social/data";
 import { DuelReveal } from "@/components/social/DuelReveal";
 import { DuelsScreen } from "@/components/social/DuelsScreen";
@@ -21,22 +21,25 @@ import { FriendProfile } from "@/components/social/FriendProfile";
 import { FriendsScreen } from "@/components/social/FriendsScreen";
 import { InviteLanding } from "@/components/social/InviteLanding";
 import { LeagueScreen } from "@/components/social/LeagueScreen";
-import { NewDuel } from "@/components/social/NewDuel";
 import { HandleForm, ProfileHome, useBadges } from "@/components/social/ProfileHome";
+import { ToneSheet } from "@/components/social/ToneSheet";
 import { markWeekSeen, unseenWeek, WeekResult } from "@/components/social/WeekResult";
 import { SignIn } from "./SignIn";
 
 export type PlayableDuel = { id: string; lessonId: string; topic: DuelTopic };
 
 /** Kam obrazovku otevřít: notifikace míří rovnou na souboje nebo ligu. */
-export type AccountStart = { screen: "duels" } | { screen: "league" } | { screen: "reveal"; duelId: string };
+export type AccountStart =
+  | { screen: "duels" }
+  | { screen: "league" }
+  | { screen: "friends" }
+  | { screen: "reveal"; duelId: string };
 
 type Route =
   | { name: "profile" }
   | { name: "league" }
   | { name: "duels" }
   | { name: "reveal"; duelId: string }
-  | { name: "newDuel"; friendId?: string; topic?: DuelTopic }
   | { name: "friends" }
   | { name: "friend"; id: string }
   | { name: "badges" };
@@ -168,6 +171,10 @@ function SignedIn({
   const push = (next: Route) => setStack((current) => [...current, next]);
   const back = () => setStack((current) => (current.length > 1 ? current.slice(0, -1) : current));
   const badges = useBadges(social);
+  /** Výzva je list nad obrazovkou, ne další obrazovka: nikam se neodchází. */
+  const [challenge, setChallenge] = useState<{ friendId?: string; topic?: DuelTopic } | null>(null);
+  const [sent, setSent] = useState<string | null>(null);
+  const [toneOpen, setToneOpen] = useState(false);
 
   // Rozhodnuté souboje si zařízení připíše samo (pastilky žijí v telefonu).
   const duels = social.duels.data;
@@ -256,7 +263,7 @@ function SignedIn({
                 refreshDuels();
               },
               onReveal: (duel) => push({ name: "reveal", duelId: duel.id }),
-              onNew: () => push({ name: "newDuel" }),
+              onNew: () => setChallenge({}),
             }}
           />
         );
@@ -272,30 +279,12 @@ function SignedIn({
             onBack={back}
             onRematch={
               stillFriends
-                ? () => setStack((current) => [...current.slice(0, -1), { name: "newDuel", friendId: duel.opponentId, topic: duel.topic }])
+                ? () => setChallenge({ friendId: duel.opponentId, topic: duel.topic })
                 : undefined
             }
           />
         );
       }
-      case "newDuel":
-        return (
-          <NewDuel
-            social={social}
-            friendId={route.friendId}
-            topic={route.topic}
-            onBack={back}
-            onCreate={async (friend, topic, playNow) => {
-              const lessonId = newLessonId();
-              const result = await createDuel(client, userId, friend.userId, lessonId, topic);
-              if (!result.ok) return result.reason;
-              refreshDuels();
-              if (playNow) onPlayDuel({ id: result.id, lessonId, topic });
-              else setStack((current) => [...current.slice(0, -1).filter((one) => one.name !== "duels"), { name: "duels" }]);
-              return "ok";
-            }}
-          />
-        );
       case "friends":
         return <FriendsScreen social={social} onBack={back} onFriend={(id) => push({ name: "friend", id })} />;
       case "friend":
@@ -304,7 +293,7 @@ function SignedIn({
             social={social}
             friendId={route.id}
             onBack={back}
-            onChallenge={() => push({ name: "newDuel", friendId: route.id })}
+            onChallenge={() => setChallenge({ friendId: route.id })}
             onReveal={(duel) => push({ name: "reveal", duelId: duel.id })}
             onOpenDuels={() => push({ name: "duels" })}
           />
@@ -314,7 +303,13 @@ function SignedIn({
       default:
         return (
           <Shell onClose={onClose} title={tSocial("profileTitle")}>
-            <ProfileHome social={social} email={email} onOpen={(name) => push({ name })} />
+            <ProfileHome
+              social={social}
+              email={email}
+              onOpen={(name) => push({ name })}
+              onChallenge={(friendId) => setChallenge({ friendId })}
+              onEditTone={() => setToneOpen(true)}
+            />
           </Shell>
         );
     }
@@ -323,6 +318,26 @@ function SignedIn({
   return (
     <>
       {screen}
+      {challenge ? (
+        <ChallengeSheet
+          client={client}
+          userId={userId}
+          myHandle={social.profile.data?.handle ?? ""}
+          friends={social.friends.data ?? []}
+          duels={social.duels.data ?? []}
+          friendId={challenge.friendId}
+          topic={challenge.topic}
+          onClose={() => setChallenge(null)}
+          onCreated={(duel, playNow) => {
+            refreshDuels();
+            setChallenge(null);
+            if (playNow) onPlayDuel({ id: duel.id, lessonId: duel.lessonId, topic: duel.topic });
+            else setSent(duel.friend.handle);
+          }}
+        />
+      ) : null}
+      {sent ? <SentNotice handle={sent} onDone={() => setSent(null)} /> : null}
+      {toneOpen ? <ToneSheet social={social} onClose={() => setToneOpen(false)} /> : null}
       {onboarding ? (
         <PushOnboarding
           userId={userId}

@@ -621,7 +621,7 @@
     "tileLeagueEmpty": "Dohraj lekciu a zaradíme ťa do skupiny.",
     "tileDuelsIncoming": "výzva od {handle}",
     "tileDuelsWaiting": "{count, plural, one {čaká na teba} few {čakajú na teba} other {čaká na teba}}",
-    "tileDuelsNone": "Vyzvi kamaráta na rovnakú lekciu.",
+    "tileDuelsNone": "Teraz nič nebeží.",
     "tileFriends": "Priatelia · {count, number}",
     "tileFriendsEmpty": "Zatiaľ nikto. Pozvi spolužiaka.",
     "tileFriendsRequests": "{count, plural, one {# žiadosť} few {# žiadosti} other {# žiadostí}}",
@@ -717,8 +717,8 @@
     "duelRule4": "Kto po prijatí nedohrá, prehráva kontumačne — ak ten druhý dohral. Neprijatá výzva prepadne a neráta sa.",
     "duelRule5": "Výhra dá 15 pastiliek, remíza 5. XP je len za lekciu samotnú, aby sa liga nedala nafúknuť vzájomným vyzývaním.",
     "challengeTitle": "Vyzvať · {handle}",
-    "challengeAndPlay": "Vyzvať a hrať hneď",
-    "challengeOnly": "Len vyzvať, zahrám neskôr",
+    "challengeAndPlay": "Vyzvať a hrať",
+    "challengeOnly": "Len poslať výzvu",
     "pickOpponent": "Súper",
     "pickTopic": "Téma",
     "noFriendsYet": "Najprv si pridaj kamaráta.",
@@ -866,6 +866,30 @@
       "2": "stredný",
       "3": "ťažký"
     },
-    "weekLeague": "Liga"
+    "weekLeague": "Liga",
+    "challengeSummary": "{count, number} príkladov · 48 h",
+    "challengeRules": "Pravidlá",
+    "challengeSent": "Výzva pre {handle} odoslaná",
+    "challengeRow": "Vyzvi kamaráta",
+    "duelRunningWith": "S {handle} už súboj beží",
+    "tileFriendsCount": "{count, plural, one {# kamarát} few {# kamaráti} other {# kamarátov}}",
+    "lessonChallengeTitle": "Zmeraj sa s kamarátom",
+    "lessonChallengeBody": "Téma {topic}, obaja rovnaké príklady. Kto dá viac na prvý raz, vyhráva.",
+    "lessonChallengeLonely": "Vo dvojici to ide lepšie",
+    "lessonChallengeInvite": "Pozvi spolužiaka a vyzvi ho na súboj.",
+    "toneOpen": "Zmeniť farbu monogramu",
+    "toneTitle": "Farba monogramu",
+    "toneHint": "Takto ťa uvidia kamaráti v lige aj v súbojoch.",
+    "toneSave": "Uložiť farbu",
+    "toneName": {
+      "0": "Indigo",
+      "1": "Petrolej",
+      "2": "Fialka",
+      "3": "Orchidea",
+      "4": "Modrá",
+      "5": "Mach",
+      "6": "Grafit",
+      "7": "Lagúna"
+    }
   }
 }

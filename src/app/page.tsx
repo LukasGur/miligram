@@ -185,6 +185,9 @@ export default function HomePage() {
   if (lesson !== null) {
     return (
       <LessonView
+        // Nová lekce, nová instance: po výzvě ze shrnutí se rovnou hraje
+        // souboj a stav předchozí lekce v něm nesmí zůstat.
+        key={lesson.id}
         lessonId={lesson.id}
         plan={lesson.plan}
         spec={lesson.spec}
@@ -196,6 +199,18 @@ export default function HomePage() {
           setLesson(null);
           openAccount({ screen: "reveal", duelId });
         }}
+        challenge={
+          pulse?.handle
+            ? {
+                handle: pulse.handle,
+                onPlay: (duel) => void playDuel(duel),
+                onInvite: () => {
+                  setLesson(null);
+                  openAccount({ screen: "friends" });
+                },
+              }
+            : undefined
+        }
       />
     );
   }
@@ -287,9 +302,17 @@ export default function HomePage() {
             onClick={() => openAccount()}
           >
             <span className="relative flex">
-              {pulse?.handle ? <Monogram handle={pulse.handle} size="sm" /> : <PersonIcon className="size-6" />}
+              {/* Monogram v tenkém prstenci: je poznat, že jsi přihlášený,
+                  a vedle tahových ikon nekřičí. */}
+              {pulse?.handle ? (
+                <span className="border-line rounded-full border p-[2px]">
+                  <Monogram handle={pulse.handle} size="xs" />
+                </span>
+              ) : (
+                <PersonIcon className="size-6" />
+              )}
               {pulse?.attention ? (
-                <span className="bg-accent border-paper absolute -top-1 -right-1 size-3 rounded-full border-2" />
+                <span className="bg-accent border-paper absolute -top-0.5 -right-0.5 size-3 rounded-full border-2" />
               ) : null}
             </span>
           </IconButton>

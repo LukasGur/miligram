@@ -9,6 +9,7 @@ import {
   duelPhase,
   duelPills,
   duelScore,
+  lessonTopic,
 } from "../duel";
 import { CATEGORIES } from "../types";
 
@@ -104,5 +105,13 @@ describe("shoda s databází", () => {
     expect(sql).toContain("when b_ms - a_ms >= 1000 then 1");
     expect(sql).toContain("interval '48 hours'");
     for (const topic of DUEL_TOPICS) expect(sql).toContain(`'${topic}'`);
+  });
+});
+
+describe("téma výzvy po lekci", () => {
+  it("převažující kategorie, jinak mix", () => {
+    expect(lessonTopic(["redeni", "redeni", "redeni", "redeni", "zaklad", "zaklad", null])).toBe("redeni");
+    expect(lessonTopic(["redeni", "redeni", "redeni", "zaklad", "zaklad", "zaklad", null])).toBe("mix");
+    expect(lessonTopic([])).toBe("mix");
   });
 });

@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { initials, toneOf, TONES } from "../monogram";
+import { initials, resolveTone, toneOf, TONES } from "../monogram";
 
 describe("monogram", () => {
   it("bere první písmena částí přezdívky", () => {
@@ -21,5 +21,22 @@ describe("monogram", () => {
   it("tóny se mezi přezdívkami rozptýlí", () => {
     const tones = new Set(Array.from({ length: 64 }, (_, i) => toneOf(`user_${i}`)));
     expect(tones.size).toBe(TONES);
+  });
+
+  it("vybraný tón má přednost, neplatný se nahradí tím z přezdívky", () => {
+    expect(resolveTone("jana_k", 3)).toBe(3);
+    expect(resolveTone("jana_k", 0)).toBe(0);
+    expect(resolveTone("jana_k", null)).toBe(toneOf("jana_k"));
+    expect(resolveTone("jana_k", TONES)).toBe(toneOf("jana_k"));
+    expect(resolveTone("jana_k", 1.5)).toBe(toneOf("jana_k"));
+  });
+
+  it("počet tónů souhlasí s migrací i s barvami v globals.css", async () => {
+    const { readFileSync } = await import("node:fs");
+    const sql = readFileSync("supabase/migrations/0013_ton_monogramu.sql", "utf8");
+    expect(sql).toContain(`between 0 and ${TONES - 1}`);
+    const css = readFileSync("src/app/globals.css", "utf8");
+    expect(css.match(/--color-tone-\d+:/g)?.length).toBe(TONES);
+    expect(css.match(/--color-tone-\d+-wash:/g)?.length).toBe(TONES);
   });
 });

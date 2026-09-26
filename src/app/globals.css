@@ -34,18 +34,29 @@
   --color-pill: #a14f06;
   --color-pill-wash: #fff1dc;
 
-  /* Tóny monogramů. Osm sytých barev, na kterých má bílé písmo kontrast
-     přes 4,5:1. Žádná není červená (ta patří chybě) ani medová (pastilky):
-     monogram je identita, nesmí vypadat jako signál. Počet musí sedět
-     s TONES v src/core/monogram.ts. */
-  --color-tone-0: #3730d9;
-  --color-tone-1: #0f766e;
-  --color-tone-2: #7e3ab8;
-  --color-tone-3: #be185d;
-  --color-tone-4: #2563a8;
-  --color-tone-5: #4d7c0f;
-  --color-tone-6: #475569;
-  --color-tone-7: #0e7490;
+  /* Tóny monogramů. Dvojice: jemný podklad (wash) a tmavé iniciály
+     téhož odstínu, kontrast přes 6:1. Syté plné barvy křičely jedna přes
+     druhou a kdo dostal tu, která se mu nelíbí, neměl kam uhnout — tlumené
+     tóny jsou si příbuzné a vedle indiga nepřebíjejí nic. Žádný není
+     červený (ten patří chybě) ani medový (pastilky): monogram je identita,
+     nesmí vypadat jako signál. Počet musí sedět s TONES
+     v src/core/monogram.ts a s rozsahem v migraci 0013. */
+  --color-tone-0: #312ab5;
+  --color-tone-0-wash: #e8e7fb;
+  --color-tone-1: #0b5d56;
+  --color-tone-1-wash: #d9efeb;
+  --color-tone-2: #652c99;
+  --color-tone-2-wash: #eee4f8;
+  --color-tone-3: #98195a;
+  --color-tone-3-wash: #f7e3ef;
+  --color-tone-4: #1d4f8a;
+  --color-tone-4-wash: #dfeaf7;
+  --color-tone-5: #3b610f;
+  --color-tone-5-wash: #e4eed6;
+  --color-tone-6: #394455;
+  --color-tone-6-wash: #e6e9ee;
+  --color-tone-7: #0b5f73;
+  --color-tone-7-wash: #d8eef3;
 
   /* --- typografie ------------------------------------------------------- */
   --font-sans: var(--font-plex-sans), ui-sans-serif, system-ui, sans-serif;

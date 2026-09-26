@@ -8,7 +8,9 @@ import { lessonExercise, resolvePlan, type LessonPlan } from "@/core/lesson";
 import type { LessonKind } from "@/core/scoring";
 import type { DailySpec } from "@/core/curriculum";
 import { attemptsOn, firstTryOutcomes, nextIndex, solvedCount } from "@/core/lessonRun";
-import { duelScore } from "@/core/duel";
+import { duelScore, lessonTopic, type DuelTopic } from "@/core/duel";
+import { categoryOfId } from "@/core/templateCategories";
+import type { PlayableDuel } from "@/components/account/AccountScreen";
 import type { DuelResult } from "@/lib/remote";
 import type { BadgeState } from "@/core/badges";
 import { freshLocalBadges } from "@/lib/social";
@@ -32,6 +34,19 @@ const PushOffer = dynamic(() => import("@/components/push/PushOffer").then((modu
   ssr: false,
 });
 
+/** Výzva kamaráda ve shrnutí. Taky s klientem Supabase, a tak až tady. */
+const LessonChallenge = dynamic(
+  () => import("@/components/social/LessonChallenge").then((module) => module.LessonChallenge),
+  { ssr: false },
+);
+
+/** Po lekci se nabízí souboj na totéž téma; jen přihlášenému. */
+export type LessonChallengeProps = {
+  handle: string;
+  onPlay: (duel: PlayableDuel) => void;
+  onInvite: () => void;
+};
+
 /**
  * Průběh lekce.
  *
@@ -51,6 +66,7 @@ export function LessonView({
   onExit,
   onAgain,
   onDuelDone,
+  challenge,
 }: {
   lessonId: string;
   /** Hotový plán z tréninku, opakování chyb nebo rozehrané lekce. */
@@ -69,6 +85,7 @@ export function LessonView({
   onAgain: () => void;
   /** Po dohraném souboji: přejít rovnou k jeho výsledku. */
   onDuelDone?: (duelId: string) => void;
+  challenge?: LessonChallengeProps;
 }) {
   const plan = useMemo(() => resolvePlan({ lessonId, plan: given, spec }), [given, spec, lessonId]);
   // Rozehraná lekce začíná tam, kde uživatel přestal. Pořadí se dopočítá
@@ -118,6 +135,8 @@ export function LessonView({
         onExit={onExit}
         onAgain={onAgain}
         onDuel={duelId && onDuelDone ? () => onDuelDone(duelId) : undefined}
+        challenge={duelId ? undefined : challenge}
+        topic={lessonTopic(plan.items.map((item) => categoryOfId(item.templateId)))}
       />
     );
   }
@@ -276,6 +295,8 @@ function LessonSummary({
   onExit,
   onAgain,
   onDuel,
+  challenge,
+  topic,
 }: {
   /** Jak dopadl první pokus u každého příkladu. Odměna je z toho. */
   outcomes: readonly boolean[];
@@ -291,6 +312,9 @@ function LessonSummary({
   onAgain: () => void;
   /** Lekce byla souboj: hlavní akce vede k jeho výsledku. */
   onDuel?: () => void;
+  challenge?: LessonChallengeProps;
+  /** Převažující téma lekce, pro výzvu. */
+  topic: DuelTopic;
 }) {
   const t = useTranslations("lesson");
   const tHome = useTranslations("home");
@@ -424,6 +448,17 @@ function LessonSummary({
                 </div>
               ))}
             </div>
+          ) : null}
+
+          {/* Jen po čerstvě dohrané lekci: u lekce otevřené už hotové by
+              výzva přišla odnikud. */}
+          {challenge && walletBefore !== undefined ? (
+            <LessonChallenge
+              topic={topic}
+              myHandle={challenge.handle}
+              onPlay={challenge.onPlay}
+              onInvite={challenge.onInvite}
+            />
           ) : null}
         </div>
       </main>
