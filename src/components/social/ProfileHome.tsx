@@ -79,9 +79,9 @@ export function ProfileHome({
           <Stat label={t("statXp")} value={format.number(local.xp)} />
           <Stat label={t("statLessons")} value={format.number(lessons)} />
           <Stat
-            label={t("statRecord")}
-            value={record ? `${record.wins}‑${record.losses}‑${record.draws}` : "–"}
-            hint={t("statRecordHint")}
+            label={t("statDuelWins")}
+            value={record ? format.number(record.wins) : "–"}
+            hint={record ? t("recordLabel", { ...record }) : undefined}
           />
         </dl>
       </section>
