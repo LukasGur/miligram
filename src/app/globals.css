@@ -376,6 +376,12 @@
   }
 }
 
+/* Výhody na obrazovce účtu: animace čeká, dokud karta nevjede do záběru. */
+[data-seen="false"],
+[data-seen="false"] * {
+  animation-play-state: paused;
+}
+
 @media (prefers-reduced-motion: reduce) {
   *,
   *::before,

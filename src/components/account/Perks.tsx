@@ -1,6 +1,6 @@
 "use client";
 
-import type { CSSProperties, ReactNode } from "react";
+import { useEffect, useRef, type CSSProperties, type ReactNode } from "react";
 import { useFormatter, useTranslations } from "next-intl";
 import { BellIcon, CaretDownIcon, LadderIcon, ShieldIcon, VersusIcon } from "@/components/icons";
 import { Notice } from "@/components/push/ReminderPreview";
@@ -15,70 +15,96 @@ const STAGGER_MS = 70;
  * s tebou uprostřed, výsledek souboje, dar od kamaráda. Náhledy jsou
  * pro odečítač skryté; význam nese nadpis a věta pod ním.
  *
+ * Pořadí: nejvíc táhnou spolužáci, proto souboje první a dárky hned za
+ * nimi — bez přátel nemají smysl. Připomínky nakonec, nabídnou se stejně
+ * hned po registraci.
+ *
  * Záloha postupu tu schválně chybí. Postup zůstává v telefonu i bez účtu
  * a lákat na ni by znělo, jako by bez účtu hrozilo, že o něj člověk přijde.
  */
-export function Perks({ first = 0 }: { first?: number }) {
+export function Perks() {
   const t = useTranslations("account");
+  const list = useRevealOnView<HTMLUListElement>();
 
   return (
-    <ul className="mt-6 space-y-3">
-      <Perk
-        index={first}
-        icon={<LadderIcon className="size-5" />}
-        title={t("perkLeagueTitle")}
-        body={t("perkLeagueBody")}
-      >
-        <LeaguePreview />
-      </Perk>
-      <Perk
-        index={first + 1}
-        icon={<VersusIcon className="size-5" />}
-        title={t("perkDuelsTitle")}
-        body={t("perkDuelsBody")}
-      >
+    <ul ref={list} className="mt-3 space-y-3">
+      <Perk icon={<VersusIcon className="size-5" />} title={t("perkDuelsTitle")} body={t("perkDuelsBody")}>
         <DuelPreview />
       </Perk>
-      <Perk
-        index={first + 2}
-        icon={<ShieldIcon className="size-5" />}
-        title={t("perkGiftsTitle")}
-        body={t("perkGiftsBody")}
-      >
+      <Perk icon={<ShieldIcon className="size-5" />} title={t("perkGiftsTitle")} body={t("perkGiftsBody")}>
         <GiftPreview />
       </Perk>
-      <Perk
-        index={first + 3}
-        icon={<BellIcon className="size-5" />}
-        title={t("perkRemindersTitle")}
-        body={t("perkRemindersBody")}
-      >
+      <Perk icon={<LadderIcon className="size-5" />} title={t("perkLeagueTitle")} body={t("perkLeagueBody")}>
+        <LeaguePreview />
+      </Perk>
+      <Perk icon={<BellIcon className="size-5" />} title={t("perkRemindersTitle")} body={t("perkRemindersBody")}>
         <ReminderPerkPreview />
       </Perk>
     </ul>
   );
 }
 
-/** Zpoždění nástupu pro n-tý prvek obrazovky. Sdílí ho i formulář pod výhodami. */
+/**
+ * Karty stojí pod formulářem, většinou pod okrajem obrazovky. Animace
+ * spuštěná při otevření by doběhla dřív, než k ní člověk doscrolluje —
+ * hlavně prohození v lize. Proto každá karta čeká zastavená
+ * (`data-seen="false"` v globals.css), dokud nevjede do záběru.
+ *
+ * Karty, které se ukážou naráz (vyšší displej), nastoupí postupně.
+ * Přímo přes DOM: jde o jednorázové spuštění, kvůli kterému
+ * není potřeba překreslovat.
+ */
+function useRevealOnView<T extends HTMLElement>() {
+  const ref = useRef<T>(null);
+
+  useEffect(() => {
+    const items = Array.from(ref.current?.children ?? []) as HTMLElement[];
+    const reveal = (item: HTMLElement, order: number) => {
+      item.style.animationDelay = `${order * STAGGER_MS}ms`;
+      item.dataset.seen = "true";
+    };
+    if (typeof IntersectionObserver === "undefined") {
+      items.forEach(reveal);
+      return;
+    }
+    const observer = new IntersectionObserver(
+      (entries) => {
+        entries
+          .filter((entry) => entry.isIntersecting)
+          .map((entry) => entry.target as HTMLElement)
+          .sort((a, b) => items.indexOf(a) - items.indexOf(b))
+          .forEach((item, order) => {
+            observer.unobserve(item);
+            reveal(item, order);
+          });
+      },
+      { rootMargin: "0px 0px -12% 0px" },
+    );
+    items.forEach((item) => observer.observe(item));
+    return () => observer.disconnect();
+  }, []);
+
+  return ref;
+}
+
+/** Zpoždění nástupu pro n-tý prvek horní části obrazovky účtu. */
 export function riseDelay(index: number): CSSProperties {
   return { animationDelay: `${index * STAGGER_MS}ms` };
 }
 
 function Perk({
-  index,
   icon,
   title,
   body,
   children,
 }: {
-  index: number;
   icon: ReactNode;
   title: string;
   body: string;
   children: ReactNode;
 }) {
   return (
-    <li className="animate-rise border-line overflow-hidden rounded-panel border" style={riseDelay(index)}>
+    <li data-seen="false" className="animate-rise border-line overflow-hidden rounded-panel border">
       <div aria-hidden="true" className="bg-surface px-4 py-4">
         {children}
       </div>

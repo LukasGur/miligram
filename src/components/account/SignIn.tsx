@@ -1,11 +1,12 @@
 "use client";
 
-import { useEffect, useState, type FormEvent } from "react";
+import { useEffect, useRef, useState, type FormEvent, type Ref } from "react";
 import { useTranslations } from "next-intl";
 import type { AuthError } from "@supabase/supabase-js";
 import { useLocale } from "@/i18n/LocaleProvider";
 import { supabase } from "@/lib/supabase";
 import { MailCheckIcon } from "@/components/icons";
+import { reducedMotion } from "@/components/ui/Flyer";
 import { CodeInput } from "./CodeInput";
 import { Perks, riseDelay } from "./Perks";
 
@@ -60,6 +61,7 @@ export function SignIn() {
   const [error, setError] = useState<ErrorKey | null>(null);
   const [resendIn, setResendIn] = useState(0);
   const [failedAttempts, setFailedAttempts] = useState(0);
+  const emailInput = useRef<HTMLInputElement>(null);
 
   useEffect(() => {
     if (resendIn <= 0) return;
@@ -113,21 +115,26 @@ export function SignIn() {
     if (digits.length === CODE_LENGTH) void verify(digits);
   }
 
+  /**
+   * Kdo dočte výhody, je dole a formulář zmizel nahoře. Kurzor jde do pole
+   * hned, ještě v ťuknutí — jinak iPhone klávesnici neukáže.
+   */
+  function backToForm() {
+    const input = emailInput.current;
+    if (!input) return;
+    input.scrollIntoView({ block: "center", behavior: reducedMotion() ? "auto" : "smooth" });
+    input.focus({ preventScroll: true });
+  }
+
   return (
     <section>
-      {/* Výhody jen do chvíle, než odejde kód. Pak už je rozhodnuto a obrazovka
-          patří políčkům kódu, která musí zůstat vidět nad klávesnicí. */}
       {sent ? (
         <h2 className="text-heading font-semibold">{t("codeTitle")}</h2>
       ) : (
-        <>
-          <div className="animate-rise pt-2" style={riseDelay(0)}>
-            <p className="panel-label !text-accent">{t("pitchEyebrow")}</p>
-            <h2 className="text-title mt-1.5 font-semibold">{t("pitchTitle")}</h2>
-            <p className="text-ink-soft mt-2 text-body">{t("pitchBody")}</p>
-          </div>
-          <Perks first={1} />
-        </>
+        <div className="animate-rise pt-2" style={riseDelay(0)}>
+          <p className="panel-label !text-accent">{t("pitchEyebrow")}</p>
+          <h2 className="text-title mt-1.5 font-semibold">{t("pitchTitle")}</h2>
+        </div>
       )}
 
       {sent ? (
@@ -185,22 +192,36 @@ export function SignIn() {
           </div>
         </form>
       ) : (
-        <form className="animate-rise mt-8" style={riseDelay(4)} onSubmit={send}>
-          <Field
-            label={t("email")}
-            value={email}
-            onChange={setEmail}
-            inputMode="email"
-            autoComplete="email"
-          />
-          <Primary onClick={() => void send()} disabled={busy || !email.includes("@")}>
-            {t("sendCode")}
-          </Primary>
-          <p className="text-ink-soft mt-3 text-center text-label">{t("signInNote")}</p>
-        </form>
-      )}
+        <>
+          {/* Formulář první: kdo sem přišel založit účet, nemá co hledat
+              pod výhodami. Kdo se teprve rozhoduje, najde je hned pod ním. */}
+          <form className="animate-rise mt-6" style={riseDelay(1)} onSubmit={send}>
+            <Field
+              label={t("email")}
+              value={email}
+              onChange={setEmail}
+              inputMode="email"
+              autoComplete="email"
+              inputRef={emailInput}
+            />
+            <Primary onClick={() => void send()} disabled={busy || !email.includes("@")}>
+              {t("sendCode")}
+            </Primary>
+            {error ? <ErrorMessage text={t(error)} /> : null}
+            <p className="text-ink-soft mt-3 text-center text-label">{t("signInNote")}</p>
+          </form>
 
-      {error && !sent ? <ErrorMessage text={t(error)} /> : null}
+          {/* Výhody jen do chvíle, než odejde kód. Pak už je rozhodnuto a obrazovka
+              patří políčkům kódu, která musí zůstat vidět nad klávesnicí. */}
+          <h3 className="animate-rise mt-10 text-heading font-semibold" style={riseDelay(2)}>
+            {t("perksTitle")}
+          </h3>
+          <Perks />
+          <div className="mt-2">
+            <Primary onClick={backToForm}>{t("perksBackToForm")}</Primary>
+          </div>
+        </>
+      )}
     </section>
   );
 }
@@ -222,6 +243,7 @@ export function Field({
   autoComplete,
   placeholder,
   autoFocus,
+  inputRef,
 }: {
   label: string;
   value: string;
@@ -230,11 +252,13 @@ export function Field({
   autoComplete?: string;
   placeholder?: string;
   autoFocus?: boolean;
+  inputRef?: Ref<HTMLInputElement>;
 }) {
   return (
     <label className="block">
       <span className="panel-label">{label}</span>
       <input
+        ref={inputRef}
         value={value}
         onChange={(event) => onChange(event.target.value)}
         inputMode={inputMode}
