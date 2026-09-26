@@ -136,10 +136,12 @@ function AddFriend({ social, first }: { social: Social; first: boolean }) {
   }
 
   async function share() {
-    const text = t("shareText", { handle });
+    // Odkaz patří do textu, ne do `url`: „Kopírovat“ ve sdílení na iPhonu
+    // bere jen text a `url` by zahodilo.
+    const text = `${t("shareText", { handle })} ${link}`;
     try {
       if (navigator.share) {
-        await navigator.share({ title: "Miligram", text, url: link });
+        await navigator.share({ title: "Miligram", text });
         return;
       }
     } catch (error) {
@@ -147,7 +149,7 @@ function AddFriend({ social, first }: { social: Social; first: boolean }) {
       if (error instanceof DOMException && error.name === "AbortError") return;
     }
     try {
-      await navigator.clipboard.writeText(`${text} ${link}`);
+      await navigator.clipboard.writeText(text);
       setNotice(t("linkCopied"));
     } catch {
       setNotice(link);

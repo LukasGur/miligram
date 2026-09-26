@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useRef, useState } from "react";
+import { createPortal } from "react-dom";
 import { useTranslations } from "next-intl";
 import { CloseIcon } from "@/components/icons";
 import { parseInvite } from "@/lib/social";
@@ -16,6 +17,9 @@ type Detector = { detect: (source: HTMLVideoElement) => Promise<{ rawValue: stri
  *
  * Kde prohlížeč umí BarcodeDetector (Android), čte se jím; jinde (Safari)
  * knihovnou jsQR, která se stáhne až s otevřením skeneru.
+ *
+ * Vykresluje se přímo do `body`: uvnitř rolovací obrazovky Přátel by ho
+ * iPhone zasunul pod její hlavičku a zavřít by nešel.
  */
 export function QrScanner({ onResult, onClose }: { onResult: (handle: string) => void; onClose: () => void }) {
   const t = useTranslations("social");
@@ -96,7 +100,15 @@ export function QrScanner({ onResult, onClose }: { onResult: (handle: string) =>
     };
   }, []);
 
-  return (
+  useEffect(() => {
+    const onKey = (event: KeyboardEvent) => {
+      if (event.key === "Escape") onClose();
+    };
+    window.addEventListener("keydown", onKey);
+    return () => window.removeEventListener("keydown", onKey);
+  }, [onClose]);
+
+  return createPortal(
     <div className="fixed inset-0 z-50 flex flex-col bg-black text-white" role="dialog" aria-modal="true" aria-label={t("scanTitle")}>
       <div className="flex items-center justify-between px-3" style={{ paddingTop: "calc(var(--sa-t) + 0.5rem)" }}>
         <p className="pl-2 text-heading font-semibold">{t("scanTitle")}</p>
@@ -117,9 +129,19 @@ export function QrScanner({ onResult, onClose }: { onResult: (handle: string) =>
         </div>
       </div>
 
-      <p className="px-6 pt-4 text-center text-label text-white/80" style={{ paddingBottom: "calc(var(--sa-b) + 1.5rem)" }}>
-        {error === "denied" ? t("scanDenied") : error === "unavailable" ? t("scanUnavailable") : foreign ? t("scanForeign") : t("scanHint")}
-      </p>
-    </div>
+      <div className="mx-auto w-full max-w-md px-5 pt-4" style={{ paddingBottom: "calc(var(--sa-b) + 0.75rem)" }}>
+        <p className="text-center text-label text-white/80">
+          {error === "denied" ? t("scanDenied") : error === "unavailable" ? t("scanUnavailable") : foreign ? t("scanForeign") : t("scanHint")}
+        </p>
+        <button
+          type="button"
+          onClick={onClose}
+          className="mt-4 min-h-12 w-full rounded-control border border-white/40 text-body font-semibold text-white active:bg-white/10"
+        >
+          {t("cancel")}
+        </button>
+      </div>
+    </div>,
+    document.body,
   );
 }
