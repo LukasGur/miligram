@@ -546,7 +546,6 @@
     "offerTimeHint": "Klepni na čas a změň ho",
     "offerEnable": "Zapnout připomínky",
     "offerLater": "Teď ne",
-    "offerFoot": "Vypnout nebo přeladit se dají kdykoli v Nastavení.",
     "offerDone": "Hotovo. Ozveme se v {time}.",
     "offerClose": "Zavřít",
     "previewApp": "Miligram",
@@ -575,11 +574,11 @@
     "saveFailed": "Uložit se to nepovedlo. Zkus to znovu.",
     "onboardingLabel": "Poslední krok",
     "onboardingProgress": "Krok {step} z {total}",
-    "onboardingPointStreak": "Připomínka série jen ve dny, kdy ještě nemáš hotovo",
-    "onboardingPointFriends": "Zpráva, když tě kamarád vyzve na souboj",
-    "onboardingPointNight": "V noci mlčíme, nejvýš pár zpráv denně",
     "onboardingContinue": "Pokračovat",
     "enabling": "Zapínám…",
-    "onboardingDoneBody": "Ukázková notifikace už je v telefonu. Čas i druhy upozornění změníš v Nastavení."
+    "onboardingDoneBody": "Ukázková notifikace už je v telefonu. Čas i druhy upozornění změníš v Nastavení.",
+    "pointStreak": "Připomínka série jen ve dny, kdy ještě nemáš hotovo",
+    "pointFriends": "Zpráva, když tě kamarád vyzve na souboj",
+    "pointSettings": "Kdykoli je vypneš v Nastavení"
   }
 }

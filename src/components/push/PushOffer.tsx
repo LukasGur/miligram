@@ -5,6 +5,7 @@ import { useTranslations } from "next-intl";
 import { CheckIcon } from "@/components/icons";
 import type { DeviceFacts } from "@/lib/push";
 import { useSession } from "@/lib/useSession";
+import { PushPromises } from "./PushPromises";
 import { ReminderPreview } from "./ReminderPreview";
 import { usePushPrompt } from "./usePushPrompt";
 
@@ -79,7 +80,7 @@ export function PushOffer({ streak, facts }: { streak: number; facts: DeviceFact
         role="dialog"
         aria-modal="true"
         aria-labelledby="push-offer-title"
-        className="animate-sheet bg-paper relative mx-auto w-full max-w-md rounded-t-sheet px-5 pt-5"
+        className="animate-sheet bg-paper scroll-y relative mx-auto max-h-[94dvh] w-full max-w-md rounded-t-sheet px-5 pt-5"
         style={{ paddingBottom: "calc(var(--sa-b) + 1rem)" }}
       >
         <ReminderPreview
@@ -119,6 +120,7 @@ export function PushOffer({ streak, facts }: { streak: number; facts: DeviceFact
               {t("offerTitle")}
             </h2>
             <p className="text-ink-soft mt-2 text-label">{t("offerBody")}</p>
+            <PushPromises className="mt-4" />
             {phase === "failed" ? (
               <p role="alert" className="text-ink mt-3 text-label font-medium">
                 {t("failed")}
@@ -143,7 +145,6 @@ export function PushOffer({ streak, facts }: { streak: number; facts: DeviceFact
             >
               {t("offerLater")}
             </button>
-            <p className="text-ink-soft mt-1 text-center text-micro">{t("offerFoot")}</p>
           </>
         )}
       </div>

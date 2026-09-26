@@ -3,6 +3,7 @@
 import { useEffect, useRef } from "react";
 import { useTranslations } from "next-intl";
 import { CheckIcon } from "@/components/icons";
+import { PushPromises } from "./PushPromises";
 import type { DeviceFacts } from "@/lib/push";
 import { ReminderPreview } from "./ReminderPreview";
 import { usePushPrompt } from "./usePushPrompt";
@@ -94,20 +95,7 @@ export function PushOnboarding({
             />
           </div>
 
-          {/* Co přesně přijde — a co ne. Sliby, které aplikace opravdu drží
-              (migrace 0008), ne reklama. */}
-          {!denied ? (
-            <ul className="animate-rise mt-6 space-y-3" style={{ animationDelay: "280ms" }}>
-              {(["onboardingPointStreak", "onboardingPointFriends", "onboardingPointNight"] as const).map((key) => (
-                <li key={key} className="flex items-start gap-3 text-label">
-                  <span className="bg-accent-wash text-accent mt-px flex size-5 shrink-0 items-center justify-center rounded-full">
-                    <CheckIcon className="size-3.5" />
-                  </span>
-                  {t(key)}
-                </li>
-              ))}
-            </ul>
-          ) : null}
+          {!denied ? <PushPromises className="animate-rise mt-6" style={{ animationDelay: "280ms" }} /> : null}
 
           {phase === "failed" ? (
             <p role="alert" className="text-ink mt-5 text-label font-medium">
