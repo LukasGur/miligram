@@ -13,7 +13,8 @@ import { chime, primeSound } from "@/lib/sound";
 import type { Exercise } from "@/core/types";
 import { useAnswerUnit, useExercisePrompt } from "@/i18n/exerciseText";
 import { AnswerDisplay } from "./AnswerDisplay";
-import { Calculator } from "./Calculator";
+import { Calculator, type CalculatorEntry } from "./Calculator";
+import { CalculatorHistory } from "./CalculatorHistory";
 import { Keypad } from "./Keypad";
 import { TickScale } from "@/components/ui/TickScale";
 import { Formula } from "./Formula";
@@ -61,6 +62,13 @@ export function ExerciseView({
   const [solutionOpen, setSolutionOpen] = useState(false);
   const [hinted, setHinted] = useState(false);
   const [calculatorOpen, setCalculatorOpen] = useState(false);
+  /**
+   * Co se v příkladu spočítalo, pro „Můj výpočet“ po vyhodnocení. Žije jen
+   * do Pokračovat — vrácený příklad je nová instance a začíná načisto.
+   */
+  const [history, setHistory] = useState<(CalculatorEntry & { used?: boolean })[]>([]);
+  const [transferred, setTransferred] = useState<string | null>(null);
+  const [historyOpen, setHistoryOpen] = useState(false);
   /** Nápověda se nezneaktivní, ale řekne, proč nejde vzít. */
   const [poor, setPoor] = useState(false);
   const format = useFormatter();
@@ -212,18 +220,30 @@ export function ExerciseView({
               </div>
 
               {/* Dvě akce vedle sebe, jedna přes celou šířku — mřížka s prázdným
-                  místem po pravé straně vypadá jako chybějící tlačítko. */}
+                  místem po pravé straně vypadá jako chybějící tlačítko. Třetí
+                  jde na vlastní řádek: tři popisky vedle sebe se na úzkém
+                  telefonu nevejdou. */}
               <div className="mt-4 flex gap-2 [&>*]:flex-1">
-                <SecondaryAction onClick={() => setSolutionOpen((open) => !open)}>
+                <SecondaryAction expanded={solutionOpen} onClick={() => setSolutionOpen((open) => !open)}>
                   {solutionOpen ? t("hideSolution") : t("solutionShort")}
                 </SecondaryAction>
 
-                {stuck ? (
-                  <SecondaryAction onClick={() => onAnswered({ correct: false, hinted, gaveUp: true })}>
-                    {t("giveUp")}
+                {history.length > 0 ? (
+                  <SecondaryAction expanded={historyOpen} onClick={() => setHistoryOpen((open) => !open)}>
+                    {historyOpen ? tCalculator("hideHistory") : tCalculator("history")}
                   </SecondaryAction>
+                ) : stuck ? (
+                  <GiveUp onPress={() => onAnswered({ correct: false, hinted, gaveUp: true })} />
                 ) : null}
               </div>
+
+              {history.length > 0 && stuck ? (
+                <div className="mt-2 flex [&>*]:flex-1">
+                  <GiveUp onPress={() => onAnswered({ correct: false, hinted, gaveUp: true })} />
+                </div>
+              ) : null}
+
+              {historyOpen ? <CalculatorHistory entries={history} transferred={transferred} answer={input} /> : null}
 
               {solutionOpen ? <SolutionSteps exercise={exercise} /> : null}
             </div>
@@ -282,8 +302,16 @@ export function ExerciseView({
           {verdict !== null ? null : calculatorOpen ? (
             <div className="mt-2">
               <Calculator
+                onCalculate={(entry) => setHistory((current) => [...current, entry])}
                 onUse={(value) => {
-                  setInput(value.slice(0, MAX_INPUT_LENGTH));
+                  const answer = value.slice(0, MAX_INPUT_LENGTH);
+                  setInput(answer);
+                  setTransferred(answer);
+                  // Převzít se dá jen to, co už je v historii — zapsané
+                  // těsně předtím, nebo po „=“. Je to vždy poslední řádek.
+                  setHistory((current) =>
+                    current.map((entry, index) => ({ ...entry, used: index === current.length - 1 })),
+                  );
                   setCalculatorOpen(false);
                 }}
                 onClose={() => setCalculatorOpen(false)}
@@ -392,6 +420,12 @@ function Tool({
   );
 }
 
+/** Jít dál bez správné odpovědi. Nabízí se od druhé chyby. */
+function GiveUp({ onPress }: { onPress: () => void }) {
+  const t = useTranslations("lesson");
+  return <SecondaryAction onClick={onPress}>{t("giveUp")}</SecondaryAction>;
+}
+
 /**
  * Vedlejší akce: rámeček, ne modrý odkaz. Odkaz vypadá jako text, který
  * se dá přehlédnout, a tohle je volba, ne poznámka.
@@ -399,10 +433,13 @@ function Tool({
 function SecondaryAction({
   onClick,
   disabled,
+  expanded,
   children,
 }: {
   onClick: () => void;
   disabled?: boolean;
+  /** U přepínačů, které rozbalují obsah pod sebou. */
+  expanded?: boolean;
   children: React.ReactNode;
 }) {
   return (
@@ -411,6 +448,7 @@ function SecondaryAction({
       onClick={onClick}
       {...pressable}
       disabled={disabled}
+      aria-expanded={expanded}
       className="press press-wide border-line text-ink data-pressed:border-surface-press data-pressed:bg-surface-press flex min-h-11 items-center justify-center gap-2 rounded-control border px-3 text-label font-medium disabled:opacity-40"
     >
       {children}

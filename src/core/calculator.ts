@@ -20,7 +20,10 @@ export function evaluate(tokens: readonly Token[]): number | null {
   const values: number[] = [];
   const operators: Operator[] = [];
 
-  for (const token of tokens) {
+  for (const [index, token] of tokens.entries()) {
+    // Mezi dvěma čísly musí stát operátor. Bez něj by výsledek tiše
+    // spolkl jedno z nich a student by neměl jak poznat proč.
+    if (index > 0 && token.kind === tokens[index - 1].kind) return null;
     if (token.kind === "number") {
       const previous = operators[operators.length - 1];
       if (previous === "*" || previous === "/") {

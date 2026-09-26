@@ -515,7 +515,12 @@
     "minus": "Mínus",
     "plus": "Plus",
     "equals": "Rovná sa",
-    "open": "Otvoriť kalkulačku"
+    "open": "Otvoriť kalkulačku",
+    "history": "Môj výpočet",
+    "hideHistory": "Skryť výpočet",
+    "historyUsed": "do odpovede",
+    "historyTyped": "Odpoveď {value} prišla z klávesnice, nie z kalkulačky.",
+    "historyEdited": "Po prevzatí sa odpoveď zmenila na {value}."
   },
   "push": {
     "streakTitle": "{days, plural, =0 {Dnešná dávka čaká 💊} one {# deň po sebe 🔥} few {# dni po sebe 🔥} other {# dní po sebe 🔥}}",

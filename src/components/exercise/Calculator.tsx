@@ -17,11 +17,17 @@ import { evaluate, format, parse, render, type Operator, type Token } from "@/co
  *
  * Stojí na místě klávesnice, ne přes obrazovku: zadání musí zůstat vidět,
  * jinak si student čísla přepisuje po paměti a chyba vznikne tady.
+ *
+ * Každý dopočítaný výraz hlásí ven. Po vyhodnocení si ho student může
+ * projít a zjistit, jestli se uklikl, nebo počítal jinak než postup.
  */
 export function Calculator({
+  onCalculate,
   onUse,
   onClose,
 }: {
+  /** Dopočítaný výraz: po „=“, nebo po „Použít“ bez něj. */
+  onCalculate: (entry: CalculatorEntry) => void;
   /** Převezme výsledek do odpovědi a zavře kalkulačku. */
   onUse: (value: string) => void;
   onClose: () => void;
@@ -30,6 +36,11 @@ export function Calculator({
   const tLesson = useTranslations("lesson");
   const [tokens, setTokens] = useState<Token[]>([]);
   const [pending, setPending] = useState("");
+  /**
+   * Na displeji je výsledek právě zapsaného „=“. Převzetí ho pak nezapíše
+   * podruhé; jakákoli další klávesa zápis zase otevře.
+   */
+  const [settled, setSettled] = useState(false);
 
   const complete: Token[] = (() => {
     const value = parse(pending);
@@ -38,6 +49,17 @@ export function Calculator({
   const result = evaluate(complete);
 
   function append(character: string) {
+    setSettled(false);
+    const last = tokens[tokens.length - 1];
+    if (pending === "" && last?.kind === "number") {
+      // Číslice po „=“ začíná nový výpočet, jako na každé kalkulačce.
+      // Jinde tu číslo stojí jen po smazání operátoru, a pak se dopisuje
+      // dál. Dvě čísla bez operátoru vedle sebe by nedávala smysl.
+      const start = settled ? "" : format(last.value);
+      setTokens(settled ? [] : tokens.slice(0, -1));
+      setPending(start === "" && character === "," ? "0," : start + character);
+      return;
+    }
     setPending((current) => {
       if (character === "," && current.includes(",")) return current;
       if (current === "0" && character !== ",") return character;
@@ -46,27 +68,39 @@ export function Calculator({
   }
 
   function operator(value: Operator) {
+    setSettled(false);
     const number = parse(pending);
     if (number !== null) {
       setTokens((current) => [...current, { kind: "number", value: number }, { kind: "operator", value }]);
       setPending("");
       return;
     }
-    // Zápis končí operátorem: student si to rozmyslel, vyměníme ho.
-    setTokens((current) =>
-      current.length > 0 && current[current.length - 1].kind === "operator"
-        ? [...current.slice(0, -1), { kind: "operator", value }]
-        : current,
-    );
+    setTokens((current) => {
+      const last = current[current.length - 1];
+      if (last === undefined) return current;
+      // Zápis končí operátorem: student si to rozmyslel, vyměníme ho.
+      if (last.kind === "operator") return [...current.slice(0, -1), { kind: "operator", value }];
+      // Končí číslem, třeba výsledkem „=“: počítá se s ním dál.
+      return [...current, { kind: "operator", value }];
+    });
+  }
+
+  /** Samotné číslo není výpočet — „=“ nad ním se nezapisuje. */
+  function record() {
+    if (result === null || settled || complete.length < 3) return;
+    onCalculate({ expression: render(complete, ""), result });
   }
 
   function equals() {
     if (result === null) return;
+    record();
+    setSettled(true);
     setTokens([{ kind: "number", value: result }]);
     setPending("");
   }
 
   function backspace() {
+    setSettled(false);
     if (pending !== "") {
       setPending((current) => current.slice(0, -1));
       return;
@@ -75,6 +109,7 @@ export function Calculator({
   }
 
   function clear() {
+    setSettled(false);
     setTokens([]);
     setPending("");
   }
@@ -154,7 +189,11 @@ export function Calculator({
 
       <button
         type="button"
-        onClick={() => result !== null && onUse(format(result))}
+        onClick={() => {
+          if (result === null) return;
+          record();
+          onUse(format(result));
+        }}
         {...pressable}
         disabled={result === null}
         className="press press-wide bg-accent data-pressed:bg-accent-press mt-2 flex min-h-13 w-full items-center justify-center rounded-control text-body font-semibold text-white disabled:opacity-40"
@@ -164,6 +203,9 @@ export function Calculator({
     </section>
   );
 }
+
+/** Jeden dopočítaný výraz, jak ho student viděl na displeji. */
+export type CalculatorEntry = { expression: string; result: number };
 
 function Key({
   onPress,

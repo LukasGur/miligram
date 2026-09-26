@@ -23,6 +23,12 @@ describe("kalkulačka", () => {
     expect(evaluate([])).toBeNull();
   });
 
+  it("dvě čísla nebo dva operátory za sebou nejsou výpočet", () => {
+    expect(evaluate([cislo(3), cislo(7), op("+"), cislo(1)])).toBeNull();
+    expect(evaluate([cislo(3), op("+"), op("*"), cislo(1)])).toBeNull();
+    expect(evaluate([op("-"), cislo(1)])).toBeNull();
+  });
+
   it("dělení nulou nevrátí nekonečno, ale nic", () => {
     expect(evaluate([cislo(5), op("/"), cislo(0)])).toBeNull();
   });
