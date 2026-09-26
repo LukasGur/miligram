@@ -73,3 +73,36 @@ describe("číslo divize", () => {
     expect(displayTier(4)).toBe(2);
   });
 });
+
+describe("kolik chybí", () => {
+  it("na postup chybí o jedno víc, než má třetí", async () => {
+    const { leagueGap } = await import("../league");
+    const rows = rankLeague(group(14));
+    // group: u0 = 140 … u13 = 10; čtvrtý (u3) má 110, třetí 120
+    expect(leagueGap(rows, "u3")).toEqual({ kind: "promote", xp: 11 });
+    expect(leagueGap(rows, "u0")).toBeNull();
+  });
+
+  it("v sestupu chybí do bezpečí o jedno víc, než má poslední bezpečné místo", async () => {
+    const { leagueGap } = await import("../league");
+    const rows = rankLeague(group(14));
+    // sestupuje posledních pět (u9–u13); poslední bezpečný je u8 s 60
+    expect(leagueGap(rows, "u12")).toEqual({ kind: "safety", xp: 41 });
+  });
+
+  it("v malé skupině se nepočítá nic", async () => {
+    const { leagueGap } = await import("../league");
+    expect(leagueGap(rankLeague(group(5)), "u4")).toBeNull();
+  });
+
+  it("týden končí v pondělí o půlnoci", async () => {
+    const { weekEndsAt } = await import("../league");
+    const friday = new Date(2026, 8, 25, 14, 30);
+    const end = weekEndsAt(friday);
+    expect([end.getFullYear(), end.getMonth(), end.getDate(), end.getHours()]).toEqual([2026, 8, 28, 0]);
+    const sunday = new Date(2026, 8, 27, 23, 59);
+    expect(weekEndsAt(sunday).getDate()).toBe(28);
+    const monday = new Date(2026, 8, 28, 0, 1);
+    expect(weekEndsAt(monday).getDate()).toBe(5);
+  });
+});

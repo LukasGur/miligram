@@ -34,6 +34,19 @@
   --color-pill: #a14f06;
   --color-pill-wash: #fff1dc;
 
+  /* Tóny monogramů. Osm sytých barev, na kterých má bílé písmo kontrast
+     přes 4,5:1. Žádná není červená (ta patří chybě) ani medová (pastilky):
+     monogram je identita, nesmí vypadat jako signál. Počet musí sedět
+     s TONES v src/core/monogram.ts. */
+  --color-tone-0: #3730d9;
+  --color-tone-1: #0f766e;
+  --color-tone-2: #7e3ab8;
+  --color-tone-3: #be185d;
+  --color-tone-4: #2563a8;
+  --color-tone-5: #4d7c0f;
+  --color-tone-6: #475569;
+  --color-tone-7: #0e7490;
+
   /* --- typografie ------------------------------------------------------- */
   --font-sans: var(--font-plex-sans), ui-sans-serif, system-ui, sans-serif;
   --font-mono: var(--font-plex-mono), ui-monospace, monospace;
@@ -392,5 +405,36 @@
     animation-delay: 0s !important;
     transition-duration: 0.001ms !important;
     scroll-behavior: auto !important;
+  }
+}
+
+/* ---------------------------------------------------------------------------
+   Odhalení souboje a postup v lize
+
+   Řádky souboje se odkrývají po jednom, pruh odznaku ligy se dokreslí.
+   Obojí startuje z viditelného stavu (jen posun a průhlednost, ne nula),
+   takže při vypnutém pohybu je všechno rovnou na místě.
+--------------------------------------------------------------------------- */
+@keyframes reveal-row {
+  from { opacity: 0.2; transform: translateY(0.375rem); }
+}
+
+@keyframes stripe-grow {
+  from { opacity: 0.2; transform: scaleY(0.15); }
+}
+
+.reveal-row {
+  animation: reveal-row 480ms var(--ease-decel) backwards;
+}
+
+.stripe-grow {
+  transform-origin: center bottom;
+  animation: stripe-grow 1100ms 500ms var(--ease-decel) backwards;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .reveal-row,
+  .stripe-grow {
+    animation: none;
   }
 }

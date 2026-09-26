@@ -50,6 +50,12 @@ Pastilky za příklad se připisují hned po odpovědi (zůstatek je vidět
 v hlavičce lekce), bonus a XP až s dokončenou lekcí.
 Útrata: nápověda 15, ochrana série 60 (nejvýš dvě naráz).
 
+Souboj: výhra +15 pastilek, remíza +5, XP žádné navíc (lekce souboje dá
+běžné XP). Jinak by se liga dala nafouknout vzájemným vyzýváním. Kdo
+vyhrál, rozhoduje server (`duel_outcome`, migrace 0010); pastilky si
+připíše zařízení samo, jednou za souboj. Pravidla souboje jsou
+v `src/core/duel.ts` a musí souhlasit s migrací — test to hlídá.
+
 ## Kde jsme
 
 Aktuální stav a co dělat dál je v `docs/stav.md`.

@@ -3,7 +3,20 @@
 import { useEffect } from "react";
 import { MAX_STREAK_FREEZES } from "@/core/economy";
 import { useLocale } from "@/i18n/LocaleProvider";
-import { claimGift as markClaimed, fetchLessons, pendingGifts, remoteGateway } from "@/lib/remote";
+import {
+  claimGift as markClaimed,
+  fetchLessons,
+  fetchProfile,
+  leagueHistory,
+  listDuels,
+  pendingGifts,
+  pendingRequests,
+  remoteGateway,
+  weekStart,
+} from "@/lib/remote";
+import { updatePulse } from "@/lib/pulse";
+import { collectDuelRewards, duelsNeedingMe, flushDuelResults } from "@/lib/social";
+import { unseenWeek } from "@/components/social/WeekResult";
 import { claimGift } from "@/lib/db";
 import { pushOnFor, restorePushDevice, savePrefs, usePushStatus } from "@/lib/push";
 import { pullNews } from "@/lib/restore";
@@ -106,6 +119,52 @@ export function SyncAgent() {
       window.removeEventListener("online", retry);
     };
   }, [userId]);
+
+  /**
+   * Sociální vrstva pro domovskou obrazovku: přezdívka na monogram a kolik
+   * věcí čeká na uživatele. K tomu připsání výher ze soubojů a odeslání
+   * výsledku souboje, který se dohrál bez sítě. Ptá se po přihlášení,
+   * po návratu sítě a po návratu do aplikace.
+   */
+  useEffect(() => {
+    const client = supabase();
+    if (!client || !userId) return;
+
+    let cancelled = false;
+    let running = false;
+    const refresh = async () => {
+      if (cancelled || running || !navigator.onLine || document.visibilityState !== "visible") return;
+      running = true;
+      try {
+        await flushDuelResults(client, userId);
+        const [profile, duels, requests, history] = await Promise.all([
+          fetchProfile(client, userId),
+          listDuels(client, userId),
+          pendingRequests(client, userId),
+          leagueHistory(client),
+        ]);
+        if (cancelled) return;
+        await collectDuelRewards(userId, duels);
+        const week = unseenWeek(history, weekStart(), userId) ? 1 : 0;
+        updatePulse(userId, {
+          handle: profile?.handle ?? null,
+          attention: duelsNeedingMe(duels) + requests.length + week,
+        });
+      } finally {
+        running = false;
+      }
+    };
+
+    const retry = () => void refresh().catch(() => {});
+    retry();
+    window.addEventListener("online", retry);
+    document.addEventListener("visibilitychange", retry);
+    return () => {
+      cancelled = true;
+      window.removeEventListener("online", retry);
+      document.removeEventListener("visibilitychange", retry);
+    };
+  }, [userId, pending]);
 
   /**
    * Jazyk přihlašovacích e-mailů. Šablona v Supabase vybírá češtinu nebo

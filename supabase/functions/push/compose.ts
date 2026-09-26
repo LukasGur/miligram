@@ -14,6 +14,10 @@ export type PushKind =
   | "duelChallenge"
   | "duelPlayed"
   | "duelFinished"
+  | "duelAccepted"
+  | "duelDeclined"
+  | "duelExpiring"
+  | "duelForfeit"
   | "friendRequest"
   | "friendAccepted"
   | "gift"
@@ -34,21 +38,29 @@ export type Notice = {
 
 type Params = Record<string, string | number | null | undefined>;
 
-/** Kam klepnutí vede. Souboje, přátelé a liga jsou na obrazovce účtu. */
+/**
+ * Kam klepnutí vede. Souboje a liga mají vlastní obrazovku v profilu,
+ * přátelé jsou na profilu samotném. Starší verze aplikace neznámý cíl
+ * přejdou a otevřou domovskou obrazovku.
+ */
 const TARGET: Record<PushKind, string> = {
   streak: "/?lesson=daily",
   lastChance: "/?lesson=daily",
-  duelChallenge: "/?open=account",
-  duelPlayed: "/?open=account",
-  duelFinished: "/?open=account",
+  duelChallenge: "/?open=duels",
+  duelPlayed: "/?open=duels",
+  duelFinished: "/?open=duels",
+  duelAccepted: "/?open=duels",
+  duelDeclined: "/?open=duels",
+  duelExpiring: "/?open=duels",
+  duelForfeit: "/?open=duels",
   friendRequest: "/?open=account",
   friendAccepted: "/?open=account",
   gift: "/",
-  leagueLastDay: "/?open=account",
-  leagueResult: "/?open=account",
+  leagueLastDay: "/?open=league",
+  leagueResult: "/?open=league",
 };
 
-/** Pořadí divize, jak ho vidí uživatel: 1 je nejvyšší (src/core/league.ts). */
+/** Číslo ligy, jak ho vidí uživatel: 1 je nejvyšší (src/core/league.ts). */
 const TOP_TIER = 5;
 
 /** Postup, sestup a zóny platí jen ve skupině větší než 3 + 5 (migrace 0005). */
@@ -100,8 +112,11 @@ function prepare(kind: PushKind, params: Params, seed: number): Record<string, s
       const rank = number("rank");
       const size = number("size");
       const gap = number("gap");
-      const zone = size >= ZONES_FROM && rank <= 3 ? "up" : gap > 0 ? "chase" : "other";
-      return { rank, size, gap, zone };
+      const safe = number("safe");
+      // Sestup má přednost před honičkou o postup: kdo je dole, potřebuje
+      // vědět, kolik ho dělí od bezpečí, ne od třetího místa.
+      const zone = size >= ZONES_FROM && rank <= 3 ? "up" : safe > 0 ? "down" : gap > 0 ? "chase" : "other";
+      return { rank, size, gap, safe, zone };
     }
     case "leagueResult":
       return {
@@ -113,7 +128,10 @@ function prepare(kind: PushKind, params: Params, seed: number): Record<string, s
     case "duelFinished":
       return { handle: text("handle"), mine: number("mine"), theirs: number("theirs"), outcome: text("outcome") };
     case "duelPlayed":
-      return { handle: text("handle"), correct: number("correct"), count: number("count") };
+      // Skóre soupeře je zapečetěné, dokud příjemce sám nedohraje.
+      return { handle: text("handle"), stage: text("stage") === "offered" ? "offered" : "other" };
+    case "duelForfeit":
+      return { handle: text("handle"), outcome: text("outcome") === "won" ? "won" : "lost" };
     default:
       return { handle: text("handle") };
   }

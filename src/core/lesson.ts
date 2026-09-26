@@ -1,3 +1,4 @@
+import { topicCategory, type DuelTopic } from "./duel";
 import { createRng, type Rng } from "./random";
 import { RAMPS, stageById, type DailySpec } from "./curriculum";
 import {
@@ -217,6 +218,16 @@ export function planDailyLesson(lessonId: string, spec: DailySpec): LessonPlan {
   });
 
   return { id: lessonId, items };
+}
+
+/**
+ * Lekce souboje. Oba hráči si ji sestaví sami z identifikátoru a tématu,
+ * takže nesmí záviset na ničem, co má každý jinak — stavu programu,
+ * statistikách, jazyku.
+ */
+export function planDuelLesson(lessonId: string, topic: DuelTopic): LessonPlan {
+  const category = topicCategory(topic);
+  return category ? planCategoryLesson(lessonId, category) : planLesson(lessonId);
 }
 
 /**

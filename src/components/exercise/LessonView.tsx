@@ -8,9 +8,14 @@ import { lessonExercise, resolvePlan, type LessonPlan } from "@/core/lesson";
 import type { LessonKind } from "@/core/scoring";
 import type { DailySpec } from "@/core/curriculum";
 import { attemptsOn, firstTryOutcomes, nextIndex, solvedCount } from "@/core/lessonRun";
+import { duelScore } from "@/core/duel";
+import type { DuelResult } from "@/lib/remote";
+import type { BadgeState } from "@/core/badges";
+import { freshLocalBadges } from "@/lib/social";
+import { BadgeGlyph } from "@/components/social/BadgeGlyph";
 import { recordAnswer, recordLesson, spendPills, type LessonAttempt } from "@/lib/db";
 import { useProfile } from "@/lib/useProfile";
-import { HomeIcon, RepeatIcon } from "@/components/icons";
+import { HomeIcon, RepeatIcon, VersusIcon } from "@/components/icons";
 import { Numeral } from "@/components/ui/Numeral";
 import { Pastille } from "@/components/ui/Pastille";
 import { Balance } from "@/components/ui/Balance";
@@ -45,6 +50,7 @@ export function LessonView({
   attempts: resumed,
   onExit,
   onAgain,
+  onDuelDone,
 }: {
   lessonId: string;
   /** Hotový plán z tréninku, opakování chyb nebo rozehrané lekce. */
@@ -61,6 +67,8 @@ export function LessonView({
   onExit: () => void;
   /** Spustí další lekci rovnou ze shrnutí, bez návratu domů. */
   onAgain: () => void;
+  /** Po dohraném souboji: přejít rovnou k jeho výsledku. */
+  onDuelDone?: (duelId: string) => void;
 }) {
   const plan = useMemo(() => resolvePlan({ lessonId, plan: given, spec }), [given, spec, lessonId]);
   // Rozehraná lekce začíná tam, kde uživatel přestal. Pořadí se dopočítá
@@ -109,6 +117,7 @@ export function LessonView({
         walletBefore={walletBefore}
         onExit={onExit}
         onAgain={onAgain}
+        onDuel={duelId && onDuelDone ? () => onDuelDone(duelId) : undefined}
       />
     );
   }
@@ -131,7 +140,7 @@ export function LessonView({
       pills={profile.pills + pending}
       onExit={onExit}
       onHint={() => spendPills(HINT_COST, `hint:${exercise.templateId}`)}
-      onAnswered={({ correct, hinted, gaveUp }) => {
+      onAnswered={({ correct, hinted, gaveUp, elapsedMs }) => {
         // Semínko je identita položky v plánu, ne semínko zobrazeného
         // příkladu: to se u vráceného příkladu mění, aby přišla jiná čísla.
         const zapis: LessonAttempt = {
@@ -142,6 +151,7 @@ export function LessonView({
           correct,
           hinted,
           ...(gaveUp ? { gaveUp: true } : {}),
+          ...(elapsedMs !== undefined ? { elapsedMs } : {}),
         };
         const next = [...attempts, zapis];
         setAttempts(next);
@@ -188,19 +198,28 @@ export function LessonView({
           //
           // Klient Supabase se dotahuje až tady. Souboj je menšina lekcí
           // a 240 kB navíc by jinak čekalo na každou z nich.
-          if (duelId) void reportDuel(duelId, reward.correct, reward.count);
+          if (duelId) {
+            const score = duelScore(
+              plan.items.map((item) => item.seed),
+              next,
+            );
+            void reportDuel(duelId, { correct: reward.correct, count: reward.count, ...score });
+          }
         }
       }}
     />
   );
 }
 
-/** Nahlášení výsledku souboje. Tichý neúspěch: výzva zůstane nedohraná. */
-async function reportDuel(duelId: string, correct: number, count: number): Promise<void> {
+/**
+ * Nahlášení výsledku souboje. Výsledek se nejdřív zapíše stranou, takže
+ * bez sítě se neztratí: SyncAgent ho pošle, až se síť vrátí (src/lib/social.ts).
+ */
+async function reportDuel(duelId: string, result: DuelResult): Promise<void> {
   try {
-    const [{ supabase }, { recordDuelResult }] = await Promise.all([
+    const [{ supabase }, { submitDuelResult }] = await Promise.all([
       import("@/lib/supabase"),
-      import("@/lib/remote"),
+      import("@/lib/social"),
     ]);
     const client = supabase();
     if (!client) return;
@@ -209,9 +228,9 @@ async function reportDuel(duelId: string, correct: number, count: number): Promi
     const userId = data.session?.user.id;
     if (!userId) return;
 
-    await recordDuelResult(client, duelId, userId, correct, count);
+    await submitDuelResult(client, userId, duelId, result);
   } catch {
-    // Bez sítě se výsledek nezapíše a souboj zůstane otevřený.
+    // Bez sítě zůstane výsledek čekat a pošle se později.
   }
 }
 
@@ -256,6 +275,7 @@ function LessonSummary({
   walletBefore,
   onExit,
   onAgain,
+  onDuel,
 }: {
   /** Jak dopadl první pokus u každého příkladu. Odměna je z toho. */
   outcomes: readonly boolean[];
@@ -269,9 +289,12 @@ function LessonSummary({
   walletBefore?: number;
   onExit: () => void;
   onAgain: () => void;
+  /** Lekce byla souboj: hlavní akce vede k jeho výsledku. */
+  onDuel?: () => void;
 }) {
   const t = useTranslations("lesson");
   const tHome = useTranslations("home");
+  const tSocial = useTranslations("social");
   const format = useFormatter();
   const { profile, streak } = useProfile();
   const reward = useMemo(() => rewardForLesson(outcomes, kind), [outcomes, kind]);
@@ -283,6 +306,25 @@ function LessonSummary({
   const bonusRef = useRef<SVGSVGElement>(null);
   const [landed, setLanded] = useState(0);
   const [flights, setFlights] = useState<Flight[]>([]);
+
+  /**
+   * Odznaky, které lekce odemkla. Jen po čerstvě dohrané lekci a až po
+   * jejím zápisu — počítají se z uložených lekcí a odpovědí.
+   */
+  const [fresh, setFresh] = useState<BadgeState[]>([]);
+  useEffect(() => {
+    if (walletBefore === undefined) return;
+    let cancelled = false;
+    const timer = window.setTimeout(() => {
+      void freshLocalBadges().then((found) => {
+        if (!cancelled) setFresh(found);
+      });
+    }, 900);
+    return () => {
+      cancelled = true;
+      window.clearTimeout(timer);
+    };
+  }, [walletBefore]);
 
   // Pastilky za příklady už v zůstatku jsou, přiletí jen bonus.
   const animate = walletBefore !== undefined && bonus > 0;
@@ -366,6 +408,23 @@ function LessonSummary({
               <Award label={t("flawlessBonus")} value={bonus} pastille iconRef={bonusRef} />
             ) : null}
           </dl>
+
+          {fresh.length > 0 ? (
+            <div className="mt-6 flex flex-col gap-3" role="status">
+              {fresh.map((badge) => (
+                <div key={badge.id} className="reveal-row flex items-center gap-3">
+                  <BadgeGlyph id={badge.id} level={badge.level} levels={badge.levels} />
+                  <div>
+                    <p className="panel-label">{tSocial("newBadge")}</p>
+                    <p className="text-heading font-semibold">
+                      {tSocial(`badge.${badge.id}.name`)}
+                      {badge.levels > 1 ? ` ${["", "I", "II", "III"][badge.level]}` : ""}
+                    </p>
+                  </div>
+                </div>
+              ))}
+            </div>
+          ) : null}
         </div>
       </main>
 
@@ -392,22 +451,22 @@ function LessonSummary({
         <div className="mx-auto w-full max-w-md px-5 pt-3">
           <button
             type="button"
-            onClick={onExit}
+            onClick={onDuel ?? onExit}
             className="bg-accent active:bg-accent-press flex min-h-14 w-full items-center justify-center gap-2 rounded-control text-body font-semibold text-white transition-colors duration-75"
           >
-            <HomeIcon className="size-5" />
-            {t("home")}
+            {onDuel ? <VersusIcon className="size-5" /> : <HomeIcon className="size-5" />}
+            {onDuel ? t("duelResult") : t("home")}
           </button>
 
           {/* Další lekce je tichá volba: po splněném cíli je správné odejít,
-              ne hrát dál. */}
+              ne hrát dál. Po souboji je tichá volba domů. */}
           <button
             type="button"
-            onClick={onAgain}
+            onClick={onDuel ? onExit : onAgain}
             className="text-ink-soft mt-1 flex min-h-11 w-full items-center justify-center gap-2 text-label"
           >
-            <RepeatIcon className="size-4" />
-            {t("again")}
+            {onDuel ? <HomeIcon className="size-4" /> : <RepeatIcon className="size-4" />}
+            {onDuel ? t("home") : t("again")}
           </button>
         </div>
       </footer>

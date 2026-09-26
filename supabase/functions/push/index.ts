@@ -32,6 +32,8 @@ const TTL: Partial<Record<PushKind, number>> = {
   streak: 4 * 3600,
   lastChance: 2 * 3600,
   leagueLastDay: 6 * 3600,
+  // Připomínka konce lhůty: po šesti hodinách je souboj rozhodnutý.
+  duelExpiring: 6 * 3600,
 };
 const DEFAULT_TTL = 24 * 3600;
 

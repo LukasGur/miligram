@@ -1,6 +1,6 @@
 # Kde jsme
 
-Poslední aktualizace: **25. 9. 2026**
+Poslední aktualizace: **26. 9. 2026**
 
 ## Hotovo
 
@@ -177,7 +177,46 @@ obojí s náhledem zamčené obrazovky; vypínač a volby jsou
 v Nastavení. Ověřeno v Chromiu: odběr, uvítací notifikace a doručení
 z fronty přes FCM až do service workeru.
 
+**Profil, liga a souboje** (26. 9. 2026) — obrazovka účtu byla poskládané
+formuláře bez „já“ a souboj byl jen sdílený identifikátor lekce bez pravidel.
+Návrh ke schválení: <https://claude.ai/artifact/BWyiZjUXusytWU1BAFqLaw>.
+
+- **Profil** (`src/components/social`) — monogram s odznakem ligy, série,
+  XP, lekce a bilance soubojů, dlaždice Liga / Souboje / Přátelé, odznaky,
+  nastavení účtu dole. Na domově monogram místo ikony a tečka v akcentu,
+  když něco čeká (`src/lib/pulse.ts`, plní ho SyncAgent).
+- **Souboj** (migrace 0010, `src/core/duel.ts`) — vyzývající vybere téma
+  (mix nebo kategorie), oba hrají tytéž příklady. Vyzvaný má 48 h na
+  přijetí, pak oba 48 h na dohrání; kdo nedohraje, prohrává kontumačně,
+  jen když druhý dohrál. Bod za správně napoprvé bez nápovědy, při shodě
+  kratší čas (pod sekundu remíza). Soupeřovo skóre je zapečetěné do
+  vlastního dohrání. Jeden otevřený souboj na dvojici, odveta jedním
+  klepnutím. Lhůty hlídá minutová úloha `resolve_duels()`. Výsledek po
+  příkladech (migrace 0011) je v odhalení; výsledek dohraný bez sítě
+  čeká v localStorage a SyncAgent ho pošle později.
+- **Liga** — 5. liga až 1. liga, odznak se stoupajícími sloupky. Odpočet
+  do konce týdne, čáry postupu a sestupu, „na postup / do bezpečí chybí
+  X XP“, liga přátel jako hlavní pořadí ve skupině pod 9 lidí, výsledek
+  minulého týdne při prvním otevření. Nedělní notifikace umí i sestup.
+- **Přátelé** — QR kód a skener přímo v aplikaci (jsQR, stáhne se až se
+  skenerem; odkaz z foťáku by na iPhonu otevřel Safari bez přihlášení),
+  odkaz ke sdílení se stránkou pozvánky (`/?pritel=…`) a vložením ze
+  schránky, přezdívka. Profil přítele: vzájemná bilance, srovnání
+  v kategoriích (funkce `friend_template_stats`, jen pro přátele), dar,
+  odebrání.
+- **Odznaky** (`src/core/badges.ts`) — 10, tři stupňované. Dosažený stupeň
+  se ukládá na zařízení (Dexie verze 7) a nemizí; nové z lekce se ukážou
+  ve shrnutí.
+
+Ověřeno ve WebKitu na rozměru iPhonu s podvrženými odpověďmi serveru;
+pravidla proti živé databázi dotazem (`duel_outcome`, `resolve_duels`).
+Na telefonu se dvěma účty to ještě nikdo nehrál.
+
 ## Co dělat dál
+
+0a. **Souboj naostro na dvou telefonech.** Výzva, přijetí, hraní obou,
+   odhalení, odveta; skener QR na iPhonu z plochy (kamera v PWA).
+
 
 0. **Notifikace na iPhonu a Androidu.** Na iPhonu jen z plochy (iOS 16.4+).
    Zkusit: nabídku po lekci, uvítací notifikaci, klepnutí na připomínku

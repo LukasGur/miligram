@@ -148,6 +148,8 @@ export type LessonAttempt = {
   hinted: boolean;
   /** Student si po druhé chybě nechal ukázat postup a šel dál. */
   gaveUp?: boolean;
+  /** Doba od zobrazení příkladu do vyhodnocení. Souboj z ní rozhoduje shodu bodů. */
+  elapsedMs?: number;
 };
 
 /**
@@ -183,6 +185,16 @@ export function eventUid(): string {
   return Array.from(bytes, (byte) => byte.toString(16).padStart(2, "0")).join("");
 }
 
+/**
+ * Výhra ze souboje, kterou si zařízení připsalo. Pastilky žijí v telefonu
+ * (migrace 0006), takže o výhře rozhodne server a zařízení si ji připíše
+ * samo — jednou, podle identifikátoru souboje.
+ */
+export type DuelRewardRecord = { id: string; pills: number; creditedAt: string };
+
+/** Nejvyšší dosažený stupeň odznaku. Odznak nemizí, když série spadne. */
+export type BadgeRecord = { id: string; level: number; earnedAt: string };
+
 class MiligramDatabase extends Dexie {
   profile!: Table<Profile, number>;
   answers!: Table<AnswerRecord, number>;
@@ -190,6 +202,8 @@ class MiligramDatabase extends Dexie {
   outbox!: Table<OutboxEvent, number>;
   progress!: Table<LessonProgress, number>;
   gifts!: Table<ReceivedGiftRecord, string>;
+  duelRewards!: Table<DuelRewardRecord, string>;
+  badges!: Table<BadgeRecord, string>;
 
   constructor() {
     super("miligram");
@@ -271,6 +285,9 @@ class MiligramDatabase extends Dexie {
 
     /** Šestá verze si pamatuje vyzvednuté dary, ať se nepřipíšou dvakrát. */
     this.version(6).stores({ gifts: "id, receivedAt" });
+
+    /** Sedmá verze: připsané výhry ze soubojů a dosažené odznaky. */
+    this.version(7).stores({ duelRewards: "id", badges: "id" });
   }
 }
 
@@ -593,4 +610,52 @@ export async function claimGift(
 /** Dary, které na tomhle zařízení dorazily. Nejnovější první. */
 export async function receivedGifts(limit = 5): Promise<ReceivedGiftRecord[]> {
   return db().gifts.orderBy("receivedAt").reverse().limit(limit).toArray();
+}
+
+/**
+ * Připíše pastilky za rozhodnutý souboj. Idempotentní podle souboje:
+ * seznam soubojů se načítá opakovaně a výhra se nesmí připsat dvakrát.
+ *
+ * Souboj rozhodnutý dřív, než na zařízení vznikl profil, se jen poznamená:
+ * nová instalace by si jinak připsala celou historii výher znovu.
+ */
+export async function creditDuelReward(
+  duel: { id: string; resolvedAt: string | null },
+  pills: number,
+  now = new Date(),
+): Promise<boolean> {
+  const timestamp = now.toISOString();
+  const database = db();
+
+  return database.transaction("rw", database.profile, database.duelRewards, async () => {
+    if ((await database.duelRewards.get(duel.id)) !== undefined) return false;
+
+    const current = (await database.profile.get(PROFILE_ID)) ?? emptyProfile(now);
+    const before = duel.resolvedAt !== null && duel.resolvedAt < current.createdAt;
+    const amount = before ? 0 : pills;
+
+    await database.duelRewards.put({ id: duel.id, pills: amount, creditedAt: timestamp });
+    if (amount > 0) {
+      await database.profile.put({ ...current, pills: current.pills + amount, updatedAt: timestamp });
+    }
+    return amount > 0;
+  });
+}
+
+export async function storedBadgeLevels(): Promise<Record<string, number>> {
+  const rows = await db().badges.toArray();
+  return Object.fromEntries(rows.map((row) => [row.id, row.level]));
+}
+
+/** Uloží vyšší stupně; nižší nepřepíše. */
+export async function saveBadgeLevels(levels: Readonly<Record<string, number | undefined>>, now = new Date()): Promise<void> {
+  const database = db();
+  await database.transaction("rw", database.badges, async () => {
+    for (const [id, level] of Object.entries(levels)) {
+      if (!level) continue;
+      const current = await database.badges.get(id);
+      if (current && current.level >= level) continue;
+      await database.badges.put({ id, level, earnedAt: now.toISOString() });
+    }
+  });
 }

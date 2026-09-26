@@ -48,7 +48,7 @@ export function ExerciseView({
   /** Kolikátý pokus tohle je. Od druhého se nabídne jít dál. */
   attempt: number;
   onExit: () => void;
-  onAnswered: (result: { correct: boolean; hinted: boolean; gaveUp?: boolean }) => void;
+  onAnswered: (result: { correct: boolean; hinted: boolean; gaveUp?: boolean; elapsedMs?: number }) => void;
   onHint: () => Promise<boolean>;
   pills: number;
 }) {
@@ -72,6 +72,9 @@ export function ExerciseView({
   /** Nápověda se nezneaktivní, ale řekne, proč nejde vzít. */
   const [poor, setPoor] = useState(false);
   const format = useFormatter();
+  const clock = useVisibleClock();
+  /** Doba do vyhodnocení. Souboj z ní při shodě bodů rozhoduje. */
+  const [elapsedMs, setElapsedMs] = useState<number>();
 
   /**
    * Pastilky za příklad. Připisují se hned — do zůstatku v hlavičce
@@ -116,6 +119,7 @@ export function ExerciseView({
     // Zvuk se probouzí tady, v obsluze klepnutí — jinak ho iOS nepustí.
     primeSound();
     const result = evaluateAnswer(value, exercise.solution.value, exercise.answer.tolerance);
+    setElapsedMs(clock());
     setVerdict(result);
     if (result.correct && !repeat) {
       chime();
@@ -233,13 +237,13 @@ export function ExerciseView({
                     {historyOpen ? tCalculator("hideHistory") : tCalculator("history")}
                   </SecondaryAction>
                 ) : stuck ? (
-                  <GiveUp onPress={() => onAnswered({ correct: false, hinted, gaveUp: true })} />
+                  <GiveUp onPress={() => onAnswered({ correct: false, hinted, gaveUp: true, elapsedMs })} />
                 ) : null}
               </div>
 
               {history.length > 0 && stuck ? (
                 <div className="mt-2 flex [&>*]:flex-1">
-                  <GiveUp onPress={() => onAnswered({ correct: false, hinted, gaveUp: true })} />
+                  <GiveUp onPress={() => onAnswered({ correct: false, hinted, gaveUp: true, elapsedMs })} />
                 </div>
               ) : null}
 
@@ -331,7 +335,7 @@ export function ExerciseView({
           {calculatorOpen && verdict === null ? null : (
             <button
               type="button"
-              onClick={verdict === null ? check : () => onAnswered({ correct: verdict.correct, hinted })}
+              onClick={verdict === null ? check : () => onAnswered({ correct: verdict.correct, hinted, elapsedMs })}
               {...pressable}
               disabled={verdict === null && !canCheck}
               className="press press-wide bg-accent data-pressed:bg-accent-press mt-3 min-h-14 w-full rounded-control text-body font-semibold text-white disabled:opacity-40"
@@ -495,3 +499,34 @@ function HintPanel({ exercise }: { exercise: Exercise }) {
   );
 }
 
+
+/**
+ * Čas strávený nad příkladem, jen když je aplikace vidět. Kdo odejde
+ * uprostřed souboje do zpráv, nemá prohrát o dobu, kdy se na příklad
+ * nedíval — a nemá ani vyhrát, když soupeř udělal totéž.
+ */
+function useVisibleClock(): () => number {
+  const state = useRef<{ total: number; since: number | null } | null>(null);
+
+  useEffect(() => {
+    const visible = () => document.visibilityState === "visible";
+    state.current = { total: 0, since: visible() ? performance.now() : null };
+    const onChange = () => {
+      const current = state.current;
+      if (!current) return;
+      if (visible() && current.since === null) current.since = performance.now();
+      if (!visible() && current.since !== null) {
+        current.total += performance.now() - current.since;
+        current.since = null;
+      }
+    };
+    document.addEventListener("visibilitychange", onChange);
+    return () => document.removeEventListener("visibilitychange", onChange);
+  }, []);
+
+  return () => {
+    const current = state.current;
+    if (!current) return 0;
+    return Math.round(current.total + (current.since === null ? 0 : performance.now() - current.since));
+  };
+}

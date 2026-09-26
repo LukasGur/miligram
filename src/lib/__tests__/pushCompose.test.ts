@@ -14,7 +14,13 @@ const SAMPLES: [PushKind, Record<string, string | number>][] = [
   ["streak", { days: 0 }],
   ["lastChance", { days: 5 }],
   ["duelChallenge", { handle: "petra" }],
-  ["duelPlayed", { handle: "petra", correct: 6, count: 7 }],
+  ["duelPlayed", { handle: "petra", stage: "offered" }],
+  ["duelPlayed", { handle: "petra", stage: "accepted" }],
+  ["duelAccepted", { handle: "petra" }],
+  ["duelDeclined", { handle: "petra" }],
+  ["duelExpiring", { handle: "petra" }],
+  ["duelForfeit", { handle: "petra", outcome: "won" }],
+  ["duelForfeit", { handle: "petra", outcome: "lost" }],
   ["duelFinished", { handle: "petra", mine: 7, theirs: 5, outcome: "won" }],
   ["duelFinished", { handle: "petra", mine: 4, theirs: 5, outcome: "lost" }],
   ["duelFinished", { handle: "petra", mine: 5, theirs: 5, outcome: "draw" }],
@@ -24,6 +30,7 @@ const SAMPLES: [PushKind, Record<string, string | number>][] = [
   ["leagueLastDay", { rank: 2, size: 20, gap: 0 }],
   ["leagueLastDay", { rank: 6, size: 20, gap: 30 }],
   ["leagueLastDay", { rank: 2, size: 4, gap: 0 }],
+  ["leagueLastDay", { rank: 18, size: 20, gap: 90, safe: 20 }],
   ["leagueResult", { rank: 1, size: 20, move: "up", tier: 2 }],
   ["leagueResult", { rank: 18, size: 20, move: "down", tier: 1 }],
   ["leagueResult", { rank: 9, size: 20, move: "stay", tier: 1 }],
@@ -67,9 +74,20 @@ describe("texty notifikací", () => {
     expect(notice.actions?.[0]).toEqual({ action: "lesson", title: "Spustit lekci" });
   });
 
-  it("liga ukazuje divizi tak, jak ji vidí uživatel", () => {
-    // Uvnitř je 5 nejvyšší divize, v rozhraní 1. (src/core/league.ts)
-    expect(compose("leagueResult", { rank: 1, size: 20, move: "up", tier: 5 }, "l", "cs", 0).body).toContain("1. divizi");
+  it("liga ukazuje číslo ligy tak, jak ho vidí uživatel", () => {
+    // Uvnitř je 5 nejvyšší liga, v rozhraní 1. (src/core/league.ts)
+    expect(compose("leagueResult", { rank: 1, size: 20, move: "up", tier: 5 }, "l", "cs", 0).body).toContain("1. ligu");
+  });
+
+  it("v sestupu se říká, kolik chybí do bezpečí", () => {
+    expect(compose("leagueLastDay", { rank: 18, size: 20, gap: 90, safe: 20 }, "l", "cs", 0).body).toBe(
+      "Jsi 18. a v sestupu. 20 XP tě dostane do bezpečí.",
+    );
+  });
+
+  it("zpráva o odehraném souboji neprozradí skóre", () => {
+    const body = compose("duelPlayed", { handle: "petra", stage: "accepted", correct: 6, count: 7 }, "d", "cs", 0).body;
+    expect(body).not.toMatch(/\d/);
   });
 
   it("v malé skupině se o postupu nemluví", () => {

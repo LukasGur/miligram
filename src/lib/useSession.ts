@@ -4,6 +4,7 @@ import { useSyncExternalStore } from "react";
 import type { Session } from "@supabase/supabase-js";
 import { supabase } from "./supabase";
 import { forgetRemoteQueries } from "./remoteQuery";
+import { clearPulse } from "./pulse";
 
 /**
  * Přihlášení jako vnější úložiště.
@@ -35,7 +36,10 @@ function start() {
 
   client.auth.onAuthStateChange((_event, session) => {
     // Po odhlášení nesmí na obrazovce zůstat data předchozího účtu.
-    if (session === null) forgetRemoteQueries();
+    if (session === null) {
+      forgetRemoteQueries();
+      clearPulse();
+    }
     publish({ session, ready: true });
   });
 }

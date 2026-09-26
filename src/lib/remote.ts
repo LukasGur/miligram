@@ -1,6 +1,7 @@
 "use client";
 
 import type { SupabaseClient } from "@supabase/supabase-js";
+import { isDuelTopic, type DuelMark, type DuelStatus, type DuelTopic } from "@/core/duel";
 import { rankLeague, type RankedEntry } from "@/core/league";
 import type { RemoteLesson } from "./restore";
 import type { LessonEventRow, SyncGateway } from "./sync";
@@ -13,7 +14,7 @@ import type { LessonEventRow, SyncGateway } from "./sync";
  * server, kde by šla vynutit.
  */
 
-export type RemoteProfile = { id: string; handle: string; displayName: string };
+export type RemoteProfile = { id: string; handle: string; displayName: string; createdAt: string };
 
 export type ScoreRow = {
   userId: string;
@@ -83,11 +84,13 @@ export async function fetchLessons(
 export async function fetchProfile(client: SupabaseClient, userId: string): Promise<RemoteProfile | null> {
   const { data, error } = await client
     .from("profiles")
-    .select("id, handle, display_name")
+    .select("id, handle, display_name, created_at")
     .eq("id", userId)
     .maybeSingle();
   if (error) throw new Error(error.message);
-  return data ? { id: data.id, handle: data.handle, displayName: data.display_name } : null;
+  return data
+    ? { id: data.id, handle: data.handle, displayName: data.display_name, createdAt: data.created_at }
+    : null;
 }
 
 /** Přezdívka se zabírá zápisem — o jedinečnost se stará index, ne kontrola předem. */
@@ -225,93 +228,211 @@ export async function acceptFriend(client: SupabaseClient, userId: string, reque
 /* ---------------------------------------------------------------------------
    Souboje
 
-   Souboj nese jen identifikátor lekce. Oba hráči si z něj sestaví tytéž
-   příklady, takže se nikam neposílá zadání ani odpovědi — jen kolik kdo
-   měl správně.
+   Souboj nese identifikátor lekce a téma. Oba hráči si z nich sestaví tytéž
+   příklady, takže se nikam neposílá zadání ani odpovědi — jen body a čas.
+   Kdo vyhrál, rozhoduje server (migrace 0010); výsledek soupeře pustí až
+   po vlastním dohrání.
    ------------------------------------------------------------------------ */
+
+export type DuelResult = {
+  correct: number;
+  count: number;
+  points: number;
+  durationMs: number | null;
+  /** Značky po příkladech. Chybí u výsledků ze starší verze. */
+  items?: DuelMark[] | null;
+};
 
 export type Duel = {
   id: string;
   lessonId: string;
+  topic: DuelTopic;
+  status: DuelStatus;
   opponentId: string;
   opponentHandle: string;
   challengedByMe: boolean;
   createdAt: string;
-  mine: { correct: number; count: number } | null;
-  theirs: { correct: number; count: number } | null;
+  acceptedAt: string | null;
+  resolvedAt: string | null;
+  /** Kdo vyhrál; null u remízy a u nerozhodnutého souboje. */
+  winnerId: string | null;
+  forfeit: boolean;
+  playedByMe: boolean;
+  playedByThem: boolean;
+  mine: DuelResult | null;
+  /** Soupeřův výsledek. Server ho pustí až po vlastním dohrání. */
+  theirs: DuelResult | null;
 };
+
+export type CreateDuelResult = { ok: true; id: string } | { ok: false; reason: "open" | "refused" };
 
 export async function createDuel(
   client: SupabaseClient,
   userId: string,
   opponentId: string,
   lessonId: string,
-): Promise<void> {
-  const { error } = await client
+  topic: DuelTopic,
+): Promise<CreateDuelResult> {
+  const { data, error } = await client
     .from("duels")
-    .insert({ lesson_id: lessonId, challenger: userId, opponent: opponentId });
+    .insert({ lesson_id: lessonId, challenger: userId, opponent: opponentId, topic })
+    .select("id")
+    .single();
+  if (!error && data) return { ok: true, id: data.id };
+  // Jedinečnost otevřeného souboje na dvojici.
+  if (error?.code === "23505") return { ok: false, reason: "open" };
+  if (error?.code === "42501") return { ok: false, reason: "refused" };
+  throw new Error(error?.message ?? "Souboj se nezaložil.");
+}
+
+/** Přijetí nebo odmítnutí. Vrací nový stav, nebo null, když už nebylo na co. */
+export async function respondDuel(client: SupabaseClient, duelId: string, accept: boolean): Promise<DuelStatus | null> {
+  const { data, error } = await client.rpc("respond_duel", { p_duel: duelId, p_accept: accept });
+  if (error) throw new Error(error.message);
+  return (data as DuelStatus | null) ?? null;
+}
+
+/** Stažení nepřijaté výzvy. */
+export async function cancelDuel(client: SupabaseClient, duelId: string): Promise<void> {
+  const { error } = await client.from("duels").delete().eq("id", duelId);
   if (error) throw new Error(error.message);
 }
 
-export async function listDuels(client: SupabaseClient, userId: string): Promise<Duel[]> {
+const DUEL_COLUMNS =
+  "id, lesson_id, topic, status, challenger, opponent, created_at, accepted_at, resolved_at, winner, forfeit, challenger_played, opponent_played";
+
+type DuelRow = {
+  id: string;
+  lesson_id: string;
+  topic: string;
+  status: DuelStatus;
+  challenger: string;
+  opponent: string;
+  created_at: string;
+  accepted_at: string | null;
+  resolved_at: string | null;
+  winner: string | null;
+  forfeit: boolean;
+  challenger_played: boolean;
+  opponent_played: boolean;
+};
+
+export async function listDuels(client: SupabaseClient, userId: string, limit = 40): Promise<Duel[]> {
   const { data, error } = await client
     .from("duels")
-    .select("id, lesson_id, challenger, opponent, created_at")
+    .select(DUEL_COLUMNS)
     .order("created_at", { ascending: false })
-    .limit(20);
+    .limit(limit);
   if (error) throw new Error(error.message);
-  if ((data ?? []).length === 0) return [];
+  return hydrateDuels(client, userId, (data ?? []) as DuelRow[]);
+}
 
-  const ids = (data ?? []).map((duel) => duel.id);
-  const opponents = (data ?? []).map((duel) => (duel.challenger === userId ? duel.opponent : duel.challenger));
+/** Souboje s jedním kamarádem, pro jeho profil. */
+export async function duelsWith(client: SupabaseClient, userId: string, otherId: string, limit = 5): Promise<Duel[]> {
+  const { data, error } = await client
+    .from("duels")
+    .select(DUEL_COLUMNS)
+    .or(`challenger.eq.${otherId},opponent.eq.${otherId}`)
+    .order("created_at", { ascending: false })
+    .limit(limit);
+  if (error) throw new Error(error.message);
+  return hydrateDuels(client, userId, (data ?? []) as DuelRow[]);
+}
+
+async function hydrateDuels(client: SupabaseClient, userId: string, rows: DuelRow[]): Promise<Duel[]> {
+  if (rows.length === 0) return [];
+  const ids = rows.map((duel) => duel.id);
+  const opponents = [...new Set(rows.map((duel) => (duel.challenger === userId ? duel.opponent : duel.challenger)))];
 
   const [results, profiles] = await Promise.all([
-    client.from("duel_results").select("duel_id, user_id, correct, count").in("duel_id", ids),
+    client.from("duel_results").select("duel_id, user_id, correct, count, points, duration_ms, items").in("duel_id", ids),
     client.from("profiles").select("id, handle").in("id", opponents),
   ]);
   if (results.error) throw new Error(results.error.message);
   if (profiles.error) throw new Error(profiles.error.message);
 
   const handles = new Map((profiles.data ?? []).map((profile) => [profile.id, profile.handle]));
-  const byDuel = new Map<string, { user_id: string; correct: number; count: number }[]>();
-  for (const row of results.data ?? []) {
+  type ResultRow = {
+    user_id: string;
+    correct: number;
+    count: number;
+    points: number | null;
+    duration_ms: number | null;
+    items: DuelMark[] | null;
+  };
+  const byDuel = new Map<string, ResultRow[]>();
+  for (const row of (results.data ?? []) as (ResultRow & { duel_id: string })[]) {
     byDuel.set(row.duel_id, [...(byDuel.get(row.duel_id) ?? []), row]);
   }
+  const result = (row: ResultRow | undefined): DuelResult | null =>
+    row
+      ? {
+          correct: row.correct,
+          count: row.count,
+          points: row.points ?? row.correct,
+          durationMs: row.duration_ms,
+          items: row.items,
+        }
+      : null;
 
-  return (data ?? []).map((duel) => {
-    const opponentId = duel.challenger === userId ? duel.opponent : duel.challenger;
-    const rows = byDuel.get(duel.id) ?? [];
-    const mine = rows.find((row) => row.user_id === userId);
-    const theirs = rows.find((row) => row.user_id === opponentId);
+  return rows.map((duel) => {
+    const mineIsChallenger = duel.challenger === userId;
+    const opponentId = mineIsChallenger ? duel.opponent : duel.challenger;
+    const found = byDuel.get(duel.id) ?? [];
     return {
       id: duel.id,
       lessonId: duel.lesson_id,
+      topic: isDuelTopic(duel.topic) ? duel.topic : "mix",
+      status: duel.status,
       opponentId,
       opponentHandle: handles.get(opponentId) ?? "",
-      challengedByMe: duel.challenger === userId,
+      challengedByMe: mineIsChallenger,
       createdAt: duel.created_at,
-      mine: mine ? { correct: mine.correct, count: mine.count } : null,
-      theirs: theirs ? { correct: theirs.correct, count: theirs.count } : null,
+      acceptedAt: duel.accepted_at,
+      resolvedAt: duel.resolved_at,
+      winnerId: duel.winner,
+      forfeit: duel.forfeit,
+      playedByMe: mineIsChallenger ? duel.challenger_played : duel.opponent_played,
+      playedByThem: mineIsChallenger ? duel.opponent_played : duel.challenger_played,
+      mine: result(found.find((row) => row.user_id === userId)),
+      theirs: result(found.find((row) => row.user_id === opponentId)),
     };
   });
 }
 
 /**
  * Zapíše vlastní výsledek. Opakovaný zápis narazí na primární klíč —
- * souboj se nedá dohrát dvakrát a vylepšit si tím skóre.
+ * souboj se nedá dohrát dvakrát a vylepšit si tím skóre. Vrací false,
+ * když ho server odmítl (lhůta vypršela) — pak nemá smysl to zkoušet znovu.
  */
 export async function recordDuelResult(
   client: SupabaseClient,
   duelId: string,
   userId: string,
-  correct: number,
-  count: number,
-): Promise<void> {
-  const { error } = await client
-    .from("duel_results")
-    .insert({ duel_id: duelId, user_id: userId, correct, count });
+  result: DuelResult,
+): Promise<boolean> {
+  const { error } = await client.from("duel_results").insert({
+    duel_id: duelId,
+    user_id: userId,
+    correct: result.correct,
+    count: result.count,
+    points: result.points,
+    duration_ms: result.durationMs,
+    items: result.items ?? null,
+  });
   // 23505 znamená, že výsledek už je zapsaný. To není chyba, jen druhý pokus.
-  if (error && error.code !== "23505") throw new Error(error.message);
+  if (!error || error.code === "23505") return true;
+  if (error.code === "42501") return false;
+  throw new Error(error.message);
+}
+
+export type DuelRecord = { wins: number; losses: number; draws: number };
+
+/** Bilance: celková, nebo proti jednomu kamarádovi. */
+export async function duelRecord(client: SupabaseClient, otherId?: string): Promise<DuelRecord> {
+  const { data, error } = await client.rpc("duel_record", otherId ? { p_other: otherId } : {}).single<DuelRecord>();
+  if (error) throw new Error(error.message);
+  return { wins: data?.wins ?? 0, losses: data?.losses ?? 0, draws: data?.draws ?? 0 };
 }
 
 /* ---------------------------------------------------------------------------
@@ -442,4 +563,112 @@ export async function claimGift(client: SupabaseClient, giftId: string): Promise
     .update({ claimed_at: new Date().toISOString() })
     .eq("id", giftId);
   if (error) throw new Error(error.message);
+}
+
+/* ---------------------------------------------------------------------------
+   Přátelé: profil, odebrání
+
+   Skóre (`stats`, `weekly_xp`) a přezdívky jsou mezi přihlášenými veřejné,
+   úspěšnost podle šablon ne — tu pustí jen funkce, a jen potvrzeným
+   přátelům.
+   ------------------------------------------------------------------------ */
+
+export type FriendSummary = {
+  userId: string;
+  handle: string;
+  /** Kdy se z žádosti stalo přátelství. */
+  since: string | null;
+  streakDays: number;
+  lastLessonDay: string | null;
+  xpTotal: number;
+  xpWeek: number;
+  /** Vnitřní číslo ligy (1 nejnižší). */
+  tier: number;
+};
+
+export async function friendSummaries(client: SupabaseClient, userId: string): Promise<FriendSummary[]> {
+  const { data: links, error } = await client
+    .from("friendships")
+    .select("requester, addressee, responded_at")
+    .eq("status", "accepted");
+  if (error) throw new Error(error.message);
+
+  const since = new Map(
+    (links ?? []).map((row) => [row.requester === userId ? row.addressee : row.requester, row.responded_at as string | null]),
+  );
+  const ids = [...since.keys()];
+  if (ids.length === 0) return [];
+
+  const [profiles, stats, weekly] = await Promise.all([
+    client.from("profiles").select("id, handle").in("id", ids),
+    client.from("stats").select("user_id, xp_total, streak_days, last_lesson_day, league_tier").in("user_id", ids),
+    client.from("weekly_xp").select("user_id, xp").eq("week_start", weekStart()).in("user_id", ids),
+  ]);
+  for (const result of [profiles, stats, weekly]) if (result.error) throw new Error(result.error.message);
+
+  const statsBy = new Map((stats.data ?? []).map((row) => [row.user_id, row]));
+  const weekBy = new Map((weekly.data ?? []).map((row) => [row.user_id, Number(row.xp ?? 0)]));
+
+  return (profiles.data ?? [])
+    .map((profile) => {
+      const row = statsBy.get(profile.id);
+      return {
+        userId: profile.id,
+        handle: profile.handle,
+        since: since.get(profile.id) ?? null,
+        streakDays: row?.streak_days ?? 0,
+        lastLessonDay: row?.last_lesson_day ?? null,
+        xpTotal: row?.xp_total ?? 0,
+        xpWeek: weekBy.get(profile.id) ?? 0,
+        tier: row?.league_tier ?? 1,
+      };
+    })
+    .sort((a, b) => a.handle.localeCompare(b.handle));
+}
+
+/** Úspěšnost podle šablon (sebe nebo potvrzeného kamaráda). */
+export async function templateStats(
+  client: SupabaseClient,
+  userId: string,
+): Promise<{ templateId: string; answered: number; correct: number }[]> {
+  const { data, error } = await client.rpc("friend_template_stats", { p_friend: userId });
+  if (error) throw new Error(error.message);
+  return ((data ?? []) as { template_id: string; answered: number; correct: number }[]).map((row) => ({
+    templateId: row.template_id,
+    answered: row.answered,
+    correct: row.correct,
+  }));
+}
+
+export async function removeFriend(client: SupabaseClient, userId: string, otherId: string): Promise<void> {
+  const { error } = await client
+    .from("friendships")
+    .delete()
+    .or(`and(requester.eq.${userId},addressee.eq.${otherId}),and(requester.eq.${otherId},addressee.eq.${userId})`);
+  if (error) throw new Error(error.message);
+}
+
+/** Odmítnutí žádosti o přátelství je smazání (migrace 0001). */
+export async function declineFriend(client: SupabaseClient, userId: string, requester: string): Promise<void> {
+  const { error } = await client.from("friendships").delete().eq("requester", requester).eq("addressee", userId);
+  if (error) throw new Error(error.message);
+}
+
+/** Kolik ochran série uživatel daroval. Pro odznak Kolega. */
+export async function giftsSentCount(client: SupabaseClient, userId: string): Promise<number> {
+  const { count, error } = await client
+    .from("gifts")
+    .select("id", { count: "exact", head: true })
+    .eq("sender", userId);
+  if (error) throw new Error(error.message);
+  return count ?? 0;
+}
+
+export type LeagueWeek = { season: string; tier: number; rank: number; size: number };
+
+/** Minulé týdny v lize. Z nich je výsledek týdne a ligové odznaky. */
+export async function leagueHistory(client: SupabaseClient): Promise<LeagueWeek[]> {
+  const { data, error } = await client.rpc("league_history");
+  if (error) throw new Error(error.message);
+  return (data ?? []) as LeagueWeek[];
 }

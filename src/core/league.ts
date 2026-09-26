@@ -53,3 +53,45 @@ export function rankLeague(entries: readonly LeagueEntry[]): RankedEntry[] {
 export function displayTier(tier: number): number {
   return TOP_TIER + 1 - tier;
 }
+
+/** Od kolika lidí ve skupině se postupuje a sestupuje. Stejně jako migrace 0005. */
+export const ZONES_FROM = PROMOTED + RELEGATED + 1;
+
+/**
+ * Kolik XP chybí na postup, nebo do bezpečí ze sestupové zóny. Null,
+ * když se o tom nemá co říkat: v malé skupině se nepostupuje a kdo
+ * v zóně už je (nebo mimo ni), nic nedohání.
+ *
+ * Remíza v XP rozhoduje přezdívkou (rankLeague), takže „o jedno víc“
+ * je jistota, ne naděje.
+ */
+export function leagueGap(
+  rows: readonly RankedEntry[],
+  userId: string,
+): { kind: "promote" | "safety"; xp: number } | null {
+  if (rows.length < ZONES_FROM) return null;
+  const me = rows.find((row) => row.userId === userId);
+  if (!me) return null;
+
+  if (me.zone === "relegate") {
+    const lastSafe = rows[rows.length - RELEGATED - 1];
+    return { kind: "safety", xp: Math.max(lastSafe.xp - me.xp + 1, 1) };
+  }
+  if (me.zone === null) {
+    const third = rows[PROMOTED - 1];
+    return { kind: "promote", xp: Math.max(third.xp - me.xp + 1, 1) };
+  }
+  return null;
+}
+
+/**
+ * Konec ligového týdne: pondělí 00:00 místního času po daném okamžiku.
+ * Server počítá týden v pražském čase; v ČR i SR je to totéž.
+ */
+export function weekEndsAt(now: Date): Date {
+  const end = new Date(now);
+  end.setHours(0, 0, 0, 0);
+  const daysToMonday = (8 - end.getDay()) % 7 || 7;
+  end.setDate(end.getDate() + daysToMonday);
+  return end;
+}

@@ -20,6 +20,9 @@ import { clearProgress, type LessonAttempt } from "@/lib/db";
 import { dailySpec } from "@/lib/curriculum";
 import { useCurriculum, useLessonProgress, useProfile, useToday } from "@/lib/useProfile";
 import { onOpenIntent, type OpenIntent } from "@/lib/openIntent";
+import { usePulse } from "@/lib/pulse";
+import { Monogram } from "@/components/ui/Monogram";
+import type { AccountStart, PlayableDuel } from "@/components/account/AccountScreen";
 
 const LESSON_MINUTES = "4–6";
 
@@ -77,6 +80,11 @@ export default function HomePage() {
   const [settingsOpen, setSettingsOpen] = useState(false);
   const [shopOpen, setShopOpen] = useState(false);
   const [accountOpen, setAccountOpen] = useState(false);
+  /** Kam profil otevřít: notifikace a dohraný souboj míří dovnitř. */
+  const [accountStart, setAccountStart] = useState<AccountStart>();
+  /** Pozvánka z odkazu `/?pritel=…`. */
+  const [invite, setInvite] = useState<string>();
+  const pulse = usePulse();
   const [statsOpen, setStatsOpen] = useState(false);
   const [programOpen, setProgramOpen] = useState(false);
   /**
@@ -116,6 +124,24 @@ export default function HomePage() {
   }
 
   /** Denní lekce z domovské obrazovky: rozehraná, jinak nová. */
+  function openAccount(start?: AccountStart) {
+    setStatsOpen(false);
+    setProgramOpen(false);
+    setAccountStart(start);
+    setAccountOpen(true);
+  }
+
+  /**
+   * Souboj se sestaví z identifikátoru a tématu (src/core/lesson.ts).
+   * Plán se k rozehrané lekci uloží, takže po návratu přijdou tytéž
+   * příklady. Sestavení tahá šablony, a tak až tady.
+   */
+  async function playDuel(duel: PlayableDuel) {
+    const { planDuelLesson } = await import("@/core/lesson");
+    setAccountOpen(false);
+    setLesson({ id: duel.lessonId, plan: planDuelLesson(duel.lessonId, duel.topic), duelId: duel.id });
+  }
+
   function startDaily() {
     if (unfinished) {
       setLesson({
@@ -136,8 +162,13 @@ export default function HomePage() {
    */
   const handleIntent = useEffectEvent((intent: OpenIntent): boolean => {
     if (lesson !== null) return false;
-    if (intent === "account") {
-      setAccountOpen(true);
+    if (intent.startsWith("invite:")) {
+      setInvite(intent.slice("invite:".length));
+      openAccount();
+      return true;
+    }
+    if (intent === "account" || intent === "duels" || intent === "league") {
+      openAccount(intent === "account" ? undefined : { screen: intent });
       return true;
     }
     // Lekce se dá sestavit, až je načtený program.
@@ -161,6 +192,10 @@ export default function HomePage() {
         attempts={lesson.attempts}
         onExit={() => setLesson(null)}
         onAgain={() => startStage(lesson.spec?.stage)}
+        onDuelDone={(duelId) => {
+          setLesson(null);
+          openAccount({ screen: "reveal", duelId });
+        }}
       />
     );
   }
@@ -196,11 +231,17 @@ export default function HomePage() {
   if (accountOpen) {
     return (
       <AccountScreen
-        onClose={() => setAccountOpen(false)}
-        onPlayDuel={(duel) => {
+        // Nový začátek, nová instance: jinak by zůstal viset zásobník
+        // obrazovek z minulého otevření.
+        key={accountStart ? JSON.stringify(accountStart) : "profile"}
+        start={accountStart}
+        invite={invite}
+        onInviteDone={() => setInvite(undefined)}
+        onClose={() => {
           setAccountOpen(false);
-          setLesson({ id: duel.lessonId, duelId: duel.id });
+          setAccountStart(undefined);
         }}
+        onPlayDuel={(duel) => void playDuel(duel)}
       />
     );
   }
@@ -239,8 +280,18 @@ export default function HomePage() {
           <IconButton label={tStats("title")} onClick={() => setStatsOpen(true)}>
             <ChartIcon className="size-6" />
           </IconButton>
-          <IconButton label={tAccount("title")} onClick={() => setAccountOpen(true)}>
-            <PersonIcon className="size-6" />
+          {/* Po přihlášení monogram místo ikony. Tečka v akcentu, když na
+              uživatele něco čeká — výzva, tah v souboji, žádost, výsledek. */}
+          <IconButton
+            label={pulse?.attention ? tAccount("titleAttention", { count: pulse.attention }) : tAccount("title")}
+            onClick={() => openAccount()}
+          >
+            <span className="relative flex">
+              {pulse?.handle ? <Monogram handle={pulse.handle} size="sm" /> : <PersonIcon className="size-6" />}
+              {pulse?.attention ? (
+                <span className="bg-accent border-paper absolute -top-1 -right-1 size-3 rounded-full border-2" />
+              ) : null}
+            </span>
           </IconButton>
           <IconButton label={tCommon("settings")} onClick={() => setSettingsOpen(true)}>
             <SettingsIcon className="size-6" />
@@ -365,7 +416,7 @@ export default function HomePage() {
       <SettingsSheet
         open={settingsOpen}
         onClose={() => setSettingsOpen(false)}
-        onOpenAccount={() => setAccountOpen(true)}
+        onOpenAccount={() => openAccount()}
       />
     </div>
   );
