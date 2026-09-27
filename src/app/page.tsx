@@ -292,13 +292,14 @@ export default function HomePage() {
           <Wordmark className="text-heading" />
         </div>
         <div className="-mr-3 flex items-center">
-          <IconButton label={tStats("title")} onClick={() => setStatsOpen(true)}>
-            <ChartIcon className="size-6" />
-          </IconButton>
-          {/* Nastavení mezi statistikami a účtem: roh patří „já“ — tam
-              účet oko hledá a monogram hlavičku ukotví. */}
+          {/* Pořadí podle toho, jak často se kam sahá: nejčastější v rohu
+              u palce, nastavení (mění se párkrát za život) nejdál. Roh
+              patří „já“ — tam účet oko hledá a monogram hlavičku ukotví. */}
           <IconButton label={tCommon("settings")} onClick={() => setSettingsOpen(true)}>
             <SettingsIcon className="size-[1.375rem]" />
+          </IconButton>
+          <IconButton label={tStats("title")} onClick={() => setStatsOpen(true)}>
+            <ChartIcon className="size-6" />
           </IconButton>
           {/* Po přihlášení monogram místo ikony. Tečka v akcentu, když na
               uživatele něco čeká — výzva, tah v souboji, žádost, výsledek. */}
