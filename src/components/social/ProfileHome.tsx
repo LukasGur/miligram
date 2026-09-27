@@ -14,6 +14,7 @@ import { badgeStates, duelsNeedingMe, publishBadgesIfChanged } from "@/lib/socia
 import { useProfile } from "@/lib/useProfile";
 import { Field, Primary } from "@/components/account/SignIn";
 import { SignOut } from "@/components/account/SignOut";
+import { withTimeout } from "@/lib/useAction";
 import { BadgeGlyph } from "./BadgeGlyph";
 import { duelOpenWith } from "./ChallengeSheet";
 import { splitDuration, useNow, type Social } from "./data";
@@ -445,6 +446,7 @@ export function HandleForm({
   intro?: boolean;
 }) {
   const t = useTranslations("account");
+  const tSocial = useTranslations("social");
   const current = social.profile.data ?? null;
   const [handle, setHandle] = useState(current?.handle ?? "");
   const [error, setError] = useState<string | null>(null);
@@ -455,9 +457,11 @@ export function HandleForm({
     setBusy(true);
     setError(null);
     try {
-      const result = await claimHandle(social.client, social.userId, handle);
+      const result = await withTimeout(claimHandle(social.client, social.userId, handle));
       if (result.ok) onSaved(current === null);
       else setError(t(result.reason === "taken" ? "handleTaken" : "handleInvalid"));
+    } catch {
+      setError(tSocial("errorNetwork"));
     } finally {
       setBusy(false);
     }
@@ -470,7 +474,7 @@ export function HandleForm({
       <div className="mt-3">
         <Field label={t("handleTitle")} value={handle} onChange={setHandle} inputMode="text" />
       </div>
-      <Primary onClick={save} disabled={busy || handle.trim().length < 3 || handle === current?.handle}>
+      <Primary onClick={save} busy={busy} disabled={handle.trim().length < 3 || handle === current?.handle}>
         {t("handleSave")}
       </Primary>
       {error ? <p className="text-danger mt-2 text-label">{error}</p> : null}

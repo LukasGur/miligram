@@ -4,6 +4,8 @@ import { useEffect, useEffectEvent, useRef, useState } from "react";
 import { useTranslations } from "next-intl";
 import { CheckIcon, CloseIcon } from "@/components/icons";
 import { Monogram } from "@/components/ui/Monogram";
+import { Spinner } from "@/components/ui/Spinner";
+import { withTimeout } from "@/lib/useAction";
 import { resolveTone, TONES } from "@/core/monogram";
 import { saveTone } from "@/lib/remote";
 import { useChosenTone } from "@/lib/tones";
@@ -42,7 +44,7 @@ export function ToneSheet({ social, onClose }: { social: Social; onClose: () => 
     setBusy(true);
     setError(false);
     try {
-      await saveTone(social.client, social.userId, handle, tone);
+      await withTimeout(saveTone(social.client, social.userId, handle, tone));
       social.profile.refresh();
       onClose();
     } catch {
@@ -122,8 +124,10 @@ export function ToneSheet({ social, onClose }: { social: Social; onClose: () => 
             type="button"
             onClick={() => void save()}
             disabled={busy || tone === current}
-            className="bg-accent active:bg-accent-press mt-4 min-h-14 w-full rounded-control text-body font-semibold text-white transition-colors duration-75 disabled:opacity-40"
+            aria-busy={busy}
+            className="bg-accent active:bg-accent-press mt-4 flex min-h-14 w-full items-center justify-center gap-2 rounded-control text-body font-semibold text-white transition-colors duration-75 disabled:opacity-40"
           >
+            {busy ? <Spinner /> : null}
             {t("toneSave")}
           </button>
         </div>

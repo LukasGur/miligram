@@ -25,6 +25,8 @@ type Entry = {
   snapshot: Snapshot;
   listeners: Set<() => void>;
   started: boolean;
+  /** Poslední načítací funkce, pro nový pokus po chybě. */
+  loader?: () => Promise<unknown>;
 };
 
 const cache = new Map<string, Entry>();
@@ -50,6 +52,8 @@ function publish(entry: Entry, snapshot: Snapshot) {
 function load(key: string, loader: () => Promise<unknown>) {
   const entry = entryFor(key);
   entry.started = true;
+  entry.loader = loader;
+  watchResume();
   publish(entry, { status: "loading", data: entry.snapshot.data, error: undefined });
 
   loader().then(
@@ -100,6 +104,32 @@ export function useRemoteQuery<T>(key: string | null, loader: () => Promise<T>):
     error: state?.status === "error" ? state.error : undefined,
     refresh,
   };
+}
+
+/**
+ * Nový pokus po návratu do aplikace nebo po obnovení sítě.
+ *
+ * iPhone aplikaci na ploše uspí; po probuzení první dotazy občas odejdou
+ * ještě se starým přihlašovacím tokenem nebo po mrtvém spojení a spadnou
+ * (v logu 401 hned po obnově tokenu). Dotaz, který skončil chybou, by
+ * jinak zůstal viset, dokud se obrazovka neotevře znovu. Opakují se jen
+ * chybné dotazy, na které se někdo dívá — hotová data se nestahují znovu.
+ */
+let watching = false;
+
+function retryFailed() {
+  for (const [key, entry] of cache) {
+    if (entry.snapshot.status === "error" && entry.listeners.size > 0 && entry.loader) load(key, entry.loader);
+  }
+}
+
+function watchResume() {
+  if (watching || typeof window === "undefined") return;
+  watching = true;
+  document.addEventListener("visibilitychange", () => {
+    if (document.visibilityState === "visible") retryFailed();
+  });
+  window.addEventListener("online", retryFailed);
 }
 
 /** Zapomene uložený výsledek — po odhlášení nesmí zůstat viset cizí data. */

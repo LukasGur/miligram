@@ -5,6 +5,8 @@ import { useFormatter, useTranslations } from "next-intl";
 import { ChevronRightIcon } from "@/components/icons";
 import { LeagueInsignia } from "@/components/ui/LeagueInsignia";
 import { Monogram } from "@/components/ui/Monogram";
+import { Spinner } from "@/components/ui/Spinner";
+import { useAction, withTimeout } from "@/lib/useAction";
 import { acceptFriend, declineFriend, requestFriend } from "@/lib/remote";
 import { inviteUrl, parseInvite } from "@/lib/social";
 import { Field } from "@/components/account/SignIn";
@@ -35,12 +37,21 @@ export function FriendsScreen({
   const friends = social.friends.data ?? [];
   const requests = social.requests.data ?? [];
 
-  async function respond(requester: string, accept: boolean) {
-    if (accept) await acceptFriend(social.client, social.userId, requester);
-    else await declineFriend(social.client, social.userId, requester);
-    social.requests.refresh();
-    social.friends.refresh();
-    social.friendWeek.refresh();
+  const action = useAction();
+  /** Žádost a volba, která se právě odesílá — spinner patří na ni. */
+  const [pending, setPending] = useState<{ requester: string; accept: boolean } | null>(null);
+
+  function respond(requester: string, accept: boolean) {
+    setPending({ requester, accept });
+    void action
+      .run(async () => {
+        if (accept) await acceptFriend(social.client, social.userId, requester);
+        else await declineFriend(social.client, social.userId, requester);
+        social.requests.refresh();
+        social.friends.refresh();
+        social.friendWeek.refresh();
+      })
+      .finally(() => setPending(null));
   }
 
   return (
@@ -53,19 +64,32 @@ export function FriendsScreen({
               <li key={request.requester} className="border-line flex min-h-16 items-center gap-3 border-b py-2">
                 <Monogram handle={request.handle} size="sm" />
                 <span className="min-w-0 flex-1 truncate text-body font-semibold">{request.handle}</span>
-                <TextButton tone="soft" className="px-2" onClick={() => void respond(request.requester, false)}>
-                  {t("decline")}
-                </TextButton>
                 <button
                   type="button"
-                  onClick={() => void respond(request.requester, true)}
-                  className="bg-accent active:bg-accent-press min-h-11 rounded-control px-4 text-label font-semibold text-white"
+                  disabled={action.busy}
+                  onClick={() => respond(request.requester, false)}
+                  className="border-line text-ink active:bg-surface flex min-h-11 items-center gap-2 rounded-control border px-3 text-label font-medium disabled:opacity-40"
                 >
+                  {pending?.requester === request.requester && !pending.accept ? <Spinner className="size-4" /> : null}
+                  {t("decline")}
+                </button>
+                <button
+                  type="button"
+                  disabled={action.busy}
+                  onClick={() => respond(request.requester, true)}
+                  className="bg-accent active:bg-accent-press flex min-h-11 items-center gap-2 rounded-control px-4 text-label font-semibold text-white disabled:opacity-40"
+                >
+                  {pending?.requester === request.requester && pending.accept ? <Spinner className="size-4" /> : null}
                   {t("accept")}
                 </button>
               </li>
             ))}
           </ul>
+          {action.failed ? (
+            <p className="text-ink-soft mt-2 text-label" role="status">
+              {t("errorNetwork")}
+            </p>
+          ) : null}
         </>
       ) : null}
 
@@ -118,7 +142,7 @@ function AddFriend({ social, first }: { social: Social; first: boolean }) {
     setBusy(true);
     setNotice(null);
     try {
-      const result = await requestFriend(social.client, social.userId, target);
+      const result = await withTimeout(requestFriend(social.client, social.userId, target));
       if (result.ok) {
         setTyped("");
         setNotice(t("requestSent", { handle: target }));
@@ -206,8 +230,9 @@ function AddFriend({ social, first }: { social: Social; first: boolean }) {
             else setNotice(tAccount("handleInvalid"));
           }}
           disabled={busy || typed.trim().length < 3}
-          className="bg-accent active:bg-accent-press min-h-12 shrink-0 rounded-control px-4 text-body font-semibold text-white disabled:opacity-40"
+          className="bg-accent active:bg-accent-press flex min-h-12 shrink-0 items-center gap-2 rounded-control px-4 text-body font-semibold text-white disabled:opacity-40"
         >
+          {busy ? <Spinner className="size-4" /> : null}
           {tAccount("friendAdd")}
         </button>
       </div>

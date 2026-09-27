@@ -10,6 +10,7 @@ import { updatePulse } from "@/lib/pulse";
 import { collectDuelRewards, duelsNeedingMe } from "@/lib/social";
 import { supabase, isRemoteConfigured } from "@/lib/supabase";
 import { useProfile } from "@/lib/useProfile";
+import { withTimeout } from "@/lib/useAction";
 import { useSession } from "@/lib/useSession";
 import { PushOnboarding } from "@/components/push/PushOnboarding";
 import { BadgesScreen } from "@/components/social/BadgesScreen";
@@ -79,7 +80,7 @@ export function AccountScreen({
         onAdd={async () => {
           if (!client || !session) return { ok: false, message: "" };
           try {
-            const result = await requestFriend(client, session.user.id, invite);
+            const result = await withTimeout(requestFriend(client, session.user.id, invite));
             if (result.ok) return { ok: true, message: tSocial("requestSent", { handle: invite }) };
             return {
               ok: result.reason === "duplicate",

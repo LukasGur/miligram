@@ -8,6 +8,8 @@ import { CheckIcon, ChevronDownIcon, CloseIcon, VersusIcon } from "@/components/
 import { CategoryIcon } from "@/components/ui/CategoryIcon";
 import { Monogram } from "@/components/ui/Monogram";
 import { Pastille } from "@/components/ui/Pastille";
+import { Spinner } from "@/components/ui/Spinner";
+import { withTimeout } from "@/lib/useAction";
 import { MASTERY_MIN_ANSWERS } from "@/core/curriculum";
 import { DIFFICULTY_RAMP, newLessonId } from "@/core/lessonPlan";
 import { DUEL_WIN_PILLS, type DuelTopic } from "@/core/duel";
@@ -98,7 +100,7 @@ export function ChallengeSheet({
     setError(null);
     try {
       const lessonId = newLessonId();
-      const result = await createDuel(client, userId, friend.userId, lessonId, topic);
+      const result = await withTimeout(createDuel(client, userId, friend.userId, lessonId, topic));
       if (result.ok) {
         onCreated({ id: result.id, lessonId, topic, friend }, playNow);
         return;
@@ -176,15 +178,13 @@ export function ChallengeSheet({
             ref={primaryRef}
             type="button"
             onClick={() => void create(true)}
-            // Odesílání není vypnuté tlačítko: zůstává barevné a říká, co dělá.
-            // Zašedlé vypadalo jako zaseklé. Dvojí klepnutí hlídá `create`.
-            disabled={!friend || !topic || open}
+            // Při odesílání zašedlé a se spinnerem: nejde na něj klepnout
+            // znovu a je vidět, že se pracuje.
+            disabled={!friend || !topic || busy || open}
             aria-busy={busy}
-            className={`bg-accent active:bg-accent-press flex min-h-14 w-full items-center justify-center gap-2 rounded-control text-body font-semibold text-white transition-colors duration-75 disabled:opacity-40 ${
-              busy ? "bg-accent-press" : ""
-            }`}
+            className="bg-accent active:bg-accent-press flex min-h-14 w-full items-center justify-center gap-2 rounded-control text-body font-semibold text-white transition-colors duration-75 disabled:opacity-40"
           >
-            <VersusIcon className="size-5 shrink-0" />
+            {busy ? <Spinner /> : <VersusIcon className="size-5 shrink-0" />}
             <span className="truncate">
               {busy
                 ? t("challengeSending")

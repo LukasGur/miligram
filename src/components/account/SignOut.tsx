@@ -3,8 +3,10 @@
 import { useEffect, useRef, useState } from "react";
 import { useTranslations } from "next-intl";
 import { LogOutIcon } from "@/components/icons";
+import { Spinner } from "@/components/ui/Spinner";
 import { pressable } from "@/lib/press";
 import { detachPushDevice } from "@/lib/push";
+import { withTimeout } from "@/lib/useAction";
 import { remoteGateway } from "@/lib/remote";
 import type { supabase } from "@/lib/supabase";
 import { syncOutbox } from "@/lib/sync";
@@ -18,8 +20,20 @@ type Client = ReturnType<typeof supabase> & object;
  * na telefon dál chodily připomínky někoho, kdo už na něm přihlášený není.
  */
 async function signOut(client: Client): Promise<void> {
-  await detachPushDevice(client);
-  await client.auth.signOut();
+  try {
+    await withTimeout(detachPushDevice(client));
+  } catch {
+    // Chyby odpojení spolkne detachPushDevice sám; tady jde o limit —
+    // čekání na service worker nebo síť nesmí odhlášení zablokovat.
+  }
+  try {
+    const { error } = await withTimeout(client.auth.signOut());
+    if (error) throw error;
+  } catch {
+    // Server nedostupný: aspoň z tohohle telefonu. Tlačítko, které po
+    // klepnutí nic neudělá, je horší než token, který dožije na serveru.
+    await client.auth.signOut({ scope: "local" });
+  }
 }
 
 /**
@@ -37,16 +51,26 @@ export function SignOut({ client, userId, email }: { client: Client; userId: str
   const t = useTranslations("account");
   const pending = usePendingEvents();
   const [confirming, setConfirming] = useState(false);
+  const [leaving, setLeaving] = useState(false);
+
+  function leave() {
+    if (leaving) return;
+    setLeaving(true);
+    // Po odhlášení se obrazovka vymění sama; stav se vrací jen pro jistotu.
+    void signOut(client).finally(() => setLeaving(false));
+  }
 
   return (
     <div className="mt-10">
       <button
         type="button"
         {...pressable}
-        onClick={() => (pending > 0 ? setConfirming(true) : void signOut(client))}
-        className="press press-wide border-line text-ink data-pressed:border-surface-press data-pressed:bg-surface-press flex min-h-12 w-full items-center justify-center gap-2 rounded-control border px-3 text-label font-medium"
+        disabled={leaving}
+        aria-busy={leaving}
+        onClick={() => (pending > 0 ? setConfirming(true) : leave())}
+        className="press press-wide border-line text-ink data-pressed:border-surface-press data-pressed:bg-surface-press flex min-h-12 w-full items-center justify-center gap-2 rounded-control border px-3 text-label font-medium disabled:opacity-40"
       >
-        <LogOutIcon className="text-ink-soft size-5" />
+        {leaving ? <Spinner className="text-ink-soft" /> : <LogOutIcon className="text-ink-soft size-5" />}
         {t("signOut")}
       </button>
       {email ? <p className="text-ink-soft mt-2 text-center text-micro">{t("signedInAs", { email })}</p> : null}
@@ -87,7 +111,7 @@ function ConfirmSheet({
     setBusy(true);
     setFailed(false);
     try {
-      await syncOutbox(remoteGateway(client, userId));
+      await withTimeout(syncOutbox(remoteGateway(client, userId)));
       await signOut(client);
     } catch {
       // Bez spojení se nic neodešle. Odhlásit jde i tak, ale ať o tom ví.
@@ -119,13 +143,16 @@ function ConfirmSheet({
           </p>
         ) : null}
 
-        <Primary onClick={() => void sendThenSignOut()} disabled={busy}>
+        <Primary onClick={() => void sendThenSignOut()} busy={busy}>
           {t("signOutSend")}
         </Primary>
         <button
           type="button"
           {...pressable}
-          onClick={() => void signOut(client)}
+          onClick={() => {
+            setBusy(true);
+            void signOut(client).finally(() => setBusy(false));
+          }}
           disabled={busy}
           className="press press-wide border-line text-ink data-pressed:border-surface-press data-pressed:bg-surface-press mt-2 flex min-h-12 w-full items-center justify-center rounded-control border px-3 text-label font-medium disabled:opacity-40"
         >

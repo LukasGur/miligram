@@ -5,6 +5,8 @@ import { useFormatter, useTranslations } from "next-intl";
 import { ShieldIcon } from "@/components/icons";
 import { Monogram } from "@/components/ui/Monogram";
 import { Pastille } from "@/components/ui/Pastille";
+import { Spinner } from "@/components/ui/Spinner";
+import { useAction, withTimeout } from "@/lib/useAction";
 import { badgeStatesFromLevels, type BadgeLevels } from "@/core/badges";
 import { localDay, STREAK_FREEZE_COST } from "@/core/economy";
 import { displayTier } from "@/core/league";
@@ -22,7 +24,7 @@ import { outcomeFor } from "@/lib/social";
 import { useProfile } from "@/lib/useProfile";
 import { BadgeGlyph } from "./BadgeGlyph";
 import type { Social } from "./data";
-import { PrimaryButton, Screen, SectionTitle, TextButton } from "./Screen";
+import { PrimaryButton, Screen, SectionTitle } from "./Screen";
 
 /**
  * Profil přítele.
@@ -57,6 +59,7 @@ export function FriendProfile({
   );
   const myWeek = social.friendWeek.data?.find((row) => row.userId === social.userId)?.xp ?? 0;
   const [confirmRemove, setConfirmRemove] = useState(false);
+  const removing = useAction();
 
   if (!friend) {
     return (
@@ -168,18 +171,27 @@ export function FriendProfile({
               </button>
               <button
                 type="button"
-                onClick={async () => {
-                  await removeFriend(social.client, social.userId, friendId);
-                  social.friends.refresh();
-                  social.friendWeek.refresh();
-                  social.duels.refresh();
-                  onBack();
-                }}
-                className="bg-ink min-h-11 flex-1 rounded-control text-label font-semibold text-white"
+                disabled={removing.busy}
+                onClick={() =>
+                  void removing.run(async () => {
+                    await removeFriend(social.client, social.userId, friendId);
+                    social.friends.refresh();
+                    social.friendWeek.refresh();
+                    social.duels.refresh();
+                    onBack();
+                  })
+                }
+                className="bg-ink flex min-h-11 flex-1 items-center justify-center gap-2 rounded-control text-label font-semibold text-white disabled:opacity-40"
               >
+                {removing.busy ? <Spinner className="size-4" /> : null}
                 {t("remove")}
               </button>
             </div>
+            {removing.failed ? (
+              <p className="text-ink-soft mt-2 text-label" role="status">
+                {t("errorNetwork")}
+              </p>
+            ) : null}
           </div>
         ) : (
           <button
@@ -263,7 +275,7 @@ function Gift({ social, friendId, handle }: { social: Social; friendId: string; 
     if (profile.pills < STREAK_FREEZE_COST) return setNotice(tAccount("giftPoor", { cost: STREAK_FREEZE_COST }));
     setBusy(true);
     try {
-      const result = await sendGift(social.client, social.userId, friendId);
+      const result = await withTimeout(sendGift(social.client, social.userId, friendId));
       if (!result.ok) {
         setNotice(tAccount(result.reason === "usedUp" ? "giftUsedUp" : "giftRefused"));
         return;
@@ -272,6 +284,8 @@ function Gift({ social, friendId, handle }: { social: Social; friendId: string; 
       setNotice(tAccount("giftSent"));
       used.refresh();
       social.giftsSent.refresh();
+    } catch {
+      setNotice(t("errorNetwork"));
     } finally {
       setBusy(false);
     }
@@ -286,7 +300,7 @@ function Gift({ social, friendId, handle }: { social: Social; friendId: string; 
         aria-label={tAccount("giftAction", { handle })}
         className="border-line active:bg-surface flex min-h-13 w-full items-center gap-3 border-y text-left"
       >
-        <ShieldIcon className="text-pill size-5 shrink-0" />
+        {busy ? <Spinner className="text-pill" /> : <ShieldIcon className="text-pill size-5 shrink-0" />}
         <span className="flex-1 text-body">{used.data ? t("giftDoneThisWeek") : t("giftStreak")}</span>
         <span className="readout text-pill flex items-center gap-1 text-label font-semibold" data-numeric>
           {format.number(STREAK_FREEZE_COST)}

@@ -2,6 +2,8 @@
 
 import { useEffect, useRef, useState, type FormEvent, type Ref } from "react";
 import { useTranslations } from "next-intl";
+import { Spinner } from "@/components/ui/Spinner";
+import { withTimeout } from "@/lib/useAction";
 import type { AuthError } from "@supabase/supabase-js";
 import { useLocale } from "@/i18n/LocaleProvider";
 import { supabase } from "@/lib/supabase";
@@ -75,12 +77,23 @@ export function SignIn() {
     if (!client || busy || !email.includes("@")) return;
     setBusy(true);
     setError(null);
-    const { error: sendError } = await client.auth.signInWithOtp({
-      email: email.trim(),
-      // Jazyk e-mailu: nový účet ho dostane rovnou, u stávajícího
-      // Supabase `data` nezapíše a srovná ho až SyncAgent po přihlášení.
-      options: { shouldCreateUser: true, data: { locale } },
-    });
+    let sendError: AuthError | null;
+    try {
+      ({ error: sendError } = await withTimeout(
+        client.auth.signInWithOtp({
+          email: email.trim(),
+          // Jazyk e-mailu: nový účet ho dostane rovnou, u stávajícího
+          // Supabase `data` nezapíše a srovná ho až SyncAgent po přihlášení.
+          options: { shouldCreateUser: true, data: { locale } },
+        }),
+      ));
+    } catch {
+      // Výjimka místo vrácené chyby (výpadek, časový limit): tlačítko
+      // se nesmí zaseknout ve stavu „odesílá se“.
+      setBusy(false);
+      setError("errorGeneric");
+      return;
+    }
     setBusy(false);
     if (sendError) {
       setError(errorKey(sendError));
@@ -96,7 +109,14 @@ export function SignIn() {
     if (!client || busy || token.length !== CODE_LENGTH) return;
     setBusy(true);
     setError(null);
-    const { error: verifyError } = await client.auth.verifyOtp({ email: email.trim(), token, type: "email" });
+    let verifyError: AuthError | null;
+    try {
+      ({ error: verifyError } = await withTimeout(client.auth.verifyOtp({ email: email.trim(), token, type: "email" })));
+    } catch {
+      setBusy(false);
+      setError("errorGeneric");
+      return;
+    }
     setBusy(false);
     if (verifyError) {
       setError(errorKey(verifyError));
@@ -170,7 +190,7 @@ export function SignIn() {
             />
             {error ? <ErrorMessage text={t(error)} /> : null}
           </div>
-          <Primary onClick={() => void verify(code)} disabled={busy || code.length !== CODE_LENGTH}>
+          <Primary onClick={() => void verify(code)} busy={busy} disabled={code.length !== CODE_LENGTH}>
             {t("verify")}
           </Primary>
           <div className="mt-3 flex flex-wrap justify-between gap-x-4">
@@ -204,7 +224,7 @@ export function SignIn() {
               autoComplete="email"
               inputRef={emailInput}
             />
-            <Primary onClick={() => void send()} disabled={busy || !email.includes("@")}>
+            <Primary onClick={() => void send()} busy={busy} disabled={!email.includes("@")}>
               {t("sendCode")}
             </Primary>
             {error ? <ErrorMessage text={t(error)} /> : null}
@@ -278,19 +298,24 @@ export function Field({
 export function Primary({
   onClick,
   disabled,
+  busy = false,
   children,
 }: {
   onClick: () => void;
   disabled?: boolean;
+  /** Odesílá se: zašedlé se spinnerem. */
+  busy?: boolean;
   children: React.ReactNode;
 }) {
   return (
     <button
       type="button"
       onClick={onClick}
-      disabled={disabled}
-      className="bg-accent active:bg-accent-press mt-4 min-h-12 w-full rounded-control text-body font-semibold text-white transition-colors duration-75 disabled:opacity-40"
+      disabled={disabled || busy}
+      aria-busy={busy}
+      className="bg-accent active:bg-accent-press mt-4 flex min-h-12 w-full items-center justify-center gap-2 rounded-control text-body font-semibold text-white transition-colors duration-75 disabled:opacity-40"
     >
+      {busy ? <Spinner /> : null}
       {children}
     </button>
   );
