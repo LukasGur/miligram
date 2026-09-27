@@ -895,6 +895,19 @@
     "lessonChallengeBodyAny": "Obaja rovnaké príklady. Kto dá viac na prvý raz, vyhráva.",
     "challengeTopic": "Vyzvať · {topic}",
     "topicChange": "Zmeniť",
-    "challengeSending": "Odosielam výzvu…"
+    "challengeSending": "Odosielam výzvu…",
+    "friendState": {
+      "incoming": "Výzva od {handle}, otvoriť súboje",
+      "myTurn": "Súboj s {handle}: si na ťahu",
+      "waiting": "Súboj s {handle}: čaká sa na súpera",
+      "free": "Vyzvať {handle}"
+    },
+    "friendStateShort": {
+      "incoming": "Prijať",
+      "myTurn": "Tvoj ťah",
+      "waiting": "čaká",
+      "free": "Vyzvať"
+    },
+    "inviteWho": "kamaráta"
   }
 }

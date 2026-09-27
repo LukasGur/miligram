@@ -16,6 +16,7 @@ import { DUEL_WIN_PILLS, type DuelTopic } from "@/core/duel";
 import { CATEGORIES, type Category } from "@/core/types";
 import { categoryScores, lastTrainedCategory } from "@/lib/curriculum";
 import { createDuel, type Duel, type FriendSummary } from "@/lib/remote";
+import { FriendDuelChip, friendsByDuelState } from "./FriendDuelChip";
 
 type Rate = { answered: number; correct: number };
 
@@ -227,7 +228,7 @@ function Versus({ me, them }: { me: string; them: string }) {
   );
 }
 
-/** Řada kamarádů. Kdo má se mnou souboj rozehraný, je ztlumený. */
+/** Řada kamarádů. S kým souboj běží, toho vyzvat nejde — odznak řekne proč. */
 function Opponents({
   friends,
   duels,
@@ -244,33 +245,17 @@ function Opponents({
   return (
     <>
       <p className="panel-label mt-2 mb-2">{t("pickOpponent")}</p>
-      <div className="-mx-5 flex gap-1 overflow-x-auto px-4 pb-1">
-        {friends.map((one) => {
-          const busy = duelOpenWith(duels, one.userId);
-          const active = one.userId === selected;
-          return (
-            <button
-              key={one.userId}
-              type="button"
-              disabled={busy}
-              onClick={() => onSelect(one.userId)}
-              aria-pressed={active}
-              className="flex w-[4.5rem] shrink-0 flex-col items-center gap-1.5 rounded-control py-2 disabled:opacity-45"
-            >
-              <span
-                className={`rounded-full p-[3px] transition-shadow duration-150 ${
-                  active ? "shadow-[0_0_0_2px_var(--color-accent)]" : ""
-                }`}
-              >
-                <Monogram handle={one.handle} />
-              </span>
-              <span className={`w-full truncate text-center text-micro ${active ? "font-semibold" : "font-medium"}`}>
-                {one.handle}
-              </span>
-              {busy ? <span className="text-ink-soft -mt-1 text-[0.625rem]">{t("duelRunning")}</span> : null}
-            </button>
-          );
-        })}
+      <div className="-mx-5 flex overflow-x-auto px-4 pb-1">
+        {friendsByDuelState(friends, duels).map(({ friend, state }) => (
+          <FriendDuelChip
+            key={friend.userId}
+            friend={friend}
+            state={state}
+            disabled={state !== "free"}
+            selected={friend.userId === selected}
+            onSelect={() => onSelect(friend.userId)}
+          />
+        ))}
       </div>
     </>
   );

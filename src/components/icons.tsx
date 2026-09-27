@@ -313,3 +313,23 @@ export function PlusIcon({ className }: IconProps) {
     </Icon>
   );
 }
+
+export function HourglassIcon({ className }: IconProps) {
+  return (
+    <Icon className={className}>
+      <path d="M5 22h14" />
+      <path d="M5 2h14" />
+      <path d="M17 22v-4.172a2 2 0 0 0-.586-1.414L12 12l-4.414 4.414A2 2 0 0 0 7 17.828V22" />
+      <path d="M7 2v4.172a2 2 0 0 0 .586 1.414L12 12l4.414-4.414A2 2 0 0 0 17 6.172V2" />
+    </Icon>
+  );
+}
+
+/** Přehrát. Plný trojúhelník: v odznaku velkém pár pixelů obrys zaniká. */
+export function PlayIcon({ className }: IconProps) {
+  return (
+    <svg viewBox="0 0 24 24" aria-hidden className={className}>
+      <path d="M7 4.5v15a1 1 0 0 0 1.53.85l12-7.5a1 1 0 0 0 0-1.7l-12-7.5A1 1 0 0 0 7 4.5z" fill="currentColor" />
+    </svg>
+  );
+}

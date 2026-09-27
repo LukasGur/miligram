@@ -895,6 +895,19 @@
     "lessonChallengeBodyAny": "Oba stejné příklady. Kdo dá víc napoprvé, vyhrává.",
     "challengeTopic": "Vyzvat · {topic}",
     "topicChange": "Změnit",
-    "challengeSending": "Odesílám výzvu…"
+    "challengeSending": "Odesílám výzvu…",
+    "friendState": {
+      "incoming": "Výzva od {handle}, otevřít souboje",
+      "myTurn": "Souboj s {handle}: jsi na tahu",
+      "waiting": "Souboj s {handle}: čeká se na soupeře",
+      "free": "Vyzvat {handle}"
+    },
+    "friendStateShort": {
+      "incoming": "Přijmout",
+      "myTurn": "Tvůj tah",
+      "waiting": "čeká",
+      "free": "Vyzvat"
+    },
+    "inviteWho": "kamaráda"
   }
 }

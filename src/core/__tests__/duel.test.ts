@@ -10,6 +10,7 @@ import {
   duelPills,
   duelScore,
   mainCategory,
+  friendDuelState,
 } from "../duel";
 import { CATEGORIES } from "../types";
 
@@ -114,5 +115,24 @@ describe("předvybrané téma výzvy", () => {
     expect(mainCategory(["zaklad", "redeni", "redeni", "zaklad"])).toBe("zaklad");
     expect(mainCategory([null])).toBeNull();
     expect(mainCategory([])).toBeNull();
+  });
+});
+
+describe("stav souboje s kamarádem", () => {
+  const duel = (status: "offered" | "accepted" | "finished", challengedByMe: boolean, playedByMe: boolean) => ({
+    opponentId: "k",
+    status,
+    challengedByMe,
+    playedByMe,
+  });
+  it("rozliší, kdo je na tahu", () => {
+    expect(friendDuelState([], "k")).toBe("free");
+    expect(friendDuelState([duel("finished", true, true)], "k")).toBe("free");
+    expect(friendDuelState([duel("offered", false, false)], "k")).toBe("incoming");
+    expect(friendDuelState([duel("offered", true, false)], "k")).toBe("myTurn");
+    expect(friendDuelState([duel("offered", true, true)], "k")).toBe("waiting");
+    expect(friendDuelState([duel("accepted", false, false)], "k")).toBe("myTurn");
+    expect(friendDuelState([duel("accepted", false, true)], "k")).toBe("waiting");
+    expect(friendDuelState([duel("offered", false, false)], "jiny")).toBe("free");
   });
 });

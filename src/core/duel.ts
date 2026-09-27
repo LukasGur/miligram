@@ -159,6 +159,34 @@ export function duelPhase({ status, challengedByMe, playedByMe }: DuelFacts): Du
   }
 }
 
+/**
+ * Jak si stojím s kamarádem, pro řadu monogramů. Jeden otevřený souboj
+ * na dvojici (migrace 0010), takže stačí najít ten.
+ *
+ * - `incoming` — vyzval mě, čeká se na přijetí
+ * - `myTurn` — mám hrát (vyzval jsem a ještě nehrál, nebo po přijetí)
+ * - `waiting` — odehráno nebo vyzváno, čeká se na kamaráda
+ * - `free` — nic neběží, dá se vyzvat
+ */
+export type FriendDuelState = "incoming" | "myTurn" | "waiting" | "free";
+
+export function friendDuelState(
+  duels: readonly (DuelFacts & { opponentId: string })[],
+  friendId: string,
+): FriendDuelState {
+  const open = duels.find(
+    (duel) => duel.opponentId === friendId && (duel.status === "offered" || duel.status === "accepted"),
+  );
+  if (!open) return "free";
+  const phase = duelPhase(open);
+  if (phase === "incoming") return "incoming";
+  if (phase === "myTurn" || (phase === "outgoing" && !open.playedByMe)) return "myTurn";
+  return "waiting";
+}
+
+/** Pořadí v řadě: nejdřív kde mám něco udělat já, pak volní, čekající nakonec. */
+export const FRIEND_DUEL_ORDER: Record<FriendDuelState, number> = { incoming: 0, myTurn: 1, free: 2, waiting: 3 };
+
 /** Kdy běžící lhůta skončí. Rozhodnutý souboj lhůtu nemá. */
 export function duelDeadline(duel: {
   status: DuelStatus;

@@ -208,6 +208,10 @@ export default function HomePage() {
                   setLesson(null);
                   openAccount({ screen: "friends" });
                 },
+                onOpenDuels: () => {
+                  setLesson(null);
+                  openAccount({ screen: "duels" });
+                },
               }
             : undefined
         }

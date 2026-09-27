@@ -2,22 +2,22 @@
 
 import { useState } from "react";
 import { useTranslations } from "next-intl";
-import { PlusIcon, VersusIcon } from "@/components/icons";
-import { Monogram } from "@/components/ui/Monogram";
+import { VersusIcon } from "@/components/icons";
 import type { DuelTopic } from "@/core/duel";
 import { friendSummaries, listDuels } from "@/lib/remote";
 import { useRemoteQuery } from "@/lib/remoteQuery";
 import { supabase } from "@/lib/supabase";
 import { useSession } from "@/lib/useSession";
 import type { PlayableDuel } from "@/components/account/AccountScreen";
-import { ChallengeSheet, duelOpenWith, SentNotice } from "./ChallengeSheet";
+import { ChallengeSheet, SentNotice } from "./ChallengeSheet";
+import { FriendDuelChip, friendsByDuelState, InviteChip } from "./FriendDuelChip";
 
 /**
  * Výzva po dohrané lekci.
  *
  * Tady chuť změřit se vzniká: student je rozehraný a právě ví, jak mu
- * téma jde. Karta nabídne řadu kamarádů a klepnutí otevře výzvu na totéž
- * téma. Kdo kamarády nemá, dostane pozvánku. Nepřihlášenému se neukáže —
+ * téma jde. Karta nabídne řadu kamarádů se stavem souboje; volného
+ * klepnutí vyzve na totéž téma, ostatní vedou na souboje. Kdo kamarády nemá, dostane pozvánku. Nepřihlášenému se neukáže —
  * o to se stará lekce, která kartu vůbec nenačte.
  *
  * Dotazy mají stejné klíče jako v profilu (components/social/data.ts),
@@ -28,11 +28,14 @@ export function LessonChallenge({
   myHandle,
   onPlay,
   onInvite,
+  onOpenDuels,
 }: {
   topic?: DuelTopic;
   myHandle: string;
   onPlay: (duel: PlayableDuel) => void;
   onInvite: () => void;
+  /** Kamarád, se kterým souboj běží: klepnutí vede na souboje. */
+  onOpenDuels: () => void;
 }) {
   const t = useTranslations("social");
   const tCategory = useTranslations("categories");
@@ -47,9 +50,6 @@ export function LessonChallenge({
   if (!client || !userId || friends.data === undefined) return null;
 
   const list = duels.data ?? [];
-  const ordered = friends.data
-    .map((friend) => ({ friend, busy: duelOpenWith(list, friend.userId) }))
-    .sort((a, b) => Number(a.busy) - Number(b.busy));
   const body = !topic
     ? t("lessonChallengeBodyAny")
     : t("lessonChallengeBody", { topic: topic === "mix" ? t("topicMix") : tCategory(topic) });
@@ -70,32 +70,16 @@ export function LessonChallenge({
         </div>
       </div>
 
-      <div className="mt-1.5 flex gap-0.5 overflow-x-auto px-1.5 pb-2">
-        {ordered.map(({ friend, busy }) => (
-          <button
+      <div className="mt-1.5 flex overflow-x-auto px-1.5 pb-2">
+        {friendsByDuelState(friends.data, list).map(({ friend, state }) => (
+          <FriendDuelChip
             key={friend.userId}
-            type="button"
-            disabled={busy}
-            onClick={() => setPicked(friend.userId)}
-            aria-label={busy ? t("duelRunningWith", { handle: friend.handle }) : t("challengeTitle", { handle: friend.handle })}
-            className="active:bg-surface flex w-[4.25rem] shrink-0 flex-col items-center gap-1 rounded-control py-1.5 disabled:opacity-45"
-          >
-            <Monogram handle={friend.handle} />
-            <span className={`w-full truncate px-0.5 text-center text-micro ${busy ? "text-ink-soft" : "font-medium"}`}>
-              {busy ? t("duelRunning") : friend.handle}
-            </span>
-          </button>
+            friend={friend}
+            state={state}
+            onSelect={() => (state === "free" ? setPicked(friend.userId) : onOpenDuels())}
+          />
         ))}
-        <button
-          type="button"
-          onClick={onInvite}
-          className="active:bg-surface flex w-[4.25rem] shrink-0 flex-col items-center gap-1 rounded-control py-1.5"
-        >
-          <span className="border-line text-ink-soft grid size-12 place-items-center rounded-full border border-dashed">
-            <PlusIcon className="size-5" />
-          </span>
-          <span className="text-ink-soft w-full truncate text-center text-micro">{t("invite")}</span>
-        </button>
+        <InviteChip onSelect={onInvite} />
       </div>
 
       {picked ? (

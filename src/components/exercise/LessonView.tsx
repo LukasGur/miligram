@@ -45,6 +45,7 @@ export type LessonChallengeProps = {
   handle: string;
   onPlay: (duel: PlayableDuel) => void;
   onInvite: () => void;
+  onOpenDuels: () => void;
 };
 
 /**
@@ -458,6 +459,7 @@ function LessonSummary({
               myHandle={challenge.handle}
               onPlay={challenge.onPlay}
               onInvite={challenge.onInvite}
+              onOpenDuels={challenge.onOpenDuels}
             />
           ) : null}
         </div>

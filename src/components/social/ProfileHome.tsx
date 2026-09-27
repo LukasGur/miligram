@@ -3,7 +3,7 @@
 import { useEffect, useState } from "react";
 import { useLiveQuery } from "dexie-react-hooks";
 import { useFormatter, useTranslations } from "next-intl";
-import { ChevronRightIcon, PencilIcon, PlusIcon, ShieldIcon, VersusIcon } from "@/components/icons";
+import { ChevronRightIcon, PencilIcon, ShieldIcon, VersusIcon } from "@/components/icons";
 import { Monogram } from "@/components/ui/Monogram";
 import type { BadgeState } from "@/core/badges";
 import { displayTier, weekEndsAt, ZONES_FROM, TOP_TIER } from "@/core/league";
@@ -16,7 +16,7 @@ import { Field, Primary } from "@/components/account/SignIn";
 import { SignOut } from "@/components/account/SignOut";
 import { withTimeout } from "@/lib/useAction";
 import { BadgeGlyph } from "./BadgeGlyph";
-import { duelOpenWith } from "./ChallengeSheet";
+import { friendsByDuelState, FriendDuelChip, InviteChip } from "./FriendDuelChip";
 import { splitDuration, useNow, type Social } from "./data";
 import { SectionTitle } from "./Screen";
 
@@ -205,8 +205,9 @@ export function ProfileHome({
 }
 
 /**
- * Souboje. Hlavička vede na seznam, pod ní řada kamarádů: klepnutí
- * na monogram rovnou otevře výzvu. Dřív vedla výzva přes seznam soubojů
+ * Souboje. Hlavička vede na seznam, pod ní řada kamarádů se stavem
+ * (FriendDuelChip): volného klepnutí rovnou vyzve, ostatní vedou
+ * na souboje. Dřív vedla výzva přes seznam soubojů
  * a výběr soupeře — pět klepnutí, a tak se skoro nevyzývalo.
  */
 function DuelsCard({
@@ -228,10 +229,7 @@ function DuelsCard({
   const format = useFormatter();
   const friends = social.friends.data ?? [];
   const duels = social.duels.data ?? [];
-  // Volní napřed: s kým souboj běží, toho teď vyzvat nejde.
-  const ordered = friends
-    .map((friend) => ({ friend, busy: duelOpenWith(duels, friend.userId) }))
-    .sort((a, b) => Number(a.busy) - Number(b.busy));
+  const ordered = friendsByDuelState(friends, duels);
 
   return (
     <section className="border-line rounded-panel border">
@@ -263,33 +261,16 @@ function DuelsCard({
 
       <div className="border-line border-t px-1.5 pt-2.5 pb-2">
         <p className="panel-label px-2">{t("challengeRow")}</p>
-        <div className="mt-1 flex gap-0.5 overflow-x-auto">
-          {ordered.map(({ friend, busy }) => (
-            <button
+        <div className="mt-1 flex overflow-x-auto">
+          {ordered.map(({ friend, state }) => (
+            <FriendDuelChip
               key={friend.userId}
-              type="button"
-              onClick={() => (busy ? onOpen() : onChallenge(friend.userId))}
-              aria-label={busy ? t("duelRunningWith", { handle: friend.handle }) : t("challengeTitle", { handle: friend.handle })}
-              className="flex w-[4.25rem] shrink-0 flex-col items-center gap-1 rounded-control py-1.5 active:bg-surface"
-            >
-              <span className={`relative ${busy ? "opacity-45" : ""}`}>
-                <Monogram handle={friend.handle} />
-              </span>
-              <span className={`w-full truncate px-0.5 text-center text-micro ${busy ? "text-ink-soft" : "font-medium"}`}>
-                {busy ? t("duelRunning") : friend.handle}
-              </span>
-            </button>
+              friend={friend}
+              state={state}
+              onSelect={() => (state === "free" ? onChallenge(friend.userId) : onOpen())}
+            />
           ))}
-          <button
-            type="button"
-            onClick={onInvite}
-            className="flex w-[4.25rem] shrink-0 flex-col items-center gap-1 rounded-control py-1.5 active:bg-surface"
-          >
-            <span className="border-line text-ink-soft grid size-12 place-items-center rounded-full border border-dashed">
-              <PlusIcon className="size-5" />
-            </span>
-            <span className="text-ink-soft w-full truncate text-center text-micro">{t("invite")}</span>
-          </button>
+          <InviteChip onSelect={onInvite} />
         </div>
       </div>
     </section>
