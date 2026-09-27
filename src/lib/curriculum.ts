@@ -10,6 +10,7 @@ import {
   type StageId,
   type StageStanding,
 } from "@/core/curriculum";
+import { mainCategory } from "@/core/duel";
 import { categoryOfId } from "@/core/templateCategories";
 import type { Category } from "@/core/types";
 import { DAILY_REVIEW_ITEMS } from "@/core/lessonPlan";
@@ -57,6 +58,18 @@ export async function categoryScores(): Promise<Scores> {
   }
 
   return scores;
+}
+
+/**
+ * Kategorie naposledy dohrané lekce — co má student čerstvě v hlavě.
+ * Předvybírá se ve výzvě, kde téma neurčuje kontext. Null, dokud nic
+ * nedohrál.
+ */
+export async function lastTrainedCategory(): Promise<Category | null> {
+  const last = await db().lessons.orderBy("finishedAt").last();
+  if (!last) return null;
+  const answers = await db().answers.where("lessonId").equals(last.lessonId).toArray();
+  return mainCategory(answers.map((answer) => categoryOfId(answer.templateId)));
 }
 
 export async function curriculumState(): Promise<CurriculumState> {

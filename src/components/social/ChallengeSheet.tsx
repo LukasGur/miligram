@@ -4,15 +4,15 @@ import { useEffect, useEffectEvent, useRef, useState } from "react";
 import { useLiveQuery } from "dexie-react-hooks";
 import { useFormatter, useTranslations } from "next-intl";
 import type { SupabaseClient } from "@supabase/supabase-js";
-import { CloseIcon, VersusIcon } from "@/components/icons";
+import { CheckIcon, ChevronDownIcon, CloseIcon, VersusIcon } from "@/components/icons";
 import { CategoryIcon } from "@/components/ui/CategoryIcon";
 import { Monogram } from "@/components/ui/Monogram";
 import { Pastille } from "@/components/ui/Pastille";
 import { MASTERY_MIN_ANSWERS } from "@/core/curriculum";
 import { DIFFICULTY_RAMP, newLessonId } from "@/core/lessonPlan";
-import { DUEL_TOPICS, DUEL_WIN_PILLS, type DuelTopic } from "@/core/duel";
-import type { Category } from "@/core/types";
-import { categoryScores } from "@/lib/curriculum";
+import { DUEL_WIN_PILLS, type DuelTopic } from "@/core/duel";
+import { CATEGORIES, type Category } from "@/core/types";
+import { categoryScores, lastTrainedCategory } from "@/lib/curriculum";
 import { createDuel, type Duel, type FriendSummary } from "@/lib/remote";
 
 type Rate = { answered: number; correct: number };
@@ -34,9 +34,12 @@ export function duelOpenWith(duels: readonly Duel[], friendId: string): boolean 
  * tam, kde chuť vzniká — po lekci, po výsledku souboje, u kamaráda — a soupeř
  * i téma jsou předvyplněné. Stačí jedno klepnutí.
  *
- * Témata jsou řada tlačítek, vidět hned, s vybraným vyplněným. První
- * pokus schoval téma do rozbalovacího čipu a ten nikdo nepoznal jako
- * ovládací prvek — vypadal jako hodnota. Podmínky jsou shrnuté na řádek a celé pod odkazem — pořád žádné
+ * Téma je pole s konkrétní kategorií, kterou student zná (z lekce, z odvety,
+ * jinak naposledy trénovanou), a stejné téma nese hlavní tlačítko:
+ * „Vyzvat · Ředění“. Předvybraný Mix se přehlížel — vypadal jako výchozí
+ * nastavení, které se nechá být. Konkrétní téma vyvolá otázku „chci
+ * zrovna tohle?“ a kdo chce jiné, hledá, kde ho změnit. Mix je proto
+ * v nabídce až poslední. Podmínky jsou shrnuté na řádek a celé pod odkazem — pořád žádné
  * překvapení, co se počítá, jen ne v cestě.
  */
 export function ChallengeSheet({
@@ -62,9 +65,14 @@ export function ChallengeSheet({
   onCreated: (duel: CreatedDuel, playNow: boolean) => void;
 }) {
   const t = useTranslations("social");
+  const tCategory = useTranslations("categories");
   const format = useFormatter();
   const [friendId, setFriendId] = useState<string | undefined>(preset);
-  const [topic, setTopic] = useState<DuelTopic>(presetTopic ?? "mix");
+  const [chosen, setChosen] = useState<DuelTopic | undefined>(presetTopic);
+  // Bez tématu z kontextu naposledy trénované; kdo nic nehrál, základ.
+  // Undefined jen na okamžik, než odpoví místní databáze.
+  const recent = useLiveQuery(() => lastTrainedCategory(), []);
+  const topic: DuelTopic | undefined = chosen ?? (recent === undefined ? undefined : (recent ?? CATEGORIES[0]));
   const [rules, setRules] = useState(false);
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -85,7 +93,7 @@ export function ChallengeSheet({
   }, []);
 
   async function create(playNow: boolean) {
-    if (!friend || busy || open) return;
+    if (!friend || !topic || busy || open) return;
     setBusy(true);
     setError(null);
     try {
@@ -132,7 +140,11 @@ export function ChallengeSheet({
             <Opponents friends={friends} duels={duels} selected={friendId} onSelect={setFriendId} />
           )}
 
-          <TopicRow topic={topic} onSelect={setTopic} rate={topic === "mix" ? total(mine) : mine?.get(topic)} />
+          <TopicField
+            topic={topic}
+            onSelect={setChosen}
+            rates={mine}
+          />
 
           {/* Podmínky na jeden řádek, celé pod odkazem. */}
           <div className="text-ink-soft mt-3 flex items-center gap-x-2 text-label">
@@ -164,16 +176,18 @@ export function ChallengeSheet({
             ref={primaryRef}
             type="button"
             onClick={() => void create(true)}
-            disabled={!friend || busy || open}
+            disabled={!friend || !topic || busy || open}
             className="bg-accent active:bg-accent-press flex min-h-14 w-full items-center justify-center gap-2 rounded-control text-body font-semibold text-white transition-colors duration-75 disabled:opacity-40"
           >
-            <VersusIcon className="size-5" />
-            {t("challengeAndPlay")}
+            <VersusIcon className="size-5 shrink-0" />
+            <span className="truncate">
+              {topic ? t("challengeTopic", { topic: topic === "mix" ? t("topicMix") : tCategory(topic) }) : t("challengeAndPlay")}
+            </span>
           </button>
           <button
             type="button"
             onClick={() => void create(false)}
-            disabled={!friend || busy || open}
+            disabled={!friend || !topic || busy || open}
             className="text-accent mt-1 min-h-11 w-full text-label font-medium disabled:opacity-40"
           >
             {t("challengeOnly")}
@@ -253,70 +267,102 @@ function Opponents({
   );
 }
 
+/** Mix až na konec: předvybírá se konkrétní téma, mix je volba navíc. */
+const TOPIC_ORDER: readonly DuelTopic[] = [...CATEGORIES, "mix"];
+
 /**
- * Témata v řadě, rolovat do strany. Vybrané je plné indigo, ostatní
- * obrys s ikonou kategorie — na první pohled tlačítka, ne text. Předvybrané
- * téma (po lekci) se při otevření sroluje do záběru, jinak by se schovalo
- * za okraj. Pravý okraj se vytrácí, ať je vidět, že řada pokračuje.
+ * Téma jako pole formuláře: popisek nad ním, rámeček, ikona, název tučně
+ * a vpravo „Změnit“ se šipkou. Rozbalí se do mřížky všech témat přímo
+ * v listu, u každého tvoje úspěšnost napoprvé (vidíš ji jen ty).
  */
-function TopicRow({
+function TopicField({
   topic,
   onSelect,
-  rate,
+  rates,
 }: {
-  topic: DuelTopic;
+  topic: DuelTopic | undefined;
   onSelect: (topic: DuelTopic) => void;
-  rate: Rate | undefined;
+  rates: ReadonlyMap<Category, Rate> | undefined;
 }) {
   const t = useTranslations("social");
   const tCategory = useTranslations("categories");
-  const selectedRef = useRef<HTMLButtonElement>(null);
-  const shown = formatRate(rate);
-
-  useEffect(() => {
-    selectedRef.current?.scrollIntoView({ block: "nearest", inline: "center" });
-    // Jen při otevření; po klepnutí je vybrané tlačítko v záběru samo.
-  }, []);
+  const [open, setOpen] = useState(false);
+  const name = (value: DuelTopic) => (value === "mix" ? t("topicMixLong") : tCategory(value));
 
   return (
     <div className="mt-5">
-      <div className="flex items-baseline justify-between gap-3">
-        <p className="panel-label">{t("pickTopic")}</p>
-        {shown !== "—" ? (
-          <p className="readout text-ink-soft text-micro" data-numeric>
-            {t("topicRate", { rate: shown })}
-          </p>
-        ) : null}
-      </div>
-      <div
-        role="radiogroup"
-        aria-label={t("pickTopic")}
-        className="-mx-5 mt-2 flex gap-2 overflow-x-auto px-5 pb-1 [scrollbar-width:none]"
-        style={{ maskImage: "linear-gradient(to right, #000 calc(100% - 2.5rem), transparent)" }}
+      <p className="panel-label mb-2">{t("pickTopic")}</p>
+      <button
+        type="button"
+        onClick={() => setOpen((value) => !value)}
+        aria-expanded={open}
+        className={`active:bg-surface flex min-h-14 w-full items-center gap-3 rounded-control border px-3.5 text-left transition-colors duration-150 ${
+          open ? "border-accent shadow-[inset_0_0_0_1px_var(--color-accent)]" : "border-ink-soft/40"
+        }`}
       >
-        {DUEL_TOPICS.map((value) => {
-          const active = value === topic;
-          return (
-            <button
-              key={value}
-              ref={active ? selectedRef : undefined}
-              type="button"
-              role="radio"
-              aria-checked={active}
-              onClick={() => onSelect(value)}
-              className={`flex min-h-11 shrink-0 items-center gap-2 rounded-full border px-4 text-label font-semibold whitespace-nowrap transition-colors duration-150 ${
-                active ? "bg-accent border-accent text-white" : "border-line text-ink active:bg-surface"
-              }`}
-            >
-              {value !== "mix" ? (
-                <CategoryIcon category={value} className={`size-4 ${active ? "" : "text-ink-soft"}`} />
-              ) : null}
-              {value === "mix" ? t("topicMix") : tCategory(value)}
-            </button>
-          );
-        })}
-      </div>
+        <span className="bg-accent-wash text-accent grid size-8 shrink-0 place-items-center rounded-full">
+          {topic && topic !== "mix" ? <CategoryIcon category={topic} className="size-[1.125rem]" /> : <MixGlyph />}
+        </span>
+        <span className="min-w-0 flex-1 truncate text-body font-semibold">{topic ? name(topic) : "\u00a0"}</span>
+        <span className="text-accent flex shrink-0 items-center gap-1 text-label font-medium">
+          {t("topicChange")}
+          <ChevronDownIcon className={`size-4 transition-transform duration-200 ${open ? "rotate-180" : ""}`} />
+        </span>
+      </button>
+
+      {open ? (
+        <div className="animate-rise mt-2">
+          <div className="grid grid-cols-2 gap-2">
+            {TOPIC_ORDER.map((value) => {
+              const active = value === topic;
+              const mix = value === "mix";
+              return (
+                <button
+                  key={value}
+                  type="button"
+                  onClick={() => {
+                    onSelect(value);
+                    setOpen(false);
+                  }}
+                  aria-pressed={active}
+                  className={`relative flex min-h-14 items-center gap-2.5 rounded-control border px-3 py-2 text-left ${
+                    mix ? "col-span-2" : ""
+                  } ${active ? "border-accent bg-accent-wash shadow-[inset_0_0_0_1px_var(--color-accent)]" : "border-line active:bg-surface"}`}
+                >
+                  <span className={active ? "text-accent" : "text-ink-soft"}>
+                    {mix ? <MixGlyph /> : <CategoryIcon category={value} className="size-[1.125rem]" />}
+                  </span>
+                  <span className="min-w-0 flex-1">
+                    <span className="block text-label leading-snug font-semibold">{name(value)}</span>
+                    <span className="readout text-ink-soft block text-micro" data-numeric>
+                      {formatRate(mix ? total(rates) : rates?.get(value))}
+                    </span>
+                  </span>
+                  {active ? <CheckIcon className="text-accent size-4 shrink-0" /> : null}
+                </button>
+              );
+            })}
+          </div>
+          <p className="text-ink-soft mt-2 text-micro" data-numeric>
+            {t("rateNote", { min: MASTERY_MIN_ANSWERS })}
+          </p>
+        </div>
+      ) : null}
     </div>
+  );
+}
+
+/** Mix: čtyři tečky, jako čtyři kategorie v jedné lekci. */
+function MixGlyph() {
+  return (
+    <svg viewBox="0 0 24 24" aria-hidden className="size-[1.125rem]">
+      <g fill="currentColor">
+        <circle cx="7.5" cy="7.5" r="2.25" />
+        <circle cx="16.5" cy="7.5" r="2.25" />
+        <circle cx="7.5" cy="16.5" r="2.25" />
+        <circle cx="16.5" cy="16.5" r="2.25" />
+      </g>
+    </svg>
   );
 }
 

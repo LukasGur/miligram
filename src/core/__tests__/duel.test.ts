@@ -9,7 +9,7 @@ import {
   duelPhase,
   duelPills,
   duelScore,
-  lessonTopic,
+  mainCategory,
 } from "../duel";
 import { CATEGORIES } from "../types";
 
@@ -108,10 +108,11 @@ describe("shoda s databází", () => {
   });
 });
 
-describe("téma výzvy po lekci", () => {
-  it("převažující kategorie, jinak mix", () => {
-    expect(lessonTopic(["redeni", "redeni", "redeni", "redeni", "zaklad", "zaklad", null])).toBe("redeni");
-    expect(lessonTopic(["redeni", "redeni", "redeni", "zaklad", "zaklad", "zaklad", null])).toBe("mix");
-    expect(lessonTopic([])).toBe("mix");
+describe("předvybrané téma výzvy", () => {
+  it("kategorie s nejvíc příklady, při shodě ta dřívější", () => {
+    expect(mainCategory(["zaklad", "redeni", "redeni", "zaklad", "redeni", null])).toBe("redeni");
+    expect(mainCategory(["zaklad", "redeni", "redeni", "zaklad"])).toBe("zaklad");
+    expect(mainCategory([null])).toBeNull();
+    expect(mainCategory([])).toBeNull();
   });
 });

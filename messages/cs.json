@@ -891,6 +891,9 @@
       "6": "Grafit",
       "7": "Laguna"
     },
-    "topicRate": "tvoje úspěšnost napoprvé {rate}"
+    "topicRate": "tvoje úspěšnost napoprvé {rate}",
+    "lessonChallengeBodyAny": "Oba stejné příklady. Kdo dá víc napoprvé, vyhrává.",
+    "challengeTopic": "Vyzvat · {topic}",
+    "topicChange": "Změnit"
   }
 }

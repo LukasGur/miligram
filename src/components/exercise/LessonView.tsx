@@ -8,7 +8,7 @@ import { lessonExercise, resolvePlan, type LessonPlan } from "@/core/lesson";
 import type { LessonKind } from "@/core/scoring";
 import type { DailySpec } from "@/core/curriculum";
 import { attemptsOn, firstTryOutcomes, nextIndex, solvedCount } from "@/core/lessonRun";
-import { duelScore, lessonTopic, type DuelTopic } from "@/core/duel";
+import { duelScore, mainCategory, type DuelTopic } from "@/core/duel";
 import { categoryOfId } from "@/core/templateCategories";
 import type { PlayableDuel } from "@/components/account/AccountScreen";
 import type { DuelResult } from "@/lib/remote";
@@ -136,7 +136,7 @@ export function LessonView({
         onAgain={onAgain}
         onDuel={duelId && onDuelDone ? () => onDuelDone(duelId) : undefined}
         challenge={duelId ? undefined : challenge}
-        topic={lessonTopic(plan.items.map((item) => categoryOfId(item.templateId)))}
+        topic={mainCategory(plan.items.map((item) => categoryOfId(item.templateId))) ?? undefined}
       />
     );
   }
@@ -314,7 +314,7 @@ function LessonSummary({
   onDuel?: () => void;
   challenge?: LessonChallengeProps;
   /** Převažující téma lekce, pro výzvu. */
-  topic: DuelTopic;
+  topic?: DuelTopic;
 }) {
   const t = useTranslations("lesson");
   const tHome = useTranslations("home");

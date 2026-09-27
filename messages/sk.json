@@ -891,6 +891,9 @@
       "6": "Grafit",
       "7": "Lagúna"
     },
-    "topicRate": "tvoja úspešnosť na prvý raz {rate}"
+    "topicRate": "tvoja úspešnosť na prvý raz {rate}",
+    "lessonChallengeBodyAny": "Obaja rovnaké príklady. Kto dá viac na prvý raz, vyhráva.",
+    "challengeTopic": "Vyzvať · {topic}",
+    "topicChange": "Zmeniť"
   }
 }

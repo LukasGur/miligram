@@ -37,15 +37,18 @@ export function isDuelTopic(value: string): value is DuelTopic {
 }
 
 /**
- * Téma výzvy po dohrané lekci: kategorie, ze které byla většina příkladů,
- * jinak mix. Denní lekce míchá stupeň s opakováním, takže „téma lekce“
- * existuje jen tehdy, když jedna kategorie převažuje.
+ * Předvybrané téma výzvy: kategorie, ze které bylo příkladů nejvíc
+ * (při shodě ta, která přišla dřív). Mix se nepředvybírá nikdy — vypadal
+ * jako výchozí nastavení, které se nechá být, a téma se přehlíželo.
+ * Konkrétní téma, které student zná, vyvolá otázku „chci zrovna tohle?“.
  */
-export function lessonTopic(categories: readonly (Category | null)[]): DuelTopic {
+export function mainCategory(categories: readonly (Category | null)[]): Category | null {
   const counts = new Map<Category, number>();
   for (const category of categories) if (category) counts.set(category, (counts.get(category) ?? 0) + 1);
-  for (const [category, count] of counts) if (count * 2 > categories.length) return category;
-  return "mix";
+  // Mapa drží pořadí prvního výskytu, takže při shodě zůstane dřívější.
+  let best: Category | null = null;
+  for (const [category, count] of counts) if (best === null || count > counts.get(best)!) best = category;
+  return best;
 }
 
 export type DuelScore = {

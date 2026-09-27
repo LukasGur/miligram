@@ -29,7 +29,7 @@ export function LessonChallenge({
   onPlay,
   onInvite,
 }: {
-  topic: DuelTopic;
+  topic?: DuelTopic;
   myHandle: string;
   onPlay: (duel: PlayableDuel) => void;
   onInvite: () => void;
@@ -50,7 +50,9 @@ export function LessonChallenge({
   const ordered = friends.data
     .map((friend) => ({ friend, busy: duelOpenWith(list, friend.userId) }))
     .sort((a, b) => Number(a.busy) - Number(b.busy));
-  const topicName = topic === "mix" ? t("topicMix") : tCategory(topic);
+  const body = !topic
+    ? t("lessonChallengeBodyAny")
+    : t("lessonChallengeBody", { topic: topic === "mix" ? t("topicMix") : tCategory(topic) });
 
   return (
     <section className="animate-rise border-line mt-6 rounded-panel border" aria-labelledby="lesson-challenge">
@@ -63,7 +65,7 @@ export function LessonChallenge({
             {friends.data.length > 0 ? t("lessonChallengeTitle") : t("lessonChallengeLonely")}
           </h2>
           <p className="text-ink-soft text-label" data-numeric>
-            {friends.data.length > 0 ? t("lessonChallengeBody", { topic: topicName }) : t("lessonChallengeInvite")}
+            {friends.data.length > 0 ? body : t("lessonChallengeInvite")}
           </p>
         </div>
       </div>
