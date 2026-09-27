@@ -8,6 +8,7 @@ import {
   mergeLevels,
   newlyEarned,
   parseBadgeLevels,
+  showcaseOrder,
   type BadgeFacts,
 } from "../badges";
 
@@ -111,5 +112,23 @@ describe("parseBadgeLevels", () => {
     expect(states).toHaveLength(BADGES.length);
     expect(states.find((state) => state.id === "streak")).toEqual({ id: "streak", level: 1, levels: 3, progress: null });
     expect(states.every((state) => state.progress === null)).toBe(true);
+  });
+});
+
+describe("vitrína", () => {
+  it("získané napřed, pak zamčené podle toho, kolik k nim chybí", () => {
+    const order = showcaseOrder([
+      { id: "streak", level: 0, levels: 3, progress: { value: 2, target: 7 } },
+      { id: "flawless", level: 1, levels: 3, progress: { value: 4, target: 10 } },
+      { id: "promotion", level: 0, levels: 1, progress: null },
+      { id: "solved", level: 0, levels: 3, progress: { value: 90, target: 100 } },
+      { id: "topLeague", level: 1, levels: 1, progress: null },
+    ]).map((state) => state.id);
+    expect(order).toEqual(["topLeague", "flawless", "solved", "streak", "promotion"]);
+  });
+
+  it("stejné postavení drží výchozí pořadí", () => {
+    const states = badgeStatesFromLevels({});
+    expect(showcaseOrder(states).map((state) => state.id)).toEqual(BADGES.map((badge) => badge.id));
   });
 });

@@ -210,3 +210,22 @@ export function badgeStatesFromLevels(levels: BadgeLevels): BadgeState[] {
     progress: null,
   }));
 }
+
+/**
+ * Pořadí pro vitrínu: získané napřed (dotaženější dřív), za nimi zamčené
+ * podle toho, kolik k nim chybí. Profil se chlubí tím, co má, a hned vedle
+ * ukáže, na co už skoro dosáhne — ne náhodný zamčený odznak.
+ */
+export function showcaseOrder(states: readonly BadgeState[]): BadgeState[] {
+  const share = (state: BadgeState) =>
+    state.progress && state.progress.target > 0 ? state.progress.value / state.progress.target : -1;
+  return states
+    .map((state, index) => ({ state, index }))
+    .sort((a, b) => {
+      const earned = Number(b.state.level > 0) - Number(a.state.level > 0);
+      if (earned !== 0) return earned;
+      if (a.state.level > 0) return b.state.level / b.state.levels - a.state.level / a.state.levels || a.index - b.index;
+      return share(b.state) - share(a.state) || a.index - b.index;
+    })
+    .map(({ state }) => state);
+}

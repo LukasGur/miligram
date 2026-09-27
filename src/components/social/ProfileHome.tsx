@@ -7,7 +7,7 @@ import { ChevronRightIcon, PencilIcon, ShieldIcon, VersusIcon } from "@/componen
 import { Monogram } from "@/components/ui/Monogram";
 import type { BadgeState } from "@/core/badges";
 import { displayTier, weekEndsAt, ZONES_FROM, TOP_TIER } from "@/core/league";
-import { leagueFacts } from "@/core/badges";
+import { leagueFacts, showcaseOrder } from "@/core/badges";
 import { db, receivedGifts } from "@/lib/db";
 import { claimHandle } from "@/lib/remote";
 import { badgeStates, duelsNeedingMe, publishBadgesIfChanged } from "@/lib/social";
@@ -16,6 +16,7 @@ import { Field, Primary } from "@/components/account/SignIn";
 import { SignOut } from "@/components/account/SignOut";
 import { withTimeout } from "@/lib/useAction";
 import { BadgeGlyph } from "./BadgeGlyph";
+import { BadgeSheet } from "./BadgeSheet";
 import { friendsByDuelState, FriendDuelChip, InviteChip } from "./FriendDuelChip";
 import { splitDuration, useNow, type Social } from "./data";
 import { SectionTitle } from "./Screen";
@@ -63,6 +64,7 @@ export function ProfileHome({
 
   const badges = useBadges(social);
   const unlocked = badges?.filter((badge) => badge.level > 0).length ?? 0;
+  const [openBadge, setOpenBadge] = useState<BadgeState | null>(null);
 
   return (
     <>
@@ -161,33 +163,23 @@ export function ProfileHome({
 
       <SectionTitle
         aside={
-          <span className="readout text-ink-soft text-label" data-numeric>
-            {t("badgesCount", { unlocked, total: badges?.length ?? 10 })}
-          </span>
+          <button
+            type="button"
+            onClick={() => onOpen("badges")}
+            aria-label={t("badgesOpen")}
+            className="text-ink-soft active:text-ink -my-3 -mr-2 flex min-h-11 items-center gap-0.5 pl-3 transition-colors duration-75"
+          >
+            <span className="readout text-label" data-numeric>
+              {t("badgesCount", { unlocked, total: badges?.length ?? 10 })}
+            </span>
+            <ChevronRightIcon className="size-5" />
+          </button>
         }
       >
         {t("badgesTitle")}
       </SectionTitle>
-      <button
-        type="button"
-        onClick={() => onOpen("badges")}
-        aria-label={t("badgesOpen")}
-        className="-mx-1 flex w-[calc(100%+0.5rem)] items-start gap-2 overflow-hidden px-1 text-left"
-      >
-        {(badges ?? [])
-          // Získané napřed: profil se chlubí tím, co má, ne tím, co chybí.
-          .slice()
-          .sort((a, b) => Number(b.level > 0) - Number(a.level > 0))
-          .slice(0, 5)
-          .map((badge) => (
-            <span key={badge.id} className="flex w-16 shrink-0 flex-col items-center gap-1.5">
-              <BadgeGlyph id={badge.id} level={badge.level} levels={badge.levels} />
-              <span className={`text-center text-micro leading-tight ${badge.level > 0 ? "font-medium" : "text-ink-soft"}`}>
-                {t(`badge.${badge.id}.name`)}
-              </span>
-            </span>
-          ))}
-      </button>
+      <BadgeShelf badges={badges} onSelect={setOpenBadge} onAll={() => onOpen("badges")} />
+      {openBadge ? <BadgeSheet badge={openBadge} onClose={() => setOpenBadge(null)} /> : null}
 
       <Gifts />
 
@@ -274,6 +266,58 @@ function DuelsCard({
         </div>
       </div>
     </section>
+  );
+}
+
+/**
+ * Odznaky na profilu: vodorovná police až k okraji displeje. Šířka položek
+ * je spočítaná tak, aby u pravého okraje vždycky vykukovala půlka dalšího
+ * odznaku — říká „posuň mě“, ne „něco se uřízlo“. Každý odznak otevře
+ * detail, police končí cestou na všechny.
+ */
+function BadgeShelf({
+  badges,
+  onSelect,
+  onAll,
+}: {
+  badges: BadgeState[] | undefined;
+  onSelect: (badge: BadgeState) => void;
+  onAll: () => void;
+}) {
+  const t = useTranslations("social");
+  // Obsahová šířka police je šířka sloupce (odsazení 1.25rem z obou stran),
+  // vidět je navíc pravý okraj; 4,5 položky a čtyři mezery po 0.5rem.
+  const item = "w-[max(4.25rem,calc((100%-0.75rem)/4.5))]";
+  return (
+    <div className="-mx-5 flex snap-x snap-mandatory scroll-px-5 gap-2 overflow-x-auto px-5 pb-1 [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
+      {showcaseOrder(badges ?? []).map((badge) => (
+        <button
+          key={badge.id}
+          type="button"
+          onClick={() => onSelect(badge)}
+          className={`group flex shrink-0 snap-start flex-col items-center gap-1.5 pt-0.5 ${item}`}
+        >
+          <span className="transition-transform duration-150 group-active:scale-94">
+            <BadgeGlyph id={badge.id} level={badge.level} levels={badge.levels} />
+          </span>
+          <span className={`text-center text-micro leading-tight ${badge.level > 0 ? "font-medium" : "text-ink-soft"}`}>
+            {t(`badge.${badge.id}.name`)}
+          </span>
+        </button>
+      ))}
+      <button
+        type="button"
+        onClick={onAll}
+        className={`group flex shrink-0 snap-start flex-col items-center gap-1.5 pt-0.5 ${item}`}
+      >
+        <span className="border-line text-ink-soft group-active:bg-surface grid size-14 place-items-center rounded-full border transition-colors duration-75">
+          <ChevronRightIcon className="size-6" />
+        </span>
+        <span className="text-ink-soft text-center text-micro leading-tight">{t("badgesAll")}</span>
+      </button>
+      {/* Konec police: pravé odsazení, které Safari u posuvného flexu jinak zahodí. */}
+      <span aria-hidden className="w-3 shrink-0" />
+    </div>
   );
 }
 

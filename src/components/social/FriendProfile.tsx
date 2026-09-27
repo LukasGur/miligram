@@ -7,7 +7,7 @@ import { Monogram } from "@/components/ui/Monogram";
 import { Pastille } from "@/components/ui/Pastille";
 import { Spinner } from "@/components/ui/Spinner";
 import { useAction, withTimeout } from "@/lib/useAction";
-import { badgeStatesFromLevels, type BadgeLevels } from "@/core/badges";
+import { badgeStatesFromLevels, showcaseOrder, type BadgeLevels, type BadgeState } from "@/core/badges";
 import { localDay, STREAK_FREEZE_COST } from "@/core/economy";
 import { displayTier } from "@/core/league";
 import { spendPills } from "@/lib/db";
@@ -23,6 +23,7 @@ import { useRemoteQuery } from "@/lib/remoteQuery";
 import { outcomeFor } from "@/lib/social";
 import { useProfile } from "@/lib/useProfile";
 import { BadgeGlyph } from "./BadgeGlyph";
+import { BadgeSheet } from "./BadgeSheet";
 import type { Social } from "./data";
 import { PrimaryButton, Screen, SectionTitle } from "./Screen";
 
@@ -220,12 +221,14 @@ function CompareRow({ label, mine, theirs }: { label: string; mine: number; thei
 }
 
 /**
- * Kamarádovy odznaky: dosažené barevně a první, zbytek šedě. Bez průběhu
- * a bez podmínek — kolik mu chybí, je jeho věc.
+ * Kamarádovy odznaky: dosažené barevně a první, zbytek šedě. Klepnutí
+ * ukáže, co odznak znamená a kolik stupňů má, ale bez průběhu — kolik mu
+ * chybí, je jeho věc.
  */
 function FriendBadges({ levels }: { levels: BadgeLevels }) {
   const t = useTranslations("social");
-  const badges = badgeStatesFromLevels(levels).sort((a, b) => Number(b.level > 0) - Number(a.level > 0));
+  const [open, setOpen] = useState<BadgeState | null>(null);
+  const badges = showcaseOrder(badgeStatesFromLevels(levels));
   const unlocked = badges.filter((badge) => badge.level > 0).length;
   return (
     <>
@@ -240,14 +243,23 @@ function FriendBadges({ levels }: { levels: BadgeLevels }) {
       </SectionTitle>
       <ul className="grid grid-cols-4 gap-x-1 gap-y-4">
         {badges.map((badge) => (
-          <li key={badge.id} className="flex flex-col items-center gap-1 text-center">
-            <BadgeGlyph id={badge.id} level={badge.level} levels={badge.levels} />
-            <span className={`text-micro leading-tight ${badge.level > 0 ? "font-semibold" : "text-ink-soft"}`}>
-              {t(`badge.${badge.id}.name`)}
-            </span>
+          <li key={badge.id}>
+            <button
+              type="button"
+              onClick={() => setOpen(badge)}
+              className="group flex w-full flex-col items-center gap-1 text-center"
+            >
+              <span className="transition-transform duration-150 group-active:scale-94">
+                <BadgeGlyph id={badge.id} level={badge.level} levels={badge.levels} />
+              </span>
+              <span className={`text-micro leading-tight ${badge.level > 0 ? "font-semibold" : "text-ink-soft"}`}>
+                {t(`badge.${badge.id}.name`)}
+              </span>
+            </button>
           </li>
         ))}
       </ul>
+      {open ? <BadgeSheet badge={open} withProgress={false} onClose={() => setOpen(null)} /> : null}
     </>
   );
 }

@@ -68,7 +68,10 @@ const GLYPH: Record<BadgeId, React.ReactNode> = {
   ),
 };
 
-const ROMAN = ["", "I", "II", "III"];
+export const ROMAN = ["", "I", "II", "III"];
+
+const BOX = { md: "size-14", lg: "size-16", xl: "size-24" } as const;
+const ICON = { md: "size-6", lg: "size-7", xl: "size-10" } as const;
 
 export function BadgeGlyph({
   id,
@@ -79,25 +82,28 @@ export function BadgeGlyph({
   id: BadgeId;
   level: number;
   levels: number;
-  size?: "md" | "lg";
+  size?: "md" | "lg" | "xl";
 }) {
   const locked = level === 0;
-  const big = size === "lg";
   return (
     <span
       aria-hidden
-      className={`relative grid shrink-0 place-items-center ${big ? "size-16" : "size-14"} ${
+      className={`relative grid shrink-0 place-items-center ${BOX[size]} ${
         locked ? "bg-surface text-ink-soft/45" : "bg-accent-wash text-accent"
       }`}
       style={{ clipPath: "polygon(18% 0, 82% 0, 100% 18%, 100% 82%, 82% 100%, 18% 100%, 0 82%, 0 18%)" }}
     >
-      <svg viewBox="0 0 24 24" className={big ? "size-7" : "size-6"}>
+      <svg viewBox="0 0 24 24" className={ICON[size]}>
         <g fill="none" stroke="currentColor" strokeWidth={2} strokeLinecap="round" strokeLinejoin="round">
           {GLYPH[id]}
         </g>
       </svg>
       {levels > 1 ? (
-        <span className="readout absolute right-1.5 bottom-1 text-[10px] leading-none font-semibold">
+        <span
+          className={`readout absolute leading-none font-semibold ${
+            size === "xl" ? "right-2.5 bottom-2 text-[13px]" : "right-1.5 bottom-1 text-[10px]"
+          }`}
+        >
           {ROMAN[Math.max(level, 1)]}
         </span>
       ) : null}
