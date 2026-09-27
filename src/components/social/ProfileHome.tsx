@@ -403,10 +403,7 @@ function HandleRow({ social }: { social: Social }) {
     <div className="border-line border-y py-3">
       <HandleForm
         social={social}
-        onSaved={() => {
-          setOpen(false);
-          social.profile.refresh();
-        }}
+        onSaved={() => setOpen(false)}
       />
     </div>
   );

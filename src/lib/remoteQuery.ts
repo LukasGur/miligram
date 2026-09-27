@@ -10,8 +10,21 @@ import { useCallback, useSyncExternalStore } from "react";
  * není kosmetický — přihlášení dovolí sdílet jeden výsledek mezi víc
  * komponentami a znovu ho použít, když se obrazovka otevře podruhé.
  *
- * Dotaz se spustí ve chvíli, kdy se na něj přihlásí první komponenta,
- * a výsledek si drží tenhle modul.
+ * Data se drží, dokud nezestárnou nebo je nezneplatní zápis:
+ *
+ * - **Zápis zneplatní, co změnil.** Každá funkce v src/lib/remote.ts, která
+ *   na serveru něco mění, zavolá `invalidateQueries` se jmény dotazů,
+ *   kterých se změna týká. Zneplatnění je tam, ne u tlačítek — dřív se
+ *   `refresh()` volalo ručně z obrazovek a kde se zapomnělo, profil ukazoval
+ *   „tvůj tah“ u souboje, který byl právě dohraný.
+ * - **Stará data se stáhnou znovu**, když se na dotaz přihlásí obrazovka
+ *   nebo se aplikace vrátí do popředí a data jsou starší než STALE_MS.
+ *   Kamarád mezitím mohl výzvu přijmout.
+ * - **Při obnově zůstávají vidět předchozí data**, žádné problikávání
+ *   prázdné obrazovky. `loading` říká, že se obnovuje.
+ *
+ * Klíč dotazu má tvar `jméno:…` (např. `duels:<userId>`); zneplatňuje se
+ * podle jména.
  */
 type Snapshot = { status: "loading" | "ready" | "error"; data: unknown; error: unknown };
 
@@ -24,10 +37,20 @@ type Entry = {
    */
   snapshot: Snapshot;
   listeners: Set<() => void>;
-  started: boolean;
-  /** Poslední načítací funkce, pro nový pokus po chybě. */
+  /** Data jsou platná. False: při příštím přihlášení se stáhnou znovu. */
+  fresh: boolean;
+  /** Kdy naposledy dorazila data. */
+  loadedAt: number;
+  /**
+   * Pořadí načtení. Odpověď staršího načtení, která dorazí po novějším,
+   * se zahodí — jinak by pomalá stará odpověď přepsala čerstvá data.
+   */
+  generation: number;
   loader?: () => Promise<unknown>;
 };
+
+/** Po jaké době se data při návratu na obrazovku stáhnou znovu. */
+const STALE_MS = 30_000;
 
 const cache = new Map<string, Entry>();
 
@@ -37,7 +60,9 @@ function entryFor(key: string): Entry {
     entry = {
       snapshot: { status: "loading", data: undefined, error: undefined },
       listeners: new Set(),
-      started: false,
+      fresh: false,
+      loadedAt: 0,
+      generation: 0,
     };
     cache.set(key, entry);
   }
@@ -51,18 +76,34 @@ function publish(entry: Entry, snapshot: Snapshot) {
 
 function load(key: string, loader: () => Promise<unknown>) {
   const entry = entryFor(key);
-  entry.started = true;
+  const generation = ++entry.generation;
+  entry.fresh = true;
   entry.loader = loader;
   watchResume();
   publish(entry, { status: "loading", data: entry.snapshot.data, error: undefined });
 
   loader().then(
-    (data) => publish(entry, { status: "ready", data, error: undefined }),
-    (error) => publish(entry, { status: "error", data: undefined, error }),
+    (data) => {
+      if (generation !== entry.generation) return;
+      entry.loadedAt = Date.now();
+      publish(entry, { status: "ready", data, error: undefined });
+    },
+    (error) => {
+      if (generation !== entry.generation) return;
+      // Chyba nemaže, co už bylo vidět; nový pokus přijde po návratu
+      // do aplikace nebo s obnovenou sítí.
+      entry.fresh = false;
+      publish(entry, { status: "error", data: entry.snapshot.data, error });
+    },
   );
 }
 
+function stale(entry: Entry): boolean {
+  return !entry.fresh || (entry.snapshot.status === "ready" && Date.now() - entry.loadedAt > STALE_MS);
+}
+
 export type RemoteQuery<T> = {
+  /** Poslední známá data, i během obnovy. */
   data: T | undefined;
   loading: boolean;
   error: unknown;
@@ -78,9 +119,12 @@ export function useRemoteQuery<T>(key: string | null, loader: () => Promise<T>):
     (onChange: () => void) => {
       if (key === null) return () => {};
       const entry = entryFor(key);
+      const first = entry.listeners.size === 0;
       entry.listeners.add(onChange);
-      // Dotaz se pouští při prvním přihlášení, ne při každém vykreslení.
-      if (!entry.started) load(key, loader);
+      // Neplatná data (nikdy nenačtená, zneplatněná, spadlá) se stáhnou
+      // vždycky. Platná, ale stará jen pro prvního odběratele — obrazovka,
+      // která se otevírá; druhá komponenta na téže obrazovce nic nespouští.
+      if (!entry.fresh || (first && stale(entry))) load(key, loader);
       return () => {
         entry.listeners.delete(onChange);
       };
@@ -99,7 +143,7 @@ export function useRemoteQuery<T>(key: string | null, loader: () => Promise<T>):
   }, [key]);
 
   return {
-    data: state?.status === "ready" ? (state.data as T) : undefined,
+    data: state?.data as T | undefined,
     loading: state === undefined || state.status === "loading",
     error: state?.status === "error" ? state.error : undefined,
     refresh,
@@ -107,19 +151,32 @@ export function useRemoteQuery<T>(key: string | null, loader: () => Promise<T>):
 }
 
 /**
- * Nový pokus po návratu do aplikace nebo po obnovení sítě.
+ * Zneplatní dotazy podle jména (část klíče před první dvojtečkou). Na které
+ * se právě někdo dívá, ty se stáhnou hned; ostatní při příštím otevření.
+ */
+export function invalidateQueries(names: readonly string[]): void {
+  const wanted = new Set(names);
+  for (const [key, entry] of cache) {
+    if (!wanted.has(key.split(":")[0])) continue;
+    if (entry.listeners.size > 0 && entry.loader) load(key, entry.loader);
+    else entry.fresh = false;
+  }
+}
+
+/**
+ * Obnova po návratu do aplikace nebo po obnovení sítě.
  *
- * iPhone aplikaci na ploše uspí; po probuzení první dotazy občas odejdou
- * ještě se starým přihlašovacím tokenem nebo po mrtvém spojení a spadnou
- * (v logu 401 hned po obnově tokenu). Dotaz, který skončil chybou, by
- * jinak zůstal viset, dokud se obrazovka neotevře znovu. Opakují se jen
- * chybné dotazy, na které se někdo dívá — hotová data se nestahují znovu.
+ * iPhone aplikaci na ploše uspí; mezitím kamarád mohl přijmout výzvu
+ * nebo dohrát souboj, a první dotazy po probuzení občas spadnou (v logu
+ * 401 hned po obnově tokenu). Stáhnou se znovu dotazy, na které se někdo
+ * dívá a jsou chybné nebo starší než STALE_MS.
  */
 let watching = false;
 
-function retryFailed() {
+function refreshVisible() {
   for (const [key, entry] of cache) {
-    if (entry.snapshot.status === "error" && entry.listeners.size > 0 && entry.loader) load(key, entry.loader);
+    if (entry.listeners.size === 0 || !entry.loader) continue;
+    if (entry.snapshot.status === "error" || stale(entry)) load(key, entry.loader);
   }
 }
 
@@ -127,9 +184,9 @@ function watchResume() {
   if (watching || typeof window === "undefined") return;
   watching = true;
   document.addEventListener("visibilitychange", () => {
-    if (document.visibilityState === "visible") retryFailed();
+    if (document.visibilityState === "visible") refreshVisible();
   });
-  window.addEventListener("online", retryFailed);
+  window.addEventListener("online", refreshVisible);
 }
 
 /** Zapomene uložený výsledek — po odhlášení nesmí zůstat viset cizí data. */

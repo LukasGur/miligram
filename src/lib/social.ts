@@ -18,7 +18,9 @@ import { LESSON_LENGTH } from "@/core/lessonPlan";
 import { CATEGORIES } from "@/core/types";
 import { categoryScores } from "./curriculum";
 import { creditDuelReward, db, PROFILE_ID, saveBadgeLevels, storedBadgeLevels } from "./db";
+import { readPending, writePending } from "./duelPending";
 import { publishBadges, recordDuelResult, type Duel, type DuelResult } from "./remote";
+import { invalidateQueries } from "./remoteQuery";
 
 /* ---------------------------------------------------------------------------
    Pozvánky
@@ -84,28 +86,6 @@ export function duelsNeedingMe(duels: readonly Duel[]): number {
   }).length;
 }
 
-/* Výsledek souboje, který se nepodařilo odeslat (bez sítě). Zkusí se znovu. */
-const PENDING_KEY = "miligram:duelResults";
-
-type PendingResults = Record<string, DuelResult & { userId: string }>;
-
-function readPending(): PendingResults {
-  try {
-    return JSON.parse(window.localStorage.getItem(PENDING_KEY) ?? "{}") as PendingResults;
-  } catch {
-    return {};
-  }
-}
-
-function writePending(value: PendingResults) {
-  try {
-    if (Object.keys(value).length === 0) window.localStorage.removeItem(PENDING_KEY);
-    else window.localStorage.setItem(PENDING_KEY, JSON.stringify(value));
-  } catch {
-    // Bez úložiště se výsledek zkusí jen jednou.
-  }
-}
-
 /**
  * Odešle výsledek souboje. Nejdřív se zapíše stranou, takže výpadek sítě
  * ho nespolkne — SyncAgent ho pošle, až se síť vrátí.
@@ -117,8 +97,14 @@ export async function submitDuelResult(
   result: DuelResult,
 ): Promise<void> {
   writePending({ ...readPending(), [duelId]: { ...result, userId } });
+  // Obrazovky se hned dozví, že je dohráno (duelPending.ts), ještě než
+  // odpoví server.
+  invalidateQueries(DUEL_QUERIES);
   await flushDuelResults(client, userId);
 }
+
+/** Dotazy, které souboj mění: seznam, bilance, souboje s kamarádem. */
+const DUEL_QUERIES = ["duels", "record", "duelsWith", "h2h"] as const;
 
 export async function flushDuelResults(client: SupabaseClient, userId: string): Promise<void> {
   const pending = readPending();
@@ -130,6 +116,9 @@ export async function flushDuelResults(client: SupabaseClient, userId: string): 
       const rest = readPending();
       delete rest[duelId];
       writePending(rest);
+      // Server teď zná oba výsledky, nebo aspoň ten můj: rozhodnutí,
+      // bilance i soupeřův výsledek se stáhnou znovu.
+      invalidateQueries(DUEL_QUERIES);
     } catch {
       return;
     }

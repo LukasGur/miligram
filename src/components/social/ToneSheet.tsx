@@ -45,7 +45,6 @@ export function ToneSheet({ social, onClose }: { social: Social; onClose: () => 
     setError(false);
     try {
       await withTimeout(saveTone(social.client, social.userId, handle, tone));
-      social.profile.refresh();
       onClose();
     } catch {
       setError(true);

@@ -175,9 +175,6 @@ export function FriendProfile({
                 onClick={() =>
                   void removing.run(async () => {
                     await removeFriend(social.client, social.userId, friendId);
-                    social.friends.refresh();
-                    social.friendWeek.refresh();
-                    social.duels.refresh();
                     onBack();
                   })
                 }
@@ -282,8 +279,6 @@ function Gift({ social, friendId, handle }: { social: Social; friendId: string; 
       }
       await spendPills(STREAK_FREEZE_COST, "gift");
       setNotice(tAccount("giftSent"));
-      used.refresh();
-      social.giftsSent.refresh();
     } catch {
       setNotice(t("errorNetwork"));
     } finally {

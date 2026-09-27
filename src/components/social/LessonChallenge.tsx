@@ -93,7 +93,6 @@ export function LessonChallenge({
           topic={topic}
           onClose={() => setPicked(null)}
           onCreated={(duel, playNow) => {
-            duels.refresh();
             setPicked(null);
             if (playNow) onPlay({ id: duel.id, lessonId: duel.lessonId, topic: duel.topic });
             else setSent(duel.friend.handle);

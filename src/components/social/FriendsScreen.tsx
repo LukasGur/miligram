@@ -45,11 +45,9 @@ export function FriendsScreen({
     setPending({ requester, accept });
     void action
       .run(async () => {
+        // Žádosti, kamarádi i žebříček se obnoví samy (mutated v remote.ts).
         if (accept) await acceptFriend(social.client, social.userId, requester);
         else await declineFriend(social.client, social.userId, requester);
-        social.requests.refresh();
-        social.friends.refresh();
-        social.friendWeek.refresh();
       })
       .finally(() => setPending(null));
   }
@@ -146,7 +144,6 @@ function AddFriend({ social, first }: { social: Social; first: boolean }) {
       if (result.ok) {
         setTyped("");
         setNotice(t("requestSent", { handle: target }));
-        social.requests.refresh();
       } else {
         setNotice(
           tAccount(result.reason === "notFound" ? "friendNotFound" : result.reason === "self" ? "friendSelf" : "friendDuplicate"),

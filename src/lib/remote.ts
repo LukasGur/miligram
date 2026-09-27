@@ -5,6 +5,8 @@ import { parseBadgeLevels, type BadgeLevels } from "@/core/badges";
 import { isDuelTopic, type DuelMark, type DuelStatus, type DuelTopic } from "@/core/duel";
 import { rankLeague, type RankedEntry } from "@/core/league";
 import type { RemoteLesson } from "./restore";
+import { readPending, withPendingResult } from "./duelPending";
+import { invalidateQueries } from "./remoteQuery";
 import { rememberTones } from "./tones";
 import type { LessonEventRow, SyncGateway } from "./sync";
 
@@ -14,7 +16,32 @@ import type { LessonEventRow, SyncGateway } from "./sync";
  * Nikde tu není kontrola oprávnění — tu dělá Row Level Security v databázi.
  * Kdyby se sem nějaká připletla, byla by to kosmetika: statický export nemá
  * server, kde by šla vynutit.
+ *
+ * Každý zápis zneplatní dotazy, kterých se týká (`mutated`), a to i když
+ * spadne — odpověď se mohla ztratit po cestě a na serveru se změna stát
+ * mohla (viz src/lib/supabase.ts). Obrazovky pak ukážou, jak to je, ne jak
+ * to bylo před klepnutím. Jména dotazů jsou první část klíče
+ * v src/components/social/data.ts a u dotazů, které si obrazovky skládají
+ * samy (`h2h`, `duelsWith`, `gift`).
  */
+
+/** Co která změna ovlivní. */
+const AFFECTS = {
+  duel: ["duels", "record", "duelsWith", "h2h"],
+  friends: ["friends", "requests", "scores", "duels", "duelsWith", "h2h", "league"],
+  profile: ["profile", "friends", "scores", "league"],
+  gift: ["gift", "giftsSent"],
+  /** Odeslané lekce: XP se přičte na serveru a pohne ligou i žebříčkem. */
+  lessons: ["league", "scores", "friends", "leagueHistory"],
+} as const;
+
+async function mutated<T>(affects: keyof typeof AFFECTS, write: () => PromiseLike<T>): Promise<T> {
+  try {
+    return await write();
+  } finally {
+    invalidateQueries(AFFECTS[affects]);
+  }
+}
 
 export type RemoteProfile = {
   id: string;
@@ -35,13 +62,13 @@ export type ScoreRow = {
 export function remoteGateway(client: SupabaseClient, userId: string): SyncGateway {
   return {
     async pushLessonEvents(rows: readonly LessonEventRow[]) {
-      const { error } = await client
-        .from("lesson_events")
-        .upsert(
+      const { error } = await mutated("lessons", () =>
+        client.from("lesson_events").upsert(
           rows.map((row) => ({ ...row, user_id: userId })),
           // Opakované odeslání téže události není chyba, jen se zahodí.
           { onConflict: "user_id,client_event_id", ignoreDuplicates: true },
-        );
+        ),
+      );
       if (error) throw new Error(error.message);
     },
   };
@@ -105,10 +132,9 @@ export async function fetchProfile(client: SupabaseClient, userId: string): Prom
 
 /** Tón monogramu. Null vrátí ten z přezdívky. */
 export async function saveTone(client: SupabaseClient, userId: string, handle: string, tone: number | null): Promise<void> {
-  const { error } = await client
-    .from("profiles")
-    .update({ tone, updated_at: new Date().toISOString() })
-    .eq("id", userId);
+  const { error } = await mutated("profile", () =>
+    client.from("profiles").update({ tone, updated_at: new Date().toISOString() }).eq("id", userId),
+  );
   if (error) throw new Error(error.message);
   rememberTones([{ handle, tone }]);
 }
@@ -122,9 +148,9 @@ export async function claimHandle(
   const normalized = handle.trim().toLowerCase();
   if (!/^[a-z0-9_]{3,20}$/.test(normalized)) return { ok: false, reason: "invalid" };
 
-  const { error } = await client
-    .from("profiles")
-    .upsert({ id: userId, handle: normalized, updated_at: new Date().toISOString() });
+  const { error } = await mutated("profile", () =>
+    client.from("profiles").upsert({ id: userId, handle: normalized, updated_at: new Date().toISOString() }),
+  );
 
   if (!error) return { ok: true };
   // 23505 je porušení jedinečnosti — přezdívku má někdo jiný.
@@ -230,20 +256,22 @@ export async function requestFriend(
   if (!data) return { ok: false, reason: "notFound" };
   if (data.id === userId) return { ok: false, reason: "self" };
 
-  const { error: insertError } = await client
-    .from("friendships")
-    .insert({ requester: userId, addressee: data.id });
+  const { error: insertError } = await mutated("friends", () =>
+    client.from("friendships").insert({ requester: userId, addressee: data.id }),
+  );
   if (!insertError) return { ok: true };
   if (insertError.code === "23505") return { ok: false, reason: "duplicate" };
   throw new Error(insertError.message);
 }
 
 export async function acceptFriend(client: SupabaseClient, userId: string, requester: string): Promise<void> {
-  const { error } = await client
-    .from("friendships")
-    .update({ status: "accepted", responded_at: new Date().toISOString() })
-    .eq("requester", requester)
-    .eq("addressee", userId);
+  const { error } = await mutated("friends", () =>
+    client
+      .from("friendships")
+      .update({ status: "accepted", responded_at: new Date().toISOString() })
+      .eq("requester", requester)
+      .eq("addressee", userId),
+  );
   if (error) throw new Error(error.message);
 }
 
@@ -295,11 +323,13 @@ export async function createDuel(
   lessonId: string,
   topic: DuelTopic,
 ): Promise<CreateDuelResult> {
-  const { data, error } = await client
-    .from("duels")
-    .insert({ lesson_id: lessonId, challenger: userId, opponent: opponentId, topic })
-    .select("id")
-    .single();
+  const { data, error } = await mutated("duel", () =>
+    client
+      .from("duels")
+      .insert({ lesson_id: lessonId, challenger: userId, opponent: opponentId, topic })
+      .select("id")
+      .single(),
+  );
   if (!error && data) return { ok: true, id: data.id };
   // Jedinečnost otevřeného souboje na dvojici.
   if (error?.code === "23505") return { ok: false, reason: "open" };
@@ -309,14 +339,16 @@ export async function createDuel(
 
 /** Přijetí nebo odmítnutí. Vrací nový stav, nebo null, když už nebylo na co. */
 export async function respondDuel(client: SupabaseClient, duelId: string, accept: boolean): Promise<DuelStatus | null> {
-  const { data, error } = await client.rpc("respond_duel", { p_duel: duelId, p_accept: accept });
+  const { data, error } = await mutated("duel", () =>
+    client.rpc("respond_duel", { p_duel: duelId, p_accept: accept }),
+  );
   if (error) throw new Error(error.message);
   return (data as DuelStatus | null) ?? null;
 }
 
 /** Stažení nepřijaté výzvy. */
 export async function cancelDuel(client: SupabaseClient, duelId: string): Promise<void> {
-  const { error } = await client.from("duels").delete().eq("id", duelId);
+  const { error } = await mutated("duel", () => client.from("duels").delete().eq("id", duelId));
   if (error) throw new Error(error.message);
 }
 
@@ -398,28 +430,35 @@ async function hydrateDuels(client: SupabaseClient, userId: string, rows: DuelRo
         }
       : null;
 
+  const pending = readPending();
   return rows.map((duel) => {
     const mineIsChallenger = duel.challenger === userId;
     const opponentId = mineIsChallenger ? duel.opponent : duel.challenger;
     const found = byDuel.get(duel.id) ?? [];
-    return {
-      id: duel.id,
-      lessonId: duel.lesson_id,
-      topic: isDuelTopic(duel.topic) ? duel.topic : "mix",
-      status: duel.status,
-      opponentId,
-      opponentHandle: handles.get(opponentId) ?? "",
-      challengedByMe: mineIsChallenger,
-      createdAt: duel.created_at,
-      acceptedAt: duel.accepted_at,
-      resolvedAt: duel.resolved_at,
-      winnerId: duel.winner,
-      forfeit: duel.forfeit,
-      playedByMe: mineIsChallenger ? duel.challenger_played : duel.opponent_played,
-      playedByThem: mineIsChallenger ? duel.opponent_played : duel.challenger_played,
-      mine: result(found.find((row) => row.user_id === userId)),
-      theirs: result(found.find((row) => row.user_id === opponentId)),
-    };
+    // Dohraný souboj, jehož výsledek ještě neodešel, je dohraný i tady
+    // (src/lib/duelPending.ts).
+    return withPendingResult<Duel>(
+      {
+        id: duel.id,
+        lessonId: duel.lesson_id,
+        topic: isDuelTopic(duel.topic) ? duel.topic : "mix",
+        status: duel.status,
+        opponentId,
+        opponentHandle: handles.get(opponentId) ?? "",
+        challengedByMe: mineIsChallenger,
+        createdAt: duel.created_at,
+        acceptedAt: duel.accepted_at,
+        resolvedAt: duel.resolved_at,
+        winnerId: duel.winner,
+        forfeit: duel.forfeit,
+        playedByMe: mineIsChallenger ? duel.challenger_played : duel.opponent_played,
+        playedByThem: mineIsChallenger ? duel.opponent_played : duel.challenger_played,
+        mine: result(found.find((row) => row.user_id === userId)),
+        theirs: result(found.find((row) => row.user_id === opponentId)),
+      },
+      userId,
+      pending,
+    );
   });
 }
 
@@ -434,15 +473,17 @@ export async function recordDuelResult(
   userId: string,
   result: DuelResult,
 ): Promise<boolean> {
-  const { error } = await client.from("duel_results").insert({
-    duel_id: duelId,
-    user_id: userId,
-    correct: result.correct,
-    count: result.count,
-    points: result.points,
-    duration_ms: result.durationMs,
-    items: result.items ?? null,
-  });
+  const { error } = await mutated("duel", () =>
+    client.from("duel_results").insert({
+      duel_id: duelId,
+      user_id: userId,
+      correct: result.correct,
+      count: result.count,
+      points: result.points,
+      duration_ms: result.durationMs,
+      items: result.items ?? null,
+    }),
+  );
   // 23505 znamená, že výsledek už je zapsaný. To není chyba, jen druhý pokus.
   if (!error || error.code === "23505") return true;
   if (error.code === "42501") return false;
@@ -529,7 +570,7 @@ export async function sendGift(
   userId: string,
   recipientId: string,
 ): Promise<GiftResult> {
-  const { error } = await client.from("gifts").insert({ sender: userId, recipient: recipientId });
+  const { error } = await mutated("gift", () => client.from("gifts").insert({ sender: userId, recipient: recipientId }));
   if (!error) return { ok: true };
   // Jedinečnost (odesílatel, týden): tenhle týden už dar poslal.
   if (error.code === "23505") return { ok: false, reason: "usedUp" };
@@ -662,16 +703,20 @@ export async function publishBadges(client: SupabaseClient, userId: string, leve
 }
 
 export async function removeFriend(client: SupabaseClient, userId: string, otherId: string): Promise<void> {
-  const { error } = await client
-    .from("friendships")
-    .delete()
-    .or(`and(requester.eq.${userId},addressee.eq.${otherId}),and(requester.eq.${otherId},addressee.eq.${userId})`);
+  const { error } = await mutated("friends", () =>
+    client
+      .from("friendships")
+      .delete()
+      .or(`and(requester.eq.${userId},addressee.eq.${otherId}),and(requester.eq.${otherId},addressee.eq.${userId})`),
+  );
   if (error) throw new Error(error.message);
 }
 
 /** Odmítnutí žádosti o přátelství je smazání (migrace 0001). */
 export async function declineFriend(client: SupabaseClient, userId: string, requester: string): Promise<void> {
-  const { error } = await client.from("friendships").delete().eq("requester", requester).eq("addressee", userId);
+  const { error } = await mutated("friends", () =>
+    client.from("friendships").delete().eq("requester", requester).eq("addressee", userId),
+  );
   if (error) throw new Error(error.message);
 }
 

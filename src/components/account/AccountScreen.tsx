@@ -7,6 +7,7 @@ import type { DuelTopic } from "@/core/duel";
 import { pushOnFor, usePushStatus } from "@/lib/push";
 import { cancelDuel, requestFriend, respondDuel, weekStart, type Duel } from "@/lib/remote";
 import { updatePulse } from "@/lib/pulse";
+import { invalidateQueries } from "@/lib/remoteQuery";
 import { collectDuelRewards, duelsNeedingMe } from "@/lib/social";
 import { supabase, isRemoteConfigured } from "@/lib/supabase";
 import { useProfile } from "@/lib/useProfile";
@@ -177,6 +178,16 @@ function SignedIn({
   const [sent, setSent] = useState<string | null>(null);
   const [toneOpen, setToneOpen] = useState(false);
 
+  // Co mění druhá strana — přijatá výzva, dohraný souboj, nová žádost —
+  // se bez notifikace nedozvíme. Dokud je profil otevřený a vidět, ptá se
+  // jednou za minutu; po návratu do aplikace hned (remoteQuery.ts).
+  useEffect(() => {
+    const timer = window.setInterval(() => {
+      if (document.visibilityState === "visible") invalidateQueries(["duels", "requests", "record"]);
+    }, 60_000);
+    return () => window.clearInterval(timer);
+  }, []);
+
   // Rozhodnuté souboje si zařízení připíše samo (pastilky žijí v telefonu).
   const duels = social.duels.data;
   useEffect(() => {
@@ -209,11 +220,6 @@ function SignedIn({
     updatePulse(userId, { handle, attention: duelsNeedingMe(duels) + requestCount + (weekPending ? 1 : 0) });
   }, [userId, handle, duels, requestCount, weekPending]);
 
-  function refreshDuels() {
-    social.duels.refresh();
-    social.record.refresh();
-  }
-
   function play(duel: Duel) {
     onPlayDuel({ id: duel.id, lessonId: duel.lessonId, topic: duel.topic });
   }
@@ -231,7 +237,6 @@ function SignedIn({
             social={social}
             intro
             onSaved={(created) => {
-              social.profile.refresh();
               if (created && canEnablePush) setOnboarding(true);
             }}
           />
@@ -256,12 +261,10 @@ function SignedIn({
               onPlay: play,
               onRespond: async (duel, accept, andPlay) => {
                 const status = await respondDuel(client, duel.id, accept);
-                refreshDuels();
                 if (status === "accepted" && andPlay) play(duel);
               },
               onCancel: async (duel) => {
                 await cancelDuel(client, duel.id);
-                refreshDuels();
               },
               onReveal: (duel) => push({ name: "reveal", duelId: duel.id }),
               onNew: () => setChallenge({}),
@@ -330,7 +333,6 @@ function SignedIn({
           topic={challenge.topic}
           onClose={() => setChallenge(null)}
           onCreated={(duel, playNow) => {
-            refreshDuels();
             setChallenge(null);
             if (playNow) onPlayDuel({ id: duel.id, lessonId: duel.lessonId, topic: duel.topic });
             else setSent(duel.friend.handle);

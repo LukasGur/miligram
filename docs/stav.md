@@ -236,6 +236,25 @@ monogram v profilu (`profiles.tone`, migrace 0013, v živé databázi);
 kdo nevybral, má dál ten z přezdívky. Tóny cizích profilů si pamatuje
 `src/lib/tones.ts`, takže se nemusí protahovat každým seznamem.
 
+**Data ze serveru: zneplatnění po zápisu.** Po dohraném souboji profil
+ukazoval „tvůj tah“, protože mezipaměť dotazů (`src/lib/remoteQuery.ts`)
+neznala zneplatnění a obrazovky volaly `refresh()` ručně, jen někde.
+Teď platí:
+
+- každý zápis v `src/lib/remote.ts` jde přes `mutated(…)` a zneplatní
+  dotazy, kterých se týká (tabulka `AFFECTS`), i když spadne — odpověď
+  se mohla ztratit, změna na serveru ne; obrazovky `refresh()` nevolají
+- data starší než 30 s se stáhnou znovu, když se obrazovka otevře nebo
+  se aplikace vrátí do popředí; otevřený profil se ptá na souboje
+  a žádosti jednou za minutu
+- při obnově zůstávají vidět předchozí data a pozdě doražená starší
+  odpověď nepřepíše novější
+- výsledek souboje, který telefon zná a server ještě ne
+  (`src/lib/duelPending.ts`), se promítá do seznamu soubojů hned
+
+Nový dotaz: klíč `jméno:…`, jméno doplnit do `AFFECTS` u zápisů, které
+ho mění.
+
 ## Co dělat dál
 
 0a. **Souboj naostro na dvou telefonech.** Výzva, přijetí, hraní obou,

@@ -899,13 +899,13 @@
     "friendState": {
       "incoming": "Výzva od {handle}, otvoriť súboje",
       "myTurn": "Súboj s {handle}: si na ťahu",
-      "waiting": "Súboj s {handle}: čaká sa na súpera",
+      "waiting": "{handle} je na ťahu",
       "free": "Vyzvať {handle}"
     },
     "friendStateShort": {
       "incoming": "Prijať",
       "myTurn": "Tvoj ťah",
-      "waiting": "čaká",
+      "waiting": "na ťahu",
       "free": "Vyzvať"
     },
     "inviteWho": "kamaráta"
