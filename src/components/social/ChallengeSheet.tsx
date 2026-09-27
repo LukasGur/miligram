@@ -176,12 +176,21 @@ export function ChallengeSheet({
             ref={primaryRef}
             type="button"
             onClick={() => void create(true)}
-            disabled={!friend || !topic || busy || open}
-            className="bg-accent active:bg-accent-press flex min-h-14 w-full items-center justify-center gap-2 rounded-control text-body font-semibold text-white transition-colors duration-75 disabled:opacity-40"
+            // Odesílání není vypnuté tlačítko: zůstává barevné a říká, co dělá.
+            // Zašedlé vypadalo jako zaseklé. Dvojí klepnutí hlídá `create`.
+            disabled={!friend || !topic || open}
+            aria-busy={busy}
+            className={`bg-accent active:bg-accent-press flex min-h-14 w-full items-center justify-center gap-2 rounded-control text-body font-semibold text-white transition-colors duration-75 disabled:opacity-40 ${
+              busy ? "bg-accent-press" : ""
+            }`}
           >
             <VersusIcon className="size-5 shrink-0" />
             <span className="truncate">
-              {topic ? t("challengeTopic", { topic: topic === "mix" ? t("topicMix") : tCategory(topic) }) : t("challengeAndPlay")}
+              {busy
+                ? t("challengeSending")
+                : topic
+                  ? t("challengeTopic", { topic: topic === "mix" ? t("topicMix") : tCategory(topic) })
+                  : t("challengeAndPlay")}
             </span>
           </button>
           <button

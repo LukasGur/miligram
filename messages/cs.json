@@ -894,6 +894,7 @@
     "topicRate": "tvoje úspěšnost napoprvé {rate}",
     "lessonChallengeBodyAny": "Oba stejné příklady. Kdo dá víc napoprvé, vyhrává.",
     "challengeTopic": "Vyzvat · {topic}",
-    "topicChange": "Změnit"
+    "topicChange": "Změnit",
+    "challengeSending": "Odesílám výzvu…"
   }
 }

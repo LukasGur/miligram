@@ -894,6 +894,7 @@
     "topicRate": "tvoja úspešnosť na prvý raz {rate}",
     "lessonChallengeBodyAny": "Obaja rovnaké príklady. Kto dá viac na prvý raz, vyhráva.",
     "challengeTopic": "Vyzvať · {topic}",
-    "topicChange": "Zmeniť"
+    "topicChange": "Zmeniť",
+    "challengeSending": "Odosielam výzvu…"
   }
 }
