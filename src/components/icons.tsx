@@ -65,18 +65,12 @@ export function AddToHomeIcon({ className }: IconProps) {
   );
 }
 
+/** Ozubené kolo. Posuvníky, které tu byly dřív, četly spíš jako filtr. */
 export function SettingsIcon({ className }: IconProps) {
   return (
     <Icon className={className}>
-      <path d="M10 5H3" />
-      <path d="M12 19H3" />
-      <path d="M14 3v4" />
-      <path d="M16 17v4" />
-      <path d="M21 12h-9" />
-      <path d="M21 19h-5" />
-      <path d="M21 5h-7" />
-      <path d="M8 10v4" />
-      <path d="M8 12H3" />
+      <path d="M9.671 4.136a2.34 2.34 0 0 1 4.659 0 2.34 2.34 0 0 0 3.319 1.915 2.34 2.34 0 0 1 2.33 4.033 2.34 2.34 0 0 0 0 3.831 2.34 2.34 0 0 1-2.33 4.033 2.34 2.34 0 0 0-3.319 1.915 2.34 2.34 0 0 1-4.659 0 2.34 2.34 0 0 0-3.32-1.915 2.34 2.34 0 0 1-2.33-4.033 2.34 2.34 0 0 0 0-3.831A2.34 2.34 0 0 1 6.35 6.051a2.34 2.34 0 0 0 3.319-1.915" />
+      <circle cx="12" cy="12" r="3" />
     </Icon>
   );
 }

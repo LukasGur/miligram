@@ -295,6 +295,11 @@ export default function HomePage() {
           <IconButton label={tStats("title")} onClick={() => setStatsOpen(true)}>
             <ChartIcon className="size-6" />
           </IconButton>
+          {/* Nastavení mezi statistikami a účtem: roh patří „já“ — tam
+              účet oko hledá a monogram hlavičku ukotví. */}
+          <IconButton label={tCommon("settings")} onClick={() => setSettingsOpen(true)}>
+            <SettingsIcon className="size-[1.375rem]" />
+          </IconButton>
           {/* Po přihlášení monogram místo ikony. Tečka v akcentu, když na
               uživatele něco čeká — výzva, tah v souboji, žádost, výsledek. */}
           <IconButton
@@ -315,9 +320,6 @@ export default function HomePage() {
                 <span className="bg-accent border-paper absolute -top-0.5 -right-0.5 size-3 rounded-full border-2" />
               ) : null}
             </span>
-          </IconButton>
-          <IconButton label={tCommon("settings")} onClick={() => setSettingsOpen(true)}>
-            <SettingsIcon className="size-6" />
           </IconButton>
         </div>
       </header>
