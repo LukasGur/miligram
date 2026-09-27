@@ -47,6 +47,8 @@ type Entry = {
    */
   generation: number;
   loader?: () => Promise<unknown>;
+  /** Běžící načtení; na něj se napojí `fetchQuery`, místo aby ptal znovu. */
+  pending?: Promise<unknown>;
 };
 
 /** Po jaké době se data při návratu na obrazovku stáhnou znovu. */
@@ -74,7 +76,7 @@ function publish(entry: Entry, snapshot: Snapshot) {
   for (const listener of entry.listeners) listener();
 }
 
-function load(key: string, loader: () => Promise<unknown>) {
+function load(key: string, loader: () => Promise<unknown>): Promise<unknown> {
   const entry = entryFor(key);
   const generation = ++entry.generation;
   entry.fresh = true;
@@ -82,20 +84,25 @@ function load(key: string, loader: () => Promise<unknown>) {
   watchResume();
   publish(entry, { status: "loading", data: entry.snapshot.data, error: undefined });
 
-  loader().then(
+  const promise = loader();
+  entry.pending = promise;
+  promise.then(
     (data) => {
       if (generation !== entry.generation) return;
+      entry.pending = undefined;
       entry.loadedAt = Date.now();
       publish(entry, { status: "ready", data, error: undefined });
     },
     (error) => {
       if (generation !== entry.generation) return;
+      entry.pending = undefined;
       // Chyba nemaže, co už bylo vidět; nový pokus přijde po návratu
       // do aplikace nebo s obnovenou sítí.
       entry.fresh = false;
       publish(entry, { status: "error", data: entry.snapshot.data, error });
     },
   );
+  return promise;
 }
 
 function stale(entry: Entry): boolean {
@@ -148,6 +155,21 @@ export function useRemoteQuery<T>(key: string | null, loader: () => Promise<T>):
     error: state?.status === "error" ? state.error : undefined,
     refresh,
   };
+}
+
+/**
+ * Totéž co `useRemoteQuery`, ale pro kód mimo obrazovky (SyncAgent). Sdílí
+ * s obrazovkami jednu mezipaměť: čerstvá data vrátí bez dotazu, na běžící
+ * načtení se napojí. Dřív si SyncAgent stahoval profil a souboje sám
+ * a s otevřeným profilem šlo všechno dvakrát.
+ */
+export function fetchQuery<T>(key: string, loader: () => Promise<T>): Promise<T> {
+  const entry = entryFor(key);
+  if (entry.fresh && entry.pending) return entry.pending as Promise<T>;
+  if (entry.fresh && entry.snapshot.status === "ready" && !stale(entry)) {
+    return Promise.resolve(entry.snapshot.data as T);
+  }
+  return load(key, loader) as Promise<T>;
 }
 
 /**

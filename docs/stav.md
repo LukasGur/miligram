@@ -255,6 +255,16 @@ Teď platí:
 Nový dotaz: klíč `jméno:…`, jméno doplnit do `AFFECTS` u zápisů, které
 ho mění.
 
+**Spotřeba dat.** Změřeno z edge logů a v Chromiu:
+
+- nová verze aplikace si stáhne jen změněné soubory: precache nese otisk
+  každého souboru a nezměněné převezme z předchozí cache (ověřeno: změna
+  index.html = 2 požadavky místo 90, dřív ~3 MB při každém nasazení)
+- SyncAgent běží jednou za běh aplikace, ne s domovskou obrazovkou —
+  dřív každý návrat z lekce nebo profilu spustil celou výměnu znovu
+- SyncAgent čte přes `fetchQuery` z téže mezipaměti jako obrazovky
+- nastavení upozornění a registrace zařízení se zapisují jen při změně
+
 ## Co dělat dál
 
 0a. **Souboj naostro na dvou telefonech.** Výzva, přijetí, hraní obou,

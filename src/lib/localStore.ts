@@ -46,6 +46,11 @@ export const STORAGE_KEYS = {
    * Po odhlášení a přihlášení téhož účtu se odběr obnoví sám, jinému ne.
    */
   pushOwner: "miligram.push.owner",
+  /**
+   * Který odběr (účet a endpoint) už server zná. Obnova po spuštění
+   * se pak neposílá znovu se stejnými údaji.
+   */
+  pushRegistered: "miligram.push.registered",
   /** Kdy naposledy uživatel odmítl nabídku notifikací po lekci. */
   pushOfferDismissedAt: "miligram.push.offerDismissedAt",
   /** Kolikrát ji odmítl. Po třetím odmítnutí se nabídka už neukáže. */

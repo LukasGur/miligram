@@ -182,6 +182,7 @@ export async function enablePush(
     if (!worker) return "failed";
     const subscription = await deviceSubscription(worker);
     await register(client, subscription);
+    writeLocal(STORAGE_KEYS.pushRegistered, `${userId}|${subscription.endpoint}`);
     await savePrefs(client, userId, settings);
     writeLocal(STORAGE_KEYS.pushOwner, userId);
     await refreshPushStatus();
@@ -204,6 +205,7 @@ export async function disablePush(client: SupabaseClient): Promise<void> {
     await subscription.unsubscribe().catch(() => {});
   }
   writeLocal(STORAGE_KEYS.pushOwner, "");
+  writeLocal(STORAGE_KEYS.pushRegistered, "");
   await refreshPushStatus();
 }
 
@@ -218,6 +220,8 @@ export async function detachPushDevice(client: SupabaseClient): Promise<void> {
     const worker = await registration();
     const subscription = await worker?.pushManager.getSubscription();
     if (subscription) await client.rpc("unregister_push_subscription", { p_endpoint: subscription.endpoint });
+    // Po přihlášení se odběr musí zapsat znovu.
+    writeLocal(STORAGE_KEYS.pushRegistered, "");
   } catch {
     // Bez sítě se odběr na serveru nesmaže. Při dalším odeslání ho server
     // zkusí a push služba ho odmítne teprve po odinstalaci — cenou je
@@ -236,7 +240,13 @@ export async function restorePushDevice(client: SupabaseClient, userId: string):
   if (availability() !== "available" || Notification.permission !== "granted") return;
   const worker = await registration();
   if (!worker) return;
-  await register(client, await deviceSubscription(worker));
+  const subscription = await deviceSubscription(worker);
+  // Server ten odběr už zná: dřív šel zápis při každém spuštění (v logu
+  // 28× za den) se stejnými údaji.
+  if (readLocal(STORAGE_KEYS.pushRegistered) !== `${userId}|${subscription.endpoint}`) {
+    await register(client, subscription);
+    writeLocal(STORAGE_KEYS.pushRegistered, `${userId}|${subscription.endpoint}`);
+  }
   await refreshPushStatus();
 }
 

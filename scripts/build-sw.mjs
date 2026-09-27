@@ -1,5 +1,7 @@
 // Po `next build` projde out/, sestaví precache manifest a zapíše out/sw.js.
-// Verze cache je otisk obsahu — každý build si tak vynutí nové přednačtení.
+// Verze cache je otisk obsahu — každý build si tak vynutí novou instalaci.
+// Každý soubor má i vlastní otisk (revizi): nová verze si stáhne jen soubory,
+// které se změnily, zbytek převezme z předchozí cache (sw.template.js).
 
 import { createHash } from "node:crypto";
 import { readdir, readFile, stat, writeFile } from "node:fs/promises";
@@ -45,8 +47,9 @@ for (const file of files.sort()) {
   if (EXCLUDED_PREFIXES.some((prefix) => url.startsWith(prefix))) continue;
 
   const content = await readFile(file);
-  hash.update(url).update(createHash("sha256").update(content).digest());
-  urls.push(url);
+  const digest = createHash("sha256").update(content).digest();
+  hash.update(url).update(digest);
+  urls.push([url, digest.toString("hex").slice(0, 16)]);
 }
 
 const version = hash.digest("hex").slice(0, 16);

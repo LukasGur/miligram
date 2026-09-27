@@ -3,21 +3,36 @@
 // Neupravuj out/sw.js, uprav tuhle šablonu.
 
 const VERSION = "__BUILD_VERSION__";
+/** [adresa, otisk obsahu]. */
 const PRECACHE = __PRECACHE_URLS__;
 
 const PRECACHE_NAME = `miligram-precache-${VERSION}`;
 const RUNTIME_NAME = `miligram-runtime-${VERSION}`;
 const OFFLINE_SHELL = "/";
+/** Pod touto adresou si každá precache pamatuje otisky svých souborů. */
+const REVISIONS_KEY = "/__miligram-revisions";
 
 self.addEventListener("install", (event) => {
   event.waitUntil(
     (async () => {
       const cache = await caches.open(PRECACHE_NAME);
-      // reload obchází HTTP cache prohlížeče — jinak by se do precache
-      // mohl dostat starý index.html z předchozího nasazení.
+      const previous = await previousPrecache();
+
+      // Soubor se stejným otiskem se převezme z předchozí verze. Dřív si
+      // každá nová verze stáhla všech ~90 souborů (3 MB) znovu, i když se
+      // změnily dva. Mění se hlavně index.html a pár balíků kódu.
       await Promise.all(
-        PRECACHE.map(async (url) => {
+        PRECACHE.map(async ([url, revision]) => {
           try {
+            if (previous && previous.revisions[url] === revision) {
+              const kept = await previous.cache.match(url);
+              if (kept) {
+                await cache.put(url, kept);
+                return;
+              }
+            }
+            // reload obchází HTTP cache prohlížeče — jinak by se do precache
+            // mohl dostat starý index.html z předchozího nasazení.
             const response = await fetch(new Request(url, { cache: "reload" }));
             if (response.ok) await cache.put(url, response);
           } catch {
@@ -25,10 +40,30 @@ self.addEventListener("install", (event) => {
           }
         }),
       );
+      await cache.put(
+        REVISIONS_KEY,
+        new Response(JSON.stringify(Object.fromEntries(PRECACHE)), { headers: { "content-type": "application/json" } }),
+      );
       await self.skipWaiting();
     })(),
   );
 });
+
+/** Předchozí precache a otisky jejích souborů; smaže se až při aktivaci. */
+async function previousPrecache() {
+  const keys = (await caches.keys()).filter((key) => key.startsWith("miligram-precache-") && key !== PRECACHE_NAME);
+  for (const key of keys.reverse()) {
+    const cache = await caches.open(key);
+    const stored = await cache.match(REVISIONS_KEY);
+    if (!stored) continue;
+    try {
+      return { cache, revisions: await stored.json() };
+    } catch {
+      // Poškozený záznam: tahle cache se nepoužije.
+    }
+  }
+  return null;
+}
 
 self.addEventListener("activate", (event) => {
   event.waitUntil(

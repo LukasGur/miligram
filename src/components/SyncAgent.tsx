@@ -15,10 +15,11 @@ import {
   weekStart,
 } from "@/lib/remote";
 import { updatePulse } from "@/lib/pulse";
+import { fetchQuery } from "@/lib/remoteQuery";
 import { collectDuelRewards, duelsNeedingMe, flushDuelResults, publishBadgesIfChanged } from "@/lib/social";
 import { unseenWeek } from "@/components/social/WeekResult";
 import { claimGift } from "@/lib/db";
-import { pushOnFor, restorePushDevice, savePrefs, usePushStatus } from "@/lib/push";
+import { pushOnFor, restorePushDevice, savePrefs, timeZone, usePushStatus } from "@/lib/push";
 import { pullNews } from "@/lib/restore";
 import { supabase } from "@/lib/supabase";
 import { syncOutbox } from "@/lib/sync";
@@ -137,11 +138,14 @@ export function SyncAgent() {
       running = true;
       try {
         await flushDuelResults(client, userId);
+        // Stejné klíče jako obrazovky (components/social/data.ts): co už je
+        // v mezipaměti čerstvé, se znovu nestahuje.
+        const key = (name: string) => `${name}:${userId}`;
         const [profile, duels, requests, history] = await Promise.all([
-          fetchProfile(client, userId),
-          listDuels(client, userId),
-          pendingRequests(client, userId),
-          leagueHistory(client),
+          fetchQuery(key("profile"), () => fetchProfile(client, userId)),
+          fetchQuery(key("duels"), () => listDuels(client, userId)),
+          fetchQuery(key("requests"), () => pendingRequests(client, userId)),
+          fetchQuery(key("leagueHistory"), () => leagueHistory(client)),
         ]);
         if (cancelled) return;
         await collectDuelRewards(userId, duels);
@@ -212,10 +216,16 @@ export function SyncAgent() {
     const client = supabase();
     if (!client || !userId || !pushOn) return;
 
+    // Zapisuje se jen změna. Dřív šel zápis při každém spuštění a návratu
+    // domů (v logu 32× za den) se stejnými hodnotami.
+    const facts = { locale, streakDays, streakFreezes, lastLessonDay };
+    const fingerprint = JSON.stringify({ userId, zone: timeZone(), ...facts });
     let cancelled = false;
     const save = () => {
-      if (cancelled || !navigator.onLine) return;
-      void savePrefs(client, userId, { locale, streakDays, streakFreezes, lastLessonDay }).catch(() => {});
+      if (cancelled || !navigator.onLine || readSynced() === fingerprint) return;
+      void savePrefs(client, userId, facts)
+        .then(() => writeSynced(fingerprint))
+        .catch(() => {});
     };
 
     save();
@@ -227,4 +237,22 @@ export function SyncAgent() {
   }, [userId, pushOn, locale, streakDays, streakFreezes, lastLessonDay]);
 
   return null;
+}
+
+const PREFS_SYNCED_KEY = "miligram:prefsSynced";
+
+function readSynced(): string | null {
+  try {
+    return window.localStorage.getItem(PREFS_SYNCED_KEY);
+  } catch {
+    return null;
+  }
+}
+
+function writeSynced(value: string): void {
+  try {
+    window.localStorage.setItem(PREFS_SYNCED_KEY, value);
+  } catch {
+    // Bez úložiště se zapíše i příště; nic horšího se nestane.
+  }
 }

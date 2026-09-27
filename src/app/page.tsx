@@ -69,7 +69,22 @@ const LessonView = dynamic(
   { ssr: false },
 );
 
+/**
+ * Výměna se serverem běží jednou za celý běh aplikace, ne s domovskou
+ * obrazovkou. Dřív byla uvnitř ní: každý návrat z lekce nebo profilu ji
+ * připojil znovu a ta znovu stáhla historii, dary, souboje, ligu a znovu
+ * zapsala nastavení upozornění — desítky požadavků za nic.
+ */
 export default function HomePage() {
+  return (
+    <>
+      <SyncAgent />
+      <Home />
+    </>
+  );
+}
+
+function Home() {
   const t = useTranslations("home");
   const tCommon = useTranslations("common");
   const tAccount = useTranslations("account");
@@ -285,7 +300,6 @@ export default function HomePage() {
   return (
     <div className="bg-paper flex h-dvh flex-col overflow-hidden">
       <NetworkStatus />
-      <SyncAgent />
 
       <header
         className="app-chrome flex items-center justify-between px-5 pb-3"
