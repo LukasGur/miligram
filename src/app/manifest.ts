@@ -5,7 +5,7 @@ export const dynamic = "force-static";
 export default function manifest(): MetadataRoute.Manifest {
   return {
     id: "/",
-    name: "Miligram — trénink dávkování",
+    name: "Miligram: trénink dávkování",
     short_name: "Miligram",
     description: "Procvičování výpočtů dávkování léků pro studenty medicíny.",
     start_url: "/",
