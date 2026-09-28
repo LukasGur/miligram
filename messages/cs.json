@@ -30,7 +30,7 @@
     "dismiss": "Teď ne"
   },
   "network": {
-    "offline": "Offline. Aplikace funguje dál.",
+    "offline": "Offline, aplikace funguje dál",
     "backOnline": "Připojení obnoveno"
   },
   "home": {
