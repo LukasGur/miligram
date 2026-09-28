@@ -14,7 +14,7 @@ Pravidla, podle kterých jsou psané:
   odborných společností vyžaduje
 - bez rodu („spočítáš“, ne „spočítal jsi“)
 
-Co opravit: napiš číslo šablony a novou větu, nebo „škrtnout“ — karta pak
+Co opravit: napiš číslo šablony a novou větu, nebo „škrtnout“ — vzor pak
 u té šablony zůstane bez věty.
 
 ## A — základní dávkování
