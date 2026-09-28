@@ -1,5 +1,5 @@
 import type { LessonKind } from "@/core/scoring";
-import { db, type OutboxEvent } from "./db";
+import { db, type OutboxEvent, type WalletPayload } from "./db";
 
 /**
  * Odeslání fronty událostí.
@@ -19,6 +19,16 @@ export type LessonEventRow = {
   finished_at: string;
 };
 
+export type WalletEventRow = {
+  client_event_id: string;
+  kind: WalletPayload["kind"];
+  pills: number;
+  freezes: number;
+  reason: string;
+  day: string | null;
+  occurred_at: string;
+};
+
 export type SyncGateway = {
   /**
    * Zapíše dávku událostí. Opakované odeslání téže události nesmí skončit
@@ -26,6 +36,8 @@ export type SyncGateway = {
    * a duplicitu zahazuje.
    */
   pushLessonEvents(rows: readonly LessonEventRow[]): Promise<void>;
+  /** Pohyby v peněžence. Duplicitu zahazuje server stejně jako u lekcí. */
+  pushWalletEvents(rows: readonly WalletEventRow[]): Promise<void>;
 };
 
 export type SyncResult = { sent: number; pending: number };
@@ -39,31 +51,51 @@ export async function syncOutbox(gateway: SyncGateway): Promise<SyncResult> {
     .filter((event) => event.syncedAt === undefined)
     .sortBy("id");
 
-  const lessons = waiting.filter((event) => event.type === "lessonFinished");
   let sent = 0;
 
-  for (let start = 0; start < lessons.length; start += BATCH) {
-    const batch = lessons.slice(start, start + BATCH);
-    await gateway.pushLessonEvents(batch.map(toRow));
+  /**
+   * Nejdřív peněženka, pak lekce. Server skládá sérii z dní s lekcí a dní
+   * pokrytých ochranou; když ochrana dorazí první, lekce po ní sérii
+   * rovnou prodlouží, místo aby ji na chvíli shodila na jedničku.
+   */
+  const wallet = waiting.filter((event) => event.type === "wallet");
+  const lessons = waiting.filter((event) => event.type === "lessonFinished");
 
-    // Označit se smí až po potvrzeném zápisu. Kdyby se to obrátilo,
-    // výpadek uprostřed by událost tiše zahodil.
-    const now = new Date().toISOString();
-    await database.outbox.bulkUpdate(
-      batch.map((event) => ({ key: event.id as number, changes: { syncedAt: now } })),
-    );
-    sent += batch.length;
+  for (const [events, push] of [
+    [wallet, (batch: OutboxEvent[]) => gateway.pushWalletEvents(batch.map(toWalletRow))],
+    [lessons, (batch: OutboxEvent[]) => gateway.pushLessonEvents(batch.map(toRow))],
+  ] as const) {
+    for (let start = 0; start < events.length; start += BATCH) {
+      const batch = events.slice(start, start + BATCH);
+      await push(batch);
+
+      // Označit se smí až po potvrzeném zápisu. Kdyby se to obrátilo,
+      // výpadek uprostřed by událost tiše zahodil.
+      const now = new Date().toISOString();
+      await database.outbox.bulkUpdate(
+        batch.map((event) => ({ key: event.id as number, changes: { syncedAt: now } })),
+      );
+      sent += batch.length;
+    }
   }
 
   const pending = await database.outbox.filter((event) => event.syncedAt === undefined).count();
   return { sent, pending };
 }
 
-/**
- * Útrata prášků se zatím neodesílá. Prášky jsou měna a jejich zůstatek
- * dává smysl jen na zařízení; server je bude potřebovat, až se bude
- * kupovat něco, co má platit napříč zařízeními.
- */
+function toWalletRow(event: OutboxEvent): WalletEventRow {
+  const payload = event.payload as WalletPayload;
+  return {
+    client_event_id: event.uid,
+    kind: payload.kind,
+    pills: payload.pills,
+    freezes: payload.freezes,
+    reason: payload.reason.slice(0, 80),
+    day: payload.day ?? null,
+    occurred_at: event.createdAt,
+  };
+}
+
 function toRow(event: OutboxEvent): LessonEventRow {
   // Události z doby před opakováním chyb druh nemají — byly to lekce.
   const payload = event.payload as { lessonId?: string; kind?: LessonKind; answers?: unknown };

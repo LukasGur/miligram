@@ -3,14 +3,13 @@
 import { useEffect, useRef, useState } from "react";
 import { useTranslations } from "next-intl";
 import { LogOutIcon } from "@/components/icons";
-import { Spinner } from "@/components/ui/Spinner";
 import { pressable } from "@/lib/press";
 import { detachPushDevice } from "@/lib/push";
 import { withTimeout } from "@/lib/useAction";
 import { remoteGateway } from "@/lib/remote";
 import type { supabase } from "@/lib/supabase";
 import { syncOutbox } from "@/lib/sync";
-import { usePendingEvents } from "@/lib/useProfile";
+import { wipeDevice } from "@/lib/account";
 import { Primary } from "./SignIn";
 
 type Client = ReturnType<typeof supabase> & object;
@@ -27,12 +26,14 @@ async function signOut(client: Client): Promise<void> {
     // čekání na service worker nebo síť nesmí odhlášení zablokovat.
   }
   try {
-    const { error } = await withTimeout(client.auth.signOut());
+    // Jen tohle sezení. Výchozí rozsah odhlásí účet na všech zařízeních,
+    // a to by s „z tohohle telefonu se smaže“ nesedělo.
+    const { error } = await withTimeout(client.auth.signOut({ scope: "local" }));
     if (error) throw error;
   } catch {
-    // Server nedostupný: aspoň z tohohle telefonu. Tlačítko, které po
-    // klepnutí nic neudělá, je horší než token, který dožije na serveru.
-    await client.auth.signOut({ scope: "local" });
+    // Server nedostupný: sezení se zahodí aspoň v telefonu. Tlačítko, které
+    // po klepnutí nic neudělá, je horší než token, který dožije na serveru.
+    await client.auth.signOut({ scope: "local" }).catch(() => {});
   }
 }
 
@@ -42,57 +43,43 @@ async function signOut(client: Client): Promise<void> {
  * Tlačítko jako ostatní vedlejší akce — rámeček, ikona, plná šířka. Holý
  * šedý text vypadal jako poznámka, ne jako něco, na co se ťuká.
  *
- * Potvrzuje se jen tehdy, když na server ještě čekají lekce. Frontu
- * neodeslaných událostí nic neváže na účet: po odhlášení by se odeslala
- * pod tím, kdo se na telefonu přihlásí příště. Proto hlavní akce lekce
- * nejdřív odešle a teprve pak odhlásí.
+ * Potvrzuje se vždycky: odhlášení z telefonu smaže postup (na účtu
+ * zůstává), a to se nemá stát jedním ťuknutím omylem.
  */
 export function SignOut({ client, userId, email }: { client: Client; userId: string; email?: string }) {
   const t = useTranslations("account");
-  const pending = usePendingEvents();
   const [confirming, setConfirming] = useState(false);
-  const [leaving, setLeaving] = useState(false);
-
-  function leave() {
-    if (leaving) return;
-    setLeaving(true);
-    // Po odhlášení se obrazovka vymění sama; stav se vrací jen pro jistotu.
-    void signOut(client).finally(() => setLeaving(false));
-  }
 
   return (
     <div className="mt-10">
       <button
         type="button"
         {...pressable}
-        disabled={leaving}
-        aria-busy={leaving}
-        onClick={() => (pending > 0 ? setConfirming(true) : leave())}
-        className="press press-wide border-line text-ink data-pressed:border-surface-press data-pressed:bg-surface-press flex min-h-12 w-full items-center justify-center gap-2 rounded-control border px-3 text-label font-medium disabled:opacity-40"
+        onClick={() => setConfirming(true)}
+        className="press press-wide border-line text-ink data-pressed:border-surface-press data-pressed:bg-surface-press flex min-h-12 w-full items-center justify-center gap-2 rounded-control border px-3 text-label font-medium"
       >
-        {leaving ? <Spinner className="text-ink-soft" /> : <LogOutIcon className="text-ink-soft size-5" />}
+        <LogOutIcon className="text-ink-soft size-5" />
         {t("signOut")}
       </button>
       {email ? <p className="text-ink-soft mt-2 text-center text-micro">{t("signedInAs", { email })}</p> : null}
 
-      {confirming ? (
-        <ConfirmSheet client={client} userId={userId} pending={pending} onClose={() => setConfirming(false)} />
-      ) : null}
+      {confirming ? <ConfirmSheet client={client} userId={userId} onClose={() => setConfirming(false)} /> : null}
     </div>
   );
 }
 
-function ConfirmSheet({
-  client,
-  userId,
-  pending,
-  onClose,
-}: {
-  client: Client;
-  userId: string;
-  pending: number;
-  onClose: () => void;
-}) {
+/**
+ * Odhlášení v pořadí: odeslat, odhlásit, vyčistit. Odeslat první, jinak
+ * by se co nevidět smazalo, co server ještě nezná. Odhlásit před
+ * vyčištěním, jinak by brána (AccountGate) prázdný telefon hned znovu
+ * přiřadila přihlášenému účtu.
+ */
+async function leave(client: Client): Promise<void> {
+  await signOut(client);
+  await wipeDevice();
+}
+
+function ConfirmSheet({ client, userId, onClose }: { client: Client; userId: string; onClose: () => void }) {
   const t = useTranslations("account");
   const [busy, setBusy] = useState(false);
   const [failed, setFailed] = useState(false);
@@ -107,35 +94,41 @@ function ConfirmSheet({
     return () => document.removeEventListener("keydown", onKeyDown);
   }, [onClose]);
 
-  async function sendThenSignOut() {
+  async function sendThenLeave() {
     setBusy(true);
     setFailed(false);
     try {
       await withTimeout(syncOutbox(remoteGateway(client, userId)));
-      await signOut(client);
     } catch {
       // Bez spojení se nic neodešle. Odhlásit jde i tak, ale ať o tom ví.
       setFailed(true);
       setBusy(false);
+      return;
     }
+    await leave(client);
   }
 
   return (
     <div className="fixed inset-0 z-50 flex flex-col justify-end">
-      <button type="button" aria-label={t("signOutCancel")} onClick={onClose} className="bg-ink/25 absolute inset-0" />
+      <button
+        type="button"
+        aria-label={t("signOutCancel")}
+        onClick={onClose}
+        className="animate-scrim bg-ink/25 absolute inset-0"
+      />
       <div
         role="dialog"
         aria-modal="true"
         aria-labelledby="sign-out-title"
         aria-describedby="sign-out-body"
-        className="bg-paper relative rounded-t-sheet px-5 pt-6"
+        className="animate-sheet bg-paper relative mx-auto w-full max-w-md rounded-t-sheet px-5 pt-6"
         style={{ paddingBottom: "calc(var(--sa-b) + 1rem)" }}
       >
         <h2 id="sign-out-title" className="text-heading font-semibold">
           {t("signOutTitle")}
         </h2>
         <p id="sign-out-body" className="text-ink-soft mt-2 text-label">
-          {t("signOutPending", { count: pending })}
+          {t("signOutBody")}
         </p>
         {failed ? (
           <p role="alert" className="text-ink mt-3 text-label">
@@ -143,21 +136,23 @@ function ConfirmSheet({
           </p>
         ) : null}
 
-        <Primary onClick={() => void sendThenSignOut()} busy={busy}>
-          {t("signOutSend")}
+        <Primary onClick={() => void sendThenLeave()} busy={busy && !failed}>
+          {t("signOutConfirm")}
         </Primary>
-        <button
-          type="button"
-          {...pressable}
-          onClick={() => {
-            setBusy(true);
-            void signOut(client).finally(() => setBusy(false));
-          }}
-          disabled={busy}
-          className="press press-wide border-line text-ink data-pressed:border-surface-press data-pressed:bg-surface-press mt-2 flex min-h-12 w-full items-center justify-center rounded-control border px-3 text-label font-medium disabled:opacity-40"
-        >
-          {t("signOutAnyway")}
-        </button>
+        {failed ? (
+          <button
+            type="button"
+            {...pressable}
+            onClick={() => {
+              setBusy(true);
+              void leave(client).finally(() => setBusy(false));
+            }}
+            disabled={busy}
+            className="press press-wide border-line text-ink data-pressed:border-surface-press data-pressed:bg-surface-press mt-2 flex min-h-12 w-full items-center justify-center rounded-control border px-3 text-label font-medium disabled:opacity-40"
+          >
+            {t("signOutAnyway")}
+          </button>
+        ) : null}
         <button
           ref={cancelRef}
           type="button"

@@ -182,3 +182,52 @@ describe("stahování novinek", () => {
     expect((await readProfile()).restoredThrough).toBeUndefined();
   });
 });
+
+describe("série z historie a ochrany", () => {
+  beforeEach(async () => {
+    const database = db();
+    await database.transaction("rw", database.tables, async () => {
+      await Promise.all(database.tables.map((table) => table.clear()));
+    });
+  });
+
+  it("obnova bez nových lekcí sérii podrženou ochranou nezkrátí", async () => {
+    await db().profile.put({ ...(await readProfile()), streakFreezes: 1 });
+    await recordLesson(LEKCE_TELEFON("a"), new Date(poledne("2026-09-01")));
+    await recordLesson(LEKCE_TELEFON("b"), new Date(poledne("2026-09-03")));
+    expect((await readProfile()).streakDays).toBe(2);
+
+    await pullNews("anna", gateway([]));
+    expect((await readProfile()).streakDays).toBe(2);
+  });
+
+  it("použitá ochrana jde do fronty i s dnem, který pokryla", async () => {
+    await db().profile.put({ ...(await readProfile()), streakFreezes: 1 });
+    await recordLesson(LEKCE_TELEFON("a"), new Date(poledne("2026-09-01")));
+    await recordLesson(LEKCE_TELEFON("b"), new Date(poledne("2026-09-03")));
+
+    const pohyby = (await db().outbox.where("type").equals("wallet").toArray()).map((event) => event.payload);
+    expect(pohyby).toContainEqual({ kind: "freezeUsed", pills: 0, freezes: -1, reason: "streak", day: "2026-09-02" });
+    expect((await readProfile()).coveredDays).toEqual(["2026-09-02"]);
+  });
+
+  it("nový telefon složí sérii i přes den, který podržela ochrana", async () => {
+    const server = gateway([lekce("a", "2026-09-01"), lekce("b", "2026-09-03"), lekce("c", "2026-09-04")]);
+    await pullNews("anna", {
+      ...server,
+      pullWallet: async () => ({ pills: 120, freezes: 0, coveredDays: ["2026-09-02"] }),
+    });
+
+    const profile = await readProfile();
+    expect(profile.streakDays).toBe(3);
+    expect(profile.pills).toBe(120);
+  });
+});
+
+function LEKCE_TELEFON(lessonId: string) {
+  return {
+    lessonId,
+    answers: [{ templateId: "A1", seed: `${lessonId}:0`, difficulty: 1, correct: true, hinted: false }],
+    reward: { xp: 10, pills: 2, correct: 1, count: 1, flawless: true },
+  };
+}

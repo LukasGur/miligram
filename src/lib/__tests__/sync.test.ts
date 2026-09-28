@@ -1,7 +1,7 @@
 import "fake-indexeddb/auto";
 import { beforeEach, describe, expect, it } from "vitest";
 import { db, recordLesson, spendPills } from "../db";
-import { syncOutbox, type LessonEventRow, type SyncGateway } from "../sync";
+import { syncOutbox, type LessonEventRow, type SyncGateway, type WalletEventRow } from "../sync";
 
 const LESSON = {
   lessonId: "abc",
@@ -11,17 +11,27 @@ const LESSON = {
 
 function fakeGateway() {
   const received: LessonEventRow[][] = [];
+  const wallet: WalletEventRow[] = [];
+  const order: string[] = [];
   const gateway: SyncGateway = {
     async pushLessonEvents(rows) {
+      order.push("lessons");
       received.push([...rows]);
     },
+    async pushWalletEvents(rows) {
+      order.push("wallet");
+      wallet.push(...rows);
+    },
   };
-  return { gateway, received };
+  return { gateway, received, wallet, order };
 }
 
 function failingGateway(): SyncGateway {
   return {
     async pushLessonEvents() {
+      throw new Error("síť je pryč");
+    },
+    async pushWalletEvents() {
       throw new Error("síť je pryč");
     },
   };
@@ -51,7 +61,8 @@ describe("odeslání fronty", () => {
     await recordLesson(LESSON);
     const { gateway, received } = fakeGateway();
 
-    expect(await syncOutbox(gateway)).toEqual({ sent: 1, pending: 0 });
+    // Lekce a pohyb v peněžence (2 pastilky za ni).
+    expect(await syncOutbox(gateway)).toEqual({ sent: 2, pending: 0 });
     expect(received[0][0]).toMatchObject({ lesson_id: "abc", kind: "lesson" });
     expect(received[0][0].answers).toHaveLength(1);
   });
@@ -91,19 +102,21 @@ describe("odeslání fronty", () => {
     await expect(syncOutbox(failingGateway())).rejects.toThrow(/síť/);
 
     const waiting = await db().outbox.filter((event) => event.syncedAt === undefined).count();
-    expect(waiting).toBe(1);
+    expect(waiting).toBe(2);
   });
 
-  it("útrata prášků se neodesílá — zůstatek je věcí zařízení", async () => {
+  it("útrata jde na server jako pohyb v peněžence, a to před lekcemi", async () => {
     await recordLesson({ ...LESSON, reward: { ...LESSON.reward, pills: 20 } });
     await spendPills(15, "hint");
-    const { gateway, received } = fakeGateway();
+    const { gateway, received, wallet, order } = fakeGateway();
 
-    const result = await syncOutbox(gateway);
-    expect(result.sent).toBe(1);
-    // Událost o útratě ve frontě zůstane, ale nikam se neposílá.
-    expect(result.pending).toBe(1);
+    expect(await syncOutbox(gateway)).toEqual({ sent: 3, pending: 0 });
     expect(received.flat()).toHaveLength(1);
+    expect(wallet.map((row) => [row.kind, row.pills, row.reason])).toEqual([
+      ["earn", 20, "lesson"],
+      ["spend", -15, "hint"],
+    ]);
+    expect(order).toEqual(["wallet", "lessons"]);
   });
 
   it("posílá po dávkách, ne všechno naráz", async () => {
@@ -112,7 +125,7 @@ describe("odeslání fronty", () => {
     }
     const { gateway, received } = fakeGateway();
 
-    expect(await syncOutbox(gateway)).toEqual({ sent: 30, pending: 0 });
+    expect(await syncOutbox(gateway)).toEqual({ sent: 60, pending: 0 });
     expect(received.map((batch) => batch.length)).toEqual([25, 5]);
   });
 

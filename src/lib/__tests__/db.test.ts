@@ -70,12 +70,16 @@ describe("zápis dokončené lekce", () => {
 
   it("zapíše událost do fronty k odeslání", async () => {
     await recordLesson(LESSON);
-    const events = await db().outbox.toArray();
+    const events = await db().outbox.where("type").equals("lessonFinished").toArray();
     expect(events).toHaveLength(1);
-    expect(events[0].type).toBe("lessonFinished");
     expect(events[0].syncedAt).toBeUndefined();
-    // Posílá se, co se stalo, ne jaký je stav — stav si server dopočítá sám.
+    // Posílá se, co se stalo, ne jaký je stav — XP si server dopočítá sám.
+    // Pastilky jdou zvlášť jako pohyb v peněžence.
     expect(events[0].payload).not.toHaveProperty("pills");
+    const wallet = await db().outbox.where("type").equals("wallet").toArray();
+    expect(wallet.map((event) => event.payload)).toEqual([
+      { kind: "earn", pills: LESSON.reward.pills, freezes: 0, reason: "lesson" },
+    ]);
   });
 });
 

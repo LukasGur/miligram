@@ -8,7 +8,8 @@ import type { RemoteLesson } from "./restore";
 import { readPending, withPendingResult } from "./duelPending";
 import { invalidateQueries } from "./remoteQuery";
 import { rememberTones } from "./tones";
-import type { LessonEventRow, SyncGateway } from "./sync";
+import type { ServerWallet } from "./db";
+import type { LessonEventRow, SyncGateway, WalletEventRow } from "./sync";
 
 /**
  * Dotazy proti serveru.
@@ -71,7 +72,45 @@ export function remoteGateway(client: SupabaseClient, userId: string): SyncGatew
       );
       if (error) throw new Error(error.message);
     },
+    async pushWalletEvents(rows: readonly WalletEventRow[]) {
+      const { error } = await client.from("wallet_events").upsert(
+        rows.map((row) => ({ ...row, user_id: userId })),
+        { onConflict: "user_id,client_event_id", ignoreDuplicates: true },
+      );
+      if (error) throw new Error(error.message);
+    },
   };
+}
+
+/** Peněženka podle serveru: součet pohybů a dny pokryté ochranou. */
+export async function fetchWallet(client: SupabaseClient): Promise<ServerWallet> {
+  const { data, error } = await client.rpc("my_wallet").single<{
+    pills: number;
+    freezes: number;
+    covered_days: string[] | null;
+  }>();
+  if (error) throw new Error(error.message);
+  return { pills: data.pills, freezes: data.freezes, coveredDays: data.covered_days ?? [] };
+}
+
+/** Bonus za registraci. `true`, když se připsal teď; podruhé nic neudělá. */
+export async function claimSignupBonus(client: SupabaseClient): Promise<boolean> {
+  const { data, error } = await client.rpc("claim_signup_bonus");
+  if (error) throw new Error(error.message);
+  return data === true;
+}
+
+/**
+ * Má účet historii? Rozhoduje, jestli je přihlášení registrace (data
+ * z telefonu se k účtu připíšou), nebo návrat k účtu, který už svoje má.
+ */
+export async function accountHasHistory(client: SupabaseClient, userId: string): Promise<boolean> {
+  const { count, error } = await client
+    .from("lesson_events")
+    .select("id", { count: "exact", head: true })
+    .eq("user_id", userId);
+  if (error) throw new Error(error.message);
+  return (count ?? 0) > 0;
 }
 
 /**

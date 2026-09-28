@@ -40,6 +40,12 @@ const LessonChallenge = dynamic(
   { ssr: false },
 );
 
+/** Výzva k založení účtu; ptá se na přihlášení, a tak taky až tady. */
+const SignUpNudge = dynamic(
+  () => import("@/components/account/SignUpNudge").then((module) => module.SignUpNudge),
+  { ssr: false },
+);
+
 /** Po lekci se nabízí souboj na totéž téma; jen přihlášenému. */
 export type LessonChallengeProps = {
   handle: string;
@@ -68,6 +74,7 @@ export function LessonView({
   onAgain,
   onDuelDone,
   challenge,
+  onAccount,
 }: {
   lessonId: string;
   /** Hotový plán z tréninku, opakování chyb nebo rozehrané lekce. */
@@ -87,6 +94,8 @@ export function LessonView({
   /** Po dohraném souboji: přejít rovnou k jeho výsledku. */
   onDuelDone?: (duelId: string) => void;
   challenge?: LessonChallengeProps;
+  /** Otevře účet — z výzvy k registraci na konci lekce. */
+  onAccount?: () => void;
 }) {
   const plan = useMemo(() => resolvePlan({ lessonId, plan: given, spec }), [given, spec, lessonId]);
   // Rozehraná lekce začíná tam, kde uživatel přestal. Pořadí se dopočítá
@@ -137,6 +146,7 @@ export function LessonView({
         onAgain={onAgain}
         onDuel={duelId && onDuelDone ? () => onDuelDone(duelId) : undefined}
         challenge={duelId ? undefined : challenge}
+        onAccount={duelId ? undefined : onAccount}
         topic={mainCategory(plan.items.map((item) => categoryOfId(item.templateId))) ?? undefined}
       />
     );
@@ -297,6 +307,7 @@ function LessonSummary({
   onAgain,
   onDuel,
   challenge,
+  onAccount,
   topic,
 }: {
   /** Jak dopadl první pokus u každého příkladu. Odměna je z toho. */
@@ -314,6 +325,7 @@ function LessonSummary({
   /** Lekce byla souboj: hlavní akce vede k jeho výsledku. */
   onDuel?: () => void;
   challenge?: LessonChallengeProps;
+  onAccount?: () => void;
   /** Převažující téma lekce, pro výzvu. */
   topic?: DuelTopic;
 }) {
@@ -453,6 +465,8 @@ function LessonSummary({
 
           {/* Jen po čerstvě dohrané lekci: u lekce otevřené už hotové by
               výzva přišla odnikud. */}
+          {!challenge && onAccount && walletBefore !== undefined ? <SignUpNudge onOpen={onAccount} /> : null}
+
           {challenge && walletBefore !== undefined ? (
             <LessonChallenge
               topic={topic}

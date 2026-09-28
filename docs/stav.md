@@ -1,6 +1,6 @@
 # Kde jsme
 
-Poslední aktualizace: **26. 9. 2026**
+Poslední aktualizace: **28. 9. 2026**
 
 ## Hotovo
 
@@ -265,6 +265,24 @@ ho mění.
 - SyncAgent čte přes `fetchQuery` z téže mezipaměti jako obrazovky
 - nastavení upozornění a registrace zařízení se zapisují jen při změně
 
+**Účty a peněženka (28. 9. 2026, plán fáze A)** — data v telefonu mají
+vlastníka a synchronizace mluví jen za něj. Dřív odhlášení nic nesmazalo
+a kdo se přihlásil po někom jiném, viděl jeho skóre, sérii i chyby.
+
+- registrace si vezme, co se odehrálo bez účtu; přihlášení k účtu, který
+  už má historii, ukáže, co z telefonu zmizí, a smaže to až po potvrzení
+  („Zpět“ přihlášení zruší); odhlášení nejdřív odešle frontu, pak telefon
+  vyčistí — a odhlašuje už jen tenhle telefon, ne všechny
+- pastilky a ochrany na serveru (`wallet_events`, `my_wallet`), takže
+  se přenesou do nového telefonu a dvě zařízení se doženou; dosavadní
+  zůstatek se pošle jednou jako počáteční stav (Dexie verze 8)
+- 30 pastilek za založení účtu (`claim_signup_bonus`), karta ve výhodách
+  a výzva na konci 1. a 3. lekce nepřihlášenému
+- série na serveru se skládá z dní s lekcí a dní podržených ochranou
+  (`recompute_streak`); kamarádi tak vidí sérii, kterou podržela ochrana
+- opravená chyba: obnova při každém spuštění přepočítala sérii z historie
+  bez ochran, takže ochrana přihlášenému vydržela jen do dalšího spuštění
+
 ## Co dělat dál
 
 **Rozpracovaný plán: [plan.md](plan.md)** — účty a pastilky na serveru
@@ -346,9 +364,10 @@ ho mění.
 - Kalkulačka je uvnitř aplikace a u každého příkladu. Systémovou nejde
   na iOS otevřít a dělit příklady na ty, kde se „smí“ počítat, by byl
   zákaz, který stejně nejde vynutit. Cvičí se postavení výpočtu.
-- Prášky zůstávají v telefonu i u darů. Dar je událost, ne převod
-  zůstatku; proti podvodu nechrání zůstatek, ale nárok odvozený z práce,
-  kterou server zná.
+- Pastilky drží server jako součet pohybů (od 28. 9. 2026, migrace 0014).
+  Dar je dál událost, ne převod zůstatku. Pastilky jsou soukromé, proto
+  server pohyby od telefonu přijímá a hlídá jen meze; XP, které řadí ligu,
+  počítá sám.
 - Prášky jsou měna, XP je neutratitelné skóre. Zisk XP: 10 za správný
   příklad, +20 za bezchybnou lekci. Lekce má 7 příkladů.
 - Tolerance se odvozuje z přesnosti prostředku (ISO 7886-1, IEC 60601-2-24,

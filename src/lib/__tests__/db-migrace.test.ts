@@ -111,3 +111,45 @@ describe("migrace na pátou verzi", () => {
     ]);
   });
 });
+
+describe("migrace na osmou verzi — peněženka na serveru", () => {
+  it("odloží zůstatek jako počáteční stav a staré útraty už neposílá", async () => {
+    await Dexie.delete("miligram");
+
+    const stara = new Dexie("miligram");
+    stara.version(7).stores({
+      profile: "id",
+      answers: "++id, lessonId, templateId, correct, answeredAt",
+      lessons: "++id, lessonId, finishedAt",
+      outbox: "++id, &uid, type, syncedAt",
+      progress: "id",
+      gifts: "id, receivedAt",
+      duelRewards: "id",
+      badges: "id",
+    });
+    await stara.open();
+    await stara.table("profile").put({
+      id: 1,
+      pills: 85,
+      xp: 400,
+      streakDays: 6,
+      lastLessonDay: "2026-09-20",
+      streakFreezes: 1,
+      createdAt: "2026-09-01T10:00:00.000Z",
+      updatedAt: "2026-09-20T10:00:00.000Z",
+    });
+    await stara.table("outbox").add({
+      uid: "stara-utrata",
+      type: "pillsSpent",
+      payload: { amount: 15, reason: "hint" },
+      createdAt: "2026-09-20T10:05:00.000Z",
+    });
+    stara.close();
+
+    vi.resetModules();
+    const { db, readProfile } = await import("../db");
+    expect((await readProfile()).opening).toEqual({ pills: 85, freezes: 1 });
+    const utrata = await db().outbox.where("uid").equals("stara-utrata").first();
+    expect(utrata?.syncedAt).toBeDefined();
+  });
+});

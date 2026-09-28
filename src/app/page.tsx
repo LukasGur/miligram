@@ -35,6 +35,15 @@ const SyncAgent = dynamic(() => import("@/components/SyncAgent").then((module) =
   ssr: false,
 });
 
+/**
+ * Brána mezi přihlášením a daty v telefonu. Taky s klientem Supabase,
+ * a tak stejně jako výměna se serverem až po vykreslení.
+ */
+const AccountGate = dynamic(
+  () => import("@/components/account/AccountGate").then((module) => module.AccountGate),
+  { ssr: false },
+);
+
 const AccountScreen = dynamic(
   () => import("@/components/account/AccountScreen").then((module) => module.AccountScreen),
   { ssr: false },
@@ -79,6 +88,7 @@ export default function HomePage() {
   return (
     <>
       <SyncAgent />
+      <AccountGate />
       <Home />
     </>
   );
@@ -213,6 +223,10 @@ function Home() {
         onDuelDone={(duelId) => {
           setLesson(null);
           openAccount({ screen: "reveal", duelId });
+        }}
+        onAccount={() => {
+          setLesson(null);
+          openAccount();
         }}
         challenge={
           pulse?.handle

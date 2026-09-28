@@ -7,6 +7,8 @@ import {
   claimGift as markClaimed,
   fetchLessons,
   fetchProfile,
+  claimSignupBonus,
+  fetchWallet,
   leagueHistory,
   listDuels,
   pendingGifts,
@@ -18,7 +20,9 @@ import { updatePulse } from "@/lib/pulse";
 import { fetchQuery } from "@/lib/remoteQuery";
 import { collectDuelRewards, duelsNeedingMe, flushDuelResults, publishBadgesIfChanged } from "@/lib/social";
 import { unseenWeek } from "@/components/social/WeekResult";
-import { claimGift } from "@/lib/db";
+import { SIGNUP_BONUS } from "@/core/economy";
+import { announceBonus } from "@/lib/bonus";
+import { claimGift, markBonusChecked, readProfile } from "@/lib/db";
 import { pushOnFor, restorePushDevice, savePrefs, timeZone, usePushStatus } from "@/lib/push";
 import { pullNews } from "@/lib/restore";
 import { supabase } from "@/lib/supabase";
@@ -40,11 +44,16 @@ export function SyncAgent() {
   const { session } = useSession();
   const { locale } = useLocale();
   const pending = usePendingEvents();
-  const userId = session?.user.id;
+  const { profile } = useProfile();
+  /**
+   * Se serverem se mluví jen za účet, kterému data v telefonu patří. Dokud
+   * o tom po přihlášení nerozhodne AccountGate, fronta čeká — jinak by
+   * lekce odehrané bez účtu odešly k účtu, který je nechce.
+   */
+  const userId = session && profile.ownerId === session.user.id ? session.user.id : undefined;
   const accountLocale: unknown = session?.user.user_metadata?.locale;
   const pushStatus = usePushStatus();
   const pushOn = pushOnFor(pushStatus, userId);
-  const { profile } = useProfile();
   const { streakDays, lastLessonDay } = profile;
   const streakFreezes = profile.streakFreezes ?? 0;
 
@@ -55,7 +64,7 @@ export function SyncAgent() {
     let cancelled = false;
     const flush = () => {
       if (cancelled || !navigator.onLine) return;
-      void syncOutbox(remoteGateway(client, userId)).catch(() => {});
+      void serial(() => syncOutbox(remoteGateway(client, userId))).catch(() => {});
     };
 
     flush();
@@ -79,7 +88,22 @@ export function SyncAgent() {
     let cancelled = false;
     const pull = () => {
       if (cancelled || !navigator.onLine) return;
-      void pullNews(userId, { pullLessons: (since) => fetchLessons(client, userId, since) }).catch(() => {});
+      void serial(async () => {
+        /**
+         * Bonus za registraci dřív, než se stáhne zůstatek — jinak by
+         * se v něm ukázal až při dalším spuštění. Server ho připíše jednou
+         * na účet; zařízení se zeptá jednou za dobu, co mu data patří.
+         */
+        if (!(await readProfile()).bonusChecked) {
+          const granted = await claimSignupBonus(client);
+          await markBonusChecked();
+          if (granted) announceBonus(SIGNUP_BONUS);
+        }
+        return pullNews(userId, {
+          pullLessons: (since) => fetchLessons(client, userId, since),
+          pullWallet: () => fetchWallet(client),
+        });
+      }).catch(() => {});
     };
 
     pull();
@@ -237,6 +261,20 @@ export function SyncAgent() {
   }, [userId, pushOn, locale, streakDays, streakFreezes, lastLessonDay]);
 
   return null;
+}
+
+/**
+ * Odeslání fronty a stažení novinek jdou za sebou, ne naráz. Zůstatek
+ * se počítá jako „co zná server + co čeká ve frontě“; kdyby se pohyb
+ * odeslal zrovna mezi dotazem na server a sečtením fronty, chyběl by
+ * v obou a pastilky by na chvíli ubyly.
+ */
+let queue: Promise<unknown> = Promise.resolve();
+
+function serial<T>(task: () => Promise<T>): Promise<T> {
+  const run = queue.then(task, task);
+  queue = run.catch(() => {});
+  return run;
 }
 
 const PREFS_SYNCED_KEY = "miligram:prefsSynced";

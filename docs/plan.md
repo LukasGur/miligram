@@ -16,7 +16,7 @@ Výchozí stav, kvůli kterému se to dělá:
   kratší, než byla.
 - Student potkává nový typ příkladu naslepo. Učí se až z chyby.
 
-## Fáze A — účty a pastilky na serveru
+## Fáze A — účty a pastilky na serveru ✅ (28. 9. 2026)
 
 ### A1. Data v telefonu patří jednomu účtu
 
@@ -115,8 +115,7 @@ Věty „proč“ pro 72 šablon, CS i SK. Před nasazením je projde autor
 - Nabídka na domovské obrazovce.
 - Migrace: server musí o obnovení vědět, aby sérii viděli i kamarádi.
 
-## Drobnost
+## Drobnost ✅
 
-Komentář v `src/core/economy.ts` odkazuje na „brief, sekci 6“ — takový
-dokument v projektu není. Přepsat na „částky jsou naše rozhodnutí,
-zdůvodnění v CLAUDE.md“.
+Komentář v `src/core/economy.ts` odkazoval na „brief, sekci 6“ — takový
+dokument v projektu není. Přepsáno.

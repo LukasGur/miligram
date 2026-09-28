@@ -34,6 +34,7 @@ async function novaInstalace(): Promise<LessonEventRow[]> {
     async pushLessonEvents(rows) {
       sent.push(...rows);
     },
+    async pushWalletEvents() {},
   };
   await syncOutbox(gateway);
   // Pořadové číslo je v obou instalacích stejné — právě proto se nesmí posílat.

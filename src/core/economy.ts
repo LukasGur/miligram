@@ -10,9 +10,9 @@ import { scoreLesson, type LessonKind, type LessonResult } from "./scoring";
  * důvod: kdyby se liga řadila podle pastilek, každá vzatá nápověda by
  * uživatele srazila v žebříčku a lidé by se vysvětlením vyhýbali.
  *
- * POZOR: konkrétní částky níže jsou návrh, ne převzatá čísla. Brief má
- * ekonomiku v sekci 6 a proti ní se musí ověřit. Všechny jsou schválně
- * na jednom místě, aby se daly změnit bez zásahu do zbytku aplikace.
+ * Částky jsou naše rozhodnutí, ne převzatá čísla; zdůvodnění je
+ * v CLAUDE.md (Ekonomika). Všechny jsou schválně na jednom místě, aby se
+ * daly změnit bez zásahu do zbytku aplikace.
  */
 export const PILLS_PER_CORRECT = 2;
 export const PILLS_FLAWLESS_BONUS = 10;
@@ -37,6 +37,14 @@ export const GIFT_FREEZE_COST = 30;
  */
 export const MAX_STREAK_FREEZES = 2;
 
+/**
+ * Pastilky za založení účtu. Jednou na účet, připisuje je server
+ * (claim_signup_bonus, migrace 0014) — test hlídá, že čísla souhlasí.
+ * Víc není potřeba: nápověda u nového typu příkladu je zadarmo, takže
+ * nováček pastilky na začátek nepotřebuje. Je to poděkování, ne zásoba.
+ */
+export const SIGNUP_BONUS = 30;
+
 export type StreakState = {
   /** Počet dní v řadě, kdy uživatel dokončil aspoň jednu lekci. */
   days: number;
@@ -54,7 +62,7 @@ export function localDay(date = new Date()): string {
   return `${year}-${month}-${day}`;
 }
 
-function previousDay(day: string): string {
+export function previousDay(day: string): string {
   const [year, month, date] = day.split("-").map(Number);
   // Datum se skládá v UTC, aby posun letního času neubral ani nepřidal den.
   const previous = new Date(Date.UTC(year, month - 1, date - 1));
@@ -95,6 +103,30 @@ export function currentStreak(state: StreakState, today = localDay()): number {
   // se ukáže, jestli ji uživatel využije, nebo o sérii přijde.
   if (state.freezes > 0 && state.lastDay === previousDay(previousDay(today))) return state.days;
   return 0;
+}
+
+/**
+ * Série složená z historie: dny s lekcí a dny, které podržela ochrana.
+ *
+ * Stejné pravidlo jako `advanceStreak`, jen naráz: pokrytý den řadu
+ * nepřeruší, ale nepřičte se. Obnova na novém telefonu bez pokrytých dní
+ * sérii po každé použité ochraně zkrátila na jedničku.
+ */
+export function streakFromDays(
+  lessonDays: readonly string[],
+  coveredDays: readonly string[] = [],
+): { days: number; lastDay: string | null } {
+  const played = new Set(lessonDays);
+  const covered = new Set(coveredDays);
+  const sorted = [...played].sort();
+  const lastDay = sorted.at(-1) ?? null;
+  if (lastDay === null) return { days: 0, lastDay: null };
+
+  let days = 0;
+  for (let day = lastDay; played.has(day) || covered.has(day); day = previousDay(day)) {
+    if (played.has(day)) days += 1;
+  }
+  return { days, lastDay };
 }
 
 export type LessonReward = LessonResult & { pills: number };

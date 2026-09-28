@@ -1,6 +1,6 @@
 import Dexie, { type Table } from "dexie";
 import type { StageId } from "@/core/curriculum";
-import { PILLS_PER_CORRECT, advanceStreak, localDay, type StreakState } from "@/core/economy";
+import { MAX_STREAK_FREEZES, PILLS_PER_CORRECT, advanceStreak, localDay, previousDay, type StreakState } from "@/core/economy";
 import type { LessonPlan } from "@/core/lessonPlan";
 import type { LessonKind } from "@/core/scoring";
 
@@ -38,6 +38,28 @@ export type Profile = {
    * novější, takže běžně nepřijde nic a stahování stojí jeden dotaz.
    */
   restoredThrough?: string;
+  /**
+   * Účet, kterému data v telefonu patří. Chybí, dokud se hraje bez účtu.
+   * Synchronizace běží jen pro vlastníka — jinak by se po přihlášení
+   * jiného účtu jeho data smíchala s cizími (src/lib/account.ts).
+   */
+  ownerId?: string;
+  /**
+   * Zůstatek z doby, kdy pastilky žily jen v telefonu. Pohyby tehdy nikam
+   * nešly, takže se na server pošle jednou jako počáteční stav — až bude
+   * jasné, komu patří. Nové pohyby už jdou frontou samy.
+   */
+  opening?: { pills: number; freezes: number };
+  /**
+   * Dny, které podržela ochrana série. Bez nich by série složená znovu
+   * z historie (obnova, nový telefon) po každé ochraně spadla na jedničku.
+   */
+  coveredDays?: string[];
+  /**
+   * Na bonus za registraci už se zařízení ptalo. Server ho připíše jednou
+   * na účet, tohle jen šetří dotaz při každém spuštění.
+   */
+  bonusChecked?: boolean;
   createdAt: string;
   updatedAt: string;
 };
@@ -168,11 +190,30 @@ export type OutboxEvent = {
    * ztratila. Náhodné uid je jedinečné napříč zařízeními i instalacemi.
    */
   uid: string;
-  type: "lessonFinished" | "pillsSpent";
+  /**
+   * `pillsSpent` je z doby před peněženkou na serveru; nikam se neposílá
+   * a verze 8 ho označila za vyřízený. Nové pohyby jsou `wallet`.
+   */
+  type: "lessonFinished" | "pillsSpent" | "wallet";
   payload: Record<string, unknown>;
   createdAt: string;
   /** Doplní se po odeslání; do té doby je událost čekající. */
   syncedAt?: string;
+};
+
+/**
+ * Pohyb v peněžence. Posílá se, co se stalo — „+2 za příklad“, „−15 za
+ * nápovědu“ —, ne zůstatek; zůstatek je na serveru součet (migrace 0014).
+ */
+export type WalletKind = "earn" | "spend" | "freezeGained" | "freezeUsed" | "opening";
+
+export type WalletPayload = {
+  kind: WalletKind;
+  pills: number;
+  freezes: number;
+  reason: string;
+  /** Den pokrytý ochranou, YYYY-MM-DD. */
+  day?: string;
 };
 
 /** Náhodné uid události. Fallback je pro prohlížeče bez `randomUUID`. */
@@ -288,6 +329,31 @@ class MiligramDatabase extends Dexie {
 
     /** Sedmá verze: připsané výhry ze soubojů a dosažené odznaky. */
     this.version(7).stores({ duelRewards: "id", badges: "id" });
+
+    /**
+     * Osmá verze: peněženka na serveru. Dosavadní zůstatek se odloží jako
+     * počáteční stav a pošle se, až bude jasné, komu patří. Staré útraty
+     * se neposílají — jsou v tom zůstatku už odečtené.
+     */
+    this.version(8).upgrade(async (transaction) => {
+      await transaction
+        .table<Profile>("profile")
+        .toCollection()
+        .modify((profile) => {
+          const freezes = profile.streakFreezes ?? 0;
+          if (profile.opening === undefined && (profile.pills > 0 || freezes > 0)) {
+            profile.opening = { pills: profile.pills, freezes };
+          }
+        });
+      const now = new Date().toISOString();
+      await transaction
+        .table<OutboxEvent>("outbox")
+        .where("type")
+        .equals("pillsSpent")
+        .modify((event) => {
+          event.syncedAt ??= now;
+        });
+    });
   }
 }
 
@@ -314,6 +380,18 @@ export function emptyProfile(now = new Date()): Profile {
     createdAt: timestamp,
     updatedAt: timestamp,
   };
+}
+
+/**
+ * Zařadí pohyb v peněžence do fronty. Uid bývá odvozené z toho, co pohyb
+ * způsobilo (`earn:lekce:semínko`, `gift:id`), takže se tentýž pohyb
+ * nezařadí dvakrát ani tehdy, když se zápis zopakuje. Volá se uvnitř
+ * transakce, která drží frontu.
+ */
+async function queueWallet(uid: string, payload: WalletPayload, timestamp: string): Promise<void> {
+  const outbox = db().outbox;
+  if ((await outbox.where("uid").equals(uid).count()) > 0) return;
+  await outbox.add({ uid, type: "wallet", payload, createdAt: timestamp });
 }
 
 export async function readProfile(): Promise<Profile> {
@@ -358,7 +436,8 @@ export async function recordAnswer(
   const timestamp = now.toISOString();
   const database = db();
 
-  await database.transaction("rw", database.answers, database.progress, database.profile, async () => {
+  const tables = [database.answers, database.progress, database.profile, database.outbox];
+  await database.transaction("rw", tables, async () => {
     const current = await database.progress.get(PROGRESS_ID);
     // Jiná lekce než rozehraná znamená, že uživatel mezitím začal jinou.
     // Pokusy té předchozí zůstávají uložené, jen se v ní už nepokračuje.
@@ -379,6 +458,11 @@ export async function recordAnswer(
       if (earned) {
         const profile = (await database.profile.get(PROFILE_ID)) ?? emptyProfile(now);
         await database.profile.put({ ...profile, pills: profile.pills + PILLS_PER_CORRECT, updatedAt: timestamp });
+        await queueWallet(
+          `earn:${lessonId}:${attempt.seed}`,
+          { kind: "earn", pills: PILLS_PER_CORRECT, freezes: 0, reason: "answer" },
+          timestamp,
+        );
       }
       await database.answers.add({
         lessonId,
@@ -448,17 +532,39 @@ export async function recordLesson(lesson: FinishedLesson, now = new Date()): Pr
       .filter((answer) => answer.credited === true)
       .count();
 
+    const earned = Math.max(0, lesson.reward.pills - credited * PILLS_PER_CORRECT);
+    /**
+     * Ochrana podržela včerejšek. Den se zapíše, aby ho znala i série
+     * složená znovu z historie — na novém telefonu i u kamarádů.
+     */
+    const frozeDay = streak.freezes < (current.streakFreezes ?? 0) ? previousDay(today) : null;
+
     const updated: Profile = {
       ...current,
-      pills: current.pills + Math.max(0, lesson.reward.pills - credited * PILLS_PER_CORRECT),
+      pills: current.pills + earned,
       xp: current.xp + lesson.reward.xp,
       streakDays: streak.days,
       lastLessonDay: streak.lastDay,
       streakFreezes: streak.freezes,
+      ...(frozeDay ? { coveredDays: [...(current.coveredDays ?? []), frozeDay] } : {}),
       updatedAt: timestamp,
     };
 
     await database.profile.put(updated);
+    if (earned > 0) {
+      await queueWallet(
+        `lesson:${lesson.lessonId}`,
+        { kind: "earn", pills: earned, freezes: 0, reason: "lesson" },
+        timestamp,
+      );
+    }
+    if (frozeDay) {
+      await queueWallet(
+        `freeze:${frozeDay}`,
+        { kind: "freezeUsed", pills: 0, freezes: -1, reason: "streak", day: frozeDay },
+        timestamp,
+      );
+    }
     /**
      * Odpovědi zpravidla uložil `recordAnswer` hned po každém pokusu.
      * Zapisují se tady jen tehdy, když po lekci žádné nezůstaly — z testu
@@ -529,12 +635,7 @@ export async function spendPills(amount: number, reason: string, now = new Date(
     if (current.pills < amount) return false;
 
     await database.profile.put({ ...current, pills: current.pills - amount, updatedAt: timestamp });
-    await database.outbox.add({
-      uid: eventUid(),
-      type: "pillsSpent",
-      payload: { amount, reason },
-      createdAt: timestamp,
-    });
+    await queueWallet(eventUid(), { kind: "spend", pills: -amount, freezes: 0, reason }, timestamp);
     return true;
   });
 }
@@ -563,12 +664,7 @@ export async function buyStreakFreeze(
       streakFreezes: (current.streakFreezes ?? 0) + 1,
       updatedAt: timestamp,
     });
-    await database.outbox.add({
-      uid: eventUid(),
-      type: "pillsSpent",
-      payload: { amount: cost, reason: "streakFreeze" },
-      createdAt: timestamp,
-    });
+    await queueWallet(eventUid(), { kind: "spend", pills: -cost, freezes: 1, reason: "streakFreeze" }, timestamp);
     return "ok";
   });
 }
@@ -591,7 +687,7 @@ export async function claimGift(
   const timestamp = now.toISOString();
   const database = db();
 
-  return database.transaction("rw", database.profile, database.gifts, async () => {
+  return database.transaction("rw", database.profile, database.gifts, database.outbox, async () => {
     if ((await database.gifts.get(gift.id)) !== undefined) return "known";
 
     const current = (await database.profile.get(PROFILE_ID)) ?? emptyProfile(now);
@@ -603,6 +699,7 @@ export async function claimGift(
       updatedAt: timestamp,
     });
     await database.gifts.put({ id: gift.id, fromHandle: gift.fromHandle, receivedAt: timestamp });
+    await queueWallet(`gift:${gift.id}`, { kind: "freezeGained", pills: 0, freezes: 1, reason: "gift" }, timestamp);
     return "ok";
   });
 }
@@ -627,7 +724,7 @@ export async function creditDuelReward(
   const timestamp = now.toISOString();
   const database = db();
 
-  return database.transaction("rw", database.profile, database.duelRewards, async () => {
+  return database.transaction("rw", database.profile, database.duelRewards, database.outbox, async () => {
     if ((await database.duelRewards.get(duel.id)) !== undefined) return false;
 
     const current = (await database.profile.get(PROFILE_ID)) ?? emptyProfile(now);
@@ -637,6 +734,7 @@ export async function creditDuelReward(
     await database.duelRewards.put({ id: duel.id, pills: amount, creditedAt: timestamp });
     if (amount > 0) {
       await database.profile.put({ ...current, pills: current.pills + amount, updatedAt: timestamp });
+      await queueWallet(`duel:${duel.id}`, { kind: "earn", pills: amount, freezes: 0, reason: "duel" }, timestamp);
     }
     return amount > 0;
   });
@@ -657,5 +755,61 @@ export async function saveBadgeLevels(levels: Readonly<Record<string, number | u
       if (current && current.level >= level) continue;
       await database.badges.put({ id, level, earnedAt: now.toISOString() });
     }
+  });
+}
+
+/**
+ * Peněženka, jak ji zná server: součet odeslaných pohybů a dny pokryté
+ * ochranou (my_wallet, migrace 0014).
+ */
+export type ServerWallet = { pills: number; freezes: number; coveredDays: readonly string[] };
+
+/**
+ * Srovná zůstatek v telefonu se serverem.
+ *
+ * Zůstatek = co zná server + co ještě čeká ve frontě. Tím se doženou dvě
+ * zařízení téhož účtu (útrata na tabletu se ukáže v telefonu) a čerstvá
+ * instalace dostane zpátky svoje pastilky. Pohyb, který se zrovna odesílá,
+ * může na chvíli chybět v obou — srovná se příště.
+ *
+ * Vrací, jestli přibyly dny pokryté ochranou, o kterých telefon nevěděl.
+ */
+export async function reconcileWallet(wallet: ServerWallet, now = new Date()): Promise<boolean> {
+  const database = db();
+  return database.transaction("rw", database.profile, database.outbox, async () => {
+    const pending = await database.outbox
+      .filter((event) => event.syncedAt === undefined && event.type === "wallet")
+      .toArray();
+    const waiting = pending.reduce(
+      (sum, event) => {
+        const payload = event.payload as WalletPayload;
+        return { pills: sum.pills + payload.pills, freezes: sum.freezes + payload.freezes };
+      },
+      { pills: 0, freezes: 0 },
+    );
+
+    const current = (await database.profile.get(PROFILE_ID)) ?? emptyProfile(now);
+    // Počáteční stav, který ještě neodešel, v součtu na serveru chybí.
+    const opening = current.opening ?? { pills: 0, freezes: 0 };
+    const known = new Set(current.coveredDays ?? []);
+    const coveredDays = [...new Set([...known, ...wallet.coveredDays])].sort();
+
+    await database.profile.put({
+      ...current,
+      pills: Math.max(0, wallet.pills + waiting.pills + opening.pills),
+      streakFreezes: Math.min(MAX_STREAK_FREEZES, Math.max(0, wallet.freezes + waiting.freezes + opening.freezes)),
+      coveredDays,
+      updatedAt: now.toISOString(),
+    });
+    return coveredDays.length > known.size;
+  });
+}
+
+/** Poznamená, že se na bonus za registraci už zařízení ptalo. */
+export async function markBonusChecked(): Promise<void> {
+  const database = db();
+  await database.transaction("rw", database.profile, async () => {
+    const current = (await database.profile.get(PROFILE_ID)) ?? emptyProfile();
+    await database.profile.put({ ...current, bonusChecked: true });
   });
 }

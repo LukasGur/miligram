@@ -6,6 +6,9 @@ import {
   PILLS_FLAWLESS_BONUS,
   PILLS_PER_CORRECT,
   rewardForLesson,
+  SIGNUP_BONUS,
+  streakFromDays,
+  type StreakState,
 } from "../economy";
 
 describe("série", () => {
@@ -109,5 +112,37 @@ describe("prášky za lekci", () => {
     const reward = rewardForLesson([true], "review");
     expect(reward.pills).toBe(PILLS_PER_CORRECT);
     expect(reward.xp).toBe(10);
+  });
+});
+
+describe("série z historie", () => {
+  it("řada dní s lekcí", () => {
+    expect(streakFromDays(["2026-09-01", "2026-09-02", "2026-09-03"])).toEqual({ days: 3, lastDay: "2026-09-03" });
+  });
+
+  it("vynechaný den řadu přeruší", () => {
+    expect(streakFromDays(["2026-09-01", "2026-09-03"])).toEqual({ days: 1, lastDay: "2026-09-03" });
+  });
+
+  it("den podržený ochranou řadu nepřeruší, ale nepřičte se", () => {
+    expect(streakFromDays(["2026-09-01", "2026-09-03"], ["2026-09-02"])).toEqual({ days: 2, lastDay: "2026-09-03" });
+  });
+
+  it("dá totéž jako série posouvaná lekci po lekci", () => {
+    let state: StreakState = { days: 0, lastDay: null, freezes: 1 };
+    for (const day of ["2026-09-01", "2026-09-02", "2026-09-04", "2026-09-05"]) state = advanceStreak(state, day);
+    expect(streakFromDays(["2026-09-01", "2026-09-02", "2026-09-04", "2026-09-05"], ["2026-09-03"]).days).toBe(state.days);
+  });
+
+  it("bez lekcí je nula", () => {
+    expect(streakFromDays([], ["2026-09-02"])).toEqual({ days: 0, lastDay: null });
+  });
+});
+
+describe("bonus za registraci", () => {
+  it("souhlasí s tím, co připisuje server", async () => {
+    const { readFileSync } = await import("node:fs");
+    const sql = readFileSync("supabase/migrations/0014_penezenka.sql", "utf8");
+    expect(sql).toContain(`values (me, 'signup', 'signup', ${SIGNUP_BONUS}, 'signup')`);
   });
 });

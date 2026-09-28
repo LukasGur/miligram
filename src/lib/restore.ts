@@ -1,6 +1,14 @@
-import { advanceStreak, localDay, type StreakState } from "@/core/economy";
+import { localDay, streakFromDays } from "@/core/economy";
 import { scoreLesson, type LessonKind } from "@/core/scoring";
-import { db, PROFILE_ID, emptyProfile, type AnswerRecord, type LessonRecord } from "./db";
+import {
+  db,
+  PROFILE_ID,
+  emptyProfile,
+  reconcileWallet,
+  type AnswerRecord,
+  type LessonRecord,
+  type ServerWallet,
+} from "./db";
 
 /**
  * Obnova historie ze serveru.
@@ -13,9 +21,8 @@ import { db, PROFILE_ID, emptyProfile, type AnswerRecord, type LessonRecord } fr
  * Stahuje se totéž, co se posílalo: co se stalo. Skóre se z toho počítá
  * znovu týmiž pravidly, takže se nemůže rozejít s tím, co drží server.
  *
- * Prášky se neobnovují. Jsou měna a jejich útrata se nikam neposílá, takže
- * server zná jen výdělek — obnovit z něj zůstatek by znamenalo vrátit
- * i všechno utracené. Zůstávají věcí zařízení, jak je rozhodnuté ve fázi 5.
+ * Pastilky se z lekcí neobnovují — lekce na serveru nese jen odpovědi.
+ * Zůstatek přijde zvlášť z peněženky (součet pohybů, migrace 0014).
  */
 export type RemoteLesson = {
   lessonId: string;
@@ -36,6 +43,8 @@ export type RestoreGateway = {
    * od poslední návštěvy — při běžném spuštění se tak nevrací nic.
    */
   pullLessons(since?: string): Promise<readonly RemoteLesson[]>;
+  /** Peněženka účtu. Bez ní (testy, starší volání) se zůstatek nesrovnává. */
+  pullWallet?(): Promise<ServerWallet>;
 };
 
 export type RestoreResult = {
@@ -73,8 +82,8 @@ export async function restoreLessons(gateway: RestoreGateway, since?: string): P
         correct: score.correct,
         flawless: score.flawless,
         xp: score.xp,
-        // Výdělek se neobnovuje, viz komentář nahoře. Nula tady neznamená
-        // „lekce nic nevynesla“, ale „prášky z ní zůstaly na starém zařízení“.
+        // Výdělek se z lekce neobnovuje, viz komentář nahoře. Nula tady
+        // neznamená „lekce nic nevynesla“ — zůstatek přijde z peněženky.
         pills: 0,
         finishedAt: lesson.finishedAt,
       });
@@ -102,36 +111,49 @@ export async function restoreLessons(gateway: RestoreGateway, since?: string): P
 
     const all = await database.lessons.toArray();
     const current = (await database.profile.get(PROFILE_ID)) ?? emptyProfile();
-    const streak = streakFromHistory(all, current.streakFreezes ?? 0);
 
     await database.profile.put({
       ...current,
       // XP se přepočítá z celé historie, ne přičtením. Kdyby se přičítalo,
       // druhé spuštění obnovy by skóre nafouklo.
       xp: all.reduce((sum, lesson) => sum + lesson.xp, 0),
-      streakDays: streak.days,
-      lastLessonDay: streak.lastDay,
       updatedAt: new Date().toISOString(),
     });
+    // Série jen tehdy, když přibyla lekce. Jinak není co měnit — a přepočet
+    // při každém spuštění dřív zahodil, co v telefonu podržela ochrana.
+    if (fresh.length > 0) await rebuildStreak();
 
     return { added: fresh.length, xp: all.reduce((sum, lesson) => sum + lesson.xp, 0) };
   });
 }
 
 /**
- * Série z historie.
+ * Série z historie: dny s lekcí a dny, které podržela ochrana.
  *
- * Skládá se den po dni týmž pravidlem, jaké sérii posouvá při hraní —
- * jinak by obnovená série znamenala něco jiného než odehraná. Ochrany
- * se do minulosti neuplatňují: kupovaly by se zpětně na dny, které už
- * proběhly.
+ * Skládá se týmž pravidlem, jaké sérii posouvá při hraní (streakFromDays),
+ * jinak by obnovená série znamenala něco jiného než odehraná.
+ *
+ * Když historie končí týmž dnem jako uložená série, vyhraje delší z obou.
+ * Ochrany použité před peněženkou na serveru nikde zapsané nejsou; série,
+ * kterou telefon napočítal při hraní, je tehdy přesnější než přepočet.
  */
-function streakFromHistory(lessons: readonly LessonRecord[], freezes: number): StreakState {
-  // Den podle kalendáře uživatele, stejně jako při hraní.
-  const days = [...new Set(lessons.map((lesson) => localDay(new Date(lesson.finishedAt))))].sort();
-  let state: StreakState = { days: 0, lastDay: null, freezes: 0 };
-  for (const day of days) state = advanceStreak(state, day);
-  return { ...state, freezes };
+export async function rebuildStreak(): Promise<void> {
+  const database = db();
+  await database.transaction("rw", database.profile, database.lessons, async () => {
+    const lessons = await database.lessons.toArray();
+    // Den podle kalendáře uživatele, stejně jako při hraní.
+    const days = lessons.map((lesson) => localDay(new Date(lesson.finishedAt)));
+    const current = (await database.profile.get(PROFILE_ID)) ?? emptyProfile();
+    const rebuilt = streakFromDays(days, current.coveredDays ?? []);
+    const sameEnd = rebuilt.lastDay !== null && rebuilt.lastDay === current.lastLessonDay;
+
+    await database.profile.put({
+      ...current,
+      streakDays: sameEnd ? Math.max(rebuilt.days, current.streakDays) : rebuilt.days,
+      lastLessonDay: rebuilt.lastDay,
+      updatedAt: new Date().toISOString(),
+    });
+  });
 }
 
 /**
@@ -156,6 +178,12 @@ export async function pullNews(userId: string, gateway: RestoreGateway): Promise
   const since = current.restoredFor === userId ? current.restoredThrough : undefined;
 
   const result = await restoreLessons(gateway, since);
+
+  if (gateway.pullWallet) {
+    const wallet = await gateway.pullWallet();
+    // Den pokrytý ochranou na jiném zařízení mění sérii i bez nové lekce.
+    if (await reconcileWallet(wallet)) await rebuildStreak();
+  }
 
   const newest = await database.lessons.orderBy("finishedAt").last();
   const after = (await database.profile.get(PROFILE_ID)) ?? emptyProfile();

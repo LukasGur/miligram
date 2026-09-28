@@ -50,6 +50,16 @@ Pastilky za příklad se připisují hned po odpovědi (zůstatek je vidět
 v hlavičce lekce), bonus a XP až s dokončenou lekcí.
 Útrata: nápověda 15, ochrana série 60 (nejvýš dvě naráz), dar ochrany
 kamarádovi 30 (jednou týdně) — darovat se má vyplatit víc než kupovat sobě.
+Za založení účtu 30 pastilek, jednou na účet (připisuje server).
+
+Pastilky a ochrany drží server jako součet pohybů (`wallet_events`,
+migrace 0014); telefon posílá, co se stalo, frontou jako lekce. Pastilky
+jsou soukromé, takže server hlídá jen meze, ne pravidla — kdo by si je
+vymyslel, podvede sebe. XP je veřejné, a proto ho server dál počítá sám.
+
+Data v telefonu patří jednomu účtu (`Profile.ownerId`, `src/lib/account.ts`).
+Registrace si je vezme, přihlášení k účtu s historií telefon po potvrzení
+vyčistí, odhlášení ho vyčistí vždy. Synchronizace mluví jen za vlastníka.
 
 Souboj: výhra +15 pastilek, remíza +5, XP žádné navíc (lekce souboje dá
 běžné XP). Jinak by se liga dala nafouknout vzájemným vyzýváním. Kdo

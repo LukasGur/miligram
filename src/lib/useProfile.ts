@@ -30,8 +30,21 @@ export function useProfile(): { profile: Profile; streak: number; ready: boolean
   };
 }
 
-/** Kolik událostí čeká na odeslání. Nula znamená, že server ví všechno. */
+/**
+ * Kolik událostí čeká na odeslání — lekce i pohyby v peněžence. Nula
+ * znamená, že server ví všechno. Staré `pillsSpent` se nepočítají,
+ * nikam se neposílají.
+ */
 export function usePendingEvents(): number {
+  return useLiveQuery(
+    () => db().outbox.filter((event) => event.syncedAt === undefined && event.type !== "pillsSpent").count(),
+    [],
+    0,
+  );
+}
+
+/** Kolik dokončených lekcí ještě server nezná. */
+export function usePendingLessons(): number {
   return useLiveQuery(
     () => db().outbox.filter((event) => event.syncedAt === undefined && event.type === "lessonFinished").count(),
     [],
