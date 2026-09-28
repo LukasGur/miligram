@@ -55,7 +55,7 @@
     "repairAction": "Obnoviť sériu",
     "repairPrice": "{cost, number} pastiliek",
     "repairDismiss": "Nechať tak",
-    "repairPoor": "Chýba ti {missing, plural, one {# pastilka} few {# pastilky} other {# pastiliek}}. Pribúdajú za príklady vypočítané na prvý raz.",
+    "repairPoor": "{missing, plural, one {Chýba ti # pastilka} few {Chýbajú ti # pastilky} other {Chýba ti # pastiliek}}. Pribúdajú za príklady vypočítané na prvý raz.",
     "repairDone": "Séria je späť. Dnes ju predĺžiš lekciou.",
     "repairDoneToday": "Séria je späť."
   },
@@ -66,10 +66,7 @@
     "install": "Inštalácia",
     "legal": "Právne informácie",
     "about": "O aplikácii",
-    "version": "Verzia {version}",
-    "sound": "Zvuk",
-    "soundToggle": "Zvuk pastiliek pri správnej úlohe",
-    "soundHint": "Cinkne, keď vypočítaš príklad na prvý raz."
+    "version": "Verzia {version}"
   },
   "locale": {
     "cs": "Čeština",
@@ -366,7 +363,7 @@
     "earnedDuringNote": "pripísané počas lekcie",
     "duelResult": "Výsledok súboja",
     "nudgeTitle": "Ulož si postup na účet",
-    "nudgeBody": "Sériu, XP aj pastilky potom máš aj v novom telefóne. A za založenie účtu dostaneš {bonus, number} pastiliek.",
+    "nudgeBody": "Pridaj si kamarátov a zmeraj sa s nimi v súbojoch aj v týždennej lige.",
     "nudgeAction": "Založiť účet",
     "introExample": "Vzor",
     "newType": "Nový typ",
@@ -375,6 +372,9 @@
     "fromHint": "Minule s pomocou, teraz bez nej",
     "hintNext": "Ďalší krok",
     "hintStep": "{current, number} / {total, number}",
+    "hintClose": "Zavrieť nápovedu",
+    "hintPrompt": "Zadanie",
+    "hintOpenLabel": "Nápoveda, krok {current, number} z {total, number}",
     "hintStepLabel": "Krok {current, number} z {total, number}",
     "hintDone": "Viac krokov nápoveda nemá. Výsledok už vypočítaš.",
     "hintAgain": "Tento typ ti príde znova v ďalšej lekcii — tentoraz bez nápovedy.",
@@ -490,8 +490,6 @@
     "bonusBody": "Za založenie účtu. Hodí sa na nápovedu alebo ochranu série.",
     "bonusDismiss": "Zavrieť",
     "perkBonusTitle": "{count, plural, one {# pastilka} few {# pastilky} other {# pastiliek}} na štart",
-    "perkBonusBody": "Pripíšeme ti ich hneď po založení účtu. Hodia sa na nápovedu alebo ochranu série.",
-    "previewBonusLabel": "Za založenie účtu",
     "signOutBody": "Tvoj postup zostane na účte. Z tohto telefónu sa zmaže a po ďalšom prihlásení sa znova stiahne.",
     "signOutConfirm": "Odhlásiť"
   },
@@ -499,7 +497,7 @@
     "freezeTitle": "Ochrana série",
     "freezeBody": "Pokryje jeden vynechaný deň. Uplatní sa sama, keď sa vrátiš.",
     "freezeOwned": "{count, plural, =0 {Žiadna v zásobe} one {# v zásobe} other {# v zásobe}}",
-    "freezePoor": "Smola, na ochranu série ti {missing, plural, one {chýba # pastilka} few {chýbajú # pastilky} other {chýba # pastiliek}}.",
+    "freezePoor": "{missing, plural, one {Chýba ti # pastilka} few {Chýbajú ti # pastilky} other {Chýba ti # pastiliek}}. Pribúdajú za príklady vypočítané na prvý raz.",
     "freezeFull": "Viac ako {max, number} si držať nejde",
     "title": "Zásoby",
     "freezeBuyShort": "Kúpiť ochranu série"

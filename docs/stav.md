@@ -83,8 +83,8 @@ vychází z jejího vlastního jazyka:
 - pastilky za příklad se připisují hned (`recordAnswer`, pole
   `credited`); „+2“ u verdiktu doletí do zůstatku. Lekce na konci přidá
   jen bonus a ten přiletí do zůstatku ve shrnutí
-- zvuk „mince“ (dva tóny o kvartu nahoru, Web Audio, relace „ambient“ —
-  na iPhonu při vypnutém zvonění mlčí), vypíná se v Nastavení
+- zvuk „mince“ byl, ale 2026-09 zrušen i s přepínačem v Nastavení —
+  na telefonu zlobil a za tu trochu radosti nestál
 
 V kódu a v databázi zůstává `pills`, žádná migrace. Lekce rozehrané
 před změnou se doplatí celé. Ověřeno ve WebKitu na rozměru iPhonu celou

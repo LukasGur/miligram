@@ -4,9 +4,6 @@ import { useEffect, useRef, type CSSProperties, type ReactNode } from "react";
 import { useFormatter, useTranslations } from "next-intl";
 import { BellIcon, CaretDownIcon, LadderIcon, ShieldIcon, VersusIcon } from "@/components/icons";
 import { Notice } from "@/components/push/ReminderPreview";
-import { Pastille } from "@/components/ui/Pastille";
-import { Tally } from "@/components/ui/Tally";
-import { SIGNUP_BONUS } from "@/core/economy";
 
 /** Rozestup nástupu jednotlivých karet. Dost na to, aby šel vidět sled, ne čekání. */
 const STAGGER_MS = 70;
@@ -18,10 +15,13 @@ const STAGGER_MS = 70;
  * s tebou uprostřed, výsledek souboje, dar od kamaráda. Náhledy jsou
  * pro odečítač skryté; význam nese nadpis a věta pod ním.
  *
- * Pořadí: pastilky na start první — jsou jediné, co se připíše hned,
- * bez kamarádů a bez čekání. Pak spolužáci, kteří táhnou nejvíc: souboje
- * a dárky hned za nimi, bez přátel nemají smysl. Připomínky nakonec,
- * nabídnou se stejně hned po registraci.
+ * Pořadí: kamarádi a souboje první — táhnou nejvíc a všechno ostatní
+ * na nich stojí. Liga hned za nimi, je to druhý důvod vracet se. Dárky
+ * až po nich, bez kamarádů nemají smysl. Připomínky nakonec, nabídnou
+ * se stejně hned po registraci.
+ *
+ * Pastilky na start tu kartu nemají. Mezi věcmi, které účet umí, by
+ * působily jako úplatek; stojí jako cenovka u formuláře a na tlačítku.
  *
  * Záloha postupu tu schválně chybí. Postup zůstává v telefonu i bez účtu
  * a lákat na ni by znělo, jako by bez účtu hrozilo, že o něj člověk přijde.
@@ -32,22 +32,14 @@ export function Perks() {
 
   return (
     <ul ref={list} className="mt-3 space-y-3">
-      <Perk
-        icon={<Pastille className="size-5" />}
-        wash="bg-pill-wash"
-        title={t("perkBonusTitle", { count: SIGNUP_BONUS })}
-        body={t("perkBonusBody")}
-      >
-        <BonusPreview />
-      </Perk>
       <Perk icon={<VersusIcon className="size-5" />} title={t("perkDuelsTitle")} body={t("perkDuelsBody")}>
         <DuelPreview />
       </Perk>
-      <Perk icon={<ShieldIcon className="size-5" />} title={t("perkGiftsTitle")} body={t("perkGiftsBody")}>
-        <GiftPreview />
-      </Perk>
       <Perk icon={<LadderIcon className="size-5" />} title={t("perkLeagueTitle")} body={t("perkLeagueBody")}>
         <LeaguePreview />
+      </Perk>
+      <Perk icon={<ShieldIcon className="size-5" />} title={t("perkGiftsTitle")} body={t("perkGiftsBody")}>
+        <GiftPreview />
       </Perk>
       <Perk icon={<BellIcon className="size-5" />} title={t("perkRemindersTitle")} body={t("perkRemindersBody")}>
         <ReminderPerkPreview />
@@ -108,14 +100,11 @@ function Perk({
   icon,
   title,
   body,
-  wash = "bg-accent-wash text-accent",
   children,
 }: {
   icon: ReactNode;
   title: string;
   body: string;
-  /** Podklad ikony. Pastilka má svůj med, ne indigo. */
-  wash?: string;
   children: ReactNode;
 }) {
   return (
@@ -124,7 +113,7 @@ function Perk({
         {children}
       </div>
       <div className="flex gap-3 px-4 py-3.5">
-        <span className={`${wash} flex size-9 shrink-0 items-center justify-center rounded-control`}>
+        <span className="bg-accent-wash text-accent flex size-9 shrink-0 items-center justify-center rounded-control">
           {icon}
         </span>
         <div className="min-w-0">
@@ -207,24 +196,6 @@ function Avatar({ label, mine = false }: { label: string; mine?: boolean }) {
         {label.charAt(0)}
       </span>
       <span className="text-ink-soft max-w-full truncate text-micro">{label}</span>
-    </div>
-  );
-}
-
-/**
- * Připsání bonusu: řádek peněženky, do kterého doběhne třicítka. Tentýž
- * doběh jako odměna na konci lekce — pastilky přibývají vždycky stejně.
- */
-function BonusPreview() {
-  const t = useTranslations("account");
-
-  return (
-    <div className="bg-paper border-line mx-auto flex max-w-72 items-center gap-2.5 rounded-control border px-3 py-2.5 shadow-sm">
-      <Pastille className="size-5 shrink-0" />
-      <span className="panel-label flex-1">{t("previewBonusLabel")}</span>
-      <span className="text-pill text-body font-semibold">
-        <Tally value={SIGNUP_BONUS} prefix="+" />
-      </span>
     </div>
   );
 }

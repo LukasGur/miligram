@@ -2,7 +2,9 @@
 
 import { useEffect, useRef, useState, type FormEvent, type Ref } from "react";
 import { useTranslations } from "next-intl";
+import { PillTag } from "@/components/ui/PillTag";
 import { Spinner } from "@/components/ui/Spinner";
+import { SIGNUP_BONUS } from "@/core/economy";
 import { withTimeout } from "@/lib/useAction";
 import type { AuthError } from "@supabase/supabase-js";
 import { useLocale } from "@/i18n/LocaleProvider";
@@ -229,6 +231,10 @@ export function SignIn() {
             </Primary>
             {error ? <ErrorMessage text={t(error)} /> : null}
             <p className="text-ink-soft mt-3 text-center text-label">{t("signInNote")}</p>
+            {/* Bonus jako cenovka, ne jako věta — informace, ne přemlouvání. */}
+            <p className="mt-2 flex justify-center text-label">
+              <PillTag>{t("perkBonusTitle", { count: SIGNUP_BONUS })}</PillTag>
+            </p>
           </form>
 
           {/* Výhody jen do chvíle, než odejde kód. Pak už je rozhodnuto a obrazovka
@@ -238,7 +244,17 @@ export function SignIn() {
           </h3>
           <Perks />
           <div className="mt-2">
-            <Primary onClick={backToForm}>{t("perksBackToForm")}</Primary>
+            <Primary onClick={backToForm}>
+              {t("perksBackToForm")}
+              <span className="text-label">
+                <PillTag>
+                  <span className="num" data-numeric aria-hidden>
+                    +{SIGNUP_BONUS}
+                  </span>
+                  <span className="sr-only">{t("perkBonusTitle", { count: SIGNUP_BONUS })}</span>
+                </PillTag>
+              </span>
+            </Primary>
           </div>
         </>
       )}

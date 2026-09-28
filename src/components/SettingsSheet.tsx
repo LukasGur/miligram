@@ -5,11 +5,9 @@ import { useTranslations } from "next-intl";
 import { useLocale } from "@/i18n/LocaleProvider";
 import { useLocalValue } from "@/lib/clientState";
 import { STORAGE_KEYS, writeLocal } from "@/lib/localStore";
-import { primeSound, chime } from "@/lib/sound";
 import { CheckIcon, CloseIcon } from "./icons";
 import { InstallSteps, useInstallOffer } from "./InstallBanner";
 import { PushSettings } from "./push/PushSettings";
-import { Toggle } from "./ui/Toggle";
 
 const APP_VERSION = "0.1.0";
 
@@ -30,7 +28,6 @@ export function SettingsSheet({
   const { locale, setLocale, available } = useLocale();
   const installOffer = useInstallOffer();
   const acceptedAt = useLocalValue(STORAGE_KEYS.disclaimerAcceptedAt);
-  const soundOn = useLocalValue(STORAGE_KEYS.sound) !== "off";
   const closeRef = useRef<HTMLButtonElement>(null);
 
   useEffect(() => {
@@ -100,23 +97,6 @@ export function SettingsSheet({
                 </button>
               ))}
             </div>
-          </Section>
-
-          <Section title={t("sound")} hint={t("soundHint")}>
-            <Toggle
-              checked={soundOn}
-              onChange={(next) => {
-                writeLocal(STORAGE_KEYS.sound, next ? "on" : "off");
-                // Zapnutí se hned předvede, ať je slyšet, co se zapnulo.
-                if (next) {
-                  primeSound();
-                  window.setTimeout(() => chime(), 60);
-                }
-              }}
-              className="border-line rounded-control border"
-            >
-              {t("soundToggle")}
-            </Toggle>
           </Section>
 
           <Section title={tNotifications("settingsTitle")}>

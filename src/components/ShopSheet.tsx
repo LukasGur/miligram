@@ -56,13 +56,13 @@ export function ShopSheet({ open, onClose }: { open: boolean; onClose: () => voi
 
   return (
     <div className="fixed inset-0 z-50 flex flex-col justify-end">
-      <button type="button" aria-label={t("title")} onClick={onClose} className="bg-ink/25 absolute inset-0" />
+      <button type="button" aria-label={t("title")} onClick={onClose} className="animate-scrim bg-ink/25 absolute inset-0" />
 
       <div
         role="dialog"
         aria-modal="true"
         aria-labelledby="shop-title"
-        className="bg-paper rounded-t-sheet relative"
+        className="animate-sheet bg-paper relative mx-auto w-full max-w-md rounded-t-sheet"
         style={{ paddingBottom: "calc(var(--sa-b) + 1rem)" }}
       >
         <div className="border-line flex items-center justify-between border-b px-5 py-4">

@@ -25,7 +25,6 @@ import { Numeral } from "@/components/ui/Numeral";
 import { Pastille } from "@/components/ui/Pastille";
 import { Balance } from "@/components/ui/Balance";
 import { Flyer, bump, reducedMotion, type Flight } from "@/components/ui/Flyer";
-import { chime, flourish } from "@/lib/sound";
 import { Tally } from "@/components/ui/Tally";
 import { ExerciseView } from "./ExerciseView";
 
@@ -420,17 +419,10 @@ function LessonSummary({
     return () => window.clearTimeout(timer);
   }, [animate, bonus]);
 
-  // Dopady se počítají stranou: dva ve stejném snímku by ze stavu
-  // přečetly totéž a závěrečná tečka by nezazněla.
-  const arrivals = useRef(0);
   function onLand(id: number) {
-    arrivals.current += 1;
-    const last = arrivals.current === Math.ceil(bonus / PER_FLYER);
     setFlights((all) => all.filter((flight) => flight.id !== id));
     setLanded((value) => value + PER_FLYER);
-    chime(id);
     bump(balanceRef.current);
-    if (last) window.setTimeout(flourish, 120);
   }
 
   return (

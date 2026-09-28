@@ -1,11 +1,10 @@
 "use client";
 
-import { useEffect, useRef } from "react";
 import { useMessages, useTranslations } from "next-intl";
-import { CloseIcon } from "@/components/icons";
 import { useExercisePrompt } from "@/i18n/exerciseText";
 import type { Exercise } from "@/core/types";
 import { Prompt } from "./Prompt";
+import { Sheet } from "./Sheet";
 import { SolutionSteps } from "./SolutionSteps";
 
 /**
@@ -59,62 +58,15 @@ function WorkedExample({ example }: { example: Exercise }) {
   );
 }
 
-/**
- * Vzor během počítání. Vyjede zespodu přes příklad a zavře se křížkem,
- * klepnutím vedle nebo Escapem — rozepsaná odpověď pod ním zůstává.
- */
+/** Vzor během počítání, v listu zespodu. */
 export function ExampleSheet({ example, onClose }: { example: Exercise; onClose: () => void }) {
   const t = useTranslations("lesson");
-  const closeRef = useRef<HTMLButtonElement>(null);
-
-  useEffect(() => {
-    closeRef.current?.focus();
-    const onKeyDown = (event: KeyboardEvent) => {
-      if (event.key === "Escape") onClose();
-    };
-    document.addEventListener("keydown", onKeyDown);
-    return () => document.removeEventListener("keydown", onKeyDown);
-  }, [onClose]);
 
   return (
-    <div className="fixed inset-0 z-50 flex flex-col justify-end">
-      <button
-        type="button"
-        tabIndex={-1}
-        aria-label={t("exampleClose")}
-        onClick={onClose}
-        className="animate-scrim bg-ink/25 absolute inset-0"
-      />
-      <div
-        role="dialog"
-        aria-modal="true"
-        aria-labelledby="example-title"
-        className="animate-sheet bg-paper relative mx-auto flex max-h-[88dvh] w-full max-w-md flex-col rounded-t-sheet"
-      >
-        <div className="border-line flex shrink-0 items-center justify-between border-b py-2 pr-2 pl-5">
-          <h2 id="example-title" className="text-heading font-semibold">
-            {t("exampleTitle")}
-          </h2>
-          <button
-            ref={closeRef}
-            type="button"
-            onClick={onClose}
-            aria-label={t("exampleClose")}
-            className="text-ink-soft flex size-11 items-center justify-center"
-          >
-            <CloseIcon className="size-5" />
-          </button>
-        </div>
-        <div
-          className="scroll-y px-5 pt-4"
-          style={{ paddingBottom: "calc(var(--sa-b) + 1.25rem)" }}
-          tabIndex={0}
-        >
-          <Why templateId={example.templateId} />
-          <WorkedExample example={example} />
-          <p className="text-ink-soft mt-5 text-micro">{t("exampleAgain")}</p>
-        </div>
-      </div>
-    </div>
+    <Sheet id="example-title" title={t("exampleTitle")} closeLabel={t("exampleClose")} onClose={onClose}>
+      <Why templateId={example.templateId} />
+      <WorkedExample example={example} />
+      <p className="text-ink-soft mt-5 text-micro">{t("exampleAgain")}</p>
+    </Sheet>
   );
 }

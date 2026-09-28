@@ -39,8 +39,6 @@ export const STORAGE_KEYS = {
   disclaimerAcceptedAt: "miligram.disclaimer.acceptedAt",
   installBannerDismissedAt: "miligram.install.dismissedAt",
   locale: "miligram.locale",
-  /** Cinknutí pastilky. Chybí-li, zvuk hraje; vypíná se hodnotou „off“. */
-  sound: "miligram.sound",
   /**
    * Účet, který na tomhle zařízení zapnul notifikace. Prázdné = vypnuto.
    * Po odhlášení a přihlášení téhož účtu se odběr obnoví sám, jinému ne.

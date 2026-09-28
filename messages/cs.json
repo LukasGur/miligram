@@ -66,10 +66,7 @@
     "install": "Instalace",
     "legal": "Právní informace",
     "about": "O aplikaci",
-    "version": "Verze {version}",
-    "sound": "Zvuk",
-    "soundToggle": "Zvuk pastilek při správné úloze",
-    "soundHint": "Cinkne, když spočítáš příklad napoprvé."
+    "version": "Verze {version}"
   },
   "locale": {
     "cs": "Čeština",
@@ -366,7 +363,7 @@
     "earnedDuringNote": "připsané během lekce",
     "duelResult": "Výsledek souboje",
     "nudgeTitle": "Ulož si postup na účet",
-    "nudgeBody": "Série, XP i pastilky pak máš i v novém telefonu. A za založení účtu dostaneš {bonus, number} pastilek.",
+    "nudgeBody": "Přidej si kamarády a změř se s nimi v soubojích i v týdenní lize.",
     "nudgeAction": "Založit účet",
     "introExample": "Vzor",
     "newType": "Nový typ",
@@ -375,6 +372,9 @@
     "fromHint": "Minule s pomocí, teď bez ní",
     "hintNext": "Další krok",
     "hintStep": "{current, number} / {total, number}",
+    "hintClose": "Zavřít nápovědu",
+    "hintPrompt": "Zadání",
+    "hintOpenLabel": "Nápověda, krok {current, number} z {total, number}",
     "hintStepLabel": "Krok {current, number} z {total, number}",
     "hintDone": "Víc kroků nápověda nemá. Výsledek už spočítáš.",
     "hintAgain": "Tenhle typ ti přijde znovu v příští lekci — tentokrát bez nápovědy.",
@@ -490,8 +490,6 @@
     "bonusBody": "Za založení účtu. Hodí se na nápovědu nebo ochranu série.",
     "bonusDismiss": "Zavřít",
     "perkBonusTitle": "{count, plural, one {# pastilka} few {# pastilky} other {# pastilek}} na start",
-    "perkBonusBody": "Připíšeme ti je hned po založení účtu. Hodí se na nápovědu nebo ochranu série.",
-    "previewBonusLabel": "Za založení účtu",
     "signOutBody": "Tvůj postup zůstane na účtu. Z tohohle telefonu se smaže a po dalším přihlášení se zase stáhne.",
     "signOutConfirm": "Odhlásit"
   },
@@ -499,7 +497,7 @@
     "freezeTitle": "Ochrana série",
     "freezeBody": "Pokryje jeden vynechaný den. Uplatní se sama, až se vrátíš.",
     "freezeOwned": "{count, plural, =0 {Žádná v zásobě} one {# v zásobě} other {# v zásobě}}",
-    "freezePoor": "Smůla, na ochranu série ti {missing, plural, one {chybí # pastilka} few {chybí # pastilky} other {chybí # pastilek}}.",
+    "freezePoor": "Chybí ti {missing, plural, one {# pastilka} few {# pastilky} other {# pastilek}}. Přibývají za příklady spočítané napoprvé.",
     "freezeFull": "Víc než {max, number} si držet nejde",
     "title": "Zásoby",
     "freezeBuyShort": "Koupit ochranu série"
