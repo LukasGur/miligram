@@ -267,6 +267,9 @@ ho mění.
 
 ## Co dělat dál
 
+**Rozpracovaný plán: [plan.md](plan.md)** — účty a pastilky na serveru
+(oprava úniku dat mezi účty), učící krok, obnovení série.
+
 0a. **Souboj naostro na dvou telefonech.** Výzva, přijetí, hraní obou,
    odhalení, odveta; skener QR na iPhonu z plochy (kamera v PWA).
 
