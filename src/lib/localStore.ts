@@ -60,4 +60,6 @@ export const STORAGE_KEYS = {
    * má jiný den, takže se nabídne znovu.
    */
   repairDismissed: "miligram.repair.dismissed",
+  /** Bublina „podívej se na vzor“ se ukázala a student ji zavřel. */
+  exampleCoachSeen: "miligram.coach.example",
 } as const;

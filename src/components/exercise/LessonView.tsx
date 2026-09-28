@@ -28,7 +28,6 @@ import { Flyer, bump, reducedMotion, type Flight } from "@/components/ui/Flyer";
 import { chime, flourish } from "@/lib/sound";
 import { Tally } from "@/components/ui/Tally";
 import { ExerciseView } from "./ExerciseView";
-import { TemplateIntro } from "./TemplateIntro";
 
 /**
  * Nabídka připomínek se dotahuje až ve shrnutí. Je v ní stav přihlášení,
@@ -141,13 +140,11 @@ export function LessonView({
 
   /**
    * Učení nového typu. Souboj ho nemá: oba hráči mají dostat stejné
-   * podmínky, a vzor nebo nápověda zdarma by zvýhodnily toho, kdo je
+   * podmínky, a vzor zdarma by zvýhodnil toho, kdo je
    * v aplikaci nový.
    */
   const learn = !duelId;
   const familiarity = useLiveQuery(() => templateFamiliarity(), []);
-  /** Položky, u kterých student vzor už viděl a klepl „Jdu na to“. */
-  const [introDone, setIntroDone] = useState<ReadonlySet<string>>(new Set());
   const templateId = index === null ? null : plan.items[index].templateId;
   const itemSeed = index === null ? null : plan.items[index].seed;
   /**
@@ -185,21 +182,6 @@ export function LessonView({
   const unmastered = learn && familiarity !== undefined && !familiarity.mastered.has(item.templateId);
   const pills = profile.pills + pending;
 
-  if (unseen && attempt === 0 && !introDone.has(item.seed) && example) {
-    return (
-      <TemplateIntro
-        key={`intro:${item.seed}`}
-        example={example}
-        category={categoryOfId(item.templateId) ?? "zaklad"}
-        solved={solved}
-        count={plan.items.length}
-        pills={pills}
-        onExit={onExit}
-        onStart={() => setIntroDone((done) => new Set(done).add(item.seed))}
-      />
-    );
-  }
-
   return (
     <ExerciseView
       /**
@@ -214,13 +196,12 @@ export function LessonView({
       /** Opakování: příklad, na kterém už student jednou pohořel. */
       repeat={attempt > 0}
       origin={item.origin}
-      newType={introDone.has(item.seed)}
+      newType={unseen && attempt === 0}
       example={unmastered && example ? example : undefined}
-      hintFree={unmastered}
       attempt={attempt + 1}
       pills={pills}
       onExit={onExit}
-      onHint={(free) => (free ? Promise.resolve(true) : spendPills(HINT_COST, `hint:${exercise.templateId}`))}
+      onHint={() => spendPills(HINT_COST, `hint:${exercise.templateId}`)}
       onAnswered={({ correct, hinted, gaveUp, elapsedMs }) => {
         // Semínko je identita položky v plánu, ne semínko zobrazeného
         // příkladu: to se u vráceného příkladu mění, aby přišla jiná čísla.

@@ -1,8 +1,8 @@
 # Věty „proč se to tak počítá“ — ke kontrole
 
-Jedna věta ke každé šabloně. Ukáže se na kartě „Nový typ příkladu“ nad
-vyřešeným vzorem (docs/plan.md, B4). **Zatím nejsou v aplikaci** — karta
-se bez nich obejde a zapojí se, až je autor schválí.
+Jedna věta ke každé šabloně. Ukáže se nahoře v listu „Vyřešený vzor“
+(docs/plan.md, B4). **Zatím nejsou v aplikaci** — vzor se bez nich
+obejde a zapojí se, až je autor schválí.
 
 Pravidla, podle kterých jsou psané:
 

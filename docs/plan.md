@@ -80,28 +80,14 @@ obnovená série sedí i s ochranami.
 Platí v denní lekci a tréninku. **Souboj zůstává beze změny** — oba
 hrají za stejných podmínek.
 
-### B1. Karta „Nový typ příkladu“
+### B1–B3 — upraveno 28. 9. 2026 po zkoušce
 
-Když student šablonu ještě nikdy nepočítal, před příkladem dostane:
-
-- jednu větu, proč se to tak počítá,
-- vyřešený vzor s jinými čísly krok po kroku (kroky už existují,
-  `SolutionSteps`; vzor = tatáž šablona s jiným seedem),
-- tlačítko „Zkusím sám“.
-
-Během příkladu jde vzor znovu otevřít.
-
-### B2. Nápověda postupně, krok po kroku
-
-- Klepnutí odkryje další krok.
-- Nový typ: zdarma, dokud ho student nevyřeší bez nápovědy.
-- Známý typ: 15 pastilek odemkne všechny kroky.
-
-### B3. Po nápovědě se typ vrátí
-
-Kdo si vzal nápovědu (zdarma i placenou), dostane týž typ s jinými
-čísly v opakovacím slotu příští lekce. U nápovědy věta „Příště to zkusíš
-bez nápovědy.“
+Karta přes celou obrazovku před novým typem byla otravná pro toho, kdo
+počítat umí. Nahradilo ji tlačítko **Vzor** v řádku pomůcek na místě
+nápovědy, u každého typu, který student ještě nespočítal sám; úplně
+poprvé na něj ukáže bublina. Otevření vzoru = pomoc: typ se vrátí
+v příští lekci. Nápověda zdarma zmizela (vzor obsahuje i vzorec),
+placená nápověda po krocích zůstává u zvládnutých typů.
 
 ### B4. Texty
 

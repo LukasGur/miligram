@@ -284,20 +284,23 @@ a kdo se přihlásil po někom jiném, viděl jeho skóre, sérii i chyby.
   bez ochran, takže ochrana přihlášenému vydržela jen do dalšího spuštění
 
 **Učící krok (28. 9. 2026, plán fáze B)** — nový typ příkladu už nepřijde
-naslepo. Před prvním příkladem šablony, kterou student nikdy nepočítal,
-ukáže karta vyřešený vzor (tatáž šablona, jiné semínko, obtížnost 1)
-i se zdroji; během počítání jde vzor znovu otevřít. Souboj to nemá —
-oba hráči mají stejné podmínky.
+bez pomoci. U šablony, kterou student ještě nespočítal sám, stojí
+v řádku pomůcek místo nápovědy **Vzor**: vyřešený příklad téhož typu
+s jinými čísly (obtížnost 1), i se zdroji, v listu zespodu. Úplně
+poprvé na něj ukáže bublina, pak už nikdy. Souboj to nemá.
 
-- nápověda odkrývá postup po krocích: popis a obecný vzorec, u kroku bez
-  vzorce dosazení bez výsledku; výsledek neprozradí nikdy
-- u typu, který student ještě nespočítal bez nápovědy, je zdarma; jinak
-  15 pastilek za všechny kroky
-- typ spočítaný s nápovědou se vrátí v opakování příští denní lekce
-  („Minule s nápovědou, teď bez ní“); vyřídí ho až výpočet napoprvé
-  a bez nápovědy. Opakování chyb ve statistikách nápovědu za chybu nemá
-- věta „proč se to tak počítá“ na kartě se ukáže, až bude v překladech
-  (`exercise.why.<šablona>`); čeká na kontrolu autora
+Původně vzor naskakoval sám přes celou obrazovku před prvním příkladem
+typu. Kdo věděl, jak na to, musel ho pokaždé odklepnout — zrušeno.
+
+- otevření vzoru se počítá jako pomoc, stejně jako nápověda: typ se vrátí
+  v opakování příští denní lekce („Minule s pomocí, teď bez ní“)
+  a zvládnutý je až spočítaný napoprvé bez vzoru i nápovědy. XP ani
+  pastilky pomoc nebere
+- u zvládnutého typu je nápověda za 15 pastilek a odkrývá postup po
+  krocích: popis a vzorec, u kroku bez vzorce dosazení bez výsledku
+- opakování chyb ve statistikách pomoc za chybu nemá
+- věta „proč se to tak počítá“ se v listu vzoru ukáže, až bude
+  v překladech (`exercise.why.<šablona>`, návrh v docs/proc-texty.md)
 
 **Obnovení série (28. 9. 2026, plán fáze C)** — spadlou sérii jde krátce
 po ztrátě obnovit za 200 pastilek: jen u série aspoň 7 dní, do konce

@@ -20,7 +20,9 @@ import { TickScale } from "@/components/ui/TickScale";
 import { Formula } from "./Formula";
 import { Prompt } from "./Prompt";
 import { SolutionSteps } from "./SolutionSteps";
-import { ExampleSheet } from "./TemplateIntro";
+import { ExampleSheet } from "./ExampleSheet";
+import { STORAGE_KEYS, writeLocal } from "@/lib/localStore";
+import { useLocalValue } from "@/lib/clientState";
 import { VerdictPanel } from "./Verdict";
 
 /** Delší číslo než tohle už není odpověď, ale překlep. */
@@ -34,7 +36,6 @@ export function ExerciseView({
   origin,
   newType = false,
   example,
-  hintFree = false,
   attempt,
   onExit,
   onAnswered,
@@ -52,18 +53,17 @@ export function ExerciseView({
   /** Typ, který student před chvílí poprvé viděl ve vzoru. */
   newType?: boolean;
   /**
-   * Vyřešený vzor u nového typu. Je-li vyplněný, dá se během počítání
-   * znovu otevřít — student ho viděl před příkladem (TemplateIntro).
+   * Vyřešený vzor u typu, který student ještě nespočítal bez pomoci.
+   * Je-li vyplněný, stojí v řádku pomůcek místo nápovědy — zdarma,
+   * protože u nového typu je vzor lepší pomoc než kus postupu.
    */
   example?: Exercise;
-  /** Nápověda zdarma: typ, který student ještě nespočítal bez ní. */
-  hintFree?: boolean;
   /** Kolikátý pokus tohle je. Od druhého se nabídne jít dál. */
   attempt: number;
   onExit: () => void;
   onAnswered: (result: { correct: boolean; hinted: boolean; gaveUp?: boolean; elapsedMs?: number }) => void;
-  /** Vezme nápovědu. Zdarma nic nestrhává, placená vrátí, jestli prošla. */
-  onHint: (free: boolean) => Promise<boolean>;
+  /** Zaplatí nápovědu; vrátí, jestli prošla. */
+  onHint: () => Promise<boolean>;
   pills: number;
 }) {
   const t = useTranslations("lesson");
@@ -76,8 +76,14 @@ export function ExerciseView({
   const [solutionOpen, setSolutionOpen] = useState(false);
   /** Kolik kroků nápovědy je odkrytých. Nula = nápověda nevzatá. */
   const [revealed, setRevealed] = useState(0);
-  const hinted = revealed > 0;
   const [exampleOpen, setExampleOpen] = useState(false);
+  /**
+   * Student se podíval na vzor. Počítá se jako pomoc, stejně jako nápověda:
+   * typ se vrátí v příští lekci, ať ho zkusí sám. Odměnu to nebere — kdyby
+   * pomoc stála body, lidé by se jí vyhýbali.
+   */
+  const [usedExample, setUsedExample] = useState(false);
+  const hinted = revealed > 0 || usedExample;
   const closeExample = useCallback(() => setExampleOpen(false), []);
   const [calculatorOpen, setCalculatorOpen] = useState(false);
   /**
@@ -114,7 +120,7 @@ export function ExerciseView({
    */
   const shown = solved + (verdict?.correct ? 1 : 0);
   const canCheck = value !== null && verdict === null;
-  const canAfford = hintFree || pills >= HINT_COST;
+  const canAfford = pills >= HINT_COST;
   const balance = pills + (landed ? PILLS_PER_CORRECT : 0);
 
   /**
@@ -124,13 +130,19 @@ export function ExerciseView({
    * transakce nepovedla, uživatel o ně nepřijde a nápovědu nedostane.
    */
   async function takeHint() {
-    if (hinted) return;
+    if (revealed > 0) return;
     if (!canAfford) {
       setPoor(true);
       return;
     }
     setPoor(false);
-    if (await onHint(hintFree)) setRevealed(1);
+    if (await onHint()) setRevealed(1);
+  }
+
+  function openExample() {
+    setExampleOpen(true);
+    setUsedExample(true);
+    writeLocal(STORAGE_KEYS.exampleCoachSeen, "1");
   }
 
   function check() {
@@ -219,36 +231,21 @@ export function ExerciseView({
               že se totéž zadání objevilo podruhé. Stejně tak typ, který
               přišel kvůli dřívější chybě nebo nápovědě: student má vědět,
               proč se mu v lekci objevil, a že ho tu čeká záměrně. */}
-          {repeat || origin || newType || example ? (
-            <div className="mb-2 flex min-h-7 items-center justify-between gap-3">
-              <p className="panel-label">
-                {repeat
-                  ? t("repeat")
-                  : origin === "mistake"
-                    ? t("fromMistake")
-                    : origin === "hint"
-                      ? t("fromHint")
-                      : newType
-                        ? t("newType")
-                        : null}
-              </p>
-              {example ? (
-                <button
-                  type="button"
-                  onClick={() => setExampleOpen(true)}
-                  aria-label={t("exampleOpenLabel")}
-                  className="text-accent -my-2 -mr-2 flex min-h-11 items-center gap-1.5 px-2 text-label font-medium"
-                >
-                  <BookIcon className="size-4" />
-                  {t("exampleOpen")}
-                </button>
-              ) : null}
-            </div>
+          {repeat || origin || newType ? (
+            <p className="panel-label mb-2">
+              {repeat
+                ? t("repeat")
+                : origin === "mistake"
+                  ? t("fromMistake")
+                  : origin === "hint"
+                    ? t("fromHint")
+                    : t("newType")}
+            </p>
           ) : null}
 
           <Prompt text={prompt(exercise)} />
 
-          {verdict === null && hinted ? (
+          {verdict === null && revealed > 0 ? (
             <div className="mt-4">
               <HintPanel exercise={exercise} revealed={revealed} onNext={() => setRevealed((count) => count + 1)} />
             </div>
@@ -318,23 +315,32 @@ export function ExerciseView({
               s odpovědí. Otevřená kalkulačka si jejich místo bere pro větší
               klávesy — zavírá se křížkem na svém displeji. */}
           {verdict === null && !calculatorOpen ? (
-            <div className="mt-2 flex gap-2 [&>*]:flex-1">
+            <div className="relative mt-2 flex gap-2 [&>*]:flex-1">
               <Tool
                 icon={<CalculatorIcon className="size-5 shrink-0" />}
                 label={tCalculator("title")}
                 pressed={calculatorOpen}
                 onPress={() => setCalculatorOpen((open) => !open)}
               />
-              {hinted ? null : (
+              {/* U typu, který student ještě nezvládl sám, je na místě
+                  nápovědy vzor. Zůstává i po otevření, dá se k němu vracet. */}
+              {example ? (
+                <Tool
+                  icon={<BookIcon className="size-5 shrink-0" />}
+                  label={t("exampleTool")}
+                  ariaLabel={t("exampleToolLabel")}
+                  onPress={openExample}
+                />
+              ) : revealed > 0 ? null : (
                 <Tool
                   icon={<HintIcon className="size-5 shrink-0" />}
                   label={t("hintTitle")}
-                  cost={hintFree ? "free" : HINT_COST}
-                  costLabel={hintFree ? t("hintFreeLabel") : t("hintPrice", { cost: HINT_COST })}
-                  freeLabel={t("hintFree")}
+                  cost={HINT_COST}
+                  costLabel={t("hintPrice", { cost: HINT_COST })}
                   onPress={takeHint}
                 />
               )}
+              {example ? <ExampleCoach /> : null}
             </div>
           ) : null}
 
@@ -429,18 +435,17 @@ function Tool({
   label,
   cost,
   costLabel,
-  freeLabel,
+  ariaLabel,
   pressed,
   onPress,
 }: {
   icon: React.ReactNode;
   label: string;
-  /** Cena v pastilkách, nebo „free“ u nápovědy k novému typu. */
-  cost?: number | "free";
+  cost?: number;
   /** Cena slovy pro odečítač: „15 pastilek“. */
   costLabel?: string;
-  /** Nápis na cenovce zdarma. */
-  freeLabel?: string;
+  /** Celý popis pro odečítač, když krátký nápis nestačí. */
+  ariaLabel?: string;
   pressed?: boolean;
   onPress: () => void;
 }) {
@@ -450,6 +455,7 @@ function Tool({
       onClick={onPress}
       {...pressable}
       aria-pressed={pressed}
+      aria-label={ariaLabel}
       className={`press press-wide flex min-h-11 items-center justify-center gap-2 rounded-control border px-3 text-label font-medium ${
         pressed
           ? "border-accent bg-accent-wash text-accent data-pressed:bg-accent-wash-press"
@@ -458,13 +464,7 @@ function Tool({
     >
       {icon}
       <span className="truncate">{label}</span>
-      {cost === "free" ? (
-        // Zdarma bez pastilky: nic se neplatí, tak se ani neukazuje měna.
-        <span className="bg-accent-wash text-accent-press inline-flex shrink-0 items-center rounded-full px-2 py-0.5 text-micro font-semibold">
-          <span aria-hidden>{freeLabel}</span>
-          <span className="sr-only">{costLabel}</span>
-        </span>
-      ) : cost === undefined ? null : (
+      {cost === undefined ? null : (
         <span className="bg-pill-wash text-pill inline-flex shrink-0 items-center gap-1 rounded-full py-0.5 pl-1.5 pr-2">
           <Pastille className="size-4" />
           <span className="num font-semibold" data-numeric aria-hidden>
@@ -474,6 +474,37 @@ function Tool({
         </span>
       )}
     </button>
+  );
+}
+
+/**
+ * Bublina nad vzorem, jen úplně poprvé. Vzor stojí tam, kde student
+ * zvyklý na aplikaci čeká nápovědu — jednou se to řekne, pak už ne.
+ * Zavře se klepnutím kamkoli; klepnutí jde dál, takže se tím rovnou
+ * třeba otevře vzor nebo napíše číslice.
+ */
+function ExampleCoach() {
+  const t = useTranslations("lesson");
+  const seen = useLocalValue(STORAGE_KEYS.exampleCoachSeen);
+
+  useEffect(() => {
+    if (seen) return;
+    const dismiss = () => writeLocal(STORAGE_KEYS.exampleCoachSeen, "1");
+    document.addEventListener("pointerdown", dismiss, { capture: true, once: true });
+    return () => document.removeEventListener("pointerdown", dismiss, { capture: true });
+  }, [seen]);
+
+  if (seen) return null;
+
+  return (
+    <div
+      role="status"
+      className="animate-tick bg-ink text-paper pointer-events-none absolute right-0 bottom-full z-10 mb-2.5 w-[min(16rem,calc(50%+4rem))] !flex-none rounded-panel px-3.5 py-2.5 text-label shadow-lg"
+    >
+      {t("exampleCoach")}
+      {/* Špička míří na tlačítko vzoru pod bublinou. */}
+      <span aria-hidden className="bg-ink absolute right-8 -bottom-1 size-2.5 rotate-45" />
+    </div>
   );
 }
 
