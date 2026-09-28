@@ -61,7 +61,7 @@ export function ExerciseView({
   /** Kolikátý pokus tohle je. Od druhého se nabídne jít dál. */
   attempt: number;
   onExit: () => void;
-  onAnswered: (result: { correct: boolean; hinted: boolean; gaveUp?: boolean; elapsedMs?: number }) => void;
+  onAnswered: (result: { correct: boolean; hinted: boolean; gaveUp?: boolean }) => void;
   /** Zaplatí nápovědu; vrátí, jestli prošla. */
   onHint: () => Promise<boolean>;
   pills: number;
@@ -98,9 +98,6 @@ export function ExerciseView({
   /** Nápověda se nezneaktivní, ale řekne, proč nejde vzít. */
   const [poor, setPoor] = useState(false);
   const format = useFormatter();
-  const clock = useVisibleClock();
-  /** Doba do vyhodnocení. Souboj z ní při shodě bodů rozhoduje. */
-  const [elapsedMs, setElapsedMs] = useState<number>();
 
   /**
    * Pastilky za příklad. Připisují se hned — do zůstatku v hlavičce
@@ -159,7 +156,6 @@ export function ExerciseView({
   function check() {
     if (value === null) return;
     const result = evaluateAnswer(value, exercise.solution.value, exercise.answer.tolerance);
-    setElapsedMs(clock());
     setVerdict(result);
     if (result.correct && !repeat) {
       if (reducedMotion()) {
@@ -276,13 +272,13 @@ export function ExerciseView({
                     {historyOpen ? tCalculator("hideHistory") : tCalculator("history")}
                   </SecondaryAction>
                 ) : stuck ? (
-                  <GiveUp onPress={() => onAnswered({ correct: false, hinted, gaveUp: true, elapsedMs })} />
+                  <GiveUp onPress={() => onAnswered({ correct: false, hinted, gaveUp: true })} />
                 ) : null}
               </div>
 
               {history.length > 0 && stuck ? (
                 <div className="mt-2 flex [&>*]:flex-1">
-                  <GiveUp onPress={() => onAnswered({ correct: false, hinted, gaveUp: true, elapsedMs })} />
+                  <GiveUp onPress={() => onAnswered({ correct: false, hinted, gaveUp: true })} />
                 </div>
               ) : null}
 
@@ -394,7 +390,7 @@ export function ExerciseView({
           {calculatorOpen && verdict === null ? null : (
             <button
               type="button"
-              onClick={verdict === null ? check : () => onAnswered({ correct: verdict.correct, hinted, elapsedMs })}
+              onClick={verdict === null ? check : () => onAnswered({ correct: verdict.correct, hinted })}
               {...pressable}
               disabled={verdict === null && !canCheck}
               className="press press-wide bg-accent data-pressed:bg-accent-press mt-3 min-h-14 w-full rounded-control text-body font-semibold text-white disabled:opacity-40"
@@ -581,35 +577,4 @@ function appendCharacter(current: string, character: string): string {
   // Vedoucí nula se nehromadí: 0 → 5 dá 5, ne 05. „0,“ zůstává.
   if (current === "0") return character;
   return current + character;
-}
-
-/**
- * Čas strávený nad příkladem, jen když je aplikace vidět. Kdo odejde
- * uprostřed souboje do zpráv, nemá prohrát o dobu, kdy se na příklad
- * nedíval — a nemá ani vyhrát, když soupeř udělal totéž.
- */
-function useVisibleClock(): () => number {
-  const state = useRef<{ total: number; since: number | null } | null>(null);
-
-  useEffect(() => {
-    const visible = () => document.visibilityState === "visible";
-    state.current = { total: 0, since: visible() ? performance.now() : null };
-    const onChange = () => {
-      const current = state.current;
-      if (!current) return;
-      if (visible() && current.since === null) current.since = performance.now();
-      if (!visible() && current.since !== null) {
-        current.total += performance.now() - current.since;
-        current.since = null;
-      }
-    };
-    document.addEventListener("visibilitychange", onChange);
-    return () => document.removeEventListener("visibilitychange", onChange);
-  }, []);
-
-  return () => {
-    const current = state.current;
-    if (!current) return 0;
-    return Math.round(current.total + (current.since === null ? 0 : performance.now() - current.since));
-  };
 }

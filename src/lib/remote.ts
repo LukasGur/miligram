@@ -324,8 +324,9 @@ export async function acceptFriend(client: SupabaseClient, userId: string, reque
    Souboje
 
    Souboj nese identifikátor lekce a téma. Oba hráči si z nich sestaví tytéž
-   příklady, takže se nikam neposílá zadání ani odpovědi — jen body a čas.
-   Kdo vyhrál, rozhoduje server (migrace 0010); výsledek soupeře pustí až
+   příklady, takže se nikam neposílá zadání ani odpovědi — jen body a značky
+   po příkladech.
+   Kdo vyhrál, rozhoduje server (migrace 0016); výsledek soupeře pustí až
    po vlastním dohrání.
    ------------------------------------------------------------------------ */
 
@@ -333,7 +334,6 @@ export type DuelResult = {
   correct: number;
   count: number;
   points: number;
-  durationMs: number | null;
   /** Značky po příkladech. Chybí u výsledků ze starší verze. */
   items?: DuelMark[] | null;
 };
@@ -444,7 +444,7 @@ async function hydrateDuels(client: SupabaseClient, userId: string, rows: DuelRo
   const opponents = [...new Set(rows.map((duel) => (duel.challenger === userId ? duel.opponent : duel.challenger)))];
 
   const [results, profiles] = await Promise.all([
-    client.from("duel_results").select("duel_id, user_id, correct, count, points, duration_ms, items").in("duel_id", ids),
+    client.from("duel_results").select("duel_id, user_id, correct, count, points, items").in("duel_id", ids),
     client.from("profiles").select("id, handle, tone").in("id", opponents),
   ]);
   if (results.error) throw new Error(results.error.message);
@@ -457,7 +457,6 @@ async function hydrateDuels(client: SupabaseClient, userId: string, rows: DuelRo
     correct: number;
     count: number;
     points: number | null;
-    duration_ms: number | null;
     items: DuelMark[] | null;
   };
   const byDuel = new Map<string, ResultRow[]>();
@@ -470,7 +469,6 @@ async function hydrateDuels(client: SupabaseClient, userId: string, rows: DuelRo
           correct: row.correct,
           count: row.count,
           points: row.points ?? row.correct,
-          durationMs: row.duration_ms,
           items: row.items,
         }
       : null;
@@ -525,7 +523,6 @@ export async function recordDuelResult(
       correct: result.correct,
       count: result.count,
       points: result.points,
-      duration_ms: result.durationMs,
       items: result.items ?? null,
     }),
   );

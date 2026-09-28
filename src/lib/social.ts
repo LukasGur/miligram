@@ -57,7 +57,7 @@ export async function collectDuelRewards(userId: string, duels: readonly Duel[])
   for (const duel of duels) {
     if (duel.status !== "finished") continue;
     const outcome = duel.winnerId === null ? "draw" : duel.winnerId === userId ? "won" : "lost";
-    await creditDuelReward({ id: duel.id, resolvedAt: duel.resolvedAt }, duelPills(outcome));
+    await creditDuelReward({ id: duel.id, resolvedAt: duel.resolvedAt }, duelPills(outcome, duel.mine));
   }
 }
 

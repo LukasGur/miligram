@@ -64,9 +64,12 @@ Data v telefonu patří jednomu účtu (`Profile.ownerId`, `src/lib/account.ts`)
 Registrace si je vezme, přihlášení k účtu s historií telefon po potvrzení
 vyčistí, odhlášení ho vyčistí vždy. Synchronizace mluví jen za vlastníka.
 
-Souboj: výhra +15 pastilek, remíza +5, XP žádné navíc (lekce souboje dá
-běžné XP). Jinak by se liga dala nafouknout vzájemným vyzýváním. Kdo
-vyhrál, rozhoduje server (`duel_outcome`, migrace 0010); pastilky si
+Souboj: výhra +15 pastilek, remíza +5, remíza bez chyby (7 : 7) +10,
+XP žádné navíc (lekce souboje dá běžné XP). Jinak by se liga dala
+nafouknout vzájemným vyzýváním. Rozhodují body; při shodě prohrává ten,
+kdo chyboval v lehčím příkladu (nápověda se počítá jako chyba). Čas
+nerozhoduje: jde o správnost, ne o rychlost. Kdo vyhrál, rozhoduje server
+(`duel_outcome`, migrace 0016); pastilky si
 připíše zařízení samo, jednou za souboj. Pravidla souboje jsou
 v `src/core/duel.ts` a musí souhlasit s migrací — test to hlídá.
 

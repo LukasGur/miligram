@@ -3,7 +3,7 @@
 import { useEffect, useState } from "react";
 import { useFormatter, useTranslations } from "next-intl";
 import { Monogram } from "@/components/ui/Monogram";
-import { decidedByTime, duelPills, type DuelMark } from "@/core/duel";
+import { duelDecision, duelPills, type DuelMark } from "@/core/duel";
 import { DIFFICULTY_RAMP } from "@/core/lessonPlan";
 import { categoryOfId } from "@/core/templateCategories";
 import type { Category } from "@/core/types";
@@ -39,21 +39,23 @@ export function DuelReveal({
   const outcome = outcomeFor(userId, duel);
   const categories = useItemCategories(duel);
   const count = duel.mine?.count ?? duel.theirs?.count ?? 7;
-  const pills = outcome ? duelPills(outcome) : 0;
-  const byTime = duel.mine && duel.theirs ? decidedByTime(duel.mine, duel.theirs) : false;
-  const margin =
-    duel.mine?.durationMs != null && duel.theirs?.durationMs != null
-      ? Math.round(Math.abs(duel.theirs.durationMs - duel.mine.durationMs) / 1000)
-      : 0;
+  const pills = outcome ? duelPills(outcome, duel.mine) : 0;
+  // Rozhodla chyba v lehčím příkladu? Jen když se klient se serverem
+  // shodne; u rozcházející se starší verze platí serverův výsledek beze slov.
+  const decision = duel.mine && duel.theirs && !duel.forfeit ? duelDecision(duel.mine, duel.theirs) : null;
+  const decisive = decision?.outcome === outcome ? decision?.decisive : undefined;
+  const flawless = outcome === "draw" && !duel.forfeit && duel.mine != null && duel.mine.points === duel.mine.count;
 
   const verdict =
     outcome === null
       ? t("revealWaiting", { handle: duel.opponentHandle })
       : duel.forfeit
         ? t(`revealForfeit.${outcome === "won" ? "won" : "lost"}`)
-        : byTime
-          ? t(`revealByTime.${outcome}`, { seconds: margin })
-          : t(`revealVerdict.${outcome}`);
+        : decisive
+          ? t(`revealByMiss.${outcome === "won" ? "won" : "lost"}`)
+          : flawless
+            ? t("revealFlawless")
+            : t(`revealVerdict.${outcome}`);
 
   return (
     <Screen
@@ -108,26 +110,26 @@ export function DuelReveal({
             <span className="readout text-ink-soft text-micro" data-numeric>
               {index + 1}
             </span>
-            <span className="text-ink-soft truncate text-label">
-              {duel.topic !== "mix"
-                ? t(`difficulty.${DIFFICULTY_RAMP[index % DIFFICULTY_RAMP.length]}`)
-                : categories?.[index]
-                  ? tCategory(categories[index])
-                  : " "}
-            </span>
-            <Mark mark={duel.mine?.items?.[index]} />
-            <Mark mark={sealHint(duel.theirs?.items?.[index])} />
+            {decisive?.index === index ? (
+              <span className="text-ink truncate text-label font-semibold">
+                {t("revealDecisive", { difficulty: t(`difficulty.${decisive.difficulty}`) })}
+              </span>
+            ) : (
+              <span className="text-ink-soft truncate text-label">
+                {duel.topic !== "mix"
+                  ? t(`difficulty.${DIFFICULTY_RAMP[index % DIFFICULTY_RAMP.length]}`)
+                  : categories?.[index]
+                    ? tCategory(categories[index])
+                    : " "}
+              </span>
+            )}
+            <Mark mark={duel.mine?.items?.[index]} decisive={decisive?.index === index && decisive.mine} />
+            <Mark
+              mark={sealHint(duel.theirs?.items?.[index])}
+              decisive={decisive?.index === index && !decisive.mine}
+            />
           </div>
         ))}
-        {duel.mine?.durationMs != null ? (
-          <div className="bg-surface text-ink-soft flex justify-between px-3 py-2.5 text-micro">
-            <span>{t("revealTime")}</span>
-            <span className="readout text-ink" data-numeric>
-              {clock(duel.mine.durationMs)}
-              {duel.theirs?.durationMs != null ? ` · ${clock(duel.theirs.durationMs)}` : ""}
-            </span>
-          </div>
-        ) : null}
       </div>
 
       <p className="text-ink-soft mt-3 flex flex-wrap gap-x-4 gap-y-1 text-micro">
@@ -177,7 +179,16 @@ function Side({
   );
 }
 
-function Mark({ mark, small = false }: { mark: DuelMark | undefined; small?: boolean }) {
+function Mark({
+  mark,
+  small = false,
+  decisive = false,
+}: {
+  mark: DuelMark | undefined;
+  small?: boolean;
+  /** Příklad, který rozhodl shodu bodů. Obrys zesílí, barva zůstane. */
+  decisive?: boolean;
+}) {
   const box = small ? "size-4 rounded-[3px] text-[0.5625rem]" : "size-[1.375rem] rounded-[5px] text-[0.6875rem]";
   const wrap = small ? "inline-flex" : "flex justify-center";
   if (mark === undefined) return <span className={wrap}><span className={`${box} bg-surface`} /></span>;
@@ -192,7 +203,7 @@ function Mark({ mark, small = false }: { mark: DuelMark | undefined; small?: boo
       ) : mark === "hint" ? (
         <span className={`${box} bg-pill-wash text-pill readout grid place-items-center font-semibold`}>N</span>
       ) : (
-        <span className={`${box} border-ink-soft/40 border-[1.5px]`} />
+        <span className={`${box} ${decisive ? "border-ink border-2" : "border-ink-soft/40 border-[1.5px]"}`} />
       )}
     </span>
   );
@@ -201,12 +212,6 @@ function Mark({ mark, small = false }: { mark: DuelMark | undefined; small?: boo
 /** Nápověda soupeře se ukazuje jen jako příklad bez bodu. */
 function sealHint(mark: DuelMark | undefined): DuelMark | undefined {
   return mark === "hint" ? "miss" : mark;
-}
-
-/** Minuty a sekundy. */
-function clock(ms: number): string {
-  const seconds = Math.round(ms / 1000);
-  return `${Math.floor(seconds / 60)}:${String(seconds % 60).padStart(2, "0")}`;
 }
 
 /**

@@ -45,7 +45,6 @@ export function withPendingResult<T extends { id: string; playedByMe: boolean; m
     correct: result.correct,
     count: result.count,
     points: result.points,
-    durationMs: result.durationMs,
     items: result.items,
   };
   return { ...duel, playedByMe: true, mine };

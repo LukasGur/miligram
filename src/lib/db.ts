@@ -172,8 +172,6 @@ export type LessonAttempt = {
   hinted: boolean;
   /** Student si po druhé chybě nechal ukázat postup a šel dál. */
   gaveUp?: boolean;
-  /** Doba od zobrazení příkladu do vyhodnocení. Souboj z ní rozhoduje shodu bodů. */
-  elapsedMs?: number;
 };
 
 /**

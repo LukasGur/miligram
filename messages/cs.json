@@ -763,10 +763,10 @@
     "forfeitNote": "{topic} · kontumačně",
     "duelRulesTitle": "Pravidla souboje",
     "duelRule1": "Vyzývající vybere téma. Oba dostanou stejných sedm příkladů se stejným náběhem obtížnosti.",
-    "duelRule2": "Bod za příklad správně napoprvé bez nápovědy. Při shodě bodů vyhraje kratší čas; rozdíl pod sekundu je remíza.",
+    "duelRule2": "Bod za příklad správně napoprvé bez nápovědy. Při shodě bodů prohrává ten, kdo chyboval v lehčím příkladu; nápověda se počítá jako chyba. Čas nerozhoduje, jde o správnost.",
     "duelRule3": "Vyzvaný má 48 hodin na přijetí. Po přijetí mají oba dalších 48 hodin na dohrání.",
     "duelRule4": "Kdo po přijetí nedohraje, prohrává kontumačně, pokud ten druhý dohrál. Nepřijatá výzva propadne a nepočítá se.",
-    "duelRule5": "Výhra dá 15 pastilek, remíza 5. XP je jen za lekci samotnou, ať se liga nedá nafouknout vzájemným vyzýváním.",
+    "duelRule5": "Výhra dá 15 pastilek, remíza 5, remíza bez chyby 10. XP je jen za lekci samotnou, ať se liga nedá nafouknout vzájemným vyzýváním.",
     "challengeTitle": "Vyzvat · {handle}",
     "challengeAndPlay": "Vyzvat a hrát",
     "challengeOnly": "Jen poslat výzvu",
@@ -781,7 +781,7 @@
     "termPoint": "Bod",
     "termPointValue": "správně napoprvé bez nápovědy",
     "termTie": "Při shodě",
-    "termTieValue": "rozhodne kratší čas",
+    "termTieValue": "prohrává chyba v lehčím příkladu",
     "termDeadline": "Lhůta",
     "termDeadlineValue": "48 h na přijetí, pak 48 h na hru",
     "termWin": "Výhra",
@@ -795,17 +795,17 @@
       "lost": "Prohra",
       "draw": "Remíza"
     },
-    "revealByTime": {
-      "won": "Výhra o {seconds, number} s",
-      "lost": "Prohra o {seconds, number} s",
-      "draw": "Remíza"
+    "revealByMiss": {
+      "won": "Výhra, soupeř chyboval v lehčím příkladu",
+      "lost": "Prohra, chyba v lehčím příkladu než u soupeře"
     },
+    "revealFlawless": "Remíza bez chyby",
     "revealForfeit": {
       "won": "Výhra kontumačně",
       "lost": "Prohra kontumačně"
     },
     "revealItem": "Příklad",
-    "revealTime": "Čas",
+    "revealDecisive": "{difficulty} · rozhodl",
     "legendOk": "správně napoprvé",
     "legendMiss": "bez bodu",
     "legendHint": "s nápovědou (vidíš jen ty)",

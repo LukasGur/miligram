@@ -201,7 +201,7 @@ export function LessonView({
       pills={pills}
       onExit={onExit}
       onHint={() => spendPills(HINT_COST, `hint:${exercise.templateId}`)}
-      onAnswered={({ correct, hinted, gaveUp, elapsedMs }) => {
+      onAnswered={({ correct, hinted, gaveUp }) => {
         // Semínko je identita položky v plánu, ne semínko zobrazeného
         // příkladu: to se u vráceného příkladu mění, aby přišla jiná čísla.
         const zapis: LessonAttempt = {
@@ -212,7 +212,6 @@ export function LessonView({
           correct,
           hinted,
           ...(gaveUp ? { gaveUp: true } : {}),
-          ...(elapsedMs !== undefined ? { elapsedMs } : {}),
         };
         const next = [...attempts, zapis];
         setAttempts(next);

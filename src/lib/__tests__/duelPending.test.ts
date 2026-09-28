@@ -3,7 +3,7 @@ import { friendDuelState } from "@/core/duel";
 import { withPendingResult, type PendingResults } from "../duelPending";
 import type { DuelResult } from "../remote";
 
-const result = { correct: 5, count: 7, points: 5, durationMs: 90_000, items: null };
+const result = { correct: 5, count: 7, points: 5, items: null };
 
 const duel = {
   id: "d1",

@@ -1,9 +1,10 @@
-import { CATEGORIES, type Category } from "./types";
+import { DIFFICULTY_RAMP } from "./lessonPlan";
+import { CATEGORIES, type Category, type Difficulty } from "./types";
 
 /**
  * Pravidla souboje.
  *
- * Totéž pravidlo stojí v databázi (migrace 0010, `duel_outcome`) — server
+ * Totéž pravidlo stojí v databázi (migrace 0016, `duel_outcome`) — server
  * rozhoduje, kdo vyhrál, aplikace to potřebuje vědět dřív, než se ozve,
  * a ukázat proč. Test hlídá, že se obě strany shodnou na krajních
  * případech.
@@ -12,22 +13,15 @@ import { CATEGORIES, type Category } from "./types";
 /** Lhůta na přijetí výzvy a po přijetí na dohrání. */
 export const DUEL_WINDOW_MS = 48 * 3600 * 1000;
 
-/** Při shodě bodů rozhoduje čas, ale rozdíl pod sekundu je remíza. */
-export const DUEL_TIE_MS = 1000;
-
 /**
  * Odměna za souboj v pastilkách. XP ne: dva kamarádi by se vyzývali
  * dokola a nafoukli si ligu. Lekce souboje sama dá běžné XP.
+ * Bezchybná remíza dá víc než obyčejná: oba spočítali všechno, a to je
+ * výsledek, o který jde.
  */
 export const DUEL_WIN_PILLS = 15;
 export const DUEL_DRAW_PILLS = 5;
-
-/**
- * Jeden příklad se do času započítá nejvýš takhle dlouho. Kdo odejde
- * od rozehraného souboje na oběd, neměl by prohrát o hodinu — ani
- * vyhrát, když soupeř udělal totéž.
- */
-export const DUEL_ITEM_CAP_MS = 10 * 60 * 1000;
+export const DUEL_FLAWLESS_DRAW_PILLS = 10;
 
 export const DUEL_TOPICS = ["mix", ...CATEGORIES] as const;
 export type DuelTopic = (typeof DUEL_TOPICS)[number];
@@ -54,8 +48,8 @@ export function mainCategory(categories: readonly (Category | null)[]): Category
 export type DuelScore = {
   /** Příklady správně napoprvé bez nápovědy. */
   points: number;
-  /** Součet času prvních pokusů. Chybí u výsledků ze starší verze. */
-  durationMs: number | null;
+  /** Značky po příkladech. Chybí u výsledků ze starší verze. */
+  items?: readonly DuelMark[] | null;
 };
 
 /**
@@ -66,27 +60,68 @@ export type DuelMark = "ok" | "miss" | "hint";
 
 export type Outcome = "won" | "lost" | "draw";
 
-/** Jak dopadl souboj pro prvního z dvojice. */
-export function duelOutcome(mine: DuelScore, theirs: DuelScore): Outcome {
-  if (mine.points !== theirs.points) return mine.points > theirs.points ? "won" : "lost";
-  if (mine.durationMs === null || theirs.durationMs === null) return "draw";
-  const difference = theirs.durationMs - mine.durationMs;
-  if (difference >= DUEL_TIE_MS) return "won";
-  if (-difference >= DUEL_TIE_MS) return "lost";
-  return "draw";
+/** Příklad bez bodu: pořadí v souboji a jeho obtížnost. */
+type Miss = { index: number; difficulty: Difficulty };
+
+/**
+ * Příklady bez bodu, od nejlehčího. Nápověda se počítá jako chyba:
+ * soupeř ji vidí jen jako „bez bodu“ a jiné pravidlo by prozradilo,
+ * co z toho byla chyba.
+ */
+function misses(items: readonly DuelMark[]): Miss[] {
+  return items
+    .map((mark, index) => ({ mark, index, difficulty: DIFFICULTY_RAMP[index % DIFFICULTY_RAMP.length] }))
+    .filter(({ mark }) => mark !== "ok")
+    .map(({ index, difficulty }) => ({ index, difficulty }))
+    .sort((a, b) => a.difficulty - b.difficulty || a.index - b.index);
 }
 
-/** Rozhodlo se časem? Shrnutí to říká větou, jinak by výhra 6 : 6 nedávala smysl. */
-export function decidedByTime(mine: DuelScore, theirs: DuelScore): boolean {
-  return mine.points === theirs.points && duelOutcome(mine, theirs) !== "draw";
+export type DuelDecision = {
+  outcome: Outcome;
+  /**
+   * Rozhodla při shodě bodů chyba: příklad, ve kterém chyboval poražený,
+   * a čí byl. Chybí, když rozhodly body nebo je remíza.
+   */
+  decisive?: Miss & { mine: boolean };
+};
+
+/**
+ * Jak dopadl souboj pro prvního z dvojice.
+ *
+ * Rozhodují body. Při shodě se porovnají chyby od nejlehčí a prohraje
+ * ten, jehož chyba byla v lehčím příkladu: nepozornost v rutinním výpočtu
+ * je u lůžka nebezpečnější než zaváhání ve složitém. Čas nerozhoduje,
+ * jde o správnost.
+ *
+ * Totéž pravidlo stojí v migraci 0016 (`duel_outcome`), srovnání polí
+ * v Postgresu: po prvcích, a když je jedno začátkem druhého, kratší
+ * je menší. Při shodě bodů mají obě pole stejnou délku, ale kopíruje se
+ * to, ať se strany nerozejdou ani jinde.
+ */
+export function duelDecision(mine: DuelScore, theirs: DuelScore): DuelDecision {
+  if (mine.points !== theirs.points) return { outcome: mine.points > theirs.points ? "won" : "lost" };
+  if (!mine.items || !theirs.items) return { outcome: "draw" };
+  const a = misses(mine.items);
+  const b = misses(theirs.items);
+  for (let index = 0; index < Math.min(a.length, b.length); index++) {
+    if (a[index].difficulty === b[index].difficulty) continue;
+    return a[index].difficulty > b[index].difficulty
+      ? { outcome: "won", decisive: { ...b[index], mine: false } }
+      : { outcome: "lost", decisive: { ...a[index], mine: true } };
+  }
+  if (a.length === b.length) return { outcome: "draw" };
+  return { outcome: a.length > b.length ? "won" : "lost" };
+}
+
+/** Jak dopadl souboj pro prvního z dvojice. */
+export function duelOutcome(mine: DuelScore, theirs: DuelScore): Outcome {
+  return duelDecision(mine, theirs).outcome;
 }
 
 export type DuelAttempt = {
   seed: string;
   correct: boolean;
   hinted: boolean;
-  /** Jak dlouho pokus trval, od zobrazení příkladu po vyhodnocení. */
-  elapsedMs?: number;
 };
 
 /**
@@ -97,27 +132,26 @@ export type DuelAttempt = {
 export function duelScore(
   seeds: readonly string[],
   attempts: readonly DuelAttempt[],
-): DuelScore & { items: DuelMark[] } {
+): { points: number; items: DuelMark[] } {
   let points = 0;
-  let durationMs = 0;
   const items: DuelMark[] = [];
   for (const seed of seeds) {
     const first = attempts.find((attempt) => attempt.seed === seed);
-    if (!first) {
-      items.push("miss");
-      continue;
-    }
-    const mark: DuelMark = first.hinted ? "hint" : first.correct ? "ok" : "miss";
+    const mark: DuelMark = !first ? "miss" : first.hinted ? "hint" : first.correct ? "ok" : "miss";
     items.push(mark);
     if (mark === "ok") points += 1;
-    durationMs += Math.min(Math.max(first.elapsedMs ?? 0, 0), DUEL_ITEM_CAP_MS);
   }
-  return { points, durationMs: Math.round(durationMs), items };
+  return { points, items };
 }
 
-/** Pastilky za rozhodnutý souboj. */
-export function duelPills(outcome: Outcome): number {
-  return outcome === "won" ? DUEL_WIN_PILLS : outcome === "draw" ? DUEL_DRAW_PILLS : 0;
+/**
+ * Pastilky za rozhodnutý souboj. Remíza, ve které mám všechno správně,
+ * je bezchybná i u soupeře, protože body se shodují.
+ */
+export function duelPills(outcome: Outcome, mine?: { points: number; count: number } | null): number {
+  if (outcome === "won") return DUEL_WIN_PILLS;
+  if (outcome === "lost") return 0;
+  return mine && mine.points === mine.count ? DUEL_FLAWLESS_DRAW_PILLS : DUEL_DRAW_PILLS;
 }
 
 export type DuelStatus = "offered" | "accepted" | "declined" | "expired" | "finished" | "void";

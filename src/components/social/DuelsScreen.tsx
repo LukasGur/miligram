@@ -302,7 +302,7 @@ function DoneRow({ duel, userId, onOpen }: { duel: Duel; userId: string; onOpen:
     );
   }
 
-  const pills = duelPills(outcome);
+  const pills = duelPills(outcome, duel.mine);
   return (
     <li>
       <button type="button" onClick={onOpen} className="border-line active:bg-surface flex min-h-16 w-full items-center gap-3 border-b py-2 text-left">

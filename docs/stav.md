@@ -188,8 +188,10 @@ Návrh ke schválení: <https://claude.ai/artifact/BWyiZjUXusytWU1BAFqLaw>.
 - **Souboj** (migrace 0010, `src/core/duel.ts`) — vyzývající vybere téma
   (mix nebo kategorie), oba hrají tytéž příklady. Vyzvaný má 48 h na
   přijetí, pak oba 48 h na dohrání; kdo nedohraje, prohrává kontumačně,
-  jen když druhý dohrál. Bod za správně napoprvé bez nápovědy, při shodě
-  kratší čas (pod sekundu remíza). Soupeřovo skóre je zapečetěné do
+  jen když druhý dohrál. Bod za správně napoprvé bez nápovědy. Při shodě
+  bodů prohrává chyba v lehčím příkladu (porovnává se od nejlehčí chyby,
+  nápověda = chyba), jinak remíza. Čas nerozhoduje ani se neměří
+  (migrace 0016). Soupeřovo skóre je zapečetěné do
   vlastního dohrání. Jeden otevřený souboj na dvojici, odveta jedním
   klepnutím. Lhůty hlídá minutová úloha `resolve_duels()`. Výsledek po
   příkladech (migrace 0011) je v odhalení; výsledek dohraný bez sítě
