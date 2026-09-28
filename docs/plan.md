@@ -108,6 +108,10 @@ bez nápovědy.“
 Věty „proč“ pro 72 šablon, CS i SK. Před nasazením je projde autor
 (přehledný seznam k přečtení), teprve pak push.
 
+Napsané v `docs/proc-texty.md`, čekají na kontrolu. Po schválení se
+vloží do `messages/*.json` jako `exercise.why.<šablona>` — karta je
+ukáže sama, kód je hotový.
+
 ## Fáze C — obnovení série ✅ (28. 9. 2026)
 
 - 200 pastilek.
