@@ -8,7 +8,7 @@ import { Pastille } from "@/components/ui/Pastille";
 import { Spinner } from "@/components/ui/Spinner";
 import { useAction, withTimeout } from "@/lib/useAction";
 import { badgeStatesFromLevels, showcaseOrder, type BadgeLevels, type BadgeState } from "@/core/badges";
-import { localDay, STREAK_FREEZE_COST } from "@/core/economy";
+import { GIFT_FREEZE_COST, localDay } from "@/core/economy";
 import { displayTier } from "@/core/league";
 import { spendPills } from "@/lib/db";
 import {
@@ -281,7 +281,7 @@ function Gift({ social, friendId, handle }: { social: Social; friendId: string; 
     if (busy) return;
     setNotice(null);
     if (used.data) return setNotice(tAccount("giftUsedUp"));
-    if (profile.pills < STREAK_FREEZE_COST) return setNotice(tAccount("giftPoor", { cost: STREAK_FREEZE_COST }));
+    if (profile.pills < GIFT_FREEZE_COST) return setNotice(tAccount("giftPoor", { cost: GIFT_FREEZE_COST }));
     setBusy(true);
     try {
       const result = await withTimeout(sendGift(social.client, social.userId, friendId));
@@ -289,7 +289,7 @@ function Gift({ social, friendId, handle }: { social: Social; friendId: string; 
         setNotice(tAccount(result.reason === "usedUp" ? "giftUsedUp" : "giftRefused"));
         return;
       }
-      await spendPills(STREAK_FREEZE_COST, "gift");
+      await spendPills(GIFT_FREEZE_COST, "gift");
       setNotice(tAccount("giftSent"));
     } catch {
       setNotice(t("errorNetwork"));
@@ -310,7 +310,7 @@ function Gift({ social, friendId, handle }: { social: Social; friendId: string; 
         {busy ? <Spinner className="text-pill" /> : <ShieldIcon className="text-pill size-5 shrink-0" />}
         <span className="flex-1 text-body">{used.data ? t("giftDoneThisWeek") : t("giftStreak")}</span>
         <span className="readout text-pill flex items-center gap-1 text-label font-semibold" data-numeric>
-          {format.number(STREAK_FREEZE_COST)}
+          {format.number(GIFT_FREEZE_COST)}
           <Pastille className="size-4" />
         </span>
       </button>

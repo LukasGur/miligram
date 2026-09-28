@@ -48,7 +48,8 @@ pastilky) — bývá to jediný příklad a vyneslo by skoro jako celá lekce.
 Do série a počtu lekcí se počítá.
 Pastilky za příklad se připisují hned po odpovědi (zůstatek je vidět
 v hlavičce lekce), bonus a XP až s dokončenou lekcí.
-Útrata: nápověda 15, ochrana série 60 (nejvýš dvě naráz).
+Útrata: nápověda 15, ochrana série 60 (nejvýš dvě naráz), dar ochrany
+kamarádovi 30 (jednou týdně) — darovat se má vyplatit víc než kupovat sobě.
 
 Souboj: výhra +15 pastilek, remíza +5, XP žádné navíc (lekce souboje dá
 běžné XP). Jinak by se liga dala nafouknout vzájemným vyzýváním. Kdo

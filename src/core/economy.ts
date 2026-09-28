@@ -24,6 +24,14 @@ export const HINT_COST = 15;
 export const STREAK_FREEZE_COST = 60;
 
 /**
+ * Ochrana série darovaná kamarádovi stojí polovinu. Darovat se má vyplatit
+ * víc než kupovat sobě. Že si dva kamarádi mohou darovat navzájem, nevadí:
+ * je to přesně chování, které má dar podpořit, a limit jednoho daru týdně
+ * spolu se stropem zásoby drží úsporu v mezích.
+ */
+export const GIFT_FREEZE_COST = 30;
+
+/**
  * Kolik ochran si jde držet naráz. Bez stropu by se dala série udržovat
  * donekonečna, aniž by se hrálo — a tím by přestala měřit, co má.
  */
