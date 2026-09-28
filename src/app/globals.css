@@ -443,9 +443,20 @@
   animation: stripe-grow 1100ms 500ms var(--ease-decel) backwards;
 }
 
+/* Prstenec vítěze souboje se dokreslí kolem monogramu, až doběhne skóre. */
+@keyframes ring-draw {
+  from { stroke-dashoffset: 1; }
+}
+
+.ring-draw {
+  stroke-dasharray: 1;
+  animation: ring-draw 700ms 450ms var(--ease-decel) backwards;
+}
+
 @media (prefers-reduced-motion: reduce) {
   .reveal-row,
-  .stripe-grow {
+  .stripe-grow,
+  .ring-draw {
     animation: none;
   }
 }

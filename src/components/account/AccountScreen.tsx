@@ -8,6 +8,7 @@ import { pushOnFor, usePushStatus } from "@/lib/push";
 import { cancelDuel, requestFriend, respondDuel, weekStart, type Duel } from "@/lib/remote";
 import { updatePulse } from "@/lib/pulse";
 import { invalidateQueries } from "@/lib/remoteQuery";
+import { markDuelSeen, unseenDuels } from "@/lib/duelSeen";
 import { collectDuelRewards, duelsNeedingMe } from "@/lib/social";
 import { supabase, isRemoteConfigured } from "@/lib/supabase";
 import { streakFacts, useProfile } from "@/lib/useProfile";
@@ -17,6 +18,7 @@ import { PushOnboarding } from "@/components/push/PushOnboarding";
 import { BadgesScreen } from "@/components/social/BadgesScreen";
 import { ChallengeSheet, SentNotice } from "@/components/social/ChallengeSheet";
 import { useSocial, type Social } from "@/components/social/data";
+import { DuelOutcome } from "@/components/social/DuelOutcome";
 import { DuelReveal } from "@/components/social/DuelReveal";
 import { DuelsScreen } from "@/components/social/DuelsScreen";
 import { FriendProfile } from "@/components/social/FriendProfile";
@@ -215,10 +217,26 @@ function SignedIn({
   const handle = social.profile.data?.handle ?? null;
   const requestCount = social.requests.data?.length;
   const weekPending = pastWeek !== null && !weekDismissed;
+
+  // Souboje rozhodnuté bez uživatele: kdo dohrál první, výsledek ještě
+  // nezná. Ukážou se po jednom, až po konci týdne. Počítadlo drží pořadí
+  // („2 ze 3“), protože viděné ze seznamu hned mizí.
+  const [resultsShown, setResultsShown] = useState(0);
+  const unseen = duels ? unseenDuels(userId, duels) : [];
+  const result = unseen[0];
+  function seeResult(duel: Duel) {
+    markDuelSeen(userId, duel.id);
+    // Poslední z řady: další výsledek začne počítat znovu od jedné.
+    setResultsShown((count) => (unseen.length <= 1 ? 0 : count + 1));
+  }
+
   useEffect(() => {
     if (!duels || requestCount === undefined) return;
-    updatePulse(userId, { handle, attention: duelsNeedingMe(duels) + requestCount + (weekPending ? 1 : 0) });
-  }, [userId, handle, duels, requestCount, weekPending]);
+    updatePulse(userId, {
+      handle,
+      attention: duelsNeedingMe(duels) + requestCount + (weekPending ? 1 : 0) + unseen.length,
+    });
+  }, [userId, handle, duels, requestCount, weekPending, unseen.length]);
 
   function play(duel: Duel) {
     onPlayDuel({ id: duel.id, lessonId: duel.lessonId, topic: duel.topic });
@@ -356,6 +374,29 @@ function SignedIn({
             markWeekSeen(userId, pastWeek.season);
             setWeekDismissed(true);
           }}
+        />
+      ) : null}
+      {result && !weekPending && !challenge && !onboarding && route.name === "profile" ? (
+        <DuelOutcome
+          key={result.id}
+          duel={result}
+          userId={userId}
+          myHandle={social.profile.data?.handle ?? ""}
+          position={{ index: resultsShown, total: resultsShown + unseen.length }}
+          onRematch={
+            social.friends.data?.some((friend) => friend.userId === result.opponentId)
+              ? () => {
+                  seeResult(result);
+                  setChallenge({ friendId: result.opponentId, topic: result.topic });
+                }
+              : undefined
+          }
+          onDetail={() => {
+            seeResult(result);
+            push({ name: "duels" });
+            push({ name: "reveal", duelId: result.id });
+          }}
+          onClose={() => seeResult(result)}
         />
       ) : null}
     </>

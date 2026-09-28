@@ -742,16 +742,51 @@
       "accepted": "{handle}",
       "finished": "{handle}"
     },
-    "outcomeTitle": {
-      "won": "Výhra · {handle}",
-      "lost": "Prohra · {handle}",
-      "draw": "Remíza · {handle}"
-    },
     "outcomeShort": {
       "won": "Výhra",
       "lost": "Prohra",
       "draw": "Remíza"
     },
+    "outcomeCounter": "Nové výsledky · {index}/{total}",
+    "outcomeNext": "Další výsledek",
+    "outcomeBalance": "{count, plural, one {Máš # pastilku} few {Máš # pastilky} other {Máš # pastilek}}",
+    "outcomeHeadline": {
+      "won": "Vítězství",
+      "lost": "Prohra",
+      "draw": "Remíza",
+      "flawless": "Remíza bez chyby"
+    },
+    "outcomeBody": {
+      "plain": {
+        "won": "Souboj s {handle} je tvůj.",
+        "lost": "Souboj s {handle} tentokrát nevyšel.",
+        "draw": "Souboj s {handle} skončil nerozhodně."
+      },
+      "byMiss": {
+        "won": "Při shodě bodů rozhodla chyba soupeře v lehčím příkladu.",
+        "lost": "Při shodě bodů rozhodla tvoje chyba v lehčím příkladu.",
+        "draw": "Souboj s {handle} skončil nerozhodně."
+      },
+      "flawless": {
+        "won": "Souboj s {handle} je tvůj.",
+        "lost": "Souboj s {handle} tentokrát nevyšel.",
+        "draw": "Oba {count} z {count}. Líp to nešlo."
+      },
+      "forfeit": {
+        "won": "Souboj s {handle} nebyl včas dohrán. Výhra je tvoje.",
+        "lost": "Lhůta souboje s {handle} vypršela. Počítá se jako prohra.",
+        "draw": "Souboj s {handle} skončil nerozhodně."
+      }
+    },
+    "outcomeReward": {
+      "won": "Za výhru",
+      "lost": "Za souboj",
+      "draw": "Za remízu",
+      "flawless": "Za remízu bez chyby"
+    },
+    "outcomeRematch": "Vyzvat znovu",
+    "outcomeDetail": "Průběh souboje",
+    "outcomeOk": "Rozumím",
     "phaseShort": {
       "offered": "Výzva čeká",
       "accepted": "Hraje se",

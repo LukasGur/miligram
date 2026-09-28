@@ -16,6 +16,7 @@ import {
   remoteGateway,
   weekStart,
 } from "@/lib/remote";
+import { unseenDuels } from "@/lib/duelSeen";
 import { updatePulse } from "@/lib/pulse";
 import { fetchQuery } from "@/lib/remoteQuery";
 import { collectDuelRewards, duelsNeedingMe, flushDuelResults, publishBadgesIfChanged } from "@/lib/social";
@@ -178,7 +179,7 @@ export function SyncAgent() {
         const week = unseenWeek(history, weekStart(), userId) ? 1 : 0;
         updatePulse(userId, {
           handle: profile?.handle ?? null,
-          attention: duelsNeedingMe(duels) + requests.length + week,
+          attention: duelsNeedingMe(duels) + requests.length + week + unseenDuels(userId, duels).length,
         });
       } finally {
         running = false;

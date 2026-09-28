@@ -308,15 +308,16 @@ function DoneRow({ duel, userId, onOpen }: { duel: Duel; userId: string; onOpen:
       <button type="button" onClick={onOpen} className="border-line active:bg-surface flex min-h-16 w-full items-center gap-3 border-b py-2 text-left">
         <Monogram handle={duel.opponentHandle} size="sm" />
         <div className="min-w-0 flex-1">
-          <p className="truncate text-body font-semibold">
-            {t(`outcomeTitle.${outcome}`, { handle: duel.opponentHandle })}
-          </p>
-          <p className="text-ink-soft truncate text-micro">
-            {duel.forfeit ? t("forfeitNote", { topic }) : topic}
+          <p className="truncate text-body font-semibold">{duel.opponentHandle}</p>
+          <p className="mt-0.5 flex min-w-0 items-center gap-2">
+            <OutcomeChip outcome={outcome} />
+            <span className="text-ink-soft truncate text-micro">
+              {duel.forfeit ? t("forfeitNote", { topic }) : topic}
+            </span>
           </p>
         </div>
         <span className="flex flex-col items-end">
-          <span className="readout text-body font-semibold" data-numeric>
+          <span className={`readout text-body font-semibold ${outcome === "won" ? "text-accent" : ""}`} data-numeric>
             {duel.mine ? format.number(duel.mine.points) : "–"} : {duel.theirs ? format.number(duel.theirs.points) : "–"}
           </span>
           {pills > 0 ? (
@@ -328,6 +329,23 @@ function DoneRow({ duel, userId, onOpen }: { duel: Duel; userId: string; onOpen:
         <ChevronRightIcon className="text-ink-soft size-5 shrink-0" />
       </button>
     </li>
+  );
+}
+
+/**
+ * Jak souboj dopadl, na první pohled. Výhra v akcentu, prohra a remíza
+ * neutrálně: prohra v souboji není chyba, červená jí nepatří.
+ */
+function OutcomeChip({ outcome }: { outcome: "won" | "lost" | "draw" }) {
+  const t = useTranslations("social");
+  return (
+    <span
+      className={`shrink-0 rounded-[4px] px-1.5 py-0.5 text-[0.625rem] font-semibold tracking-[0.04em] uppercase ${
+        outcome === "won" ? "bg-accent-wash text-accent" : outcome === "lost" ? "bg-surface text-ink-soft" : "bg-surface text-ink"
+      }`}
+    >
+      {t(`outcomeShort.${outcome}`)}
+    </span>
   );
 }
 

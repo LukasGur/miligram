@@ -7,6 +7,7 @@ import { duelDecision, duelPills, type DuelMark } from "@/core/duel";
 import { DIFFICULTY_RAMP } from "@/core/lessonPlan";
 import { categoryOfId } from "@/core/templateCategories";
 import type { Category } from "@/core/types";
+import { markDuelSeen } from "@/lib/duelSeen";
 import type { Duel } from "@/lib/remote";
 import { outcomeFor } from "@/lib/social";
 import { PrimaryButton, Screen, TextButton } from "./Screen";
@@ -37,6 +38,10 @@ export function DuelReveal({
   const tCategory = useTranslations("categories");
   const format = useFormatter();
   const outcome = outcomeFor(userId, duel);
+  // Kdo výsledek viděl tady, tomu ho profil znovu neoznamuje.
+  useEffect(() => {
+    if (outcome !== null) markDuelSeen(userId, duel.id);
+  }, [outcome, userId, duel.id]);
   const categories = useItemCategories(duel);
   const count = duel.mine?.count ?? duel.theirs?.count ?? 7;
   const pills = outcome ? duelPills(outcome, duel.mine) : 0;
