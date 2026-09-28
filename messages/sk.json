@@ -8,7 +8,11 @@
     "back": "Späť",
     "notNow": "Teraz nie",
     "settings": "Nastavenia",
-    "done": "Hotovo"
+    "done": "Hotovo",
+    "loading": "Načítavam",
+    "crashTitle": "Niečo sa nepodarilo",
+    "crashBody": "Aplikácia sa zasekla. Dáta v telefóne sú v poriadku, stačí ju načítať znova.",
+    "crashReload": "Načítať znova"
   },
   "disclaimer": {
     "title": "Študijný nástroj",

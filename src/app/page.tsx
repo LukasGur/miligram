@@ -21,6 +21,8 @@ import { clearProgress, type LessonAttempt } from "@/lib/db";
 import { dailySpec } from "@/lib/curriculum";
 import { useCurriculum, useLessonProgress, useProfile, useToday } from "@/lib/useProfile";
 import { onOpenIntent, type OpenIntent } from "@/lib/openIntent";
+import { guardedLoad } from "@/lib/screenLoad";
+import { ScreenLoading } from "@/components/ScreenLoading";
 import { usePulse } from "@/lib/pulse";
 import { Monogram } from "@/components/ui/Monogram";
 import type { AccountStart, PlayableDuel } from "@/components/account/AccountScreen";
@@ -45,9 +47,25 @@ const AccountGate = dynamic(
   { ssr: false },
 );
 
+/**
+ * Kód obrazovek za klepnutím. Jedna funkce na obrazovku, protože ji volá
+ * `dynamic()` i přednačtení: každé místo s `import()` dostane od Turbopacku
+ * vlastní zavaděč a přednačtený by `dynamic()` po klepnutí nepoužil.
+ */
+const loadAccountScreen = () => import("@/components/account/AccountScreen");
+const loadCurriculumScreen = () => import("@/components/CurriculumScreen");
+const loadStatsScreen = () => import("@/components/StatsScreen");
+const loadLessonView = () => import("@/components/exercise/LessonView");
+const loadLesson = () => import("@/core/lesson");
+
+/**
+ * Obrazovky se stahují hlídaně (src/lib/screenLoad.ts): když po probuzení
+ * z pozadí kód nedorazí, aplikace se přenačte rovnou na ně. Mezitím je
+ * vidět načítání, ne bílá plocha.
+ */
 const AccountScreen = dynamic(
-  () => import("@/components/account/AccountScreen").then((module) => module.AccountScreen),
-  { ssr: false },
+  () => guardedLoad(loadAccountScreen, "/?open=account").then((module) => module.AccountScreen),
+  { ssr: false, loading: () => <ScreenLoading /> },
 );
 
 /**
@@ -60,24 +78,40 @@ const SettingsSheet = dynamic(
 );
 
 const CurriculumScreen = dynamic(
-  () => import("@/components/CurriculumScreen").then((module) => module.CurriculumScreen),
-  { ssr: false },
+  () => guardedLoad(loadCurriculumScreen, "/?open=program").then((module) => module.CurriculumScreen),
+  { ssr: false, loading: () => <ScreenLoading /> },
 );
 
 const StatsScreen = dynamic(
-  () => import("@/components/StatsScreen").then((module) => module.StatsScreen),
-  { ssr: false },
+  () => guardedLoad(loadStatsScreen, "/?open=stats").then((module) => module.StatsScreen),
+  { ssr: false, loading: () => <ScreenLoading /> },
 );
 
 /**
  * Lekce se načítá až při spuštění. Je v ní KaTeX, všech 72 šablon i fond
  * přípravků — dohromady největší kus aplikace, který úvodní obrazovka
- * k ničemu nepotřebuje.
+ * k ničemu nepotřebuje. Po přenačtení se vrací domů: rozehraná lekce
+ * je uložená a nabídne se tam znovu.
  */
 const LessonView = dynamic(
-  () => import("@/components/exercise/LessonView").then((module) => module.LessonView),
-  { ssr: false },
+  () => guardedLoad(loadLessonView, "/").then((module) => module.LessonView),
+  { ssr: false, loading: () => <ScreenLoading /> },
 );
+
+/**
+ * Chvíli po vykreslení domovské obrazovky se kód ostatních obrazovek
+ * stáhne dopředu. Co je jednou načtené, zůstane v paměti i přes uspání,
+ * a klepnutí po návratu z pozadí už nic stahovat nemusí. Úvodní obrazovka
+ * na to nečeká a offline to nic nestojí — všechno je v precache.
+ */
+const PRELOAD_DELAY_MS = 1500;
+
+function preloadScreens() {
+  // Selhání tady nevadí: obrazovka to po klepnutí zkusí znovu, s pojistkou.
+  for (const load of [loadAccountScreen, loadCurriculumScreen, loadStatsScreen, loadLessonView, loadLesson]) {
+    load().catch(() => {});
+  }
+}
 
 /**
  * Výměna se serverem běží jednou za celý běh aplikace, ne s domovskou
@@ -163,7 +197,7 @@ function Home() {
    * příklady. Sestavení tahá šablony, a tak až tady.
    */
   async function playDuel(duel: PlayableDuel) {
-    const { planDuelLesson } = await import("@/core/lesson");
+    const { planDuelLesson } = await loadLesson();
     setAccountOpen(false);
     setLesson({ id: duel.lessonId, plan: planDuelLesson(duel.lessonId, duel.topic), duelId: duel.id });
   }
@@ -197,6 +231,12 @@ function Home() {
       openAccount(intent === "account" ? undefined : { screen: intent });
       return true;
     }
+    if (intent === "stats" || intent === "program") {
+      setAccountOpen(false);
+      setStatsOpen(intent === "stats");
+      setProgramOpen(intent === "program");
+      return true;
+    }
     // Lekce se dá sestavit, až je načtený program.
     if (!curriculum || progress === undefined) return false;
     setStatsOpen(false);
@@ -207,6 +247,11 @@ function Home() {
   // Znovu se přihlásí, když se změní, jestli se dá cíl splnit — čekající
   // cíl se tím nabídne ještě jednou.
   useEffect(() => onOpenIntent(handleIntent), [lesson, curriculum, progress]);
+
+  useEffect(() => {
+    const timer = window.setTimeout(preloadScreens, PRELOAD_DELAY_MS);
+    return () => window.clearTimeout(timer);
+  }, []);
 
   if (lesson !== null) {
     return (
@@ -266,7 +311,7 @@ function Home() {
         onTrain={async (mode) => {
           // Sestavení lekce se dotahuje až tady: je v něm fond přípravků
           // a všech 72 šablon, které domovská obrazovka nepotřebuje.
-          const { planCategoryLesson, planFromItems } = await import("@/core/lesson");
+          const { planCategoryLesson, planFromItems } = await loadLesson();
           const id = newLessonId();
           const plan =
             mode.kind === "mistakes" ? planFromItems(id, mode.items) : planCategoryLesson(id, mode.category);

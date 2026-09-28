@@ -6,11 +6,13 @@
  * Cíl přijde dvěma cestami: zavřená aplikace se otevře s adresou
  * (`/?lesson=daily`, `/?open=duels`, `/?pritel=jana_k`), běžící dostane zprávu od service
  * workeru — přenačtení by zahodilo rozehranou lekci. Obojí končí tady.
+ * Adresou se vrací i přenačtení po zaseknutém načtení obrazovky
+ * (`/?open=stats`, `/?open=program`, src/lib/screenLoad.ts).
  *
  * Cíl čeká, dokud si ho někdo nevyzvedne: domovská obrazovka ho umí
  * splnit až po načtení programu, a do té doby odpovídá „ještě ne“.
  */
-export type OpenIntent = "lesson" | "account" | "duels" | "league" | `invite:${string}`;
+export type OpenIntent = "lesson" | "account" | "duels" | "league" | "stats" | "program" | `invite:${string}`;
 
 /** Vrací true, když cíl splnil; jinak cíl počká na další pokus. */
 type Handler = (intent: OpenIntent) => boolean;
@@ -23,7 +25,7 @@ export function parseOpenIntent(href: string): OpenIntent | null {
   const url = new URL(href, "https://miligram.invalid");
   if (url.searchParams.get("lesson") === "daily") return "lesson";
   const open = url.searchParams.get("open");
-  if (open === "account" || open === "duels" || open === "league") return open;
+  if (open === "account" || open === "duels" || open === "league" || open === "stats" || open === "program") return open;
   // Pozvánka od kamaráda (src/lib/social.ts, INVITE_PARAM).
   const invite = url.searchParams.get("pritel")?.toLowerCase();
   if (invite && /^[a-z0-9_]{3,20}$/.test(invite)) return `invite:${invite}`;
