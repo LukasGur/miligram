@@ -1,10 +1,12 @@
 "use client";
 
 import { useEffect, useMemo, useRef, useState, type Ref } from "react";
+import { useLiveQuery } from "dexie-react-hooks";
 import dynamic from "next/dynamic";
 import { useFormatter, useTranslations } from "next-intl";
 import { HINT_COST, PILLS_PER_CORRECT, rewardForLesson } from "@/core/economy";
 import { lessonExercise, resolvePlan, type LessonPlan } from "@/core/lesson";
+import { buildExercise } from "@/core/templates";
 import type { LessonKind } from "@/core/scoring";
 import type { DailySpec } from "@/core/curriculum";
 import { attemptsOn, firstTryOutcomes, nextIndex, solvedCount } from "@/core/lessonRun";
@@ -16,6 +18,7 @@ import type { BadgeState } from "@/core/badges";
 import { freshLocalBadges } from "@/lib/social";
 import { BadgeGlyph } from "@/components/social/BadgeGlyph";
 import { recordAnswer, recordLesson, spendPills, type LessonAttempt } from "@/lib/db";
+import { templateFamiliarity } from "@/lib/learning";
 import { useProfile } from "@/lib/useProfile";
 import { HomeIcon, RepeatIcon, VersusIcon } from "@/components/icons";
 import { Numeral } from "@/components/ui/Numeral";
@@ -25,6 +28,7 @@ import { Flyer, bump, reducedMotion, type Flight } from "@/components/ui/Flyer";
 import { chime, flourish } from "@/lib/sound";
 import { Tally } from "@/components/ui/Tally";
 import { ExerciseView } from "./ExerciseView";
+import { TemplateIntro } from "./TemplateIntro";
 
 /**
  * Nabídka připomínek se dotahuje až ve shrnutí. Je v ní stav přihlášení,
@@ -135,6 +139,26 @@ export function LessonView({
   );
   const solved = solvedCount(plan, attempts);
 
+  /**
+   * Učení nového typu. Souboj ho nemá: oba hráči mají dostat stejné
+   * podmínky, a vzor nebo nápověda zdarma by zvýhodnily toho, kdo je
+   * v aplikaci nový.
+   */
+  const learn = !duelId;
+  const familiarity = useLiveQuery(() => templateFamiliarity(), []);
+  /** Položky, u kterých student vzor už viděl a klepl „Jdu na to“. */
+  const [introDone, setIntroDone] = useState<ReadonlySet<string>>(new Set());
+  const templateId = index === null ? null : plan.items[index].templateId;
+  const itemSeed = index === null ? null : plan.items[index].seed;
+  /**
+   * Vzor je tatáž šablona s jiným semínkem, v nejnižší obtížnosti: jde
+   * o postup, a ten je nejlíp vidět na jednoduchých číslech.
+   */
+  const example = useMemo(
+    () => (templateId && itemSeed ? buildExercise(templateId, `${itemSeed}:vzor`, 1) : null),
+    [templateId, itemSeed],
+  );
+
   if (index === null || exercise === null) {
     return (
       <LessonSummary
@@ -152,6 +176,30 @@ export function LessonView({
     );
   }
 
+  // Znalost typů se čte z databáze; bez ní by karta nového typu naskočila
+  // až po zobrazení příkladu. Je to jeden rychlý dotaz.
+  if (learn && familiarity === undefined) return <div className="bg-paper h-dvh" />;
+
+  const item = plan.items[index];
+  const unseen = learn && familiarity !== undefined && !familiarity.seen.has(item.templateId);
+  const unmastered = learn && familiarity !== undefined && !familiarity.mastered.has(item.templateId);
+  const pills = profile.pills + pending;
+
+  if (unseen && attempt === 0 && !introDone.has(item.seed) && example) {
+    return (
+      <TemplateIntro
+        key={`intro:${item.seed}`}
+        example={example}
+        category={categoryOfId(item.templateId) ?? "zaklad"}
+        solved={solved}
+        count={plan.items.length}
+        pills={pills}
+        onExit={onExit}
+        onStart={() => setIntroDone((done) => new Set(done).add(item.seed))}
+      />
+    );
+  }
+
   return (
     <ExerciseView
       /**
@@ -165,11 +213,14 @@ export function LessonView({
       count={plan.items.length}
       /** Opakování: příklad, na kterém už student jednou pohořel. */
       repeat={attempt > 0}
-      mistake={plan.items[index].origin === "mistake"}
+      origin={item.origin}
+      newType={introDone.has(item.seed)}
+      example={unmastered && example ? example : undefined}
+      hintFree={unmastered}
       attempt={attempt + 1}
-      pills={profile.pills + pending}
+      pills={pills}
       onExit={onExit}
-      onHint={() => spendPills(HINT_COST, `hint:${exercise.templateId}`)}
+      onHint={(free) => (free ? Promise.resolve(true) : spendPills(HINT_COST, `hint:${exercise.templateId}`))}
       onAnswered={({ correct, hinted, gaveUp, elapsedMs }) => {
         // Semínko je identita položky v plánu, ne semínko zobrazeného
         // příkladu: to se u vráceného příkladu mění, aby přišla jiná čísla.

@@ -283,6 +283,22 @@ a kdo se přihlásil po někom jiném, viděl jeho skóre, sérii i chyby.
 - opravená chyba: obnova při každém spuštění přepočítala sérii z historie
   bez ochran, takže ochrana přihlášenému vydržela jen do dalšího spuštění
 
+**Učící krok (28. 9. 2026, plán fáze B)** — nový typ příkladu už nepřijde
+naslepo. Před prvním příkladem šablony, kterou student nikdy nepočítal,
+ukáže karta vyřešený vzor (tatáž šablona, jiné semínko, obtížnost 1)
+i se zdroji; během počítání jde vzor znovu otevřít. Souboj to nemá —
+oba hráči mají stejné podmínky.
+
+- nápověda odkrývá postup po krocích: popis a obecný vzorec, u kroku bez
+  vzorce dosazení bez výsledku; výsledek neprozradí nikdy
+- u typu, který student ještě nespočítal bez nápovědy, je zdarma; jinak
+  15 pastilek za všechny kroky
+- typ spočítaný s nápovědou se vrátí v opakování příští denní lekce
+  („Minule s nápovědou, teď bez ní“); vyřídí ho až výpočet napoprvé
+  a bez nápovědy. Opakování chyb ve statistikách nápovědu za chybu nemá
+- věta „proč se to tak počítá“ na kartě se ukáže, až bude v překladech
+  (`exercise.why.<šablona>`); čeká na kontrolu autora
+
 ## Co dělat dál
 
 **Rozpracovaný plán: [plan.md](plan.md)** — účty a pastilky na serveru

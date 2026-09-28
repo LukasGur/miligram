@@ -43,8 +43,11 @@ export type LessonPlan = {
     templateId: string;
     seed: string;
     difficulty: Difficulty;
-    /** Příklad se do lekce dostal kvůli dřívější chybě. Ukáže se to u zadání. */
-    origin?: "mistake";
+    /**
+     * Příklad se do lekce dostal kvůli dřívější chybě, nebo protože ho
+     * student minule spočítal s nápovědou. Ukáže se to u zadání.
+     */
+    origin?: "mistake" | "hint";
   }[];
 };
 

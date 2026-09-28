@@ -201,5 +201,5 @@ export type DailySpec = {
    * Mají v lekci přednost před opakováním: látku, která nesedí, nesmí
    * přebít náhoda losu z látky, která sedí.
    */
-  mistakes?: readonly { templateId: string; difficulty: Difficulty }[];
+  mistakes?: readonly { templateId: string; difficulty: Difficulty; reason?: "hint" }[];
 };

@@ -76,7 +76,12 @@ export async function overview(): Promise<Overview> {
  * Chyba k opakování. Nese šablonu a obtížnost, ne semínko: opakování má
  * dát tentýž výpočet s jinými čísly, ať se nedá projít po paměti.
  */
-export type Mistake = { templateId: string; difficulty: Difficulty };
+export type Mistake = {
+  templateId: string;
+  difficulty: Difficulty;
+  /** Proč se vrací: chyba, nebo příklad spočítaný s nápovědou. */
+  reason?: "hint";
+};
 
 /**
  * Chyby k opakování.
@@ -93,8 +98,14 @@ export type Mistake = { templateId: string; difficulty: Difficulty };
  *
  * Řadí se od nejstarší neopravené chyby, aby se nezapomnělo na to, co
  * leží nejdéle.
+ *
+ * S `hints` se vrací i typy spočítané s nápovědou: kdo potřeboval pomoc,
+ * má dostat šanci to dát sám (denní lekce). Opakování chyb ve statistikách
+ * je nebere — jmenuje se „chyby“ a příklad s nápovědou chyba není.
+ * Vyřídit se dá obojí jen tak, že to student spočítá napoprvé a bez
+ * nápovědy.
  */
-export async function mistakesToRepeat(limit: number): Promise<Mistake[]> {
+export async function mistakesToRepeat(limit: number, { hints = false } = {}): Promise<Mistake[]> {
   const answers = await db().answers.orderBy("id").toArray();
 
   const open = new Map<string, Mistake>();
@@ -103,10 +114,14 @@ export async function mistakesToRepeat(limit: number): Promise<Mistake[]> {
     if (categoryOfId(answer.templateId) === null) continue;
 
     const key = `${answer.templateId}:${answer.difficulty}`;
-    if (answer.firstTry) {
+    const difficulty = answer.difficulty as Difficulty;
+    if (answer.firstTry && !answer.hinted) {
       open.delete(key);
-    } else if (!open.has(key)) {
-      open.set(key, { templateId: answer.templateId, difficulty: answer.difficulty as Difficulty });
+    } else if (!answer.firstTry) {
+      // Chyba přebije nápovědu: je to silnější důvod k opakování.
+      open.set(key, { templateId: answer.templateId, difficulty });
+    } else if (hints && !open.has(key)) {
+      open.set(key, { templateId: answer.templateId, difficulty, reason: "hint" });
     }
   }
 

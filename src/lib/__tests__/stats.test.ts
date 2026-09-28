@@ -223,3 +223,49 @@ describe("týden na domovské obrazovce", () => {
     ]);
   });
 });
+
+describe("po nápovědě se typ vrátí", () => {
+  const sNapovedou = (templateId: string, seed: string) => ({ ...answer(templateId, seed, true), hinted: true });
+
+  it("denní lekce vrací i typ spočítaný s nápovědou, označený", async () => {
+    await recordLesson({
+      lessonId: "l",
+      answers: [sNapovedou("A1", "s1"), answer("A2", "s2", false)],
+      reward: { xp: 10, pills: 2, correct: 1, count: 2, flawless: false },
+    });
+    expect(await mistakesToRepeat(5, { hints: true })).toEqual([
+      { templateId: "A1", difficulty: 1, reason: "hint" },
+      { templateId: "A2", difficulty: 1 },
+    ]);
+  });
+
+  it("opakování chyb ve statistikách nápovědu za chybu nepovažuje", async () => {
+    await recordLesson({
+      lessonId: "l",
+      answers: [sNapovedou("A1", "s1")],
+      reward: { xp: 10, pills: 2, correct: 1, count: 1, flawless: true },
+    });
+    expect(await mistakesToRepeat(5)).toEqual([]);
+  });
+
+  it("vyřídí se až spočítáním bez nápovědy", async () => {
+    await recordLesson({
+      lessonId: "l1",
+      answers: [answer("A1", "s1", false)],
+      reward: { xp: 0, pills: 0, correct: 0, count: 1, flawless: false },
+    });
+    await recordLesson({
+      lessonId: "l2",
+      answers: [sNapovedou("A1", "s2")],
+      reward: { xp: 10, pills: 2, correct: 1, count: 1, flawless: true },
+    });
+    expect(await mistakesToRepeat(5, { hints: true })).toEqual([{ templateId: "A1", difficulty: 1 }]);
+
+    await recordLesson({
+      lessonId: "l3",
+      answers: [answer("A1", "s3", true)],
+      reward: { xp: 10, pills: 2, correct: 1, count: 1, flawless: true },
+    });
+    expect(await mistakesToRepeat(5, { hints: true })).toEqual([]);
+  });
+});

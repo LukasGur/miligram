@@ -1,8 +1,8 @@
 "use client";
 
-import { useEffect, useRef, useState } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
 import { useFormatter, useTranslations } from "next-intl";
-import { CalculatorIcon, CloseIcon, HintIcon } from "@/components/icons";
+import { BookIcon, CalculatorIcon, CloseIcon, HintIcon } from "@/components/icons";
 import { Balance } from "@/components/ui/Balance";
 import { Flyer, bump, reducedMotion, type Flight } from "@/components/ui/Flyer";
 import { Pastille } from "@/components/ui/Pastille";
@@ -20,6 +20,7 @@ import { TickScale } from "@/components/ui/TickScale";
 import { Formula } from "./Formula";
 import { Prompt } from "./Prompt";
 import { SolutionSteps } from "./SolutionSteps";
+import { ExampleSheet } from "./TemplateIntro";
 import { VerdictPanel } from "./Verdict";
 
 /** Delší číslo než tohle už není odpověď, ale překlep. */
@@ -30,7 +31,10 @@ export function ExerciseView({
   solved,
   count,
   repeat,
-  mistake = false,
+  origin,
+  newType = false,
+  example,
+  hintFree = false,
   attempt,
   onExit,
   onAnswered,
@@ -43,13 +47,23 @@ export function ExerciseView({
   count: number;
   /** Příklad, který se vrátil, protože poprvé nevyšel. */
   repeat: boolean;
-  /** Příklad přišel do lekce kvůli chybě z dřívějška. */
-  mistake?: boolean;
+  /** Proč příklad přišel do lekce: dřívější chyba, nebo dřívější nápověda. */
+  origin?: "mistake" | "hint";
+  /** Typ, který student před chvílí poprvé viděl ve vzoru. */
+  newType?: boolean;
+  /**
+   * Vyřešený vzor u nového typu. Je-li vyplněný, dá se během počítání
+   * znovu otevřít — student ho viděl před příkladem (TemplateIntro).
+   */
+  example?: Exercise;
+  /** Nápověda zdarma: typ, který student ještě nespočítal bez ní. */
+  hintFree?: boolean;
   /** Kolikátý pokus tohle je. Od druhého se nabídne jít dál. */
   attempt: number;
   onExit: () => void;
   onAnswered: (result: { correct: boolean; hinted: boolean; gaveUp?: boolean; elapsedMs?: number }) => void;
-  onHint: () => Promise<boolean>;
+  /** Vezme nápovědu. Zdarma nic nestrhává, placená vrátí, jestli prošla. */
+  onHint: (free: boolean) => Promise<boolean>;
   pills: number;
 }) {
   const t = useTranslations("lesson");
@@ -60,7 +74,11 @@ export function ExerciseView({
   const [input, setInput] = useState("");
   const [verdict, setVerdict] = useState<Verdict | null>(null);
   const [solutionOpen, setSolutionOpen] = useState(false);
-  const [hinted, setHinted] = useState(false);
+  /** Kolik kroků nápovědy je odkrytých. Nula = nápověda nevzatá. */
+  const [revealed, setRevealed] = useState(0);
+  const hinted = revealed > 0;
+  const [exampleOpen, setExampleOpen] = useState(false);
+  const closeExample = useCallback(() => setExampleOpen(false), []);
   const [calculatorOpen, setCalculatorOpen] = useState(false);
   /**
    * Co se v příkladu spočítalo, pro „Můj výpočet“ po vyhodnocení. Žije jen
@@ -96,22 +114,23 @@ export function ExerciseView({
    */
   const shown = solved + (verdict?.correct ? 1 : 0);
   const canCheck = value !== null && verdict === null;
-  const canAfford = pills >= HINT_COST;
+  const canAfford = hintFree || pills >= HINT_COST;
   const balance = pills + (landed ? PILLS_PER_CORRECT : 0);
 
   /**
-   * Nápověda odkryje první krok řešení, ne výsledek. Pastilky se strhnou
-   * až po potvrzení zápisu — kdyby se transakce nepovedla, uživatel
-   * o ně nepřijde a nápovědu nedostane.
+   * Nápověda odkrývá postup krok po kroku, ne výsledek. Placená se platí
+   * jednou, další kroky už nic nestojí — kdo potřebuje víc pomoci, nemá
+   * platit víc. Pastilky se strhnou až po potvrzení zápisu: kdyby se
+   * transakce nepovedla, uživatel o ně nepřijde a nápovědu nedostane.
    */
-  async function buyHint() {
+  async function takeHint() {
     if (hinted) return;
     if (!canAfford) {
       setPoor(true);
       return;
     }
     setPoor(false);
-    if (await onHint()) setHinted(true);
+    if (await onHint(hintFree)) setRevealed(1);
   }
 
   function check() {
@@ -197,20 +216,41 @@ export function ExerciseView({
           <h1 className="sr-only">{t("progress", { current: shown, count })}</h1>
 
           {/* Vrácený příklad se označí. Bez toho vypadá jako chyba aplikace,
-              že se totéž zadání objevilo podruhé. */}
-          {repeat ? (
-            <p className="panel-label mb-2">{t("repeat")}</p>
-          ) : mistake ? (
-            // Typ výpočtu, který dřív nevyšel. Student má vědět, proč
-            // se mu v lekci objevil, a že ho tu čeká záměrně.
-            <p className="panel-label mb-2">{t("fromMistake")}</p>
+              že se totéž zadání objevilo podruhé. Stejně tak typ, který
+              přišel kvůli dřívější chybě nebo nápovědě: student má vědět,
+              proč se mu v lekci objevil, a že ho tu čeká záměrně. */}
+          {repeat || origin || newType || example ? (
+            <div className="mb-2 flex min-h-7 items-center justify-between gap-3">
+              <p className="panel-label">
+                {repeat
+                  ? t("repeat")
+                  : origin === "mistake"
+                    ? t("fromMistake")
+                    : origin === "hint"
+                      ? t("fromHint")
+                      : newType
+                        ? t("newType")
+                        : null}
+              </p>
+              {example ? (
+                <button
+                  type="button"
+                  onClick={() => setExampleOpen(true)}
+                  aria-label={t("exampleOpenLabel")}
+                  className="text-accent -my-2 -mr-2 flex min-h-11 items-center gap-1.5 px-2 text-label font-medium"
+                >
+                  <BookIcon className="size-4" />
+                  {t("exampleOpen")}
+                </button>
+              ) : null}
+            </div>
           ) : null}
 
           <Prompt text={prompt(exercise)} />
 
           {verdict === null && hinted ? (
             <div className="mt-4">
-              <HintPanel exercise={exercise} />
+              <HintPanel exercise={exercise} revealed={revealed} onNext={() => setRevealed((count) => count + 1)} />
             </div>
           ) : null}
 
@@ -289,9 +329,10 @@ export function ExerciseView({
                 <Tool
                   icon={<HintIcon className="size-5 shrink-0" />}
                   label={t("hintTitle")}
-                  cost={HINT_COST}
-                  costLabel={t("hintPrice", { cost: HINT_COST })}
-                  onPress={buyHint}
+                  cost={hintFree ? "free" : HINT_COST}
+                  costLabel={hintFree ? t("hintFreeLabel") : t("hintPrice", { cost: HINT_COST })}
+                  freeLabel={t("hintFree")}
+                  onPress={takeHint}
                 />
               )}
             </div>
@@ -349,6 +390,8 @@ export function ExerciseView({
           )}
         </div>
       </footer>
+
+      {exampleOpen && example ? <ExampleSheet example={example} onClose={closeExample} /> : null}
     </div>
   );
 }
@@ -386,14 +429,18 @@ function Tool({
   label,
   cost,
   costLabel,
+  freeLabel,
   pressed,
   onPress,
 }: {
   icon: React.ReactNode;
   label: string;
-  cost?: number;
+  /** Cena v pastilkách, nebo „free“ u nápovědy k novému typu. */
+  cost?: number | "free";
   /** Cena slovy pro odečítač: „15 pastilek“. */
   costLabel?: string;
+  /** Nápis na cenovce zdarma. */
+  freeLabel?: string;
   pressed?: boolean;
   onPress: () => void;
 }) {
@@ -411,7 +458,13 @@ function Tool({
     >
       {icon}
       <span className="truncate">{label}</span>
-      {cost === undefined ? null : (
+      {cost === "free" ? (
+        // Zdarma bez pastilky: nic se neplatí, tak se ani neukazuje měna.
+        <span className="bg-accent-wash text-accent-press inline-flex shrink-0 items-center rounded-full px-2 py-0.5 text-micro font-semibold">
+          <span aria-hidden>{freeLabel}</span>
+          <span className="sr-only">{costLabel}</span>
+        </span>
+      ) : cost === undefined ? null : (
         <span className="bg-pill-wash text-pill inline-flex shrink-0 items-center gap-1 rounded-full py-0.5 pl-1.5 pr-2">
           <Pastille className="size-4" />
           <span className="num font-semibold" data-numeric aria-hidden>
@@ -472,33 +525,95 @@ function appendCharacter(current: string, character: string): string {
   return current + character;
 }
 
-/** Odkrytý první krok řešení. Dál než k němu nápověda nesahá. */
-function HintPanel({ exercise }: { exercise: Exercise }) {
+/**
+ * Nápověda po krocích.
+ *
+ * První krok řešení je přehled zadaných hodnot, a tak se začíná druhým.
+ * Každý krok ukáže, co se dělá: obecný vzorec, a kde vzorec není, dosazení
+ * bez výsledku — co se má spočítat, ale ne kolik to dá. Hotové číslo se
+ * ukáže jen u kroku, který nic jiného nemá a není poslední. Výsledek
+ * příkladu nápověda neprozradí nikdy; ten má student spočítat.
+ */
+function HintPanel({
+  exercise,
+  revealed,
+  onNext,
+}: {
+  exercise: Exercise;
+  revealed: number;
+  onNext: () => void;
+}) {
   const t = useTranslations("lesson");
   const tSteps = useTranslations("exercise.steps");
-  // První krok je vždy přehled zadaných hodnot; napovídá až ten druhý.
-  const step = exercise.solution.steps[1] ?? exercise.solution.steps[0];
+  const all = exercise.solution.steps;
+  const steps = all.length > 1 ? all.slice(1) : all;
+  const last = all[all.length - 1];
+  const shown = steps.slice(0, revealed);
+  const done = revealed >= steps.length;
 
   return (
-    <section
-      /**
-       * Nápověda se objeví nad klávesnicí, takže bez odrolování by z ní byl
-       * vidět jen nadpis. Ref se zavolá při připojení uzlu — na rozdíl od
-       * efektu je to přesně ten okamžik, kdy má obsah přijít do zorného pole.
-       */
-      ref={(node) => node?.scrollIntoView({ block: "nearest", behavior: "smooth" })}
-      className="bg-accent-wash rounded-panel px-4 py-3"
-    >
-      <h2 className="text-micro text-accent-press uppercase tracking-wide">{t("hintTitle")}</h2>
-      <p className="text-label text-ink-soft mt-1">{tSteps(step.textKey)}</p>
-      <div className="mt-1 overflow-x-auto">
-        {step.formula ? <Formula latex={step.formula} display className="block" /> : null}
-        {!step.formula && step.result ? <Formula latex={step.result} className="block" /> : null}
+    <section className="bg-accent-wash rounded-panel px-4 pt-3 pb-3.5">
+      <div className="flex items-baseline justify-between gap-3">
+        <h2 className="text-micro text-accent-press uppercase tracking-wide">{t("hintTitle")}</h2>
+        <span className="num text-accent-press text-micro" data-numeric aria-hidden>
+          {t("hintStep", { current: Math.min(revealed, steps.length), total: steps.length })}
+        </span>
+        <span className="sr-only">
+          {t("hintStepLabel", { current: Math.min(revealed, steps.length), total: steps.length })}
+        </span>
+      </div>
+
+      <ol className="mt-2 space-y-3">
+        {shown.map((step, index) => (
+          <li
+            key={`${step.textKey}-${index}`}
+            className={index === shown.length - 1 && index > 0 ? "animate-tick" : undefined}
+          >
+            <p className="text-label text-ink">{tSteps(step.textKey)}</p>
+            <div className="mt-1 overflow-x-auto">
+              {step.formula ? (
+                <Formula latex={step.formula} display className="block" />
+              ) : step.substituted ? (
+                <Formula latex={step.substituted} display className="block" />
+              ) : step.result && step !== last ? (
+                <Formula latex={step.result} className="block" />
+              ) : null}
+            </div>
+          </li>
+        ))}
+      </ol>
+
+      {/* Nápověda se objeví nad klávesnicí, takže bez odrolování by z ní
+          byl vidět jen nadpis. Do záběru se proto doroluje spodek panelu
+          i s tlačítkem dalšího kroku. S každým krokem se připojí znovu
+          (klíč), takže ref se zavolá přesně ve chvíli, kdy obsah přibyl —
+          a až o snímek později, po vysazení vzorců. */}
+      <div
+        key={revealed}
+        ref={(node) => {
+          if (!node) return;
+          requestAnimationFrame(() =>
+            node.scrollIntoView({ block: "nearest", behavior: reducedMotion() ? "auto" : "smooth" }),
+          );
+        }}
+      >
+        {done ? (
+          <p className="text-ink-soft pt-3 text-label">{t("hintDone")}</p>
+        ) : (
+          <button
+            type="button"
+            onClick={onNext}
+            {...pressable}
+            className="press press-wide bg-paper text-accent border-accent/20 data-pressed:bg-accent-wash-press mt-3 flex min-h-11 w-full items-center justify-center rounded-control border text-label font-semibold"
+          >
+            {t("hintNext")}
+          </button>
+        )}
+        <p className="text-ink-soft pt-2.5 text-micro">{t("hintAgain")}</p>
       </div>
     </section>
   );
 }
-
 
 /**
  * Čas strávený nad příkladem, jen když je aplikace vidět. Kdo odejde

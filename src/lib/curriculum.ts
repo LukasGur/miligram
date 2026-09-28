@@ -73,7 +73,7 @@ export async function lastTrainedCategory(): Promise<Category | null> {
 }
 
 export async function curriculumState(): Promise<CurriculumState> {
-  const [scores, mistakes] = await Promise.all([categoryScores(), mistakesToRepeat(DAILY_REVIEW_ITEMS)]);
+  const [scores, mistakes] = await Promise.all([categoryScores(), mistakesToRepeat(DAILY_REVIEW_ITEMS, { hints: true })]);
   return { scores, standings: allStandings(scores), current: currentStage(scores), mistakes };
 }
 

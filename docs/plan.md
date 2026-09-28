@@ -75,7 +75,7 @@ Přepnutí účtu nesmíchá data; upozornění před smazáním; pohyb pastilek
 se nezapočítá dvakrát; počáteční stav i bonus jen jednou na účet;
 obnovená série sedí i s ochranami.
 
-## Fáze B — učící krok
+## Fáze B — učící krok ✅ B1–B3 (28. 9. 2026), B4 čeká na kontrolu textů
 
 Platí v denní lekci a tréninku. **Souboj zůstává beze změny** — oba
 hrají za stejných podmínek.

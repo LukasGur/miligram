@@ -179,8 +179,12 @@ export function planDailyLesson(lessonId: string, spec: DailySpec): LessonPlan {
   const reviewIds =
     reviewCount > 0 ? drawTemplates(createRng(`review:${lessonId}`), reviewPool, reviewCount) : [];
 
-  const extra: { templateId: string; difficulty?: Difficulty; origin?: "mistake" }[] = [
-    ...mistakes.map((mistake) => ({ ...mistake, origin: "mistake" as const })),
+  const extra: { templateId: string; difficulty?: Difficulty; origin?: "mistake" | "hint" }[] = [
+    ...mistakes.map(({ templateId, difficulty, reason }) => ({
+      templateId,
+      difficulty,
+      origin: reason === "hint" ? ("hint" as const) : ("mistake" as const),
+    })),
     ...reviewIds.map((templateId) => ({ templateId })),
   ];
   const slots = new Set(REVIEW_SLOTS.slice(0, extra.length));
