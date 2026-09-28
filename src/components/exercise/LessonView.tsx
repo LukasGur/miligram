@@ -19,7 +19,7 @@ import { freshLocalBadges } from "@/lib/social";
 import { BadgeGlyph } from "@/components/social/BadgeGlyph";
 import { recordAnswer, recordLesson, spendPills, type LessonAttempt } from "@/lib/db";
 import { templateFamiliarity } from "@/lib/learning";
-import { useProfile } from "@/lib/useProfile";
+import { streakFacts, useProfile } from "@/lib/useProfile";
 import { HomeIcon, RepeatIcon, VersusIcon } from "@/components/icons";
 import { Numeral } from "@/components/ui/Numeral";
 import { Pastille } from "@/components/ui/Pastille";
@@ -538,11 +538,7 @@ function LessonSummary({
       {walletBefore !== undefined ? (
         <PushOffer
           streak={streak}
-          facts={{
-            streakDays: profile.streakDays,
-            streakFreezes: profile.streakFreezes ?? 0,
-            lastLessonDay: profile.lastLessonDay,
-          }}
+          facts={streakFacts(profile)}
         />
       ) : null}
 

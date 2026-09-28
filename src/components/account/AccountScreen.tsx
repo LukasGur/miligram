@@ -10,7 +10,7 @@ import { updatePulse } from "@/lib/pulse";
 import { invalidateQueries } from "@/lib/remoteQuery";
 import { collectDuelRewards, duelsNeedingMe } from "@/lib/social";
 import { supabase, isRemoteConfigured } from "@/lib/supabase";
-import { useProfile } from "@/lib/useProfile";
+import { streakFacts, useProfile } from "@/lib/useProfile";
 import { withTimeout } from "@/lib/useAction";
 import { useSession } from "@/lib/useSession";
 import { PushOnboarding } from "@/components/push/PushOnboarding";
@@ -345,11 +345,7 @@ function SignedIn({
         <PushOnboarding
           userId={userId}
           streak={streak}
-          facts={{
-            streakDays: local.streakDays,
-            streakFreezes: local.streakFreezes ?? 0,
-            lastLessonDay: local.lastLessonDay,
-          }}
+          facts={streakFacts(local)}
           onDone={() => setOnboarding(false)}
         />
       ) : null}

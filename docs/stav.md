@@ -299,6 +299,20 @@ oba hráči mají stejné podmínky.
 - věta „proč se to tak počítá“ na kartě se ukáže, až bude v překladech
   (`exercise.why.<šablona>`); čeká na kontrolu autora
 
+**Obnovení série (28. 9. 2026, plán fáze C)** — spadlou sérii jde krátce
+po ztrátě obnovit za 200 pastilek: jen u série aspoň 7 dní, do konce
+druhého dne po ztrátě, nejvýš jednou za 30 dní. Karta je na domovské
+obrazovce nad denním cílem a jde odmítnout. Obnovené dny se zapíšou jako
+pokryté (jako den podržený ochranou), takže platí obě situace: kdo ještě
+nehrál, má sérii zpátky hned; kdo už začal od jedničky, tomu se stará
+řada spojí s novou.
+
+- server obnovení hlídá sám (`check_repair`, migrace 0015): jen nedávný
+  den a jedno placené obnovení za 30 dní; ověřeno v transakci na živé
+  databázi
+- `stats.streak_through` — kam série sahá přes pokryté dny; kamarádi
+  a připomínky počítají s ním, ne jen s dnem poslední lekce
+
 ## Co dělat dál
 
 **Rozpracovaný plán: [plan.md](plan.md)** — účty a pastilky na serveru

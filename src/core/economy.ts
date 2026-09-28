@@ -45,6 +45,18 @@ export const MAX_STREAK_FREEZES = 2;
  */
 export const SIGNUP_BONUS = 30;
 
+/**
+ * Obnovení spadlé série. Schválně drahé — asi osm lekcí bez chyby: má
+ * zachránit dlouhou sérii po nešťastném dni, ne nahradit docházku.
+ * Proto jen u série aspoň týden dlouhé, jen krátce po ztrátě a nejvýš
+ * jednou za třicet dní. Meze hlídá i server (migrace 0015).
+ */
+export const REPAIR_COST = 200;
+export const REPAIR_MIN_STREAK = 7;
+export const REPAIR_COOLDOWN_DAYS = 30;
+/** Nejvýš tolik vynechaných dní jde obnovit — víc už není „krátce po ztrátě“. */
+export const REPAIR_MAX_MISSED = 2;
+
 export type StreakState = {
   /** Počet dní v řadě, kdy uživatel dokončil aspoň jednu lekci. */
   days: number;
@@ -52,6 +64,11 @@ export type StreakState = {
   lastDay: string | null;
   /** Kolik zbývá koupených ochran proti vynechanému dni. */
   freezes: number;
+  /**
+   * Dny pokryté ochranou nebo obnovou. Řadu nepřeruší, ale nepřičtou se —
+   * série za ně sahá dál, než je poslední lekce.
+   */
+  covered?: readonly string[];
 };
 
 /** Dnešek jako YYYY-MM-DD v místním čase — série se počítá podle kalendáře uživatele. */
@@ -69,6 +86,30 @@ export function previousDay(day: string): string {
   return previous.toISOString().slice(0, 10);
 }
 
+export function nextDay(day: string): string {
+  const [year, month, date] = day.split("-").map(Number);
+  return new Date(Date.UTC(year, month - 1, date + 1)).toISOString().slice(0, 10);
+}
+
+/** Posun o n dní (i dozadu). */
+export function addDays(day: string, count: number): string {
+  const [year, month, date] = day.split("-").map(Number);
+  return new Date(Date.UTC(year, month - 1, date + count)).toISOString().slice(0, 10);
+}
+
+/**
+ * Kam až série sahá: den poslední lekce a za ním dny pokryté ochranou
+ * nebo obnovou. Obnovená série „dojede“ až ke včerejšku, i když poslední
+ * lekce byla předevčírem.
+ */
+export function streakThrough(lastDay: string | null, covered: readonly string[] = []): string | null {
+  if (lastDay === null || covered.length === 0) return lastDay;
+  const set = new Set(covered);
+  let day = lastDay;
+  while (set.has(nextDay(day))) day = nextDay(day);
+  return day;
+}
+
 /**
  * Posun série po dokončené lekci.
  *
@@ -77,13 +118,14 @@ export function previousDay(day: string): string {
  */
 export function advanceStreak(state: StreakState, today = localDay()): StreakState {
   if (state.lastDay === today) return state;
-  if (state.lastDay === previousDay(today)) return { ...state, days: state.days + 1, lastDay: today };
+  const through = streakThrough(state.lastDay, state.covered);
+  if (through === previousDay(today)) return { ...state, days: state.days + 1, lastDay: today };
 
   /**
    * Vynechaný den. Ochrana ho pokryje, ale jen jeden a jen tehdy, když
    * uživatel přišel hned nazítří — po týdnu mlčení už není co chránit.
    */
-  const missedOneDay = state.lastDay !== null && state.lastDay === previousDay(previousDay(today));
+  const missedOneDay = through !== null && through === previousDay(previousDay(today));
   if (missedOneDay && state.freezes > 0) {
     return { days: state.days + 1, lastDay: today, freezes: state.freezes - 1 };
   }
@@ -97,12 +139,86 @@ export function advanceStreak(state: StreakState, today = localDay()): StreakSta
  * počítat při čtení.
  */
 export function currentStreak(state: StreakState, today = localDay()): number {
-  if (state.lastDay === null) return 0;
-  if (state.lastDay === today || state.lastDay === previousDay(today)) return state.days;
+  const through = streakThrough(state.lastDay, state.covered);
+  if (through === null) return 0;
+  if (through >= previousDay(today)) return state.days;
   // Koupená ochrana drží sérii naživu i den po vynechání — teprve pak
   // se ukáže, jestli ji uživatel využije, nebo o sérii přijde.
-  if (state.freezes > 0 && state.lastDay === previousDay(previousDay(today))) return state.days;
+  if (state.freezes > 0 && through === previousDay(previousDay(today))) return state.days;
   return 0;
+}
+
+export type RepairOffer = {
+  /** Kolik dní měla série, která spadla. */
+  lost: number;
+  /** Vynechané dny, které obnovení pokryje. */
+  missing: string[];
+  /** Poslední den, kdy se obnovit dá. */
+  until: string;
+};
+
+/**
+ * Dá se spadlá série obnovit?
+ *
+ * Dvě situace. Student se vrátil a ještě nehrál: série stojí na nule
+ * a chybí jeden nebo dva dny. Nebo už zase hrál a série začala znovu
+ * od jedničky — obnovení pak spojí starou řadu s novou. V obou je lhůta
+ * stejná: do konce druhého dne po ztrátě.
+ */
+export function repairOffer(input: {
+  lessonDays: readonly string[];
+  coveredDays?: readonly string[];
+  freezes: number;
+  /** Den posledního placeného obnovení, YYYY-MM-DD. */
+  lastRepair?: string | null;
+  today?: string;
+}): RepairOffer | null {
+  const { lessonDays, coveredDays = [], freezes, lastRepair, today = localDay() } = input;
+  if (lessonDays.length === 0) return null;
+  if (lastRepair && addDays(lastRepair, REPAIR_COOLDOWN_DAYS) > today) return null;
+
+  const played = new Set(lessonDays);
+  const covered = new Set(coveredDays);
+  const inStreak = (day: string) => played.has(day) || covered.has(day);
+  const last = [...played].sort().at(-1)!;
+  const through = streakThrough(last, coveredDays)!;
+
+  let end: string;
+  let missing: string[];
+  if (through < previousDay(today)) {
+    // Ještě nehrál: chybí dny od konce řady po včerejšek.
+    missing = daysBetween(nextDay(through), previousDay(today));
+    // Jediný vynechaný den podrží ochrana sama, jakmile se odehraje lekce.
+    if (freezes > 0 && missing.length === 1) return null;
+    end = through;
+  } else {
+    // Už hrál: najít mezeru před současnou řadou.
+    let start = through;
+    while (inStreak(previousDay(start))) start = previousDay(start);
+    const before = [...played, ...covered].filter((day) => day < start).sort().at(-1);
+    if (before === undefined) return null;
+    missing = daysBetween(nextDay(before), previousDay(start));
+    end = before;
+  }
+
+  if (missing.length === 0 || missing.length > REPAIR_MAX_MISSED) return null;
+  // Série spadla s prvním dnem, který nic nepokrylo; lhůta běží do konce
+  // druhého dne potom.
+  const until = addDays(missing[0], 2);
+  if (today > until) return null;
+
+  const lost = streakFromDays(
+    lessonDays.filter((day) => day <= end),
+    coveredDays.filter((day) => day <= end),
+  ).days;
+  return lost >= REPAIR_MIN_STREAK ? { lost, missing, until } : null;
+}
+
+/** Dny od–do včetně. Prázdné, když je začátek za koncem. */
+function daysBetween(from: string, to: string): string[] {
+  const days: string[] = [];
+  for (let day = from; day <= to; day = nextDay(day)) days.push(day);
+  return days;
 }
 
 /**

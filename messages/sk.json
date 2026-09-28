@@ -49,7 +49,15 @@
     "startFresh": "Začať novú lekciu",
     "mix": "{stage, number} z témy · {review, number} opakovanie",
     "mixOnly": "{stage, number} príkladov z témy",
-    "wallet": "{count, plural, one {# pastilka} few {# pastilky} other {# pastiliek}} · otvoriť zásoby"
+    "wallet": "{count, plural, one {# pastilka} few {# pastilky} other {# pastiliek}} · otvoriť zásoby",
+    "repairTitle": "Séria {days, plural, one {# deň} few {# dni} other {# dní}} padla",
+    "repairBody": "{when, select, today {Obnoviť ju ide už len dnes.} other {Obnoviť ju ide do zajtra.}} Obnovenie je raz za 30 dní.",
+    "repairAction": "Obnoviť sériu",
+    "repairPrice": "{cost, number} pastiliek",
+    "repairDismiss": "Nechať tak",
+    "repairPoor": "Chýba ti {missing, plural, one {# pastilka} few {# pastilky} other {# pastiliek}}. Pribúdajú za príklady vypočítané na prvý raz.",
+    "repairDone": "Séria je späť. Dnes ju predĺžiš lekciou.",
+    "repairDoneToday": "Séria je späť."
   },
   "settings": {
     "title": "Nastavenia",

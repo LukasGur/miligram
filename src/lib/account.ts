@@ -46,6 +46,7 @@ export async function deviceSummary(): Promise<DeviceSummary> {
       days: profile.streakDays,
       lastDay: profile.lastLessonDay,
       freezes: profile.streakFreezes ?? 0,
+      covered: profile.coveredDays,
     }),
     pills: profile.pills,
     unfinished: progress > 0,

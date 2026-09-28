@@ -55,4 +55,9 @@ export const STORAGE_KEYS = {
   pushOfferDismissedAt: "miligram.push.offerDismissedAt",
   /** Kolikrát ji odmítl. Po třetím odmítnutí se nabídka už neukáže. */
   pushOfferDismissals: "miligram.push.offerDismissals",
+  /**
+   * První vynechaný den série, jejíž obnovení student odmítl. Další ztráta
+   * má jiný den, takže se nabídne znovu.
+   */
+  repairDismissed: "miligram.repair.dismissed",
 } as const;

@@ -1,7 +1,7 @@
 "use client";
 
 import { useLiveQuery } from "dexie-react-hooks";
-import { currentStreak } from "@/core/economy";
+import { currentStreak, streakThrough } from "@/core/economy";
 import { curriculumState, type CurriculumState } from "./curriculum";
 import { db, emptyProfile, PROFILE_ID, PROGRESS_ID, type LessonProgress, type Profile } from "./db";
 import { solvedToday, weekActivity, type WeekDay } from "./today";
@@ -25,8 +25,26 @@ export function useProfile(): { profile: Profile; streak: number; ready: boolean
       days: profile.streakDays,
       lastDay: profile.lastLessonDay,
       freezes: profile.streakFreezes ?? 0,
+      covered: profile.coveredDays,
     }),
     ready: stored !== undefined,
+  };
+}
+
+/**
+ * Série pro server (texty připomínek). Jako den poslední lekce se posílá
+ * den, kam série sahá — po obnovení je to včerejšek, i když se hrálo
+ * předevčírem, a připomínka nemá hlásit nulu.
+ */
+export function streakFacts(profile: Profile): {
+  streakDays: number;
+  streakFreezes: number;
+  lastLessonDay: string | null;
+} {
+  return {
+    streakDays: profile.streakDays,
+    streakFreezes: profile.streakFreezes ?? 0,
+    lastLessonDay: streakThrough(profile.lastLessonDay, profile.coveredDays),
   };
 }
 

@@ -27,7 +27,7 @@ import { pushOnFor, restorePushDevice, savePrefs, timeZone, usePushStatus } from
 import { pullNews } from "@/lib/restore";
 import { supabase } from "@/lib/supabase";
 import { syncOutbox } from "@/lib/sync";
-import { usePendingEvents, useProfile } from "@/lib/useProfile";
+import { streakFacts, usePendingEvents, useProfile } from "@/lib/useProfile";
 import { useSession } from "@/lib/useSession";
 
 /**
@@ -54,8 +54,8 @@ export function SyncAgent() {
   const accountLocale: unknown = session?.user.user_metadata?.locale;
   const pushStatus = usePushStatus();
   const pushOn = pushOnFor(pushStatus, userId);
-  const { streakDays, lastLessonDay } = profile;
-  const streakFreezes = profile.streakFreezes ?? 0;
+  // Den, kam série sahá, ne jen poslední lekce — po obnovení je to včerejšek.
+  const { streakDays, streakFreezes, lastLessonDay } = streakFacts(profile);
 
   useEffect(() => {
     const client = supabase();

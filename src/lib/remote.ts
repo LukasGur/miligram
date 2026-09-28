@@ -88,9 +88,15 @@ export async function fetchWallet(client: SupabaseClient): Promise<ServerWallet>
     pills: number;
     freezes: number;
     covered_days: string[] | null;
+    last_repair: string | null;
   }>();
   if (error) throw new Error(error.message);
-  return { pills: data.pills, freezes: data.freezes, coveredDays: data.covered_days ?? [] };
+  return {
+    pills: data.pills,
+    freezes: data.freezes,
+    coveredDays: data.covered_days ?? [],
+    lastRepair: data.last_repair ?? null,
+  };
 }
 
 /** Bonus za registraci. `true`, když se připsal teď; podruhé nic neudělá. */
@@ -708,7 +714,10 @@ export async function friendSummaries(client: SupabaseClient, userId: string): P
 
   const [profiles, stats, weekly] = await Promise.all([
     client.from("profiles").select("id, handle, badges, tone").in("id", ids),
-    client.from("stats").select("user_id, xp_total, streak_days, last_lesson_day, league_tier").in("user_id", ids),
+    client
+      .from("stats")
+      .select("user_id, xp_total, streak_days, last_lesson_day, streak_through, league_tier")
+      .in("user_id", ids),
     client.from("weekly_xp").select("user_id, xp").eq("week_start", weekStart()).in("user_id", ids),
   ]);
   for (const result of [profiles, stats, weekly]) if (result.error) throw new Error(result.error.message);
@@ -725,7 +734,9 @@ export async function friendSummaries(client: SupabaseClient, userId: string): P
         handle: profile.handle,
         since: since.get(profile.id) ?? null,
         streakDays: row?.streak_days ?? 0,
-        lastLessonDay: row?.last_lesson_day ?? null,
+        // Kam série sahá (přes dny pokryté ochranou nebo obnovou), ne jen
+        // poslední lekce — jinak by obnovená série kamarádům ukazovala nulu.
+        lastLessonDay: row?.streak_through ?? row?.last_lesson_day ?? null,
         xpTotal: row?.xp_total ?? 0,
         xpWeek: weekBy.get(profile.id) ?? 0,
         tier: row?.league_tier ?? 1,

@@ -51,6 +51,9 @@ v hlavičce lekce), bonus a XP až s dokončenou lekcí.
 Útrata: nápověda 15, ochrana série 60 (nejvýš dvě naráz), dar ochrany
 kamarádovi 30 (jednou týdně) — darovat se má vyplatit víc než kupovat sobě.
 Za založení účtu 30 pastilek, jednou na účet (připisuje server).
+Obnovení spadlé série 200, jen u série aspoň 7 dní, do konce druhého dne
+po ztrátě a nejvýš jednou za 30 dní (lhůtu a četnost hlídá i server,
+migrace 0015 — série je veřejná).
 
 Pastilky a ochrany drží server jako součet pohybů (`wallet_events`,
 migrace 0014); telefon posílá, co se stalo, frontou jako lekce. Pastilky

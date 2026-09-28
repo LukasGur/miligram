@@ -60,6 +60,8 @@ export type Profile = {
    * na účet, tohle jen šetří dotaz při každém spuštění.
    */
   bonusChecked?: boolean;
+  /** Den posledního obnovení série. Obnovit jde nejvýš jednou za třicet dní. */
+  lastRepair?: string;
   createdAt: string;
   updatedAt: string;
 };
@@ -205,7 +207,7 @@ export type OutboxEvent = {
  * Pohyb v peněžence. Posílá se, co se stalo — „+2 za příklad“, „−15 za
  * nápovědu“ —, ne zůstatek; zůstatek je na serveru součet (migrace 0014).
  */
-export type WalletKind = "earn" | "spend" | "freezeGained" | "freezeUsed" | "opening";
+export type WalletKind = "earn" | "spend" | "freezeGained" | "freezeUsed" | "opening" | "repair";
 
 export type WalletPayload = {
   kind: WalletKind;
@@ -521,7 +523,12 @@ export async function recordLesson(lesson: FinishedLesson, now = new Date()): Pr
   return database.transaction("rw", tables, async () => {
     const current = (await database.profile.get(PROFILE_ID)) ?? emptyProfile(now);
     const streak: StreakState = advanceStreak(
-      { days: current.streakDays, lastDay: current.lastLessonDay, freezes: current.streakFreezes ?? 0 },
+      {
+        days: current.streakDays,
+        lastDay: current.lastLessonDay,
+        freezes: current.streakFreezes ?? 0,
+        covered: current.coveredDays,
+      },
       today,
     );
 
@@ -762,7 +769,13 @@ export async function saveBadgeLevels(levels: Readonly<Record<string, number | u
  * Peněženka, jak ji zná server: součet odeslaných pohybů a dny pokryté
  * ochranou (my_wallet, migrace 0014).
  */
-export type ServerWallet = { pills: number; freezes: number; coveredDays: readonly string[] };
+export type ServerWallet = {
+  pills: number;
+  freezes: number;
+  coveredDays: readonly string[];
+  /** Den posledního placeného obnovení série. */
+  lastRepair?: string | null;
+};
 
 /**
  * Srovná zůstatek v telefonu se serverem.
@@ -793,12 +806,14 @@ export async function reconcileWallet(wallet: ServerWallet, now = new Date()): P
     const opening = current.opening ?? { pills: 0, freezes: 0 };
     const known = new Set(current.coveredDays ?? []);
     const coveredDays = [...new Set([...known, ...wallet.coveredDays])].sort();
+    const lastRepair = [current.lastRepair, wallet.lastRepair ?? undefined].filter(Boolean).sort().at(-1);
 
     await database.profile.put({
       ...current,
       pills: Math.max(0, wallet.pills + waiting.pills + opening.pills),
       streakFreezes: Math.min(MAX_STREAK_FREEZES, Math.max(0, wallet.freezes + waiting.freezes + opening.freezes)),
       coveredDays,
+      ...(lastRepair ? { lastRepair } : {}),
       updatedAt: now.toISOString(),
     });
     return coveredDays.length > known.size;

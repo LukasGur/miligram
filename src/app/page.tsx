@@ -5,6 +5,7 @@ import dynamic from "next/dynamic";
 import { useFormatter, useTranslations } from "next-intl";
 import { InstallBanner } from "@/components/InstallBanner";
 import { NetworkStatus } from "@/components/NetworkStatus";
+import { RepairCard } from "@/components/RepairCard";
 import { ShopSheet } from "@/components/ShopSheet";
 import { Wordmark } from "@/components/Wordmark";
 import { ChartIcon, ChevronRightIcon, PersonIcon, SettingsIcon } from "@/components/icons";
@@ -358,6 +359,10 @@ function Home() {
       </header>
 
       <main tabIndex={0} className="scroll-y mx-auto flex w-full max-w-md flex-1 flex-col px-5">
+        {/* Spadlá série se dá krátce po ztrátě obnovit. Nahoře, protože
+            lhůta běží — a jinak se karta vůbec neukáže. */}
+        <RepairCard />
+
         {/* Hrdina se drží ve svislém středu volného místa — jinak se obrazovka
             rozpadne na horní půlku s obsahem a spodní s prázdnem. */}
         <section className="flex flex-1 flex-col items-center justify-center gap-7 py-4">

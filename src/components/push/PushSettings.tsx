@@ -20,7 +20,7 @@ import {
   type NotificationPrefs,
 } from "@/lib/push";
 import { supabase } from "@/lib/supabase";
-import { useProfile } from "@/lib/useProfile";
+import { streakFacts, useProfile } from "@/lib/useProfile";
 import { useSession } from "@/lib/useSession";
 
 /**
@@ -128,9 +128,7 @@ function Controls({ userId, on }: { userId: string; on: boolean }) {
       if (next) {
         const result = await enablePush(client, userId, {
           locale,
-          streakDays: profile.streakDays,
-          streakFreezes: profile.streakFreezes ?? 0,
-          lastLessonDay: profile.lastLessonDay,
+          ...streakFacts(profile),
         });
         if (result === "enabled") {
           await showWelcomeNotice(t("welcomeTitle"), t("welcomeBody", { time: current.reminderTime }));

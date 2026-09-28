@@ -108,7 +108,7 @@ bez nápovědy.“
 Věty „proč“ pro 72 šablon, CS i SK. Před nasazením je projde autor
 (přehledný seznam k přečtení), teprve pak push.
 
-## Fáze C — obnovení série
+## Fáze C — obnovení série ✅ (28. 9. 2026)
 
 - 200 pastilek.
 - Nabídka do 48 h po ztrátě, jen u série aspoň 7 dní, nejvýš 1× za 30 dní.

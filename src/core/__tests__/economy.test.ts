@@ -6,8 +6,11 @@ import {
   PILLS_FLAWLESS_BONUS,
   PILLS_PER_CORRECT,
   rewardForLesson,
+  REPAIR_COOLDOWN_DAYS,
+  repairOffer,
   SIGNUP_BONUS,
   streakFromDays,
+  streakThrough,
   type StreakState,
 } from "../economy";
 
@@ -144,5 +147,78 @@ describe("bonus za registraci", () => {
     const { readFileSync } = await import("node:fs");
     const sql = readFileSync("supabase/migrations/0014_penezenka.sql", "utf8");
     expect(sql).toContain(`values (me, 'signup', 'signup', ${SIGNUP_BONUS}, 'signup')`);
+  });
+});
+
+/** Sedm dní v řadě končících daným dnem. */
+function tyden(konec: string): string[] {
+  const [y, m, d] = konec.split("-").map(Number);
+  return Array.from({ length: 7 }, (_, i) =>
+    new Date(Date.UTC(y, m - 1, d - 6 + i)).toISOString().slice(0, 10),
+  );
+}
+
+describe("obnovené dny", () => {
+  it("série sahá přes pokryté dny až ke včerejšku", () => {
+    expect(streakThrough("2026-09-10", ["2026-09-11", "2026-09-12"])).toBe("2026-09-12");
+    expect(currentStreak({ days: 9, lastDay: "2026-09-10", freezes: 0, covered: ["2026-09-11", "2026-09-12"] }, "2026-09-13")).toBe(9);
+  });
+
+  it("lekce po obnovení sérii prodlouží", () => {
+    const state = { days: 9, lastDay: "2026-09-10", freezes: 0, covered: ["2026-09-11"] };
+    expect(advanceStreak(state, "2026-09-12")).toMatchObject({ days: 10, lastDay: "2026-09-12" });
+  });
+});
+
+describe("obnovení série", () => {
+  const dny = tyden("2026-09-10");
+
+  it("den po ztrátě: chybí jeden den", () => {
+    expect(repairOffer({ lessonDays: dny, freezes: 0, today: "2026-09-12" })).toEqual({
+      lost: 7,
+      missing: ["2026-09-11"],
+      until: "2026-09-13",
+    });
+  });
+
+  it("dva dny po ztrátě: chybí dva dny, pořád ve lhůtě", () => {
+    expect(repairOffer({ lessonDays: dny, freezes: 0, today: "2026-09-13" })?.missing).toEqual([
+      "2026-09-11",
+      "2026-09-12",
+    ]);
+  });
+
+  it("po lhůtě už ne", () => {
+    expect(repairOffer({ lessonDays: dny, freezes: 0, today: "2026-09-14" })).toBeNull();
+  });
+
+  it("série, která žije, se neobnovuje", () => {
+    expect(repairOffer({ lessonDays: dny, freezes: 0, today: "2026-09-11" })).toBeNull();
+  });
+
+  it("krátká série se neobnovuje", () => {
+    expect(repairOffer({ lessonDays: dny.slice(1), freezes: 0, today: "2026-09-12" })).toBeNull();
+  });
+
+  it("jeden vynechaný den podrží ochrana sama", () => {
+    expect(repairOffer({ lessonDays: dny, freezes: 1, today: "2026-09-12" })).toBeNull();
+  });
+
+  it("už znovu hrál: obnovení spojí starou řadu s novou", () => {
+    expect(repairOffer({ lessonDays: [...dny, "2026-09-12"], freezes: 0, today: "2026-09-12" })).toEqual({
+      lost: 7,
+      missing: ["2026-09-11"],
+      until: "2026-09-13",
+    });
+  });
+
+  it("jednou za třicet dní", () => {
+    const input = { lessonDays: dny, freezes: 0, today: "2026-09-12" };
+    expect(repairOffer({ ...input, lastRepair: "2026-08-20" })).toBeNull();
+    expect(repairOffer({ ...input, lastRepair: `2026-08-${13 - (REPAIR_COOLDOWN_DAYS - 30)}` })).not.toBeNull();
+  });
+
+  it("po obnovení se nenabízí znovu", () => {
+    expect(repairOffer({ lessonDays: dny, coveredDays: ["2026-09-11"], freezes: 0, today: "2026-09-12" })).toBeNull();
   });
 });
