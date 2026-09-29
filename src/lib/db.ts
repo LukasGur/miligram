@@ -199,6 +199,8 @@ export type OutboxEvent = {
   createdAt: string;
   /** Doplní se po odeslání; do té doby je událost čekající. */
   syncedAt?: string;
+  /** Server událost odmítl (src/lib/sync.ts); už se neposílá. */
+  rejectedAt?: string;
 };
 
 /**

@@ -13,6 +13,7 @@ import { MailCheckIcon } from "@/components/icons";
 import { reducedMotion } from "@/components/ui/Flyer";
 import { CodeInput } from "./CodeInput";
 import { Perks, riseDelay } from "./Perks";
+import { PrivacyLink } from "@/components/PrivacySheet";
 
 /**
  * Délka a platnost kódu. Musí sedět s nastavením v Supabase, které nahrává
@@ -231,6 +232,10 @@ export function SignIn() {
             </Primary>
             {error ? <ErrorMessage text={t(error)} /> : null}
             <p className="text-ink-soft mt-3 text-center text-label">{t("signInNote")}</p>
+            {/* div, ne p: odkaz si nese list, a ten v odstavci být nesmí. */}
+            <div className="text-ink-soft mt-1 text-center text-micro">
+              {t.rich("signInPrivacy", { link: (chunks) => <PrivacyLink className="min-h-11">{chunks}</PrivacyLink> })}
+            </div>
             {/* Bonus jako cenovka, ne jako věta — informace, ne přemlouvání. */}
             <p className="mt-2 flex justify-center text-label">
               <PillTag>{t("perkBonusTitle", { count: SIGNUP_BONUS })}</PillTag>

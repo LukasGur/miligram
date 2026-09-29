@@ -21,9 +21,14 @@ self.addEventListener("install", (event) => {
       // Soubor se stejným otiskem se převezme z předchozí verze. Dřív si
       // každá nová verze stáhla všech ~90 souborů (3 MB) znovu, i když se
       // změnily dva. Mění se hlavně index.html a pár balíků kódu.
-      await Promise.all(
-        PRECACHE.map(async ([url, revision]) => {
-          try {
+      //
+      // Chybějící soubor instalaci shodí. Neúplná verze by se hned
+      // aktivovala, smazala tu předchozí a offline by aplikace nenaběhla.
+      // Takhle zůstane stará, dokud se nová nestáhne celá — prohlížeč to
+      // zkusí znovu při dalším spuštění.
+      try {
+        await Promise.all(
+          PRECACHE.map(async ([url, revision]) => {
             if (previous && previous.revisions[url] === revision) {
               const kept = await previous.cache.match(url);
               if (kept) {
@@ -34,12 +39,14 @@ self.addEventListener("install", (event) => {
             // reload obchází HTTP cache prohlížeče — jinak by se do precache
             // mohl dostat starý index.html z předchozího nasazení.
             const response = await fetch(new Request(url, { cache: "reload" }));
-            if (response.ok) await cache.put(url, response);
-          } catch {
-            // Jeden nedostupný soubor nesmí shodit celou instalaci.
-          }
-        }),
-      );
+            if (!response.ok) throw new Error(`${url}: ${response.status}`);
+            await cache.put(url, response);
+          }),
+        );
+      } catch (error) {
+        await caches.delete(PRECACHE_NAME);
+        throw error;
+      }
       await cache.put(
         REVISIONS_KEY,
         new Response(JSON.stringify(Object.fromEntries(PRECACHE)), { headers: { "content-type": "application/json" } }),

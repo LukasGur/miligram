@@ -40,7 +40,14 @@ export type SyncGateway = {
   pushWalletEvents(rows: readonly WalletEventRow[]): Promise<void>;
 };
 
-export type SyncResult = { sent: number; pending: number };
+/**
+ * Server událost odmítl kvůli pravidlu (mez v peněžence, lhůta obnovení
+ * série…), ne kvůli síti. Poslat ji znovu nepomůže: odmítne ji zas.
+ */
+export class RejectedError extends Error {}
+
+/** `rejected`: události, které server odmítl; ve frontě už nečekají. */
+export type SyncResult = { sent: number; pending: number; rejected: number };
 
 /** Kolik událostí jde v jedné dávce. Menší dávka přežije horší připojení. */
 const BATCH = 25;
@@ -52,6 +59,12 @@ export async function syncOutbox(gateway: SyncGateway): Promise<SyncResult> {
     .sortBy("id");
 
   let sent = 0;
+  let rejected = 0;
+
+  /** Označit se smí až po potvrzeném zápisu, jinak by výpadek událost tiše zahodil. */
+  const settle = async (events: OutboxEvent[], changes: Partial<OutboxEvent>) => {
+    await database.outbox.bulkUpdate(events.map((event) => ({ key: event.id as number, changes })));
+  };
 
   /**
    * Nejdřív peněženka, pak lekce. Server skládá sérii z dní s lekcí a dní
@@ -67,20 +80,34 @@ export async function syncOutbox(gateway: SyncGateway): Promise<SyncResult> {
   ] as const) {
     for (let start = 0; start < events.length; start += BATCH) {
       const batch = events.slice(start, start + BATCH);
-      await push(batch);
-
-      // Označit se smí až po potvrzeném zápisu. Kdyby se to obrátilo,
-      // výpadek uprostřed by událost tiše zahodil.
-      const now = new Date().toISOString();
-      await database.outbox.bulkUpdate(
-        batch.map((event) => ({ key: event.id as number, changes: { syncedAt: now } })),
-      );
-      sent += batch.length;
+      try {
+        await push(batch);
+        await settle(batch, { syncedAt: new Date().toISOString() });
+        sent += batch.length;
+      } catch (error) {
+        if (!(error instanceof RejectedError)) throw error;
+        // Dávka se zapisuje celá, nebo vůbec. Jedna odmítnutá událost by
+        // tak navždy zadržela ostatní — a protože lekce jdou až po
+        // peněžence, i XP v lize. Proto po jedné: odmítnutá se odloží,
+        // zbytek projde.
+        for (const event of batch) {
+          try {
+            await push([event]);
+            await settle([event], { syncedAt: new Date().toISOString() });
+            sent += 1;
+          } catch (single) {
+            if (!(single instanceof RejectedError)) throw single;
+            const now = new Date().toISOString();
+            await settle([event], { syncedAt: now, rejectedAt: now });
+            rejected += 1;
+          }
+        }
+      }
     }
   }
 
   const pending = await database.outbox.filter((event) => event.syncedAt === undefined).count();
-  return { sent, pending };
+  return { sent, pending, rejected };
 }
 
 function toWalletRow(event: OutboxEvent): WalletEventRow {

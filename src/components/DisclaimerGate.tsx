@@ -4,6 +4,7 @@ import type { ReactNode } from "react";
 import { useTranslations } from "next-intl";
 import { useHydrated, useLocalValue } from "@/lib/clientState";
 import { writeLocal, STORAGE_KEYS } from "@/lib/localStore";
+import { PrivacyLink } from "./PrivacySheet";
 import { Wordmark } from "./Wordmark";
 
 export function DisclaimerGate({ children }: { children: ReactNode }) {
@@ -43,6 +44,7 @@ export function DisclaimerGate({ children }: { children: ReactNode }) {
         <p className="mt-4 text-body font-medium">{t("lead")}</p>
         <p className="text-ink-soft mt-3 text-body">{t("body")}</p>
         <p className="text-ink-soft border-line mt-6 border-l-2 pl-4 text-label">{t("note")}</p>
+        <PrivacyLink className="mt-4 min-h-11 self-start text-label" />
       </div>
 
       <div className="mx-auto w-full max-w-md px-6 pt-6">

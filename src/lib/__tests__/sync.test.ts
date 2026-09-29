@@ -1,7 +1,7 @@
 import "fake-indexeddb/auto";
 import { beforeEach, describe, expect, it } from "vitest";
 import { db, recordLesson, spendPills } from "../db";
-import { syncOutbox, type LessonEventRow, type SyncGateway, type WalletEventRow } from "../sync";
+import { RejectedError, syncOutbox, type LessonEventRow, type SyncGateway, type WalletEventRow } from "../sync";
 
 const LESSON = {
   lessonId: "abc",
@@ -62,7 +62,7 @@ describe("odeslání fronty", () => {
     const { gateway, received } = fakeGateway();
 
     // Lekce a pohyb v peněžence (2 pastilky za ni).
-    expect(await syncOutbox(gateway)).toEqual({ sent: 2, pending: 0 });
+    expect(await syncOutbox(gateway)).toEqual({ sent: 2, pending: 0, rejected: 0 });
     expect(received[0][0]).toMatchObject({ lesson_id: "abc", kind: "lesson" });
     expect(received[0][0].answers).toHaveLength(1);
   });
@@ -93,7 +93,7 @@ describe("odeslání fronty", () => {
     const { gateway, received } = fakeGateway();
     await syncOutbox(gateway);
 
-    expect(await syncOutbox(gateway)).toEqual({ sent: 0, pending: 0 });
+    expect(await syncOutbox(gateway)).toEqual({ sent: 0, pending: 0, rejected: 0 });
     expect(received).toHaveLength(1);
   });
 
@@ -105,12 +105,57 @@ describe("odeslání fronty", () => {
     expect(waiting).toBe(2);
   });
 
+  it("odmítnutý pohyb v peněžence nezadrží ostatní ani lekce", async () => {
+    await recordLesson({ ...LESSON, reward: { ...LESSON.reward, pills: 20 } });
+    await spendPills(15, "hint");
+    const wallet: WalletEventRow[] = [];
+    const lessons: LessonEventRow[] = [];
+    const gateway: SyncGateway = {
+      async pushWalletEvents(rows) {
+        // Server odmítne útratu (třeba obnovení série po lhůtě); dávka
+        // s ní neprojde celá.
+        if (rows.some((row) => row.kind === "spend")) throw new RejectedError("check_violation");
+        wallet.push(...rows);
+      },
+      async pushLessonEvents(rows) {
+        lessons.push(...rows);
+      },
+    };
+
+    expect(await syncOutbox(gateway)).toEqual({ sent: 2, pending: 0, rejected: 1 });
+    expect(wallet.map((row) => row.kind)).toEqual(["earn"]);
+    expect(lessons).toHaveLength(1);
+
+    const odlozene = await db().outbox.filter((event) => event.rejectedAt !== undefined).toArray();
+    expect(odlozene.map((event) => (event.payload as { kind: string }).kind)).toEqual(["spend"]);
+    // Příště se už neposílá.
+    expect(await syncOutbox(gateway)).toEqual({ sent: 0, pending: 0, rejected: 0 });
+  });
+
+  it("síťová chyba při posílání po jedné nic neodloží", async () => {
+    await recordLesson(LESSON);
+    await spendPills(1, "hint");
+    let calls = 0;
+    const gateway: SyncGateway = {
+      async pushWalletEvents() {
+        calls += 1;
+        if (calls === 1) throw new RejectedError("check_violation");
+        throw new Error("síť je pryč");
+      },
+      async pushLessonEvents() {},
+    };
+
+    await expect(syncOutbox(gateway)).rejects.toThrow(/síť/);
+    expect(await db().outbox.filter((event) => event.rejectedAt !== undefined).count()).toBe(0);
+    expect(await db().outbox.filter((event) => event.syncedAt === undefined).count()).toBe(3);
+  });
+
   it("útrata jde na server jako pohyb v peněžence, a to před lekcemi", async () => {
     await recordLesson({ ...LESSON, reward: { ...LESSON.reward, pills: 20 } });
     await spendPills(15, "hint");
     const { gateway, received, wallet, order } = fakeGateway();
 
-    expect(await syncOutbox(gateway)).toEqual({ sent: 3, pending: 0 });
+    expect(await syncOutbox(gateway)).toEqual({ sent: 3, pending: 0, rejected: 0 });
     expect(received.flat()).toHaveLength(1);
     expect(wallet.map((row) => [row.kind, row.pills, row.reason])).toEqual([
       ["earn", 20, "lesson"],
@@ -125,7 +170,7 @@ describe("odeslání fronty", () => {
     }
     const { gateway, received } = fakeGateway();
 
-    expect(await syncOutbox(gateway)).toEqual({ sent: 60, pending: 0 });
+    expect(await syncOutbox(gateway)).toEqual({ sent: 60, pending: 0, rejected: 0 });
     expect(received.map((batch) => batch.length)).toEqual([25, 5]);
   });
 

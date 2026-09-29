@@ -14,6 +14,7 @@ import { badgeStates, duelsNeedingMe, publishBadgesIfChanged } from "@/lib/socia
 import { useProfile } from "@/lib/useProfile";
 import { Field, Primary } from "@/components/account/SignIn";
 import { SignOut } from "@/components/account/SignOut";
+import { DeleteAccount } from "@/components/account/DeleteAccount";
 import { withTimeout } from "@/lib/useAction";
 import { BadgeGlyph } from "./BadgeGlyph";
 import { BadgeSheet } from "./BadgeSheet";
@@ -192,6 +193,7 @@ export function ProfileHome({
         </div>
       ) : null}
       <SignOut client={social.client} userId={social.userId} email={undefined} />
+      <DeleteAccount client={social.client} handle={social.profile.data?.handle ?? null} />
     </>
   );
 }

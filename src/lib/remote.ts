@@ -9,7 +9,7 @@ import { readPending, withPendingResult } from "./duelPending";
 import { invalidateQueries } from "./remoteQuery";
 import { rememberTones } from "./tones";
 import type { ServerWallet } from "./db";
-import type { LessonEventRow, SyncGateway, WalletEventRow } from "./sync";
+import { RejectedError, type LessonEventRow, type SyncGateway, type WalletEventRow } from "./sync";
 
 /**
  * Dotazy proti serveru.
@@ -70,16 +70,34 @@ export function remoteGateway(client: SupabaseClient, userId: string): SyncGatew
           { onConflict: "user_id,client_event_id", ignoreDuplicates: true },
         ),
       );
-      if (error) throw new Error(error.message);
+      if (error) throw writeError(error);
     },
     async pushWalletEvents(rows: readonly WalletEventRow[]) {
       const { error } = await client.from("wallet_events").upsert(
         rows.map((row) => ({ ...row, user_id: userId })),
         { onConflict: "user_id,client_event_id", ignoreDuplicates: true },
       );
-      if (error) throw new Error(error.message);
+      if (error) throw writeError(error);
     },
   };
+}
+
+/**
+ * Chyby dat (třída 22) a porušená omezení (třída 23) jsou odmítnutí:
+ * stejná událost projde zase stejně. Všechno ostatní — síť, vypršelé
+ * přihlášení, výpadek serveru — se zkusí znovu.
+ */
+function writeError(error: { message: string; code?: string }): Error {
+  return /^2[23]/.test(error.code ?? "") ? new RejectedError(error.message) : new Error(error.message);
+}
+
+/**
+ * Smaže účet i se vším, co k němu na serveru patří (migrace 0017).
+ * Po úspěchu už sezení nepatří nikomu; telefon se musí odhlásit a vyčistit.
+ */
+export async function deleteAccount(client: SupabaseClient): Promise<void> {
+  const { error } = await client.rpc("delete_my_account");
+  if (error) throw new Error(error.message);
 }
 
 /** Peněženka podle serveru: součet pohybů a dny pokryté ochranou. */

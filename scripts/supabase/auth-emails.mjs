@@ -238,8 +238,10 @@ async function push() {
     smtp_admin_email: SENDER.email,
     smtp_sender_name: SENDER.name,
     // Vestavěné SMTP Supabase pouští dva e-maily za hodinu na celý projekt.
-    // S vlastním serverem je strop náš; 30 za hodinu stačí a brání zneužití.
-    rate_limit_email_sent: 30,
+    // S vlastním serverem je strop náš. 30 za hodinu by při spuštění
+    // nestačilo, když se v jedné hodině přihlásí pár desítek lidí; 100 ještě
+    // brání zneužití.
+    rate_limit_email_sent: 100,
     mailer_otp_length: OTP_LENGTH,
     mailer_otp_exp: OTP_MINUTES * 60,
     mailer_subjects_magic_link: SUBJECT,

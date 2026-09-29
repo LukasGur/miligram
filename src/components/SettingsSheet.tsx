@@ -4,10 +4,11 @@ import { useEffect, useRef } from "react";
 import { useTranslations } from "next-intl";
 import { useLocale } from "@/i18n/LocaleProvider";
 import { useLocalValue } from "@/lib/clientState";
-import { STORAGE_KEYS, writeLocal } from "@/lib/localStore";
+import { STORAGE_KEYS } from "@/lib/localStore";
 import { CheckIcon, CloseIcon } from "./icons";
 import { InstallSteps, useInstallOffer } from "./InstallBanner";
 import { PushSettings } from "./push/PushSettings";
+import { PrivacyLink } from "./PrivacySheet";
 
 const APP_VERSION = "0.1.0";
 
@@ -140,6 +141,7 @@ export function SettingsSheet({
                 {acceptedLabel}
               </p>
             ) : null}
+            <PrivacyLink className="mt-2 min-h-11 text-label" />
           </Section>
 
           <Section title={t("about")}>

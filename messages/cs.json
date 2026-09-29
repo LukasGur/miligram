@@ -495,7 +495,15 @@
     "bonusDismiss": "Zavřít",
     "perkBonusTitle": "{count, plural, one {# pastilka} few {# pastilky} other {# pastilek}} na start",
     "signOutBody": "Tvůj postup zůstane na účtu. Z tohohle telefonu se smaže a po dalším přihlášení se zase stáhne.",
-    "signOutConfirm": "Odhlásit"
+    "signOutConfirm": "Odhlásit",
+    "signInPrivacy": "Přihlášením bereš na vědomí <link>zásady ochrany osobních údajů</link>.",
+    "deleteAccount": "Smazat účet",
+    "deleteTitle": "Smazat účet?",
+    "deleteBody": "Z účtu i z tohohle telefonu zmizí XP, série, liga, pastilky, přátelé, souboje i odznaky. Vrátit to nejde.",
+    "deleteTypeHandle": "Pro potvrzení napiš svou přezdívku {handle}",
+    "deleteConfirm": "Smazat natrvalo",
+    "deleteCancel": "Zrušit",
+    "deleteFailed": "Účet se nepodařilo smazat. Zkontroluj připojení a zkus to znovu."
   },
   "shop": {
     "freezeTitle": "Ochrana série",
@@ -999,5 +1007,27 @@
       "free": "Vyzvat"
     },
     "inviteWho": "kamaráda"
+  },
+  "privacy": {
+    "link": "Ochrana osobních údajů",
+    "title": "Ochrana osobních údajů",
+    "updated": "Platí od 29. 9. 2026",
+    "close": "Zavřít",
+    "whoTitle": "Kdo údaje zpracovává",
+    "whoBody": "Správcem je Lukáš Gurecký, autor aplikace. S čímkoli ohledně tvých údajů piš na miligram@lukasgurecky.cz.",
+    "withoutTitle": "Bez účtu",
+    "withoutBody": "Když hraješ bez účtu, všechno zůstává jen v tomhle telefonu. Nic se nikam neposílá. Aplikace nepoužívá analytiku, reklamu ani sledovací cookies.",
+    "whatTitle": "Co ukládáme s účtem",
+    "whatBody": "E-mail, přezdívku a barvu monogramu. Výsledky lekcí (který příklad vyšel napoprvé, kde byla nápověda), XP, sérii, ligu, pastilky a odznaky. Přátele, souboje a dary. Když zapneš upozornění, i adresu pro jejich doručení, časové pásmo a jazyk.",
+    "whyTitle": "Proč",
+    "whyBody": "Aby šel účet obnovit na jiném telefonu a aby fungoval žebříček, liga, přátelé a souboje. Právním základem je plnění smlouvy, tedy provoz aplikace, kterou s účtem používáš (čl. 6 odst. 1 písm. b GDPR).",
+    "seeTitle": "Co vidí ostatní",
+    "seeBody": "Kamarádi a lidé ve tvé skupině ligy vidí přezdívku, sérii, XP, ligu a odznaky. Úspěšnost, chyby a nápovědy nevidí nikdo jiný. V souboji soupeř vidí, které příklady ti vyšly.",
+    "whereTitle": "Kde údaje jsou",
+    "whereBody": "Databázi a přihlašování provozuje Supabase na serverech ve Frankfurtu (EU). Aplikaci doručuje Cloudflare. E-maily s kódem odesílá Seznam.cz. Upozornění předávají push služby Apple, Google nebo Mozilla podle prohlížeče; jejich obsah je šifrovaný.",
+    "howLongTitle": "Jak dlouho",
+    "howLongBody": "Dokud účet nesmažeš. Smazat ho můžeš kdykoli v profilu tlačítkem Smazat účet; údaje zmizí hned a ze záloh poskytovatele databáze s jejich pravidelnou obměnou.",
+    "rightsTitle": "Tvoje práva",
+    "rightsBody": "Máš právo na přístup ke svým údajům, jejich opravu, výmaz, omezení zpracování a přenositelnost a můžeš zpracování vznést námitku. Stížnost můžeš podat u Úřadu pro ochranu osobních údajů (uoou.gov.cz), na Slovensku u Úradu na ochranu osobných údajov SR (dataprotection.gov.sk)."
   }
 }

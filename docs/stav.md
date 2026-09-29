@@ -1,6 +1,6 @@
 # Kde jsme
 
-Poslední aktualizace: **28. 9. 2026**
+Poslední aktualizace: **29. 9. 2026**
 
 ## Hotovo
 
@@ -317,6 +317,26 @@ nehrál, má sérii zpátky hned; kdo už začal od jedničky, tomu se stará
   databázi
 - `stats.streak_through` — kam série sahá přes pokryté dny; kamarádi
   a připomínky počítají s ním, ne jen s dnem poslední lekce
+
+**Před vydáním (29. 9. 2026)** — kontrola celé aplikace a opravy:
+
+- **Zaseknutá synchronizace.** Dávka se na server zapisuje celá, nebo
+  vůbec, a jeden pohyb, který server odmítne (obnovení série odeslané
+  po lhůtě, lhůta 30 dní mezi dvěma telefony), zadržel celou frontu
+  navždy, i lekce a XP v lize. Teď se po odmítnutí dávky posílá po jedné,
+  odmítnutá událost dostane `rejectedAt` a zbytek projde. Odmítnutí
+  poznáme podle kódu Postgresu (třídy 22 a 23); síť se dál opakuje.
+- **Neúplná aktualizace.** Service worker dřív při chybějícím souboru
+  instaloval dál, novou verzi aktivoval a starou smazal, takže offline
+  aplikace nenaběhla. Teď instalace selže a zůstane stará verze.
+- **GDPR.** Zásady ochrany osobních údajů (`PrivacySheet`, texty pod
+  `privacy`) s odkazem v úvodním upozornění, v nastavení a u přihlášení.
+  Správce Lukáš Gurecký, kontakt miligram@lukasgurecky.cz. Smazání účtu
+  v profilu pod odhlášením, potvrzuje se opsáním přezdívky; na serveru
+  `delete_my_account()` (migrace 0017) smaže uživatele a zbytek padne
+  kaskádou (ověřeno v transakci vrácené zpět: 26 řádků → 0).
+- **Limit e-mailů** 30 → 100 za hodinu ve skriptu `auth-emails.mjs`.
+  Čeká na nahrání: osobní token Supabase v `.env.secrets.local` vypršel.
 
 ## Co dělat dál
 
