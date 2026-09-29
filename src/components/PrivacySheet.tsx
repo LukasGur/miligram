@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useRef, useState, type ReactNode } from "react";
+import { createPortal } from "react-dom";
 import { useTranslations } from "next-intl";
 import { CloseIcon } from "./icons";
 
@@ -31,15 +32,22 @@ function PrivacySheet({ onClose }: { onClose: () => void }) {
 
   useEffect(() => {
     closeRef.current?.focus();
+    // Ve fázi zachycení a bez dalšího šíření: Escape zavře jen zásady,
+    // ne i nastavení pod nimi.
     const onKeyDown = (event: KeyboardEvent) => {
-      if (event.key === "Escape") onClose();
+      if (event.key !== "Escape") return;
+      event.stopImmediatePropagation();
+      onClose();
     };
-    document.addEventListener("keydown", onKeyDown);
-    return () => document.removeEventListener("keydown", onKeyDown);
+    document.addEventListener("keydown", onKeyDown, true);
+    return () => document.removeEventListener("keydown", onKeyDown, true);
   }, [onClose]);
 
+  // Do body, ne na místo odkazu. V nastavení by list ležel v rolovací
+  // oblasti a iOS Safari by jeho `fixed` vztáhl k ní: vrstva zásad pak
+  // překryla hlavičku nastavení a křížek, vidět byl, ale nešel stisknout.
   // Nad nastavením (z-50), odkud se taky otevírá.
-  return (
+  return createPortal(
     <div className="fixed inset-0 z-[60] flex flex-col justify-end text-left">
       <button type="button" aria-label={t("close")} onClick={onClose} className="animate-scrim bg-ink/25 absolute inset-0" />
       <div
@@ -75,6 +83,7 @@ function PrivacySheet({ onClose }: { onClose: () => void }) {
           </p>
         </div>
       </div>
-    </div>
+    </div>,
+    document.body,
   );
 }
