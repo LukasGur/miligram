@@ -335,8 +335,9 @@ nehrál, má sérii zpátky hned; kdo už začal od jedničky, tomu se stará
   v profilu pod odhlášením, potvrzuje se opsáním přezdívky; na serveru
   `delete_my_account()` (migrace 0017) smaže uživatele a zbytek padne
   kaskádou (ověřeno v transakci vrácené zpět: 26 řádků → 0).
-- **Limit e-mailů** 30 → 100 za hodinu ve skriptu `auth-emails.mjs`.
-  Čeká na nahrání: osobní token Supabase v `.env.secrets.local` vypršel.
+- **Limit e-mailů** zůstává 30 za hodinu na celý projekt; na postupné
+  vydání mezi desítky lidí stačí. Kdyby kódy přestaly chodit, zvednout
+  `rate_limit_email_sent` v `scripts/supabase/auth-emails.mjs`.
 
 ## Co dělat dál
 
