@@ -35,7 +35,7 @@ sama fronta (`sent_at`, `outcome`), cron ji čistí po třiceti dnech.
 
 | Druh | Kdy | Příklad (cs) | Vypínač |
 |---|---|---|---|
-| Série | zvolený čas, jen bez dnešní lekce | 12 dní v kuse. Dnes to přece nepokazíš? 💊 | Připomínka série |
+| Série | zvolený čas, jen bez dnešní lekce | 12 dní v kuse 🔥 · Stačí jedna lekce a série poroste. | Připomínka série |
 | Poslední šance | 21:30, série ≥ 3, pořád bez lekce | Série 12 dní končí o půlnoci. Stačí 5 minut ⏳ | Poslední šance |
 | Výzva na souboj | hned | ⚔️ {handle} tě vyzývá na souboj. Ukaž, kdo líp počítá kapky! | Kamarádi |
 | Souboj dohrán | hned, když soupeř dohraje | {handle} má odehráno: 6/7. Tvůj tah 👀 | Kamarádi |
@@ -178,7 +178,7 @@ strojopisem, akcent indigo, červená jen pro chybu.
   dávno před 19:00.
 - **Ochrana série** je v telefonu. Připomínka proto neříká „série
   skončí“, když může mít zásobu; formulace počítá s tím, že ochrana
-  existuje („Dnes to přece nepokazíš?“), ne s jistotou konce.
+  existuje („Stačí jedna lekce a série poroste.“), ne s jistotou konce.
 - **iOS** doručuje jen aplikaci z plochy (16.4+) a každý push musí
   zobrazit notifikaci.
 - **Limit Edge Functions** na zdarma plánu je 500 000 volání měsíčně;

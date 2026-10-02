@@ -76,12 +76,12 @@ describe("texty notifikací", () => {
 
   it("liga ukazuje číslo ligy tak, jak ho vidí uživatel", () => {
     // Uvnitř je 5 nejvyšší liga, v rozhraní 1. (src/core/league.ts)
-    expect(compose("leagueResult", { rank: 1, size: 20, move: "up", tier: 5 }, "l", "cs", 0).body).toContain("1. ligu");
+    expect(compose("leagueResult", { rank: 1, size: 20, move: "up", tier: 5 }, "l", "cs", 0).body).toContain("1. ligy");
   });
 
   it("v sestupu se říká, kolik chybí do bezpečí", () => {
     expect(compose("leagueLastDay", { rank: 18, size: 20, gap: 90, safe: 20 }, "l", "cs", 0).body).toBe(
-      "Jsi 18. a v sestupu. 20 XP tě dostane do bezpečí.",
+      "Jsi 18. a padáš do nižší ligy. Do bezpečí chybí 20 XP.",
     );
   });
 
@@ -91,7 +91,7 @@ describe("texty notifikací", () => {
   });
 
   it("v malé skupině se o postupu nemluví", () => {
-    expect(compose("leagueLastDay", { rank: 1, size: 4, gap: 0 }, "l", "cs", 0).body).toBe("Jsi 1. z 4. Dnes ještě můžeš přidat.");
+    expect(compose("leagueLastDay", { rank: 1, size: 4, gap: 0 }, "l", "cs", 0).body).toBe("Jsi 1. z 4. Dnes ještě můžeš přidat XP.");
   });
 
   it("neznámý jazyk dostane češtinu", () => {
