@@ -196,7 +196,7 @@
     },
     "prompts": {
       "A1": "Na oddělení máte {productName} v tabletách po {strengthMg, number, ::.######} mg. Ordinace zní {doseShown, number, ::.######} {doseUnit} na jedno podání.\n\nKolik tablet to je?",
-      "A2": "{productName} je perorální roztok, {strengthMg, number, ::.######} mg v {referenceMl, number, ::.######} ml. Pacient má dostat {doseMg, number, ::.######} mg.\n\nKolik mililitrů odměříte?",
+      "A2": "{productName} je {liquidForm, select, suspension {perorální suspenze} other {perorální roztok}}, {strengthMg, number, ::.######} mg v {referenceMl, number, ::.######} ml. Pacient má dostat {doseMg, number, ::.######} mg.\n\nKolik mililitrů odměříte?",
       "A3": "Ampule přípravku {productName} obsahuje {strengthMg, number, ::.######} mg v {ampouleMl, number, ::.######} ml. Ordinováno je {doseShown, number, ::.######} {doseUnit}.\n\nKolik mililitrů natáhnete do stříkačky?",
       "A4": "Jedna ampule přípravku {productName} obsahuje {ampouleMg, number, ::.######} mg v {ampouleMl, number, ::.######} ml. Pacient má dostat {doseMg, number, ::.######} mg.\n\nKolik ampulí na to potřebujete?",
       "A5": "{productName} má v tabletě {strengthMg, number, ::.######} mg. Na receptu je dávka zapsaná v mikrogramech: {doseUg, number, ::.######} µg.\n\nKolik tablet podáte?",

@@ -62,6 +62,11 @@ const VERIFIED_AT = "2026-09-24";
 /** Tablety, další perorální roztoky a prášky k rekonstituci. */
 const VERIFIED_AT_ORAL = "2026-10-05";
 
+const TAXIMED_QUOTE =
+  "Obvykle se podává 1 až 2 g cefotaximu každých 12 hodin. … Denní dávka byla většinou rozdělena do 3 dílčích " +
+  "dávek (2 g cefotaximu 3krát denně), ale v jednotlivých případech byla také podávána ve 2 dílčích dávkách " +
+  "(3 g cefotaximu dvakrát denně).";
+
 const LIST: readonly AdultDose[] = [
   // Antiemetika
   {
@@ -650,6 +655,26 @@ const LIST: readonly AdultDose[] = [
     quote: "Doporučená zahajovací dávka je 50 mg tapentadolu ve formě perorálního roztoku po 4 až 6 hodinách.",
   },
 
+  {
+    suklCode: "0167735", product: "Lyrica 20 mg/ml perorální roztok", spc: "EMA: lyrica-epar-product-information_cs.pdf", verifiedAt: VERIFIED_AT_ORAL,
+    singleMg: [50, 75, 100, 150, 300], rangeMg: { min: 50, max: 300 },
+    quote: "Dávkovací rozmezí je 150 až 600 mg (7,5 – 30 ml) denně rozdělených buď do dvou, nebo tří dílčích dávek.",
+  },
+  {
+    suklCode: "0025853", product: "Keppra 100 mg/ml perorální roztok", spc: "EMA: keppra-epar-product-information_cs.pdf", verifiedAt: VERIFIED_AT_ORAL,
+    singleMg: [250, 500, 750, 1000, 1500], rangeMg: { min: 250, max: 1500 },
+    quote:
+      "Počáteční terapeutická dávka je 500 mg dvakrát denně. … Podle klinické odpovědi a snášenlivosti lze denní dávku " +
+      "zvýšit až na 1 500 mg dvakrát denně. Dávku lze zvyšovat nebo snižovat po 250 mg nebo 500 mg dvakrát denně.",
+  },
+  {
+    suklCode: "0257348", product: "Equilion 25 mg/ml perorální suspenze", spc: "SPC234216.pdf", verifiedAt: VERIFIED_AT_ORAL,
+    singleMg: [50, 100, 150, 200, 300], rangeMg: { min: 50, max: 300 },
+    quote:
+      "Celková denní dávka pro první čtyři dny léčby je 50 mg (1. den), 100 mg (2. den), 200 mg (3. den) a 300 mg (4. den). " +
+      "… Dávku je možno u jednotlivých pacientů upravit podle klinické odpovědi a snášenlivosti v rozmezí 150 -750 mg/den.",
+  },
+
   // Prášky k rekonstituci (E1, E5). Rozpouštědlo jen tam, kde bod 6.6
   // uvádí objem i výslednou koncentraci bez objemu prášku navíc.
   {
@@ -690,8 +715,39 @@ const LIST: readonly AdultDose[] = [
   },
   {
     suklCode: "0206563", product: "TAXIMED 1 g prášek pro injekční/infuzní roztok", spc: "SPC225032.pdf", verifiedAt: VERIFIED_AT_ORAL,
-    singleMg: [2000], rangeMg: { min: 1000, max: 2000 },
-    quote: "Obvykle se podává 1 až 2 g cefotaximu každých 12 hodin.",
+    singleMg: [2000, 3000], rangeMg: { min: 1000, max: 3000 },
+    quote: TAXIMED_QUOTE,
+  },
+  {
+    suklCode: "0206566", product: "TAXIMED 2 g prášek pro injekční/infuzní roztok", spc: "SPC225030.pdf", verifiedAt: VERIFIED_AT_ORAL,
+    singleMg: [1000, 3000], rangeMg: { min: 1000, max: 3000 },
+    quote: TAXIMED_QUOTE,
+  },
+  {
+    suklCode: "0183925", product: "AZEPO 1 g prášek pro injekční/infuzní roztok", spc: "SPC233233.pdf", verifiedAt: VERIFIED_AT_ORAL,
+    singleMg: [500, 2000], rangeMg: { min: 500, max: 2000 },
+    quote:
+      "Obvyklá dávka pro dospělé 1‒2 g/den ve dvou nebo třech stejných dávkách. … AZEPO lze podávat v dávkách " +
+      "až 6 g/den u těžkých infekcí jako je endokarditida.",
+  },
+  {
+    suklCode: "0221888", product: "Cefazolin Noridem 2 g prášek pro injekční/infuzní roztok", spc: "SPC215530.pdf", verifiedAt: VERIFIED_AT_ORAL,
+    singleMg: [1000, 1500], rangeMg: { min: 1000, max: 2000 },
+    quote:
+      "Infekce způsobené středně citlivými mikroorganismy: 3–4 g cefazolinu denně rozdělené na 3–4 stejné dávky. … " +
+      "K prevenci pooperační infekce … 1 g cefazolinu 30–60 minut před operací.",
+  },
+  {
+    suklCode: "0064830", product: "AXETINE 1,5 g prášek pro injekční/infuzní roztok", spc: "SPC228375.pdf", verifiedAt: VERIFIED_AT_ORAL,
+    singleMg: [750], rangeMg: { min: 750, max: 1500 },
+    quote: "Komunitní pneumonie … 750 mg každých 8 hodin. … Komplikované infekce močových cest … 1,5 g každých 8 hodin.",
+  },
+  {
+    suklCode: "0138217", product: "Nolpaza 40 mg prášek pro injekční roztok", spc: "SPC219262.pdf", verifiedAt: VERIFIED_AT_ORAL,
+    singleMg: [80], rangeMg: { min: 40, max: 80 },
+    quote:
+      "Doporučená intravenózní dávka je jedna injekční lahvička pantoprazolu (40 mg) denně. … zahajovací dávka " +
+      "2× 80 mg pantoprazolu intravenózně je u většiny pacientů dostatečná.",
   },
   {
     suklCode: "0273263", product: "Fortum 500 mg prášek pro injekční/infuzní roztok", spc: "SPC221078.pdf", verifiedAt: VERIFIED_AT_ORAL,

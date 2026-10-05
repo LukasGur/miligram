@@ -35,6 +35,8 @@ export const A2 = register({
     return {
       code: item.product.code,
       productName: item.product.name,
+      // Léková forma z DLP: suspenze se jako roztok vydávat nesmí.
+      liquidForm: item.product.form.includes("SUS") ? "suspension" : "solution",
       substance: item.product.substance,
       strengthMg: item.contentMg,
       referenceMl: item.contentMl,
