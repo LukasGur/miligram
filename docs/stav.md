@@ -376,8 +376,9 @@ nehrál, má sérii zpátky hned; kdo už začal od jedničky, tomu se stará
   Shrnutí lekce podle výsledku s „Projít chyby“, věta pod kruhem cíle,
   prázdné statistiky s ukázkou, program s obsahem stupňů, zásoby řeknou
   předem, kolik chybí, bublina vzoru nezakrývá odpověď.
-- **Tmavý režim** podle systému (tokeny v globals.css, `on-accent`,
-  `scrim`).
+- **Tmavý režim** podle systému byl 5. 10. přidán a týž den zase
+  odebrán, aplikace je jen světlá (`color-scheme: light`). Tokeny
+  `on-accent` a `scrim` zůstaly.
 - **Proužek v lekci** po klepnutí na notifikaci (`IntentBanner`); service
   worker posílá i titulek a text notifikace.
 - **Pestrost příkladů.** F1–F6 mají deset nosných roztoků ve všech
