@@ -5,8 +5,15 @@ import { frac, given, intermediate, q, result, substitute, tex } from "./helpers
 import { register } from "./registry";
 
 /** Koncentrace, se kterými se v praxi pracuje v obou zápisech. */
+/**
+ * Koncentrace, jaké se v praxi zapisují. Na první úrovni kulaté, dál
+ * i 0,05 % (chlorhexidin), 0,25 % (bupivakain), 4 % nebo 20 %
+ * a poměry jako 1:200 000 (adrenalin v místním anestetiku).
+ */
 const PERCENTS = [0.1, 0.5, 1, 2, 5, 10] as const;
+const PERCENTS_MORE = [0.02, 0.05, 0.2, 0.25, 4, 20] as const;
 const RATIOS = [100, 200, 1000, 10000, 100000] as const;
+const RATIOS_MORE = [400, 500, 2000, 5000, 200000] as const;
 
 /**
  * D8 — procenta a poměr jsou dva zápisy téhož.
@@ -33,8 +40,8 @@ export const D8 = register({
 
     // Obě větve nesou obě proměnné, ať má zadání stálý tvar; nepoužitá je nula.
     return direction === "percentToRatio"
-      ? { direction, percent: rng.pick(PERCENTS), ratio: 0 }
-      : { direction, percent: 0, ratio: rng.pick(RATIOS) };
+      ? { direction, percent: rng.pick(difficulty === 1 ? PERCENTS : [...PERCENTS, ...PERCENTS_MORE]), ratio: 0 }
+      : { direction, percent: 0, ratio: rng.pick(difficulty === 1 ? RATIOS : [...RATIOS, ...RATIOS_MORE]) };
   },
 
   solve(vars): Solution {
