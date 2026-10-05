@@ -380,6 +380,15 @@ nehrál, má sérii zpátky hned; kdo už začal od jedničky, tomu se stará
   `scrim`).
 - **Proužek v lekci** po klepnutí na notifikaci (`IntentBanner`); service
   worker posílá i titulek a text notifikace.
+- **Pestrost příkladů.** F1–F6 mají deset nosných roztoků ve všech
+  velikostech vaku (`carriers.ts`) a rychlost v mezích; G1–G3, G5 i
+  dobutamin a hotové roztoky do perfuzoru; E1 dětské dávky ceftriaxonu
+  a meropenem; E2 vankomycin podle hmotnosti a meropenem; C2, C3, C5,
+  L3 docetaxel, epirubicin, cisplatina a oxaliplatina; D5, H2, H5, H6
+  bikarbonát a NaCl 10 %; D8 běžné koncentrace; G4, G6 víc ředění.
+  Zbývá (potřebuje další údaje ze SPC): E4 objem prášku jen u pár
+  lahviček, E5 a A2 závisí na tabulce dávek pro dospělé, J4 a J5 mají
+  jedinou renální tabulku, G6 nemá rozdíl obtížnosti, B4 jen enoxaparin.
 
 ## Co dělat dál
 
