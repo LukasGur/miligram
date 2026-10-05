@@ -33,7 +33,7 @@ export const L4 = register({
     const atRisk = difficulty === 3 && rng.int(0, 1) === 1;
     const limit = atRisk ? rule.cumulativeRiskMgPerM2 : rule.cumulativeMaxMgPerM2;
 
-    const dosePerCycle = difficulty === 1 ? range.min : rng.step(range.min, range.max, 5);
+    const dosePerCycle = difficulty === 1 ? rng.pick([range.min, range.max]) : rng.step(range.min, range.max, 5);
     // Aspoň jeden cyklus musí zbývat, jinak není co počítat.
     const alreadyGiven = rng.step(dosePerCycle, Math.floor(limit - dosePerCycle), dosePerCycle);
 

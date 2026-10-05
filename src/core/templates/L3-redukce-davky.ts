@@ -8,7 +8,7 @@ import { register } from "./registry";
 import { packageLabel } from "../products/label";
 
 /** Cytostatika, u kterých SPC uvádí dávku na metr čtvereční. */
-const RULES: readonly DosingRuleId[] = ["paklitaxel", "karboplatina", "doxorubicin"];
+const RULES: readonly DosingRuleId[] = ["paklitaxel", "karboplatina", "doxorubicin", "docetaxel", "epirubicin", "cisplatina"];
 
 /**
  * L3 — snížená dávka po toxicitě předchozího cyklu.

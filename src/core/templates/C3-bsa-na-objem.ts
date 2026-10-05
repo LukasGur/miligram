@@ -7,7 +7,7 @@ import { formula, frac, given, intermediate, q, result, substitute, weightForHei
 import { ISO_7886, register, SUKL_DLP } from "./registry";
 import { packageLabel } from "../products/label";
 
-const RULES: readonly DosingRuleId[] = ["paklitaxel", "karboplatina"];
+const RULES: readonly DosingRuleId[] = ["paklitaxel", "karboplatina", "docetaxel", "epirubicin", "cisplatina", "oxaliplatina"];
 
 /**
  * C3 — od výšky a hmotnosti k objemu koncentrátu.

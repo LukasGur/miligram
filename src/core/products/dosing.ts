@@ -314,6 +314,52 @@ export const DOSING_RULES = {
       "srdečním onemocněním nebo je současně léčen jinými kardiotoxickými neantracyklinovými " +
       "cytostatiky, doporučuje se maximální souhrnná dávka 400 mg/m² plochy povrchu těla.",
   },
+
+  // Cytostatika doplněná 5. 10. 2026 kvůli pestrosti úloh na povrch těla.
+  docetaxel: {
+    suklCode: "0142877",
+    product: "Docetaxel Ebewe 10 mg/ml koncentrát pro infuzní roztok",
+    substance: "DOCETAXEL",
+    spc: "SPC205826.pdf",
+    single: { min: 75, max: 100, unit: "mg/m2" },
+    presentation: { strengthMg: 10, referenceMl: 1, packVolumeMl: 8 },
+    quote:
+      "Doporučená dávka docetaxelu je 75 mg/m2 každé 3 týdny … 100 mg/m2 v monoterapii.",
+  },
+
+  epirubicin: {
+    suklCode: "0266457",
+    product: "Epirubicin Teva 2 mg/ml injekční roztok",
+    substance: "EPIRUBICIN",
+    spc: "SPC229125.pdf",
+    single: { min: 60, max: 90, unit: "mg/m2" },
+    presentation: { strengthMg: 2, referenceMl: 1, packVolumeMl: 25 },
+    quote:
+      "V případě monoterapie epirubicin-hydrochloridem je jeho doporučovaná dávka u dospělých 60 - 90 mg/m2 " +
+      "tělesného povrchu.",
+  },
+
+  cisplatina: {
+    suklCode: "0189991",
+    product: "Cisplatin Ebewe 1 mg/ml koncentrát pro infuzní roztok",
+    substance: "CISPLATINA",
+    spc: "SPC215660.pdf",
+    single: { min: 50, max: 120, unit: "mg/m2" },
+    presentation: { strengthMg: 1, referenceMl: 1, packVolumeMl: 50 },
+    quote: "Jednorázová dávka 50 - 120 mg/m2 plochy povrchu těla každé 3 až 4 týdny.",
+  },
+
+  oxaliplatina: {
+    suklCode: "0104238",
+    product: "Oxaliplatin Teva 5 mg/ml koncentrát pro infuzní roztok",
+    substance: "OXALIPLATINA",
+    spc: "SPC223024.pdf",
+    single: { min: 85, max: 85, unit: "mg/m2" },
+    presentation: { strengthMg: 5, referenceMl: 1, packVolumeMl: 20 },
+    quote:
+      "Doporučená dávka oxaliplatiny v léčbě metastazujícího kolorektálního karcinomu je 85 mg/m2 " +
+      "intravenózně, opakovaně každé dva týdny.",
+  },
 } as const satisfies Record<string, DosingRule>;
 
 export type DosingRuleId = keyof typeof DOSING_RULES;

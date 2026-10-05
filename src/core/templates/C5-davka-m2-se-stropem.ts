@@ -5,6 +5,10 @@ import type { Solution, Vars } from "../types";
 import { formula, given, intermediate, q, result, substitute } from "./helpers";
 import { register } from "./registry";
 import { packageLabel } from "../products/label";
+import type { DosingRuleId } from "../products/dosing";
+
+/** Taxany a platina: dávka v mg/m² s rozmezím v SPC. */
+const RULES: readonly DosingRuleId[] = ["paklitaxel", "docetaxel", "cisplatina"];
 
 /**
  * C5 — dávka v mg/m² omezená stropem z protokolu.
@@ -16,10 +20,11 @@ import { packageLabel } from "../products/label";
 export const C5 = register({
   id: "C5",
   category: "povrch",
-  source: dosingSource("paklitaxel"),
+  source: RULES.map(dosingSource),
 
   generate(rng, difficulty) {
-    const rule = dosingRule("paklitaxel");
+    const ruleId = rng.pick(RULES);
+    const rule = dosingRule(ruleId);
     const range = rule.single!;
 
     const bsaM2 = difficulty === 1 ? rng.step(1.7, 2.2, 0.1) : rng.step(1.4, 2.4, 0.01);

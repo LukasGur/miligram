@@ -6,7 +6,8 @@ import { formula, given, q, result, substitute } from "./helpers";
 import { register } from "./registry";
 import { packageLabel } from "../products/label";
 
-const RULES: readonly DosingRuleId[] = ["paklitaxel", "karboplatina"];
+// Oxaliplatina jen v C3: SPC má jedinou dávku a „uvádí dávku 85–85 mg/m²“ by v zadání vypadalo jako chyba.
+const RULES: readonly DosingRuleId[] = ["paklitaxel", "karboplatina", "docetaxel", "epirubicin", "cisplatina"];
 
 /**
  * C2 — dávka v mg/m².
