@@ -6,6 +6,15 @@ import { register } from "./registry";
 import { packageLabel } from "../products/label";
 
 const RULE = "vankomycinDeti" as const;
+/** Dospělý pacient: cefepim, tabulka podle clearance kreatininu. */
+const ADULT_RULE = "cefepimDospeli" as const;
+
+/** Clearance uvnitř pásem cefepimu, na vyšší obtížnosti i u hranic. */
+const CRCL = {
+  1: [80, 40, 20] as const,
+  2: [70, 45, 35, 25, 15] as const,
+  3: [51, 50, 30, 29, 11, 10, 8] as const,
+};
 
 /** Hodnoty eGFR uvnitř pásem tabulky z SPC. */
 const EGFR = {
@@ -26,16 +35,39 @@ export const J4 = register({
   id: "J4",
   category: "renalni",
   source: renalSource(RULE),
+  sourceFor: (vars) => (vars.population === "adult" ? [renalSource(ADULT_RULE)] : []),
 
   generate(rng, difficulty) {
+    // Dítě s vankomycinem (eGFR na 1,73 m²), nebo dospělý s cefepimem
+    // (clearance v ml/min). Stejná úvaha, jiná tabulka a jiná veličina.
+    const adult = rng.pick([true, false]);
     return {
-      egfr: rng.pick(EGFR[difficulty]),
+      population: adult ? "adult" : "child",
+      egfr: adult ? 0 : rng.pick(EGFR[difficulty]),
+      crCl: adult ? rng.pick(CRCL[difficulty]) : 0,
       weightKg: difficulty === 1 ? rng.step(15, 35, 5) : rng.step(8, 42, 1),
-      product: packageLabel(renalRule(RULE).product),
+      product: packageLabel(renalRule(adult ? ADULT_RULE : RULE).product),
     } satisfies Vars;
   },
 
   solve(vars): Solution {
+    if (vars.population === "adult") {
+      const crCl = Number(vars.crCl);
+      const adultBand = bandFor(ADULT_RULE, crCl);
+      if (!adultBand?.dose || !adultBand.intervalHours) {
+        throw new Error(`Clearance ${crCl} ml/min není v tabulce pravidla ${ADULT_RULE}.`);
+      }
+      return {
+        value: adultBand.intervalHours,
+        steps: [
+          given(q(crCl, "ml/min", 0)),
+          step("odectVTabulce", { result: `${tex(adultBand.dose, 1)}\\,\\mathrm{g}` }),
+          result(adultBand.intervalHours, "h", 0),
+        ],
+        roundingNoteKey: "zaokrouhleniInterval",
+      };
+    }
+
     const egfr = Number(vars.egfr);
     const weightKg = Number(vars.weightKg);
 

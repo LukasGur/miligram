@@ -29,7 +29,7 @@ export type RenalRule = {
   substance: string;
   spc: string;
   /** Jednotka dávky v pásmech. */
-  doseUnit: "mg/kg" | "mg/m2";
+  doseUnit: "mg/kg" | "mg/m2" | "g";
   bands: readonly RenalBand[];
   quote: string;
 };
@@ -58,6 +58,27 @@ export const RENAL_RULES = {
       "středně těžkou poruchou funkce ledvin se počáteční dávka nesmí snižovat. U pacientů " +
       "s těžkou poruchou funkce ledvin je vhodnější raději prodloužit interval mezi podáním " +
       "než podávat nižší denní dávky.",
+  },
+
+  /**
+   * Cefepim u dospělých, sloupec „závažné infekce“. SPC píše „> 50“,
+   * hodnota přesně 50 patří do pásma 30–50. Doplněno 5. 10. 2026.
+   */
+  cefepimDospeli: {
+    suklCode: "0197687",
+    product: "Cefepim MIP 1 g prášek pro injekční/infuzní roztok",
+    substance: "CEFEPIM",
+    spc: "SPC146768.pdf",
+    doseUnit: "g",
+    bands: [
+      { minCrCl: 51, dose: 2, intervalHours: 12 },
+      { minCrCl: 30, maxCrCl: 50, dose: 2, intervalHours: 24 },
+      { minCrCl: 11, maxCrCl: 29, dose: 1, intervalHours: 24 },
+      { minCrCl: 0, maxCrCl: 10, dose: 0.5, intervalHours: 24 },
+    ],
+    quote:
+      "Clearance kreatininu [ml/min] — doporučená udržovací dávka, závažné infekce: > 50 (obvyklá dávka) 2 g " +
+      "po 12 hodinách; 30-50 2 g po 24 hodinách; 11-29 1 g po 24 hodinách; ≤ 10 0,5 g po 24 hodinách.",
   },
 
   /**
