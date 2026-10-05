@@ -4,6 +4,7 @@ import * as tolerances from "../tolerances";
 import type { Solution, Vars } from "../types";
 import { formula, given, intermediate, orderStep, q, result, substitute } from "./helpers";
 import { register } from "./registry";
+import { packageLabel } from "../products/label";
 
 /**
  * B6 — o kolik je nasycovací dávka vyšší než udržovací.
@@ -30,7 +31,7 @@ export const B6 = register({
       : rng.step(maintenance.min, maintenance.max, orderStep(maintenance));
 
     return {
-      productName: rule.product,
+      productName: packageLabel(rule.product),
       substance: rule.substance,
       code: rule.suklCode,
       loadingPerKg,

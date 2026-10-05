@@ -4,6 +4,7 @@ import * as tolerances from "../tolerances";
 import type { Solution, Vars } from "../types";
 import { formula, frac, given, q, result, substitute } from "./helpers";
 import { register } from "./registry";
+import { packageLabel } from "../products/label";
 
 /** Glukóza od nejslabší po nejsilnější. */
 const GLUCOSE = PERCENT_SOLUTION_LIST.filter(([, item]) => item.substance === "GLUKÓZA").sort(
@@ -45,11 +46,11 @@ export const D7 = register({
     return {
       substance: weaker.substance,
       codeA: weaker.suklCode,
-      productA: weaker.product,
+      productA: packageLabel(weaker.product),
       concentrationA: weaker.mgPerMl,
       volumeA,
       codeB: stronger.suklCode,
-      productB: stronger.product,
+      productB: packageLabel(stronger.product),
       concentrationB: stronger.mgPerMl,
       volumeB,
     } satisfies Vars;

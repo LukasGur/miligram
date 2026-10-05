@@ -4,6 +4,7 @@ import * as tolerances from "../tolerances";
 import type { Solution, Source, Vars } from "../types";
 import { formula, frac, given, q, result, substitute, tex } from "./helpers";
 import { ISO_7886, register } from "./registry";
+import { packageLabel } from "../products/label";
 
 const RULE = "amoxicilinKlavulanat" as const;
 
@@ -48,7 +49,7 @@ export const K3 = register({
     const mgPerKgPerDay = difficulty === 1 ? range.min : rng.step(range.min, range.max, 5);
 
     return {
-      productName: rule.product,
+      productName: packageLabel(rule.product),
       code: rule.suklCode,
       strengthMg: presentation.strengthMg,
       referenceMl: presentation.referenceMl,

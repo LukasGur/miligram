@@ -5,6 +5,7 @@ import * as tolerances from "../tolerances";
 import type { Solution, Vars } from "../types";
 import { formula, frac, given, intermediate, q, result, substitute, weightForHeight } from "./helpers";
 import { ISO_7886, register, SUKL_DLP } from "./registry";
+import { packageLabel } from "../products/label";
 
 const RULES: readonly DosingRuleId[] = ["paklitaxel", "karboplatina"];
 
@@ -31,7 +32,7 @@ export const C3 = register({
 
     return {
       ruleId,
-      productName: rule.product,
+      productName: packageLabel(rule.product),
       substance: rule.substance,
       code: rule.suklCode,
       concentrationMgPerMl: presentation.strengthMg / presentation.referenceMl,

@@ -3,6 +3,7 @@ import * as tolerances from "../tolerances";
 import type { Solution, Vars } from "../types";
 import { formula, frac, given, intermediate, q, result, substitute, tex } from "./helpers";
 import { register } from "./registry";
+import { packageLabel } from "../products/label";
 
 const RULE = "doxorubicin" as const;
 
@@ -37,7 +38,7 @@ export const L4 = register({
     const alreadyGiven = rng.step(dosePerCycle, Math.floor(limit - dosePerCycle), dosePerCycle);
 
     return {
-      productName: rule.product,
+      productName: packageLabel(rule.product),
       substance: rule.substance,
       code: rule.suklCode,
       atRisk: atRisk ? 1 : 0,

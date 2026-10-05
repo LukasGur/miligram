@@ -4,6 +4,7 @@ import * as tolerances from "../tolerances";
 import type { Solution, Vars } from "../types";
 import { formula, given, intermediate, q, result, substitute } from "./helpers";
 import { register } from "./registry";
+import { packageLabel } from "../products/label";
 
 /**
  * C5 — dávka v mg/m² omezená stropem z protokolu.
@@ -32,7 +33,7 @@ export const C5 = register({
     const computed = bsaBasedDose(perM2, bsaM2);
     const capMg = Math.round((computed * rng.step(0.8, 1.2, 0.05)) / 10) * 10;
 
-    return { productName: rule.product, substance: rule.substance, code: rule.suklCode, perM2, bsaM2, capMg } satisfies Vars;
+    return { productName: packageLabel(rule.product), substance: rule.substance, code: rule.suklCode, perM2, bsaM2, capMg } satisfies Vars;
   },
 
   solve(vars): Solution {

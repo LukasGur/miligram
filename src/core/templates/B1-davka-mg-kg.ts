@@ -4,6 +4,7 @@ import * as tolerances from "../tolerances";
 import type { Solution, Vars } from "../types";
 import { formula, given, orderStep, q, result, substitute } from "./helpers";
 import { register } from "./registry";
+import { packageLabel } from "../products/label";
 
 /** Rozmezí, u kterých SPC uvádí dávku na jedno podání v mg/kg. */
 const RULES: readonly DosingRuleId[] = ["paracetamolDeti", "ibuprofenBaby", "ceftriaxonDeti"];
@@ -34,7 +35,7 @@ export const B1 = register({
 
     return {
       ruleId,
-      productName: rule.product,
+      productName: packageLabel(rule.product),
       substance: rule.substance,
       code: rule.suklCode,
       rangeMin: range.min,

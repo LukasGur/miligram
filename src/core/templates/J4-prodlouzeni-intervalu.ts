@@ -3,6 +3,7 @@ import * as tolerances from "../tolerances";
 import type { Solution, Vars } from "../types";
 import { given, intermediate, q, result, step, tex } from "./helpers";
 import { register } from "./registry";
+import { packageLabel } from "../products/label";
 
 const RULE = "vankomycinDeti" as const;
 
@@ -30,7 +31,7 @@ export const J4 = register({
     return {
       egfr: rng.pick(EGFR[difficulty]),
       weightKg: difficulty === 1 ? rng.step(15, 35, 5) : rng.step(8, 42, 1),
-      product: renalRule(RULE).product,
+      product: packageLabel(renalRule(RULE).product),
     } satisfies Vars;
   },
 

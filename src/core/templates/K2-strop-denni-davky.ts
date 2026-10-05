@@ -4,6 +4,7 @@ import * as tolerances from "../tolerances";
 import type { Solution, Vars } from "../types";
 import { formula, frac, given, intermediate, q, result, substitute, tex } from "./helpers";
 import { ISO_7886, register } from "./registry";
+import { packageLabel } from "../products/label";
 
 /** Pravidla, kde SPC uvádí nepřekročitelnou denní dávku i objemové balení. */
 const RULES: readonly DosingRuleId[] = ["ibuprofenBaby", "gentamicin"];
@@ -32,7 +33,7 @@ export const K2 = register({
 
     return {
       ruleId,
-      productName: rule.product,
+      productName: packageLabel(rule.product),
       substance: rule.substance,
       code: rule.suklCode,
       maxDailyPerKg: rule.maxDaily.min,

@@ -4,6 +4,7 @@ import * as tolerances from "../tolerances";
 import type { Solution, Vars } from "../types";
 import { formula, given, intermediate, orderStep, q, result, substitute } from "./helpers";
 import { register } from "./registry";
+import { packageLabel } from "../products/label";
 
 /**
  * B5 — dávka podle hmotnosti se stropem na jedno podání.
@@ -28,7 +29,7 @@ export const B5 = register({
     const perKg = difficulty === 1 ? rng.pick([15, 20] as const) : rng.step(range.min, range.max, orderStep(range));
 
     return {
-      productName: rule.product,
+      productName: packageLabel(rule.product),
       substance: rule.substance,
       code: rule.suklCode,
       rangeMin: range.min,

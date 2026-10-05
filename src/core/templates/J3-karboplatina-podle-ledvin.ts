@@ -4,6 +4,7 @@ import * as tolerances from "../tolerances";
 import type { Solution, Vars } from "../types";
 import { formula, given, intermediate, q, result, substitute, tex, weightForHeight } from "./helpers";
 import { register } from "./registry";
+import { packageLabel } from "../products/label";
 
 const RULE = "karboplatina" as const;
 
@@ -34,7 +35,7 @@ export const J3 = register({
       heightCm,
       weightKg,
       crClMlPerMin: rng.pick(CLEARANCES[difficulty]),
-      product: renalRule(RULE).product,
+      product: packageLabel(renalRule(RULE).product),
     } satisfies Vars;
   },
 

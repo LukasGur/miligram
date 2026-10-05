@@ -4,6 +4,7 @@ import * as tolerances from "../tolerances";
 import type { AnswerUnit, Solution } from "../types";
 import { formula, frac, given, intermediate, q, result, substitute } from "./helpers";
 import { register } from "./registry";
+import { packageLabel } from "../products/label";
 
 /** Dvojmocné ionty — jen u nich se mmol a mEq číselně rozejdou. */
 const DIVALENT = ELECTROLYTE_LIST.filter(([, item]) => item.valence > 1);
@@ -27,7 +28,7 @@ export const H2 = register({
       return {
         direction: "mmolToMeq",
         id,
-        product: item.product,
+        product: packageLabel(item.product),
         ion: item.ion,
         valence: item.valence,
         mmol: rng.step(2, 20, 0.5),
@@ -47,7 +48,7 @@ export const H2 = register({
     return {
       direction: rng.int(0, 1) === 1 ? "massToMmol" : "mmolToMass",
       id,
-      product: item.product,
+      product: packageLabel(item.product),
       ion: item.ion,
       valence: item.valence,
       mmol,

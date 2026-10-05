@@ -5,16 +5,17 @@ import * as tolerances from "../tolerances";
 import type { AnswerUnit, Solution, Vars } from "../types";
 import { formula, frac, given, intermediate, q, result, substitute, tex } from "./helpers";
 import { register } from "./registry";
+import { packageLabel } from "../products/label";
 
 /** Roztoky, které se v praxi označují procenty, ať už jsou to ionty, nebo cukr. */
 const LABELLED = [
   ...PERCENT_SOLUTION_LIST.map(([, item]) => ({
-    product: item.product,
+    product: packageLabel(item.product),
     percent: item.percent,
     mgPerMl: item.mgPerMl,
   })),
   ...ELECTROLYTE_LIST.map(([, item]) => ({
-    product: item.product,
+    product: packageLabel(item.product),
     percent: item.percent,
     mgPerMl: item.mgPerMl,
   })),
@@ -51,7 +52,7 @@ export const H5 = register({
         : rng.pick(["mgPerMlToPercent", "percentToGPerL"] as const);
 
     return {
-      product: item.product,
+      product: packageLabel(item.product),
       percent: item.percent,
       mgPerMl: item.mgPerMl,
       direction,

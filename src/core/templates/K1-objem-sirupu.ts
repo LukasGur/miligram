@@ -5,6 +5,7 @@ import * as tolerances from "../tolerances";
 import type { Solution, Vars } from "../types";
 import { formula, frac, given, intermediate, q, result, substitute, tex } from "./helpers";
 import { ISO_7886, register } from "./registry";
+import { packageLabel } from "../products/label";
 
 /** Perorální přípravky, u kterých SPC uvádí denní dávku i počet podání. */
 const RULES: readonly DosingRuleId[] = ["ibuprofenDeti", "amoxicilin", "amoxicilinKlavulanat"];
@@ -37,7 +38,7 @@ export const K1 = register({
 
     return {
       ruleId,
-      productName: rule.product,
+      productName: packageLabel(rule.product),
       substance: rule.substance,
       code: rule.suklCode,
       strengthMg: presentation.strengthMg,

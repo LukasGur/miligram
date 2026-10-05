@@ -4,6 +4,7 @@ import * as tolerances from "../tolerances";
 import type { Solution, Vars } from "../types";
 import { formula, frac, given, q, result, substitute } from "./helpers";
 import { ISO_7886, register } from "./registry";
+import { packageLabel } from "../products/label";
 
 /**
  * D5 — kolik mililitrů koncentrátu na zadané látkové množství.
@@ -30,7 +31,7 @@ export const D5 = register({
 
     return {
       code: item.suklCode,
-      productName: item.product,
+      productName: packageLabel(item.product),
       ion: item.ion,
       percent: item.percent,
       mmolPerMl: item.mmolPerMl,

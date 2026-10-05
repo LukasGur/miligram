@@ -9,6 +9,7 @@ import * as tolerances from "../tolerances";
 import type { Solution, Vars } from "../types";
 import { formula, frac, given, intermediate, q, result, substitute } from "./helpers";
 import { register } from "./registry";
+import { packageLabel } from "../products/label";
 
 /** Pravidla, která uvádějí strop koncentrace v hotové infuzi. */
 const RULES = RECONSTITUTION_LIST
@@ -36,7 +37,7 @@ export const E2 = register({
 
     return {
       ruleId,
-      productName: rule.product,
+      productName: packageLabel(rule.product),
       code: rule.suklCode,
       vialMg: rule.vialMg,
       diluentMl: rule.diluentMl,

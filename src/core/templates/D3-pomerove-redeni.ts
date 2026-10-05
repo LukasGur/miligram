@@ -5,6 +5,7 @@ import * as tolerances from "../tolerances";
 import type { Solution, Vars } from "../types";
 import { formula, frac, given, intermediate, q, result, substitute } from "./helpers";
 import { ISO_7886, register } from "./registry";
+import { packageLabel } from "../products/label";
 
 /**
  * D3 — poměrové ředění adrenalinu.
@@ -28,7 +29,7 @@ export const D3 = register({
     const ratio = difficulty === 1 ? 1000 : rng.pick([1000, 10000] as const);
 
     return {
-      productName: rule.product,
+      productName: packageLabel(rule.product),
       substance: rule.substance,
       code: rule.suklCode,
       ratio,

@@ -4,6 +4,7 @@ import * as tolerances from "../tolerances";
 import type { Solution, Vars } from "../types";
 import { formula, given, q, result, substitute, tex } from "./helpers";
 import { register } from "./registry";
+import { packageLabel } from "../products/label";
 
 /**
  * Hmotnostní rozsah se u každého pravidla drží toho, o kom SPC mluví.
@@ -48,7 +49,7 @@ export const K4 = register({
 
     return {
       ruleId: choice.id,
-      productName: rule.product,
+      productName: packageLabel(rule.product),
       substance: rule.substance,
       code: rule.suklCode,
       weightKg,

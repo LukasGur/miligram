@@ -4,6 +4,7 @@ import * as tolerances from "../tolerances";
 import type { Solution, Vars } from "../types";
 import { formula, given, intermediate, orderStep, q, result, substitute } from "./helpers";
 import { register } from "./registry";
+import { packageLabel } from "../products/label";
 
 const RULES: readonly DosingRuleId[] = ["ibuprofenBaby", "paracetamolDeti", "gentamicin"];
 
@@ -43,7 +44,7 @@ export const B3 = register({
 
     return {
       ruleId,
-      productName: rule.product,
+      productName: packageLabel(rule.product),
       substance: rule.substance,
       code: rule.suklCode,
       limitPerKg: limit.min,

@@ -3,6 +3,7 @@ import * as tolerances from "../tolerances";
 import type { Solution, Vars } from "../types";
 import { formula, frac, given, intermediate, q, result, substitute } from "./helpers";
 import { register } from "./registry";
+import { packageLabel } from "../products/label";
 
 /** Kolikrát se koncentrát naředí, než se koncentrace udává v mmol/l. */
 const DILUTIONS = {
@@ -39,7 +40,7 @@ export const H6 = register({
 
     return {
       code: item.suklCode,
-      productName: item.product,
+      productName: packageLabel(item.product),
       ion: item.ion,
       molarMass: item.molarMassGPerMol ?? 0,
       dilution,

@@ -4,6 +4,7 @@ import * as tolerances from "../tolerances";
 import type { Solution, Vars } from "../types";
 import { formula, frac, given, q, result, substitute } from "./helpers";
 import { register } from "./registry";
+import { packageLabel } from "../products/label";
 
 /**
  * E3 — objem nosného roztoku pro zadanou konečnou koncentraci.
@@ -28,7 +29,7 @@ export const E3 = register({
       : rng.step(range.min, range.max, 0.5);
 
     return {
-      productName: rule.product,
+      productName: packageLabel(rule.product),
       code: rule.suklCode,
       vialMg: rule.vialMg,
       rangeMin: range.min,

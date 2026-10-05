@@ -4,6 +4,7 @@ import * as tolerances from "../tolerances";
 import type { Solution, Vars } from "../types";
 import { formula, frac, given, intermediate, q, result, substitute } from "./helpers";
 import { register, SUKL_DLP } from "./registry";
+import { packageLabel } from "../products/label";
 
 const RULES: readonly DosingRuleId[] = ["amoxicilin", "ibuprofenDeti"];
 
@@ -43,7 +44,7 @@ export const B8 = register({
 
     return {
       ruleId,
-      productName: rule.product,
+      productName: packageLabel(rule.product),
       substance: rule.substance,
       code: rule.suklCode,
       strengthMg: presentation.strengthMg,
