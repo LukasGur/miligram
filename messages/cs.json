@@ -395,7 +395,9 @@
     "summaryWeak": "Drhlo to: {topics}.",
     "summaryLowNote": "Projdi si chyby hned, dokud je máš v hlavě.",
     "summaryDots": "{correct, number} z {count, number} napoprvé",
-    "reviewMistakes": "Projít chyby · {count, number}"
+    "reviewMistakes": "Projít chyby · {count, number}",
+    "bannerOpen": "Otevřít",
+    "bannerDismiss": "Zavřít oznámení"
   },
   "account": {
     "title": "Účet",

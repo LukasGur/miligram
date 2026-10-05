@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useEffectEvent, useState } from "react";
+import { useCallback, useEffect, useEffectEvent, useRef, useState } from "react";
 import dynamic from "next/dynamic";
 import { useFormatter, useTranslations } from "next-intl";
 import { InstallBanner } from "@/components/InstallBanner";
@@ -21,7 +21,8 @@ import type { Difficulty } from "@/core/types";
 import { clearProgress, lessonState, type LessonAttempt } from "@/lib/db";
 import { dailySpec } from "@/lib/curriculum";
 import { useCurriculum, useLessonProgress, useProfile, useToday } from "@/lib/useProfile";
-import { onOpenIntent, type OpenIntent } from "@/lib/openIntent";
+import { onOpenIntent, type IntentNote, type OpenIntent } from "@/lib/openIntent";
+import { IntentBanner } from "@/components/IntentBanner";
 import { guardedLoad } from "@/lib/screenLoad";
 import { ScreenLoading } from "@/components/ScreenLoading";
 import { usePulse } from "@/lib/pulse";
@@ -161,6 +162,12 @@ function Home() {
     helped?: readonly string[];
   } | null>(null);
 
+  /** Proužek nad lekcí po klepnutí na notifikaci (IntentBanner). */
+  // Patří k lekci, nad kterou se objevil; do příští lekce nepřeskočí.
+  const [banner, setBanner] = useState<{ intent: OpenIntent; note: IntentNote; lessonId: string } | null>(null);
+  const bannerSeen = useRef<OpenIntent | null>(null);
+  const dismissBanner = useCallback(() => setBanner(null), []);
+
   const { profile, streak } = useProfile();
   const { solved, week, unsolved } = useToday();
   const progress = useLessonProgress();
@@ -244,8 +251,17 @@ function Home() {
    * od kamarádů a z ligy obrazovku účtu. Rozehraná lekce má přednost —
    * notifikace ji nesmí zahodit.
    */
-  const handleIntent = useEffectEvent((intent: OpenIntent): boolean => {
-    if (lesson !== null) return false;
+  const handleIntent = useEffectEvent((intent: OpenIntent, note: IntentNote | null): boolean => {
+    if (lesson !== null) {
+      // Běží lekce: cíl počká, ale klepnutou notifikaci ukáže proužek.
+      // Jednou na cíl — obsluha se volá znovu při každé změně stavu.
+      // Připomínka lekce v lekci nemá co říct.
+      if (note && intent !== "lesson" && bannerSeen.current !== intent) {
+        bannerSeen.current = intent;
+        setBanner({ intent, note, lessonId: lesson.id });
+      }
+      return false;
+    }
     if (intent.startsWith("duel:")) {
       openAccount({ screen: "duel", duelId: intent.slice("duel:".length) });
       return true;
@@ -283,44 +299,59 @@ function Home() {
 
   if (lesson !== null) {
     return (
-      <LessonView
-        // Nová lekce, nová instance: po výzvě ze shrnutí se rovnou hraje
-        // souboj a stav předchozí lekce v něm nesmí zůstat.
-        key={lesson.id}
-        lessonId={lesson.id}
-        plan={lesson.plan}
-        spec={lesson.spec}
-        duelId={lesson.duelId}
-        attempts={lesson.attempts}
-        helped={lesson.helped}
-        onExit={() => setLesson(null)}
-        onAgain={() => startStage(lesson.spec?.stage)}
-        onReview={(items) => void startReview(items)}
-        onDuelDone={(duelId) => {
-          setLesson(null);
-          openAccount({ screen: "reveal", duelId });
-        }}
-        onAccount={() => {
-          setLesson(null);
-          openAccount();
-        }}
-        challenge={
-          pulse?.handle
-            ? {
-                handle: pulse.handle,
-                onPlay: (duel) => void playDuel(duel),
-                onInvite: () => {
-                  setLesson(null);
-                  openAccount({ screen: "friends" });
-                },
-                onOpenDuels: () => {
-                  setLesson(null);
-                  openAccount({ screen: "duels" });
-                },
-              }
-            : undefined
-        }
-      />
+      <>
+        {banner?.lessonId === lesson.id ? (
+          <IntentBanner
+            intent={banner.intent}
+            note={banner.note}
+            onDismiss={dismissBanner}
+            // Každá odpověď je uložená; lekce půjde dohrát z domovské obrazovky.
+            // Po odchodu z lekce si čekající cíl vyzvedne obsluha výše.
+            onOpen={() => {
+              setBanner(null);
+              setLesson(null);
+            }}
+          />
+        ) : null}
+        <LessonView
+          // Nová lekce, nová instance: po výzvě ze shrnutí se rovnou hraje
+          // souboj a stav předchozí lekce v něm nesmí zůstat.
+          key={lesson.id}
+          lessonId={lesson.id}
+          plan={lesson.plan}
+          spec={lesson.spec}
+          duelId={lesson.duelId}
+          attempts={lesson.attempts}
+          helped={lesson.helped}
+          onExit={() => setLesson(null)}
+          onAgain={() => startStage(lesson.spec?.stage)}
+          onReview={(items) => void startReview(items)}
+          onDuelDone={(duelId) => {
+            setLesson(null);
+            openAccount({ screen: "reveal", duelId });
+          }}
+          onAccount={() => {
+            setLesson(null);
+            openAccount();
+          }}
+          challenge={
+            pulse?.handle
+              ? {
+                  handle: pulse.handle,
+                  onPlay: (duel) => void playDuel(duel),
+                  onInvite: () => {
+                    setLesson(null);
+                    openAccount({ screen: "friends" });
+                  },
+                  onOpenDuels: () => {
+                    setLesson(null);
+                    openAccount({ screen: "duels" });
+                  },
+                }
+              : undefined
+          }
+        />
+      </>
     );
   }
 

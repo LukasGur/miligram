@@ -395,7 +395,9 @@
     "summaryWeak": "Zaseklo sa to: {topics}.",
     "summaryLowNote": "Prejdi si chyby hneď, kým ich máš v hlave.",
     "summaryDots": "{correct, number} z {count, number} na prvý pokus",
-    "reviewMistakes": "Prejsť chyby · {count, number}"
+    "reviewMistakes": "Prejsť chyby · {count, number}",
+    "bannerOpen": "Otvoriť",
+    "bannerDismiss": "Zavrieť oznámenie"
   },
   "account": {
     "title": "Účet",

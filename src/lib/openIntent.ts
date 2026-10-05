@@ -30,10 +30,24 @@ const INTENT_MAX_AGE_MS = 5 * 60_000;
 
 const UUID = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
 
-/** Vrací true, když cíl splnil; jinak cíl počká na další pokus. */
-type Handler = (intent: OpenIntent) => boolean;
+/** Co stálo v klepnuté notifikaci. Chybí, když cíl přišel adresou. */
+export type IntentNote = { title: string; body: string };
+
+/**
+ * Vrací true, když cíl splnil; jinak cíl počká na další pokus. `note`
+ * dostane obsluha, která cíl zrovna splnit nemůže (běží lekce) a chce
+ * aspoň ukázat, co čeká.
+ */
+type Handler = (intent: OpenIntent, note: IntentNote | null) => boolean;
 
 let pending: OpenIntent | null = null;
+let pendingNote: IntentNote | null = null;
+
+function readNote(value: unknown): IntentNote | null {
+  const note = value as { title?: unknown; body?: unknown } | null | undefined;
+  if (!note || typeof note.title !== "string" || note.title === "") return null;
+  return { title: note.title, body: typeof note.body === "string" ? note.body : "" };
+}
 const handlers = new Set<Handler>();
 let started = false;
 
@@ -55,8 +69,9 @@ export function parseOpenIntent(href: string): OpenIntent | null {
 function offer() {
   if (!pending) return;
   for (const handler of handlers) {
-    if (handler(pending)) {
+    if (handler(pending, pendingNote)) {
       pending = null;
+      pendingNote = null;
       return;
     }
   }
@@ -70,9 +85,10 @@ function start() {
   }
 
   navigator.serviceWorker?.addEventListener("message", (event: MessageEvent) => {
-    const data = event.data as { type?: string; url?: string } | null;
+    const data = event.data as { type?: string; url?: string; note?: unknown } | null;
     if (data?.type !== "miligram:navigate" || !data.url) return;
     pending = parseOpenIntent(data.url);
+    pendingNote = pending ? readNote(data.note) : null;
     // Tentýž cíl leží i v cache; vyzvednutý podruhé by obrazovku otevřel znovu.
     void takeStashed();
     offer();
@@ -85,15 +101,17 @@ function start() {
 }
 
 /** Vyzvedne a smaže cíl, který odložil service worker. */
-async function takeStashed(): Promise<{ url: string; at: number } | null> {
+async function takeStashed(): Promise<{ url: string; at: number; note: IntentNote | null } | null> {
   if (typeof caches === "undefined") return null;
   try {
     const cache = await caches.open(INTENT_CACHE);
     const stored = await cache.match(INTENT_KEY);
     if (!stored) return null;
     await cache.delete(INTENT_KEY);
-    const data = (await stored.json()) as { url?: unknown; at?: unknown };
-    return typeof data.url === "string" && typeof data.at === "number" ? { url: data.url, at: data.at } : null;
+    const data = (await stored.json()) as { url?: unknown; at?: unknown; note?: unknown };
+    return typeof data.url === "string" && typeof data.at === "number"
+      ? { url: data.url, at: data.at, note: readNote(data.note) }
+      : null;
   } catch {
     return null;
   }
@@ -105,6 +123,7 @@ async function claimStashed() {
   const intent = parseOpenIntent(stashed.url);
   if (!intent) return;
   pending = intent;
+  pendingNote = stashed.note;
   offer();
 }
 

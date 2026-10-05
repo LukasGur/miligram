@@ -253,6 +253,9 @@ self.addEventListener("notificationclick", (event) => {
   event.notification.close();
   const target = event.action === "lesson" ? "/?lesson=daily" : event.notification.data?.url || "/";
   const url = new URL(target, self.location.origin).href;
+  // Titulek a text jdou s cílem: běžící lekce z nich ukáže proužek,
+  // aby student věděl, co klepnul, a lekci neopouštěl naslepo.
+  const note = { title: event.notification.title || "", body: event.notification.body || "" };
 
   event.waitUntil(
     (async () => {
@@ -260,7 +263,7 @@ self.addEventListener("notificationclick", (event) => {
         const cache = await caches.open(INTENT_CACHE);
         await cache.put(
           INTENT_KEY,
-          new Response(JSON.stringify({ url, at: Date.now() }), { headers: { "content-type": "application/json" } }),
+          new Response(JSON.stringify({ url, note, at: Date.now() }), { headers: { "content-type": "application/json" } }),
         );
       } catch {
         // Bez cache zbývá zpráva a adresa.
@@ -270,7 +273,7 @@ self.addEventListener("notificationclick", (event) => {
       const open = windows.find((client) => new URL(client.url).origin === self.location.origin);
       if (open) {
         // Zpráva před focus(): ten na iOS umí selhat a zpráva by neodešla.
-        open.postMessage({ type: "miligram:navigate", url });
+        open.postMessage({ type: "miligram:navigate", url, note });
         try {
           await open.focus();
           return;

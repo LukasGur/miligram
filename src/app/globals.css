@@ -431,6 +431,11 @@
   }
 
   /* Až list dojede, aby dopad nezanikl v jeho pohybu. */
+  /* Proužek v lekci po klepnutí na notifikaci: dopadne hned, bez čekání. */
+  .animate-drop {
+    animation: notice-drop 420ms var(--ease-decel) both;
+  }
+
   .animate-notice {
     animation: notice-drop 560ms var(--ease-decel) 380ms both;
   }
