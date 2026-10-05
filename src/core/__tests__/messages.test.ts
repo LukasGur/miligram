@@ -160,4 +160,37 @@ describe("překlady zadání a kroků", () => {
       }
     }
   });
+  /**
+   * Počítané slovo za číslem se musí skloňovat: „2 ampule“, ne „2 ampuli“.
+   * Číslo s pevným tvarem slova (`{n, number} ampuli`) sedí jen na jedničku,
+   * a tak se tu hledá a místo něj se chce `plural`.
+   */
+  it("ampule a lahvičky za číslem se skloňují", () => {
+    const failures: string[] = [];
+    for (const [locale, messages] of LOCALES) {
+      for (const [id, text] of Object.entries(messages.exercise.prompts as Record<string, string>)) {
+        if (/number[^}]*\}\s+(ampul|lahvič|liekovk|fľaštič)/i.test(text)) failures.push(`${locale}/${id}`);
+      }
+    }
+    expect(failures).toEqual([]);
+  });
+
+  it("D3: zadání netvrdí, že ampule z krabičky je naředěná 1:10 000", () => {
+    for (const [locale, messages] of LOCALES) {
+      const t = createTranslator({
+        locale,
+        messages,
+        namespace: "exercise.prompts",
+        onError: (error) => { throw error; },
+      }) as unknown as (key: string, values: Record<string, unknown>) => string;
+      for (const difficulty of DIFFICULTIES) {
+        for (const seed of SEEDS) {
+          const { vars } = buildExercise("D3", seed, difficulty);
+          const text = t("D3", vars);
+          if (vars.ratio === 10000) expect(text, `${locale}/${seed}`).toMatch(/naředili|nariedili/);
+          else expect(text, `${locale}/${seed}`).not.toMatch(/naředili|nariedili/);
+        }
+      }
+    }
+  });
 });

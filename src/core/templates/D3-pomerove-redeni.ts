@@ -32,6 +32,9 @@ export const D3 = register({
       substance: rule.substance,
       code: rule.suklCode,
       ratio,
+      // Ampule je 1:1000. Ředění 1:10 000 si sestra připraví sama, takže
+      // zadání nesmí tvrdit, že tak vypadá přípravek z krabičky.
+      form: ratio === 1000 ? "ampoule" : "diluted",
       perKg,
       weightKg,
       maxSingleMg: rule.maxSingleMg ?? 1,
