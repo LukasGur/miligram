@@ -2,7 +2,7 @@ import { weightBasedDose } from "../formulas";
 import { dosingRule, dosingSource, type DosingRuleId } from "../products/dosing";
 import * as tolerances from "../tolerances";
 import type { Solution, Vars } from "../types";
-import { formula, given, q, result, substitute } from "./helpers";
+import { formula, given, orderStep, q, result, substitute } from "./helpers";
 import { register } from "./registry";
 
 /** Rozmezí, u kterých SPC uvádí dávku na jedno podání v mg/kg. */
@@ -30,7 +30,7 @@ export const B1 = register({
     const weightKg = difficulty === 1 ? rng.step(10, 40, 5) : rng.step(3.5, 45, 0.5);
     const perKg = difficulty === 1
       ? rng.pick([range.min, range.max])
-      : rng.step(range.min, range.max, 0.5);
+      : rng.step(range.min, range.max, orderStep(range));
 
     return {
       ruleId,

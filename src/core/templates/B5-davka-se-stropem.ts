@@ -2,7 +2,7 @@ import { weightBasedDose } from "../formulas";
 import { dosingRule, dosingSource } from "../products/dosing";
 import * as tolerances from "../tolerances";
 import type { Solution, Vars } from "../types";
-import { formula, given, intermediate, q, result, substitute } from "./helpers";
+import { formula, given, intermediate, orderStep, q, result, substitute } from "./helpers";
 import { register } from "./registry";
 
 /**
@@ -25,7 +25,7 @@ export const B5 = register({
     const weightKg = difficulty === 1
       ? rng.step(60, 90, 5)
       : rng.step(55, 140, 5);
-    const perKg = difficulty === 1 ? rng.pick([15, 20] as const) : rng.step(15, 20, 0.5);
+    const perKg = difficulty === 1 ? rng.pick([15, 20] as const) : rng.step(range.min, range.max, orderStep(range));
 
     return {
       productName: rule.product,

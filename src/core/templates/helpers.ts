@@ -144,3 +144,13 @@ export function weightForHeight(
   // Meze se s pásmem minuly: hmotnost na tom okraji pásma, ke kterému chtěly.
   return (limits.minKg ?? 0) > bmiMax ? bmiMax : bmiMin;
 }
+
+/**
+ * Krok, po kterém lékař dávku na kilogram píše. Rozmezí 50–80 mg/kg
+ * po pěti, 5–10 mg/kg po jedné, úzké pásmo po půlce. „Lékař zvolil
+ * 66,5 mg/kg“ v zadání nikdo neuvěří.
+ */
+export function orderStep(range: { min: number; max: number }): number {
+  const width = range.max - range.min;
+  return width >= 20 ? 5 : width >= 3 ? 1 : 0.5;
+}

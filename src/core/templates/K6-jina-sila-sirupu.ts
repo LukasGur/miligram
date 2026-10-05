@@ -1,12 +1,61 @@
 import { concentrationOf, selectProducts } from "../products";
 import { syringeFor } from "../devices";
 import * as tolerances from "../tolerances";
-import type { Solution, Vars } from "../types";
+import type { Solution, Source, Vars } from "../types";
 import { formula, frac, given, intermediate, q, result, substitute } from "./helpers";
 import { ISO_7886, register, SUKL_DLP } from "./registry";
 
 /** Látky, které se registrují ve dvou silách sirupu a předepisují dětem. */
 const SUBSTANCES = ["IBUPROFEN", "AZITHROMYCIN", "KLARITHROMYCIN"] as const;
+
+const SPC_URL =
+  "https://opendata.sukl.cz/?q=katalog/spc-souhrn-udaju-o-lecivem-pripravku-summary-product-characteristics";
+
+/**
+ * Rozmezí jedné dětské dávky v mg. Předpis v zadání z něj vychází,
+ * jinak by z „12,2 ml sirupu 40 mg/ml“ bylo 488 mg ibuprofenu naráz.
+ * Dolní mez je nejmenší dítě, pro které SPC dávku uvádí, horní dítě
+ * kolem 40 kg nebo strop ze SPC.
+ */
+const SINGLE_DOSE: Record<(typeof SUBSTANCES)[number], { minMg: number; maxMg: number; source: Source }> = {
+  IBUPROFEN: {
+    minMg: 50,
+    maxMg: 400,
+    source: {
+      citation:
+        "SÚKL, SPC přípravku Inflanor 20 mg/ml perorální suspenze, bod 4.2: „obvyklá denní dávka 20-30 mg/kg, " +
+        "která se podává rozděleně do 3-4 dílčích dávek“; nejmenší dávka 2,5 ml (50 mg).",
+      url: SPC_URL,
+      suklCode: "0274535",
+      verifiedAt: "2026-10-05",
+    },
+  },
+  KLARITHROMYCIN: {
+    minMg: 60,
+    maxMg: 300,
+    source: {
+      citation:
+        "SÚKL, SPC přípravku Klacid 125 mg/5 ml granule pro perorální suspenzi, bod 4.2: „Doporučená dávka " +
+        "klarithromycinu pro kojence a děti od 6 měsíců do 12 let je 7,5 mg/kg dvakrát denně“ " +
+        "(od 8 kg, u 40 kg 300 mg).",
+      url: SPC_URL,
+      suklCode: "0267343",
+      verifiedAt: "2026-10-05",
+    },
+  },
+  AZITHROMYCIN: {
+    minMg: 50,
+    maxMg: 500,
+    source: {
+      citation:
+        "SÚKL, SPC přípravku Sumamed 20 mg/ml prášek pro perorální suspenzi, bod 4.2: 10 mg/kg/den, " +
+        "nejvyšší jednotlivá dávka 500 mg jako u dospělých.",
+      url: SPC_URL,
+      suklCode: "0273525",
+      verifiedAt: "2026-10-05",
+    },
+  },
+};
 
 /**
  * Dvojice sil téže látky. Sestavuje se z fondu, ne ze seznamu v kódu —
@@ -34,6 +83,7 @@ export const K6 = register({
   id: "K6",
   category: "pediatrie",
   source: [SUKL_DLP, ISO_7886],
+  sourceFor: (vars) => [SINGLE_DOSE[vars.substance as (typeof SUBSTANCES)[number]].source],
 
   generate(rng, difficulty) {
     const pair = rng.pick(PAIRS);
@@ -42,17 +92,19 @@ export const K6 = register({
     const from = fromStronger ? pair.stronger : pair.weaker;
     const to = fromStronger ? pair.weaker : pair.stronger;
 
-    const prescribedMl = difficulty === 1
-      ? rng.step(2.5, 10, 2.5)
-      : difficulty === 2
-        ? rng.step(1, 12, 0.5)
-        : rng.step(1.2, 14.4, 0.2);
+    // Předepsaný objem odpovídá dětské dávce, krok podle obtížnosti.
+    const dose = SINGLE_DOSE[pair.substance];
+    const fromConcentration = concentrationOf(from);
+    const stepMl = difficulty === 1 ? 2.5 : difficulty === 2 ? 0.5 : 0.2;
+    const minMl = Math.ceil(dose.minMg / fromConcentration / stepMl) * stepMl;
+    const maxMl = Math.floor(dose.maxMg / fromConcentration / stepMl) * stepMl;
+    const prescribedMl = Number(rng.step(minMl, maxMl, stepMl).toFixed(1));
 
     return {
       substance: pair.substance,
       fromName: from.name,
       fromCode: from.code,
-      fromConcentration: concentrationOf(from),
+      fromConcentration,
       toName: to.name,
       toCode: to.code,
       toConcentration: concentrationOf(to),

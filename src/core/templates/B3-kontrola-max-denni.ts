@@ -2,7 +2,7 @@ import { weightBasedDose } from "../formulas";
 import { dosingRule, dosingSource, type DosingRuleId } from "../products/dosing";
 import * as tolerances from "../tolerances";
 import type { Solution, Vars } from "../types";
-import { formula, given, intermediate, q, result, substitute } from "./helpers";
+import { formula, given, intermediate, orderStep, q, result, substitute } from "./helpers";
 import { register } from "./registry";
 
 const RULES: readonly DosingRuleId[] = ["ibuprofenBaby", "paracetamolDeti", "gentamicin"];
@@ -25,13 +25,21 @@ export const B3 = register({
     if (!limit) throw new Error(`Pravidlo ${ruleId} nemá maximální denní dávku.`);
 
     const weightKg = difficulty === 1 ? rng.step(10, 30, 5) : rng.step(4, 45, 0.5);
-    const maxDailyMg = weightBasedDose(limit.min, weightKg);
 
-    // Kolik už pacient dnes dostal — vždy pod stropem, jinak by otázka
-    // neměla smysl a odpověď by byla záporná.
-    const usedShare = difficulty === 1 ? rng.pick([0.5, 0.75] as const) : rng.step(0.2, 0.85, 0.05);
-    const dosesGiven = rng.pick([1, 2, 3] as const);
-    const perDoseMg = Number(((maxDailyMg * usedShare) / dosesGiven).toPrecision(3));
+    /**
+     * Kolik už dnes dostal: jedna až dvě dávky z rozmezí jednotlivé dávky
+     * v SPC, při podávání třikrát denně i tři. Dřív to byl podíl denního
+     * stropu, a 15kg dítě tak „dostalo 1× 450 mg“ paracetamolu.
+     * Gentamicin jednotlivou dávku v SPC nemá; bere se denní rozmezí
+     * rozdělené do podání.
+     */
+    const schedule = rng.pick(rule.dosesPerDay ?? [3]);
+    const single = rule.single ?? (rule.daily && { min: rule.daily.min / schedule, max: rule.daily.max / schedule });
+    if (!single) throw new Error(`Pravidlo ${ruleId} nemá dávku na jedno podání.`);
+    const perKgDose = difficulty === 1 ? rng.pick([single.min, single.max]) : rng.step(single.min, single.max, orderStep(single));
+    const dosesGiven = schedule === 1 ? 1 : rng.int(1, Math.min(schedule - 1, 3));
+    const roundTo = difficulty === 1 ? 5 : 1;
+    const perDoseMg = Math.max(roundTo, Math.round(weightBasedDose(perKgDose, weightKg) / roundTo) * roundTo);
 
     return {
       ruleId,

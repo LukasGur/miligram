@@ -144,6 +144,23 @@ describe("K5 — kontrola předepsaného objemu", () => {
 });
 
 describe("K6 — jiná síla sirupu", () => {
+  it("předepsaná dávka odpovídá dětské dávce ze SPC", () => {
+    const bounds: Record<string, [number, number]> = {
+      IBUPROFEN: [50, 400],
+      KLARITHROMYCIN: [60, 300],
+      AZITHROMYCIN: [50, 500],
+    };
+    for (const difficulty of DIFFICULTIES) {
+      for (const seed of SEEDS) {
+        const { vars } = buildExercise("K6", seed, difficulty);
+        const mg = Number(vars.prescribedMl) * Number(vars.fromConcentration);
+        const [low, high] = bounds[String(vars.substance)];
+        expect(mg, `${difficulty}/${seed}: ${vars.substance}`).toBeGreaterThanOrEqual(low);
+        expect(mg, `${difficulty}/${seed}: ${vars.substance}`).toBeLessThanOrEqual(high);
+      }
+    }
+  });
+
   it("5 ml po 40 mg/ml odpovídá 10 ml po 20 mg/ml", () => {
     const solution = getTemplate("K6").solve(
       { prescribedMl: 5, fromConcentration: 40, toConcentration: 20 },

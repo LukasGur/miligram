@@ -2,7 +2,7 @@ import { weightBasedDose } from "../formulas";
 import { dosingRule, dosingSource, type DosingRuleId } from "../products/dosing";
 import * as tolerances from "../tolerances";
 import type { Solution, Vars } from "../types";
-import { formula, given, intermediate, q, result, substitute } from "./helpers";
+import { formula, given, intermediate, orderStep, q, result, substitute } from "./helpers";
 import { register } from "./registry";
 
 const RULES: readonly DosingRuleId[] = ["paracetamolDeti", "ibuprofenBaby"];
@@ -27,7 +27,7 @@ export const B7 = register({
     const weightKg = difficulty === 1 ? rng.step(10, 30, 5) : rng.step(4, 45, 0.5);
     const perDoseMg = Number(
       (weightBasedDose(
-        difficulty === 1 ? rng.pick([single.min, single.max]) : rng.step(single.min, single.max, 0.5),
+        difficulty === 1 ? rng.pick([single.min, single.max]) : rng.step(single.min, single.max, orderStep(single)),
         weightKg,
       )).toPrecision(3),
     );

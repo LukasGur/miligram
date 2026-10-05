@@ -2,7 +2,7 @@ import { describe, expect, it } from "vitest";
 import "../templates";
 import { buildExercise, getTemplate } from "../templates";
 import { DOSING_RULE_LIST, dosingRule, liquidPresentationOf, presentationOf, type DosingRuleId } from "../products/dosing";
-import type { Difficulty } from "../types";
+import { DIFFICULTIES, type Difficulty } from "../types";
 
 const D2 = 2 as Difficulty;
 const SEEDS = Array.from({ length: 40 }, (_, i) => `b${i}`);
@@ -204,6 +204,42 @@ describe("C — dávkování podle povrchu těla", () => {
       const { solution } = buildExercise("C1", seed, D);
       expect(solution.value).toBeGreaterThan(0.7);
       expect(solution.value).toBeLessThan(2.8);
+    }
+  });
+});
+
+describe("dávky, jaké by lékař napsal", () => {
+  const SEEDS_REAL = Array.from({ length: 60 }, (_, i) => `real${i}`);
+
+  it("B3: už podaná dávka leží v rozmezí jednotlivé dávky ze SPC", () => {
+    for (const difficulty of DIFFICULTIES) {
+      for (const seed of SEEDS_REAL) {
+        const { vars } = buildExercise("B3", seed, difficulty);
+        const rule = dosingRule(vars.ruleId as DosingRuleId);
+        const perKg = Number(vars.perDoseMg) / Number(vars.weightKg);
+        const high = rule.single?.max ?? rule.daily!.max;
+        // Zaokrouhlení na celé nebo pětky mg u malého dítěte posune mg/kg.
+        expect(perKg, `${difficulty}/${seed}`).toBeLessThanOrEqual(high * 1.25 + 0.5);
+        expect(Number(vars.perDoseMg) * Number(vars.dosesGiven), `${difficulty}/${seed}`)
+          .toBeLessThan(Number(vars.limitPerKg) * Number(vars.weightKg));
+      }
+    }
+  });
+
+  it("B1, B5, B6: dávka na kilogram bez nesmyslných desetin", () => {
+    for (const difficulty of DIFFICULTIES) {
+      for (const seed of SEEDS_REAL) {
+        for (const [id, keys] of [["B1", ["perKg"]], ["B5", ["perKg"]], ["B6", ["loadingPerKg", "maintenancePerKg"]]] as const) {
+          const { vars } = buildExercise(id, seed, difficulty);
+          for (const key of keys) {
+            const value = Number(vars[key]);
+            expect(Math.round(value * 2), `${id}/${key}/${difficulty}/${seed}: ${value}`).toBe(value * 2);
+          }
+          if (id === "B1" && Number(vars.rangeMax) - Number(vars.rangeMin) >= 20) {
+            expect(Number(vars.perKg) % 5, `${seed}`).toBe(0);
+          }
+        }
+      }
     }
   });
 });
