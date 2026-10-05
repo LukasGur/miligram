@@ -2,6 +2,7 @@ import { describe, expect, it } from "vitest";
 import "../templates";
 import { buildExercise, getTemplate } from "../templates";
 import { RECONSTITUTION_LIST } from "../products/reconstitution";
+import { POWDER_VOLUMES } from "../products/powderVolumes";
 import { DIFFICULTIES, type Difficulty } from "../types";
 
 const D = 2 as Difficulty;
@@ -43,6 +44,27 @@ describe("E — rekonstituce", () => {
     const withoutDisplacement = 1000 / 9.3;
     expect(withDisplacement).toBe(100);
     expect(withDisplacement).toBeLessThan(withoutDisplacement);
+  });
+
+  it("E4: 1000 mg s 3 ml rozpouštědla a koncentrací 250 mg/ml — prášek zabírá 1 ml", () => {
+    expect(
+      getTemplate("E4").solve({ form: "volume", vialMg: 1000, diluentMl: 3, approxMgPerMl: 250 }, D).value,
+    ).toBeCloseTo(1, 9);
+  });
+
+  it("E4: čísla jsou ze SPC a prášek vždy něco zabere", () => {
+    for (const difficulty of [1, 2, 3] as const) {
+      for (let i = 0; i < 80; i += 1) {
+        const { vars, solution, source } = buildExercise("E4", `e4-${i}`, difficulty);
+        const item = POWDER_VOLUMES.find(
+          (one) => one.suklCode === vars.code && one.diluentMl === vars.diluentMl,
+        );
+        expect(item, `${vars.productName} ${vars.diluentMl} ml`).toBeDefined();
+        expect([source].flat().map((s) => s.citation).join(" ")).toContain(item!.quote);
+        if (vars.form === "volume") expect(solution.value).toBeGreaterThan(0);
+        else expect(Number(vars.displacementMl)).toBeGreaterThan(0);
+      }
+    }
   });
 
   it("E5: 2500 mg z lahviček po 1000 mg jsou tři lahvičky", () => {

@@ -164,6 +164,7 @@ a co se z nich bere. Sloupec „SPC“ odkazuje na soubor v archivu SÚKL
 | SPC125966 | Heparin Léčiva 5000 IU/ml | 0091915 | 5 000 IU v 1 ml | fond, `templates/H3` |
 | EMA EPAR | Actrapid | 0026481, 0026483 | registrace v koncentraci 40 i 100 IU/ml | fond, `templates/I2` |
 | 45 × SPC, bod 4.2 | ampule a perorální roztoky ve fondu | viz soubor | obvyklé jednotlivé dávky pro dospělého — ordinace v A3, A4, A6, A8 | `products/adultDoses.ts` |
+| SPC233233, SPC154505/8, SPC221075/8, SPC228375/7, SPC212156 | AZEPO, Ampicilin BBP, Fortum, AXETINE, Ceftriaxon Kabi | viz soubor | objem roztoku po rozpuštění, nebo přibližná koncentrace — kolik místa zabere prášek (E4) | `products/powderVolumes.ts` |
 | 52 × SPC, body 3, 4.2 a 6.6 | tablety, perorální roztoky, prášky ve fondu | viz soubor | dávka, četnost, délka léčby, dělitelnost, rozpouštědlo — A1, A2, A5, A7, E1, E5 | `products/adultDoses.ts` |
 | ISO 7886-1 | — | — | tolerance objemu odměřeného stříkačkou | `devices.ts` |
 | IEC 60601-2-24 | — | — | přesnost průtoku pumpy ±2 % | `devices.ts` |
