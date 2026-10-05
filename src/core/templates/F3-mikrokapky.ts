@@ -14,6 +14,9 @@ import { register, SUKL_DLP } from "./registry";
  * se obojí vykrátí. Šablona vede řešení tak, aby to bylo vidět, ne aby
  * si uživatel pamatoval pravidlo.
  */
+/** Nejvyšší rychlost, pro kterou se mikrokapkový set v zadání použije. */
+const MAX_MICRODRIP_ML_H = 100;
+
 export const F3 = register({
   id: "F3",
   category: "infuze",
@@ -22,7 +25,16 @@ export const F3 = register({
   generate(rng, difficulty) {
     const product = pickProduct(rng, { kind: "infusionBag", minVolumeMl: 1, atcPrefixes: BASE_SOLUTION_ATC });
     const bagMl = product.packUnitVolumeMl ?? 500;
-    const hours = difficulty === 1 ? rng.pick([1, 2, 4, 8] as const) : rng.step(0.5, 12, 0.5);
+    /**
+     * Mikrokapkový set je na malé rychlosti; 60 kapek za minutu je 60 ml/h.
+     * Nad 100 ml/h by kapky nešly spočítat, a tak se doba volí tak, aby
+     * rychlost pod touhle hranicí zůstala.
+     */
+    const minHours = Math.ceil(bagMl / MAX_MICRODRIP_ML_H / 0.5) * 0.5;
+    const hours =
+      difficulty === 1
+        ? rng.pick([1, 2, 4, 5, 8, 10, 12, 24].filter((h) => h >= minHours))
+        : rng.step(Math.max(0.5, minHours), Math.max(12, minHours + 6), 0.5);
 
     return {
       code: product.code,

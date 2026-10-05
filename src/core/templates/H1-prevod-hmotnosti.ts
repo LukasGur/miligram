@@ -25,8 +25,24 @@ const DOWN: readonly (readonly [Unit, Unit])[] = [
   ["ng", "µg"],
 ];
 
-const WHOLE = [1, 2, 5, 10, 25, 50, 100, 250, 500] as const;
-const FRACTIONAL = [0.125, 0.25, 1.25, 1.5, 2.5, 3.75, 6.25, 7.5, 62.5] as const;
+/**
+ * Hodnoty pro každý převod zvlášť. Jedna společná tabulka dávala
+ * „500 g → mg“ nebo „50 mg → ng“ (50 000 000): převody, které nikdo
+ * nedělá. Gramy jsou tu jako u antibiotik, mikrogramy jako u digoxinu
+ * nebo levotyroxinu, nanogramy jen tam, kde dávají smysl. Dvoustupňový
+ * převod začíná u malých hodnot, aby výsledek zůstal čitelný.
+ * `easy` jsou kulaté hodnoty, `hard` přidávají desetiny a čtvrtiny.
+ */
+const VALUES: Record<string, { easy: readonly number[]; hard: readonly number[] }> = {
+  "g>mg": { easy: [1, 2, 4], hard: [0.25, 0.5, 0.75, 1.2, 1.5] },
+  "mg>µg": { easy: [1, 2, 5, 10], hard: [0.05, 0.1, 0.125, 0.25, 0.4, 2.5] },
+  "µg>ng": { easy: [1, 2, 5], hard: [0.1, 0.25, 0.5, 1.5] },
+  "g>µg": { easy: [0.001, 0.002, 0.005], hard: [0.003, 0.015, 0.025, 0.05] },
+  "mg>ng": { easy: [0.001, 0.002, 0.005], hard: [0.003, 0.015, 0.025] },
+  "mg>g": { easy: [500, 1000, 2000], hard: [125, 250, 750, 1200, 1500] },
+  "µg>mg": { easy: [500, 1000, 2000], hard: [50, 125, 250, 400, 750] },
+  "ng>µg": { easy: [500, 1000, 2000], hard: [100, 250, 750, 1500] },
+};
 
 const UNIT_LABEL: Record<string, AnswerUnit> = { ng: "ng", "µg": "ug", mg: "mg", g: "g" };
 
@@ -47,8 +63,9 @@ export const H1 = register({
     const goesUp = difficulty === 3 ? rng.int(0, 2) > 0 : rng.int(0, 1) === 1;
     const [from, to] = goesUp ? rng.pick(up) : rng.pick(DOWN);
 
-    // Desetinné zadání dává smysl jen směrem nahoru — dolů by odpověď utekla.
-    const value = goesUp && difficulty === 3 ? rng.pick(FRACTIONAL) : rng.pick(WHOLE);
+    // Hodnota, jaká v té jednotce opravdu stojí na obalu nebo v ordinaci.
+    const values = VALUES[`${from}>${to}`];
+    const value = difficulty === 3 ? rng.pick([...values.easy, ...values.hard]) : rng.pick(values.easy);
     return { value, from, to };
   },
 

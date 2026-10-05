@@ -43,6 +43,18 @@ describe("H1 — převod hmotnosti", () => {
     expect(getTemplate("H1").solve({ value: 2, from: "g", to: "µg" }, D).value).toBe(2_000_000);
   });
 
+  it("převádí se hodnota, jaká se v praxi potká", () => {
+    for (const difficulty of DIFFICULTIES) {
+      for (const seed of SEEDS) {
+        const { vars, solution } = buildExercise("H1", seed, difficulty);
+        const label = `${difficulty}/${seed}: ${vars.value} ${vars.from} → ${vars.to}`;
+        expect(solution.value, label).toBeLessThanOrEqual(100_000);
+        expect(solution.value, label).toBeGreaterThanOrEqual(0.001);
+        if (vars.from === "g") expect(Number(vars.value), label).toBeLessThanOrEqual(4);
+      }
+    }
+  });
+
   it("odpověď jde zapsat nejvýš na tři desetinná místa", () => {
     for (const difficulty of DIFFICULTIES) {
       for (const seed of SEEDS) {

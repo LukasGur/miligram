@@ -85,6 +85,15 @@ describe("F — rychlost infuze", () => {
     expect(getTemplate("F1").solve({ bagMl: 1000, hours: 8 }, D).value).toBe(125);
   });
 
+  it("F3: mikrokapky jen do 100 ml/h", () => {
+    for (const difficulty of DIFFICULTIES) {
+      for (const seed of Array.from({ length: 60 }, (_, i) => `f3-${i}`)) {
+        const { vars } = buildExercise("F3", seed, difficulty);
+        expect(Number(vars.bagMl) / Number(vars.hours), `${difficulty}/${seed}`).toBeLessThanOrEqual(100);
+      }
+    }
+  });
+
   it("F3: u mikrokapkového setu se kapky rovnají ml/h", () => {
     const solution = getTemplate("F3").solve({ bagMl: 500, hours: 4 }, D);
     expect(solution.value).toBe(125);
