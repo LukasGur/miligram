@@ -54,9 +54,15 @@ export function choosePerfusorDilution(
     minRate?: number;
     maxRate?: number;
     ampouleCounts?: readonly number[];
+    /**
+     * `nearest` vezme ředění, při kterém pumpa běží nejblíž 10 ml/h
+     * (úlohy na rychlost). `any` kterékoli v mezích — u přípravy
+     * stříkačky jinak vycházely pořád tytéž tři kombinace.
+     */
+    choice?: "nearest" | "any";
   },
 ): Dilution {
-  const { codes, minRate = 0.5, maxRate = 60, ampouleCounts = [1, 2, 3, 4] } = options;
+  const { codes, minRate = 0.5, maxRate = 60, ampouleCounts = [1, 2, 3, 4], choice = "nearest" } = options;
 
   const rateFor = (concentration: number) =>
     "perKgMin" in dose
@@ -119,8 +125,9 @@ export function choosePerfusorDilution(
   }
 
   const product = rng.pick([...new Set(candidates.map((option) => option.product))]);
-  return candidates
-    .filter((option) => option.product === product)
+  const ofProduct = candidates.filter((option) => option.product === product);
+  if (choice === "any") return rng.pick(ofProduct);
+  return ofProduct
     .reduce((best, option) =>
       Math.abs(Math.log(option.rateMlPerHour / 10)) < Math.abs(Math.log(best.rateMlPerHour / 10))
         ? option
@@ -158,12 +165,16 @@ export const PER_KG_CODES: Record<PerKgRule, readonly string[]> = {
 export function realisticDilution(rng: Rng): Dilution {
   if (rng.pick([true, false])) {
     const range = dosingRule("noradrenalin").single!;
-    return choosePerfusorDilution(rng, { perMin: rng.step(range.min, range.max, 1) }, { codes: NORADRENALINE_CODES });
+    return choosePerfusorDilution(
+      rng,
+      { perMin: rng.step(range.min, range.max, 1) },
+      { codes: NORADRENALINE_CODES, minRate: 1, maxRate: 40, choice: "any" },
+    );
   }
   const range = dosingRule("dopamin").single!;
   return choosePerfusorDilution(
     rng,
     { perKgMin: rng.step(range.min, range.max, 1), weightKg: rng.step(50, 95, 5) },
-    { codes: DOPAMINE_CODES },
+    { codes: DOPAMINE_CODES, minRate: 1, maxRate: 40, choice: "any" },
   );
 }
