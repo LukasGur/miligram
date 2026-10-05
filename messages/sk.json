@@ -327,6 +327,8 @@
     "progress": "{current, number} / {count, number}",
     "check": "Skontrolovať",
     "continueLabel": "Pokračovať",
+    "retryLabel": "Skúsiť s inými číslami",
+    "nextLabel": "Ďalší príklad",
     "finish": "Dokončiť lekciu",
     "answerLabel": "Odpoveď",
     "answerHint": "Zadaj číslo",
@@ -356,7 +358,7 @@
     "summaryScoreLabel": "správne",
     "repeat": "Znova",
     "fromMistake": "Opakovanie chyby",
-    "giveUp": "Rozumiem, idem ďalej",
+    "giveUp": "Preskočiť, vráti sa v opakovaní",
     "summaryUnsolved": "{count, plural, one {# príklad zostal nespočítaný} few {# príklady zostali nespočítané} other {# príkladov zostalo nespočítaných}}. Vráti sa v opakovaní chýb.",
     "hintPrice": "{cost, plural, one {# pastilka} few {# pastilky} other {# pastiliek}}",
     "hintPoor": "Na nápovedu potrebuješ {cost, number} pastiliek.",
@@ -512,7 +514,9 @@
     "freezePoor": "{missing, plural, one {Chýba ti # pastilka} few {Chýbajú ti # pastilky} other {Chýba ti # pastiliek}}. Pribúdajú za príklady vypočítané na prvý raz.",
     "freezeFull": "Viac ako {max, number} si držať nejde",
     "title": "Zásoby",
-    "freezeBuyShort": "Kúpiť ochranu série"
+    "freezeBuyShort": "Kúpiť ochranu série",
+    "freezeProgress": "Na ochranu máš {have, number} z {cost, number} pastiliek",
+    "freezePoorShort": "Na ochranu teraz nezostáva."
   },
   "categories": {
     "zaklad": "Základné dávkovanie",

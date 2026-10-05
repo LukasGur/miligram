@@ -44,6 +44,7 @@ export function ExerciseView({
   onHelped,
   helped = false,
   pills,
+  retryNext = false,
 }: {
   exercise: Exercise;
   /** Kolik příkladů z lekce je hotových. Ukazatel jede podle vyřešených. */
@@ -63,6 +64,12 @@ export function ExerciseView({
   example?: Exercise;
   /** Kolikátý pokus tohle je. Od druhého se nabídne jít dál. */
   attempt: number;
+  /**
+   * Po chybě přijde hned tentýž příklad s jinými čísly, protože jiný
+   * nevyřešený nezbývá. Jinak vede tlačítko na další příklad a tenhle se
+   * vrátí později; popisek nesmí slibovat opravu, která hned nepřijde.
+   */
+  retryNext?: boolean;
   onExit: () => void;
   /**
    * Odpověď je vyhodnocená. Zapisuje se hned, ne až s Pokračovat: kdo
@@ -417,9 +424,13 @@ export function ExerciseView({
             >
               {verdict === null
                 ? t("check")
-                : verdict.correct && solved + 1 === count
-                  ? t("finish")
-                  : t("continueLabel")}
+                : verdict.correct
+                  ? solved + 1 === count
+                    ? t("finish")
+                    : t("continueLabel")
+                  : retryNext
+                    ? t("retryLabel")
+                    : t("nextLabel")}
             </button>
           )}
         </div>
@@ -521,7 +532,7 @@ function Tool({
 }
 
 /**
- * Bublina nad vzorem, jen úplně poprvé. Vzor stojí tam, kde student
+ * Bublina u vzoru, jen úplně poprvé. Vzor stojí tam, kde student
  * zvyklý na aplikaci čeká nápovědu — jednou se to řekne, pak už ne.
  * Zavře se klepnutím kamkoli; klepnutí jde dál, takže se tím rovnou
  * třeba otevře vzor nebo napíše číslice.
@@ -542,11 +553,13 @@ function ExampleCoach() {
   return (
     <div
       role="status"
-      className="animate-tick bg-ink text-paper pointer-events-none absolute right-0 bottom-full z-10 mb-2.5 w-[min(16rem,calc(50%+4rem))] !flex-none rounded-panel px-3.5 py-2.5 text-label shadow-lg"
+      className="animate-tick bg-ink text-paper pointer-events-none absolute top-full right-0 z-10 mt-2.5 w-[min(16rem,calc(50%+4rem))] !flex-none rounded-panel px-3.5 py-2.5 text-label shadow-lg"
     >
       {t("exampleCoach")}
-      {/* Špička míří na tlačítko vzoru pod bublinou. */}
-      <span aria-hidden className="bg-ink absolute right-8 -bottom-1 size-2.5 rotate-45" />
+      {/* Špička míří na tlačítko vzoru nad bublinou. Bublina leží přes
+          klávesnici, ne přes pole odpovědi: jednotka odpovědi musí být
+          vidět hned, klávesy jsou pod ní dál klepatelné. */}
+      <span aria-hidden className="bg-ink absolute right-8 -top-1 size-2.5 rotate-45" />
     </div>
   );
 }

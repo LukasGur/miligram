@@ -260,6 +260,7 @@ export function LessonView({
       newType={unseen && attempt === 0}
       example={unmastered && example ? example : undefined}
       attempt={attempt + 1}
+      retryNext={checked !== null && !checked.correct && nextIndex(plan, [...attempts, checked]) === index}
       pills={pills}
       onExit={onExit}
       onHint={() => spendPills(HINT_COST, `hint:${exercise.templateId}`)}
