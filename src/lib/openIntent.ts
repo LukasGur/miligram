@@ -12,7 +12,23 @@
  * Cíl čeká, dokud si ho někdo nevyzvedne: domovská obrazovka ho umí
  * splnit až po načtení programu, a do té doby odpovídá „ještě ne“.
  */
-export type OpenIntent = "lesson" | "account" | "duels" | "league" | "stats" | "program" | `invite:${string}`;
+export type OpenIntent =
+  | "lesson"
+  | "account"
+  | "duels"
+  | "league"
+  | "stats"
+  | "program"
+  | `invite:${string}`
+  | `duel:${string}`;
+
+/** Odložený cíl ze service workeru (scripts/sw.template.js). */
+const INTENT_CACHE = "miligram-intent";
+const INTENT_KEY = "/__miligram-intent";
+/** Starší cíl už nepatří k čerstvému klepnutí — aplikace se otevřela jinak. */
+const INTENT_MAX_AGE_MS = 5 * 60_000;
+
+const UUID = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
 
 /** Vrací true, když cíl splnil; jinak cíl počká na další pokus. */
 type Handler = (intent: OpenIntent) => boolean;
@@ -24,6 +40,10 @@ let started = false;
 export function parseOpenIntent(href: string): OpenIntent | null {
   const url = new URL(href, "https://miligram.invalid");
   if (url.searchParams.get("lesson") === "daily") return "lesson";
+  // Konkrétní souboj (supabase/functions/push/compose.ts). Starší verze
+  // aplikace parametr přejdou a otevřou podle `open=duels` aspoň seznam.
+  const duel = url.searchParams.get("duel");
+  if (duel && UUID.test(duel)) return `duel:${duel.toLowerCase()}`;
   const open = url.searchParams.get("open");
   if (open === "account" || open === "duels" || open === "league" || open === "stats" || open === "program") return open;
   // Pozvánka od kamaráda (src/lib/social.ts, INVITE_PARAM).
@@ -53,8 +73,39 @@ function start() {
     const data = event.data as { type?: string; url?: string } | null;
     if (data?.type !== "miligram:navigate" || !data.url) return;
     pending = parseOpenIntent(data.url);
+    // Tentýž cíl leží i v cache; vyzvednutý podruhé by obrazovku otevřel znovu.
+    void takeStashed();
     offer();
   });
+
+  void claimStashed();
+  document.addEventListener("visibilitychange", () => {
+    if (document.visibilityState === "visible") void claimStashed();
+  });
+}
+
+/** Vyzvedne a smaže cíl, který odložil service worker. */
+async function takeStashed(): Promise<{ url: string; at: number } | null> {
+  if (typeof caches === "undefined") return null;
+  try {
+    const cache = await caches.open(INTENT_CACHE);
+    const stored = await cache.match(INTENT_KEY);
+    if (!stored) return null;
+    await cache.delete(INTENT_KEY);
+    const data = (await stored.json()) as { url?: unknown; at?: unknown };
+    return typeof data.url === "string" && typeof data.at === "number" ? { url: data.url, at: data.at } : null;
+  } catch {
+    return null;
+  }
+}
+
+async function claimStashed() {
+  const stashed = await takeStashed();
+  if (!stashed || Date.now() - stashed.at > INTENT_MAX_AGE_MS) return;
+  const intent = parseOpenIntent(stashed.url);
+  if (!intent) return;
+  pending = intent;
+  offer();
 }
 
 /**

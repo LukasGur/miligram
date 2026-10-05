@@ -11,6 +11,12 @@ const RUNTIME_NAME = `miligram-runtime-${VERSION}`;
 const OFFLINE_SHELL = "/";
 /** Pod touto adresou si každá precache pamatuje otisky svých souborů. */
 const REVISIONS_KEY = "/__miligram-revisions";
+/**
+ * Kam vede klepnutá notifikace. Verze se nemění, takže ji aktivace nové
+ * verze nesmaže; čte ji aplikace (src/lib/openIntent.ts).
+ */
+const INTENT_CACHE = "miligram-intent";
+const INTENT_KEY = "/__miligram-intent";
 
 self.addEventListener("install", (event) => {
   event.waitUntil(
@@ -78,7 +84,9 @@ self.addEventListener("activate", (event) => {
       const keys = await caches.keys();
       await Promise.all(
         keys
-          .filter((key) => key.startsWith("miligram-") && key !== PRECACHE_NAME && key !== RUNTIME_NAME)
+          .filter(
+            (key) => key.startsWith("miligram-") && key !== PRECACHE_NAME && key !== RUNTIME_NAME && key !== INTENT_CACHE,
+          )
           .map((key) => caches.delete(key)),
       );
       await self.clients.claim();
@@ -170,6 +178,11 @@ self.addEventListener("push", (event) => {
 // Klepnutí otevře aplikaci tam, kam zpráva míří. Běžící okno se jen
 // vytáhne dopředu a cíl dostane zprávou — přenačtení by zahodilo
 // rozehranou lekci.
+//
+// Na iPhonu se na zprávu ani na adresu spolehnout nedá: aplikace z plochy
+// otevřená přes openWindow začíná na úvodní adrese bez parametrů a uspané
+// okno zprávu nemusí dostat. Cíl se proto nejdřív odloží do cache a
+// aplikace si ho vyzvedne sama, při startu i po návratu do popředí.
 self.addEventListener("notificationclick", (event) => {
   event.notification.close();
   const target = event.action === "lesson" ? "/?lesson=daily" : event.notification.data?.url || "/";
@@ -177,12 +190,27 @@ self.addEventListener("notificationclick", (event) => {
 
   event.waitUntil(
     (async () => {
+      try {
+        const cache = await caches.open(INTENT_CACHE);
+        await cache.put(
+          INTENT_KEY,
+          new Response(JSON.stringify({ url, at: Date.now() }), { headers: { "content-type": "application/json" } }),
+        );
+      } catch {
+        // Bez cache zbývá zpráva a adresa.
+      }
+
       const windows = await self.clients.matchAll({ type: "window", includeUncontrolled: true });
       const open = windows.find((client) => new URL(client.url).origin === self.location.origin);
       if (open) {
-        await open.focus();
+        // Zpráva před focus(): ten na iOS umí selhat a zpráva by neodešla.
         open.postMessage({ type: "miligram:navigate", url });
-        return;
+        try {
+          await open.focus();
+          return;
+        } catch {
+          // Okno nejde vytáhnout dopředu; otevře se znovu níže.
+        }
       }
       await self.clients.openWindow(url);
     })(),

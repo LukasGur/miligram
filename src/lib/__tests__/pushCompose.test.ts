@@ -97,4 +97,14 @@ describe("texty notifikací", () => {
   it("neznámý jazyk dostane češtinu", () => {
     expect(compose("gift", { handle: "a" }, "g", "de", 0).title).toBe("Dárek! 🎁");
   });
+
+  it("klepnutí na zprávu o souboji vede na jeho kartu, ostatní tam, kam patří", () => {
+    const id = "0b5c3a1e-7d2f-4c8a-9e61-3f2d1c0b9a87";
+    expect(compose("duelChallenge", { handle: "petra" }, `duel:${id}`, "cs", 0).url).toBe(`/?open=duels&duel=${id}`);
+    expect(compose("duelFinished", { handle: "petra", mine: 7, theirs: 5, outcome: "won" }, `duel:${id}`, "cs", 0).url).toBe(
+      `/?open=duels&duel=${id}`,
+    );
+    expect(compose("friendRequest", { handle: "petra" }, "friend:x", "cs", 0).url).toBe("/?open=account");
+    expect(compose("leagueResult", { rank: 1, size: 10, tier: 3 }, "league", "cs", 0).url).toBe("/?open=league");
+  });
 });

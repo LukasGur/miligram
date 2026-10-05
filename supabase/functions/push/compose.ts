@@ -85,6 +85,11 @@ export function compose(kind: PushKind, params: Params, tag: string, locale: str
   if (kind === "streak" || kind === "lastChance") {
     notice.actions = [{ action: "lesson", title: format("actionLesson") }];
   }
+  // Zpráva o konkrétním souboji otevře jeho kartu. Identifikátor nese
+  // značka zprávy (`duel:<id>`, migrace 0008 a 0010).
+  if (kind.startsWith("duel") && tag.startsWith("duel:")) {
+    notice.url = `/?open=duels&duel=${encodeURIComponent(tag.slice("duel:".length))}`;
+  }
   return notice;
 }
 

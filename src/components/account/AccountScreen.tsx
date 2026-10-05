@@ -3,7 +3,7 @@
 import { useEffect, useState } from "react";
 import { useTranslations } from "next-intl";
 import { CloseIcon } from "@/components/icons";
-import type { DuelTopic } from "@/core/duel";
+import { canPlayDuel, duelPhase, type DuelTopic } from "@/core/duel";
 import { pushOnFor, usePushStatus } from "@/lib/push";
 import { cancelDuel, requestFriend, respondDuel, weekStart, type Duel } from "@/lib/remote";
 import { updatePulse } from "@/lib/pulse";
@@ -19,6 +19,7 @@ import { BadgesScreen } from "@/components/social/BadgesScreen";
 import { ChallengeSheet, SentNotice } from "@/components/social/ChallengeSheet";
 import { useSocial, type Social } from "@/components/social/data";
 import { DuelOutcome } from "@/components/social/DuelOutcome";
+import { DuelInviteSheet } from "@/components/social/DuelInviteSheet";
 import { DuelReveal } from "@/components/social/DuelReveal";
 import { DuelsScreen } from "@/components/social/DuelsScreen";
 import { FriendProfile } from "@/components/social/FriendProfile";
@@ -37,7 +38,9 @@ export type AccountStart =
   | { screen: "duels" }
   | { screen: "league" }
   | { screen: "friends" }
-  | { screen: "reveal"; duelId: string };
+  | { screen: "reveal"; duelId: string }
+  /** Notifikace o konkrétním souboji: seznam soubojů a nad ním jeho karta. */
+  | { screen: "duel"; duelId: string };
 
 type Route =
   | { name: "profile" }
@@ -150,6 +153,7 @@ export function AccountScreen({
 function initialRoutes(start?: AccountStart): Route[] {
   if (!start) return [{ name: "profile" }];
   if (start.screen === "reveal") return [{ name: "profile" }, { name: "duels" }, { name: "reveal", duelId: start.duelId }];
+  if (start.screen === "duel") return [{ name: "profile" }, { name: "duels" }];
   return [{ name: "profile" }, { name: start.screen }];
 }
 
@@ -179,6 +183,8 @@ function SignedIn({
   const [challenge, setChallenge] = useState<{ friendId?: string; topic?: DuelTopic } | null>(null);
   const [sent, setSent] = useState<string | null>(null);
   const [toneOpen, setToneOpen] = useState(false);
+  /** Souboj z notifikace, jehož karta se ukáže nad seznamem soubojů. */
+  const [focusDuel, setFocusDuel] = useState(start?.screen === "duel" ? start.duelId : null);
 
   // Co mění druhá strana — přijatá výzva, dohraný souboj, nová žádost —
   // se bez notifikace nedozvíme. Dokud je profil otevřený a vidět, ptá se
@@ -242,6 +248,31 @@ function SignedIn({
     onPlayDuel({ id: duel.id, lessonId: duel.lessonId, topic: duel.topic });
   }
 
+  const duelActions = {
+    onPlay: play,
+    onRespond: async (duel: Duel, accept: boolean, andPlay: boolean) => {
+      const status = await respondDuel(client, duel.id, accept);
+      if (status === "accepted" && andPlay) play(duel);
+    },
+  };
+
+  /**
+   * Souboj z notifikace. Dá-li se s ním něco udělat, vyjede jeho karta;
+   * rozhodnutý rovnou ukáže výsledek. Jinak (čeká se na soupeře, propadl)
+   * stačí seznam, ve kterém je vidět proč.
+   */
+  const focused = focusDuel ? duels?.find((one) => one.id === focusDuel) : undefined;
+  const focusedPhase = focused ? duelPhase(focused) : null;
+  // Seznam v paměti může být starší než notifikace, která právě přišla.
+  useEffect(() => {
+    if (start?.screen === "duel") invalidateQueries(["duels"]);
+  }, [start]);
+  // Stav se srovná při vykreslení, ne v efektu: obrazovka nemá problikat.
+  if (focused && focusedPhase !== "incoming" && !canPlayDuel(focused)) {
+    setFocusDuel(null);
+    if (focusedPhase === "finished") setStack((current) => [...current, { name: "reveal", duelId: focused.id }]);
+  }
+
   if (social.profile.loading && social.profile.data === undefined) {
     return <Shell onClose={onClose}><p className="text-ink-soft text-label">{tSocial("loading")}</p></Shell>;
   }
@@ -276,11 +307,7 @@ function SignedIn({
             loading={social.duels.loading}
             onBack={back}
             actions={{
-              onPlay: play,
-              onRespond: async (duel, accept, andPlay) => {
-                const status = await respondDuel(client, duel.id, accept);
-                if (status === "accepted" && andPlay) play(duel);
-              },
+              ...duelActions,
               onCancel: async (duel) => {
                 await cancelDuel(client, duel.id);
               },
@@ -340,6 +367,14 @@ function SignedIn({
   return (
     <>
       {screen}
+      {focused && route.name === "duels" && (focusedPhase === "incoming" || canPlayDuel(focused)) ? (
+        <DuelInviteSheet
+          duel={focused}
+          myHandle={social.profile.data?.handle ?? ""}
+          actions={duelActions}
+          onClose={() => setFocusDuel(null)}
+        />
+      ) : null}
       {challenge ? (
         <ChallengeSheet
           client={client}

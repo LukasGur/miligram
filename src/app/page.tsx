@@ -233,6 +233,10 @@ function Home() {
    */
   const handleIntent = useEffectEvent((intent: OpenIntent): boolean => {
     if (lesson !== null) return false;
+    if (intent.startsWith("duel:")) {
+      openAccount({ screen: "duel", duelId: intent.slice("duel:".length) });
+      return true;
+    }
     if (intent.startsWith("invite:")) {
       setInvite(intent.slice("invite:".length));
       openAccount();

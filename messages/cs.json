@@ -1006,7 +1006,15 @@
       "waiting": "na tahu",
       "free": "Vyzvat"
     },
-    "inviteWho": "kamaráda"
+    "inviteWho": "kamaráda",
+    "duelInviteLabel": "Výzva na souboj",
+    "duelInviteTurn": "Jsi na tahu proti {handle}",
+    "duelInviteTopic": "Téma",
+    "duelInviteItems": "Příkladů",
+    "duelInviteFair": "Oba dostanete stejné příklady. Body jsou za správně napoprvé, čas nerozhoduje.",
+    "duelInviteSealed": "{handle} už má odehráno. Skóre uvidíš, až dohraješ.",
+    "duelInviteLater": "Přijmout, hrát později",
+    "duelInviteNotNow": "Teď ne"
   },
   "privacy": {
     "link": "Ochrana osobních údajů",

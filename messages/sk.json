@@ -1006,7 +1006,15 @@
       "waiting": "na ťahu",
       "free": "Vyzvať"
     },
-    "inviteWho": "kamaráta"
+    "inviteWho": "kamaráta",
+    "duelInviteLabel": "Výzva na súboj",
+    "duelInviteTurn": "Si na ťahu proti {handle}",
+    "duelInviteTopic": "Téma",
+    "duelInviteItems": "Príkladov",
+    "duelInviteFair": "Obaja dostanete rovnaké príklady. Body sú za správne na prvý raz, čas nerozhoduje.",
+    "duelInviteSealed": "{handle} už má odohrané. Skóre uvidíš, keď dohráš.",
+    "duelInviteLater": "Prijať, hrať neskôr",
+    "duelInviteNotNow": "Teraz nie"
   },
   "privacy": {
     "link": "Ochrana osobných údajov",
