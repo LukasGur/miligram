@@ -36,7 +36,12 @@ describe("monogram", () => {
     const sql = readFileSync("supabase/migrations/0013_ton_monogramu.sql", "utf8");
     expect(sql).toContain(`between 0 and ${TONES - 1}`);
     const css = readFileSync("src/app/globals.css", "utf8");
-    expect(css.match(/--color-tone-\d+:/g)?.length).toBe(TONES);
-    expect(css.match(/--color-tone-\d+-wash:/g)?.length).toBe(TONES);
+    // Každý tón je v globals.css dvakrát: světlý v @theme, tmavý v bloku
+    // pro tmavý režim. Počítá se v každém zvlášť.
+    const [light, dark] = css.split("@media (prefers-color-scheme: dark)");
+    for (const part of [light, dark]) {
+      expect(part.match(/--color-tone-\d+:/g)?.length).toBe(TONES);
+      expect(part.match(/--color-tone-\d+-wash:/g)?.length).toBe(TONES);
+    }
   });
 });
