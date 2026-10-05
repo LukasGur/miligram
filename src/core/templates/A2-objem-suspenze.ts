@@ -1,9 +1,9 @@
 import { doseVolume } from "../formulas";
 import { syringeFor } from "../devices";
-import { concentrationOf, pickProduct } from "../products";
+import { doseSourceFor, dosedProducts, pickDose, roundVolume } from "./ampouleDoses";
 import * as tolerances from "../tolerances";
 import type { Solution, Vars } from "../types";
-import { formula, frac, given, q, result, substitute, tidy } from "./helpers";
+import { formula, frac, given, q, result, substitute } from "./helpers";
 import { register, SUKL_DLP } from "./registry";
 
 /**
@@ -18,27 +18,28 @@ export const A2 = register({
   category: "zaklad",
   source: SUKL_DLP,
 
-  generate(rng, difficulty) {
-    const product = pickProduct(rng, {
-      kind: "oralLiquid",
-      strengthUnit: "mg",
-      minStrength: 1,
-    });
-    const concentration = concentrationOf(product);
+  sourceFor: doseSourceFor,
 
-    // Objem na jedno podání: L1 kulatý, dál po půl mililitru.
-    const volumeMl = difficulty === 1
-      ? rng.pick([2.5, 5, 10] as const)
-      : rng.step(1, 15, 0.5);
+  generate(rng, difficulty) {
+    /**
+     * Dávka pro dospělého ze SPC roztoku. Dřív se dávka dopočítala
+     * z náhodného objemu až 15 ml, a z kapek, kde je v mililitru 100 mg
+     * tramadolu nebo 500 mg metamizolu, vycházely gramy. Na první úrovni
+     * vychází objem na půl mililitru, výš na desetiny.
+     */
+    const { item, doseMg } = pickDose(rng, dosedProducts("oralLiquid"), (dose, candidate) =>
+      roundVolume(dose, candidate, difficulty === 1 ? 0.5 : 0.1) &&
+      Math.abs(dose - candidate.contentMg) > 1e-9,
+    );
 
     return {
-      code: product.code,
-      productName: product.name,
-      substance: product.substance,
-      strengthMg: product.strength,
-      referenceMl: product.volumeMl ?? 1,
-      concentrationMgPerMl: concentration,
-      doseMg: tidy(concentration * volumeMl),
+      code: item.product.code,
+      productName: item.product.name,
+      substance: item.product.substance,
+      strengthMg: item.contentMg,
+      referenceMl: item.contentMl,
+      concentrationMgPerMl: item.concentrationMgPerMl,
+      doseMg,
     } satisfies Vars;
   },
 

@@ -27,7 +27,9 @@ describe("dávky pro dospělé ze SPC", () => {
 
   it("každý záznam patří přípravku, který úlohy skutečně používají", () => {
     const codes = new Set(PRODUCTS.map((p) => p.code));
-    const usable = new Set([...dosedProducts("ampoule"), ...dosedProducts("oralLiquid")].map((d) => d.product.code));
+    const usable = new Set(
+      (["ampoule", "oralLiquid", "tablet", "powderVial"] as const).flatMap((kind) => dosedProducts(kind)).map((d) => d.product.code),
+    );
     for (const dose of ADULT_DOSES.values()) {
       expect(codes.has(dose.suklCode), `${dose.product} není ve fondu`).toBe(true);
       expect(usable.has(dose.suklCode), `${dose.product} se v úlohách nepoužije`).toBe(true);
@@ -36,7 +38,7 @@ describe("dávky pro dospělé ze SPC", () => {
 });
 
 describe("základní úlohy zadávají dávku ze SPC", () => {
-  for (const id of ["A3", "A4", "A6"]) {
+  for (const id of ["A1", "A2", "A3", "A4", "A5", "A6", "E1", "E5"]) {
     it(`${id}: ordinace je dávka ze SPC vylosovaného přípravku`, () => {
       for (const difficulty of DIFFICULTIES) {
         for (const seed of SEEDS) {
@@ -75,6 +77,43 @@ describe("základní úlohy zadávají dávku ze SPC", () => {
         expect(dose, `${seed} ${vars.productName}`).toBeDefined();
         expect(dose!.singleMg.some((d) => Math.abs(d - mg) < 1e-6), `${seed} ${vars.productName} ${mg} mg`).toBe(true);
       }
+    }
+  });
+});
+
+describe("tablety, lahvičky a kúry podle SPC", () => {
+  it("A7: jednotlivá dávka, četnost i délka léčby jsou ze SPC", () => {
+    for (const difficulty of DIFFICULTIES) {
+      for (const seed of SEEDS) {
+        const { vars } = buildExercise("A7", seed, difficulty);
+        const dose = adultDoseFor(String(vars.code))!;
+        const label = `A7/${difficulty}/${seed} ${vars.productName}`;
+        expect(dose.singleMg, label).toContain(Number(vars.perDose) * Number(vars.strengthMg));
+        expect(dose.timesPerDay, label).toContain(Number(vars.timesPerDay));
+        const course = dose.course === "longTerm" ? { min: 28, max: 90 } : dose.course!;
+        expect(Number(vars.days), label).toBeGreaterThanOrEqual(course.min);
+        expect(Number(vars.days), label).toBeLessThanOrEqual(course.max);
+      }
+    }
+  });
+
+  it("půl tablety jen tam, kde ji SPC dovoluje dělit", () => {
+    for (const id of ["A1", "A5", "A7"]) {
+      for (const difficulty of DIFFICULTIES) {
+        for (const seed of SEEDS) {
+          const { vars, solution } = buildExercise(id, seed, difficulty);
+          const count = id === "A7" ? Number(vars.perDose) : solution.value;
+          if (Number.isInteger(count)) continue;
+          expect(adultDoseFor(String(vars.code))!.divisibleQuote, `${id}/${seed} ${vars.productName}`).toBeDefined();
+        }
+      }
+    }
+  });
+
+  it("E1 rozpouští v objemu z bodu 6.6", () => {
+    for (const seed of SEEDS) {
+      const { vars } = buildExercise("E1", seed, 2);
+      expect(Number(vars.diluentMl)).toBe(adultDoseFor(String(vars.code))!.reconstitution!.diluentMl);
     }
   });
 });

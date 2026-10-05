@@ -1,12 +1,11 @@
 import { unitsForDose } from "../formulas";
-import { pickProduct } from "../products";
+import { doseSourceFor, dosedProducts, pickDose, tabletCount } from "./ampouleDoses";
 import * as tolerances from "../tolerances";
 import type { Solution, Vars } from "../types";
 import { formula, frac, given, intermediate, q, result, substitute } from "./helpers";
 import { register, SUKL_DLP } from "./registry";
 
 /** Dělitelnost, kterou snese běžná tableta s půlicí rýhou. */
-const FRACTIONS = [0.5, 1, 1.5, 2, 2.5, 3] as const;
 
 /**
  * A5 — dělení tablety u dávky v mikrogramech.
@@ -20,23 +19,24 @@ export const A5 = register({
   category: "zaklad",
   source: SUKL_DLP,
 
+  sourceFor: doseSourceFor,
+
   generate(rng, difficulty) {
-    const product = pickProduct(rng, {
-      kind: "tablet",
-      strengthUnit: "mg",
-      minStrength: 0.05,
-      maxStrength: 5,
+    // Dávka ze SPC do 3 mg, kde zápis v mikrogramech dává smysl
+    // (digoxin 125 µg); 10 000 µg by nikdo nenapsal. Půlka jen u tablety,
+    // kterou lze podle SPC dělit.
+    const { item, doseMg } = pickDose(rng, dosedProducts("tablet"), (dose, candidate) => {
+      const count = tabletCount(dose, candidate);
+      return dose <= 3 && count !== null && (difficulty !== 1 || Number.isInteger(count));
     });
-    const fraction = difficulty === 1 ? rng.pick([1, 2] as const) : rng.pick(FRACTIONS);
-    const doseMg = product.strength * fraction;
 
     return {
-      code: product.code,
-      productName: product.name,
-      substance: product.substance,
-      strengthMg: product.strength,
+      code: item.product.code,
+      productName: item.product.name,
+      substance: item.product.substance,
+      strengthMg: item.contentMg,
       doseMg,
-      doseUg: doseMg * 1000,
+      doseUg: Number((doseMg * 1000).toFixed(3)),
     } satisfies Vars;
   },
 

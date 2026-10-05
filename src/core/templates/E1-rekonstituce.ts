@@ -1,5 +1,5 @@
 import { doseVolume, reconstitutedConcentration } from "../formulas";
-import { pickProduct } from "../products";
+import { doseSourceFor, dosedProducts, lessThanContent, pickDose } from "./ampouleDoses";
 import { syringeFor } from "../devices";
 import * as tolerances from "../tolerances";
 import type { Solution, Vars } from "../types";
@@ -7,7 +7,6 @@ import { frac, step, tex, unit } from "./helpers";
 import { ISO_7886, register, SUKL_DLP } from "./registry";
 
 /** Objemy rozpouštědla, které SPC lyofilizátů uvádějí nejčastěji. */
-const DILUENT_VOLUMES_ML = [5, 10, 20] as const;
 
 /**
  * E1 — rekonstituce lyofilizátu.
@@ -21,29 +20,24 @@ export const E1 = register({
   category: "rekonstituce",
   source: [SUKL_DLP, ISO_7886],
 
-  generate(rng, difficulty) {
-    const product = pickProduct(rng, {
-      kind: "powderVial",
-      strengthUnit: "mg",
-      minStrength: 100,
-      maxStrength: 2000,
-    });
-    const diluentMl = rng.pick(DILUENT_VOLUMES_ML);
+  sourceFor: doseSourceFor,
 
+  generate(rng, difficulty) {
     /**
-     * Celá lahvička se nepodává nikdy: rozpuštěný objem je v zadání, takže
-     * by odpověď byla opsané číslo. Na první úrovni proto aspoň polovina
-     * nebo čtvrtina — dělení hezkým číslem, ale pořád dělení.
+     * Dávka i objem rozpouštědla ze SPC. Dřív se rozpouštědlo losovalo
+     * z 5, 10 a 20 ml a dávka byla zlomek lahvičky — 188 mg cefuroximu
+     * nikdo neordinuje. Teď jen lahvičky, u kterých bod 6.6 uvádí objem
+     * i výslednou koncentraci, a dávka menší než obsah lahvičky.
      */
-    const fraction = difficulty === 1 ? rng.pick([0.25, 0.5, 0.75]) : rng.step(0.25, 0.9, 0.05);
-    const doseMg = Number((product.strength * fraction).toPrecision(3));
+    const candidates = dosedProducts("powderVial").filter((candidate) => candidate.dose.reconstitution);
+    const { item, doseMg } = pickDose(rng, candidates, lessThanContent);
 
     return {
-      code: product.code,
-      productName: product.name,
-      substance: product.substance,
-      vialMg: product.strength,
-      diluentMl,
+      code: item.product.code,
+      productName: item.product.name,
+      substance: item.product.substance,
+      vialMg: item.contentMg,
+      diluentMl: item.dose.reconstitution?.diluentMl ?? 10,
       doseMg,
       doseUnit: difficulty === 3 ? "g" : "mg",
       doseShown: difficulty === 3 ? doseMg / 1000 : doseMg,

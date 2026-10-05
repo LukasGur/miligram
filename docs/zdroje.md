@@ -96,6 +96,27 @@ těla (cytostatika, aminoglykosidy, myorelaxancia), Paracetamol Kabi 10 ml
 (ampule je podle SPC pro děti do 33 kg), Rivotril 1 mg/ml (ředí se
 rozpouštědlem) a Solu-Medrol (lyofilizát, objem z DLP nevyčteme).
 
+**5. 10. 2026** přibylo 52 přípravků (soubory SPC a citace jsou v kódu):
+40 tablet a tobolek, 2 perorální roztoky a 10 prášků k rekonstituci.
+U tablet je navíc četnost podání a délka léčby z téže citace (úloha
+na počet balení), a kde to bod 3 SPC výslovně připouští, i to, že tabletu
+lze rozdělit na stejné dávky. Půlicí rýha „pro snazší polykání“ nestačí.
+U prášků je dávka z bodu 4.2 a tam, kde bod 6.6 uvádí objem i výslednou
+koncentraci, i objem rozpouštědla.
+
+Proč: počet tablet, objem perorálního roztoku, počet lahviček a balení
+na kúru se dřív losovaly jako násobky síly. Vycházelo 180 mg gliklazidu
+(nejvýš 120 mg denně), 2× 300 mg klopidogrelu třikrát denně po 60 dní
+nebo 7,5 g metamizolu z kapek. Teď A1, A2, A5, A7, E1 a E5 zadávají
+jen dávky z tabulky.
+
+Ředění (D1, D2, D4, D6) a infuze (F1–F6) dávku netvrdí, a tak tabulku
+nepotřebují. Drží se toho, co je v balení podle DLP: natahuje se nejvýš
+obsah balení, pacient dostane nejvýš obsah vaku, rychlosti se počítají
+jen u nosných roztoků. Perfuzor (G1–G6) má dávku jen z rozmezí látky,
+o kterou jde — dopamin podle SPC Tensaminu (SPC163908), noradrenalin
+podle SPC191989.
+
 Fond také vylučuje přípravky jen s cestou podání IPT, ITH nebo ICM
 a rozlišuje typ obalu (lahvička, pero, zásobní vložka, předplněná
 stříkačka) — viz `scripts/sukl/README.md`.
@@ -131,6 +152,7 @@ a co se z nich bere. Sloupec „SPC“ odkazuje na soubor v archivu SÚKL
 | SPC236508 | Digoxin Léčiva 0,125 mg | 0083318 | 10–25 µg/kg/den udržovací, 10–50 µg/kg nárazová | `products/dosing.ts` |
 | SPC191989 | Noradrenalin Léčiva 1 mg/ml | 0000536 | udržovací dávka 2–12 µg/min | `products/dosing.ts` |
 | SPC219162 | Dobutamin hameln 5 mg/ml | 0252131 | 2–20 µg/kg/min | `products/dosing.ts` |
+| SPC163908 | Tensamin 40 mg/ml | 0004380 | 2–5 µg/kg/min „velmi malé dávky“, do 50 µg/kg/min β-mimetický účinek; úlohy berou 2–20 | `products/dosing.ts`, `templates/perfusor.ts` |
 | SPC200355 | Paclitaxel Ebewe 6 mg/ml | 0104239 | 135–175 mg/m², koncentrace 6 mg/ml | `products/dosing.ts` |
 | SPC212755 | Carboplatin Accord 10 mg/ml | 0241270 | 200–400 mg/m² podle clearance; **Calvertův vzorec a cílové AUC**; snížení úvodní dávky o 20–25 % | `products/dosing.ts`, `renal.ts`, `oncology.ts` |
 | SPC202208 | Doxorubicin Ebewe 2 mg/ml | 0107681 | 60–75 mg/m² à 3 týdny; **kumulativní limit 550, resp. 400 mg/m²** | `products/dosing.ts` |
@@ -142,6 +164,7 @@ a co se z nich bere. Sloupec „SPC“ odkazuje na soubor v archivu SÚKL
 | SPC125966 | Heparin Léčiva 5000 IU/ml | 0091915 | 5 000 IU v 1 ml | fond, `templates/H3` |
 | EMA EPAR | Actrapid | 0026481, 0026483 | registrace v koncentraci 40 i 100 IU/ml | fond, `templates/I2` |
 | 45 × SPC, bod 4.2 | ampule a perorální roztoky ve fondu | viz soubor | obvyklé jednotlivé dávky pro dospělého — ordinace v A3, A4, A6, A8 | `products/adultDoses.ts` |
+| 52 × SPC, body 3, 4.2 a 6.6 | tablety, perorální roztoky, prášky ve fondu | viz soubor | dávka, četnost, délka léčby, dělitelnost, rozpouštědlo — A1, A2, A5, A7, E1, E5 | `products/adultDoses.ts` |
 | ISO 7886-1 | — | — | tolerance objemu odměřeného stříkačkou | `devices.ts` |
 | IEC 60601-2-24 | — | — | přesnost průtoku pumpy ±2 % | `devices.ts` |
 | B. Braun IV109 3/20 | — | — | kapkové faktory 10, 15, 20 a 60 gtt/ml | `devices.ts` |

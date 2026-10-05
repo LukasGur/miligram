@@ -1,7 +1,7 @@
-import { pickProduct } from "../products";
+import { doseSourceFor, dosedProducts, moreThanContent, pickDose } from "./ampouleDoses";
 import * as tolerances from "../tolerances";
 import type { Solution, Vars } from "../types";
-import { formula, frac, given, intermediate, q, result, substitute, tidy } from "./helpers";
+import { formula, frac, given, intermediate, q, result, substitute } from "./helpers";
 import { register, SUKL_DLP } from "./registry";
 
 /**
@@ -15,26 +15,28 @@ export const E5 = register({
   category: "rekonstituce",
   source: SUKL_DLP,
 
+  sourceFor: doseSourceFor,
+
   generate(rng, difficulty) {
-    const product = pickProduct(rng, {
-      kind: "powderVial",
-      strengthUnit: "mg",
-      minStrength: 100,
-      maxStrength: 2000,
+    /**
+     * Dávka ze SPC, větší než obsah jedné lahvičky. Dřív se brala jako
+     * náhodný násobek obsahu (2,9 g cefotaximu). Na první úrovni vyjde
+     * celý počet lahviček, výš se zaokrouhluje nahoru.
+     */
+    const { item, doseMg } = pickDose(rng, dosedProducts("powderVial"), (dose, candidate) => {
+      if (!moreThanContent(dose, candidate)) return false;
+      const vials = dose / candidate.contentMg;
+      return difficulty !== 1 || Math.abs(vials - Math.round(vials)) < 1e-9;
     });
 
-    const multiple = difficulty === 1
-      ? rng.pick([2, 3, 4] as const)
-      : rng.step(1.1, 4.9, 0.1);
-
     return {
-      code: product.code,
-      productName: product.name,
-      substance: product.substance,
-      vialMg: product.strength,
-      doseMg: tidy(product.strength * multiple),
+      code: item.product.code,
+      productName: item.product.name,
+      substance: item.product.substance,
+      vialMg: item.contentMg,
+      doseMg,
       doseUnit: difficulty === 3 ? "g" : "mg",
-      doseShown: difficulty === 3 ? tidy(product.strength * multiple) / 1000 : tidy(product.strength * multiple),
+      doseShown: difficulty === 3 ? doseMg / 1000 : doseMg,
     } satisfies Vars;
   },
 

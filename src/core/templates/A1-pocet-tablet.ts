@@ -1,19 +1,9 @@
 import { unitsForDose } from "../formulas";
-import { pickProduct } from "../products";
+import { doseSourceFor, dosedProducts, pickDose, tabletCount } from "./ampouleDoses";
 import * as tolerances from "../tolerances";
 import type { Solution, Vars } from "../types";
 import { formula, frac, given, q, result, substitute, tex, unit } from "./helpers";
 import { register, SUKL_DLP } from "./registry";
-
-/**
- * Násobky síly tablety, které dávají dělitelnou dávku. Jednička mezi nimi
- * není: „tablety po 550 mg, ordinace 550 mg“ má odpověď přímo v zadání.
- */
-const MULTIPLES = {
-  1: [2, 3] as const,
-  2: [0.5, 1.5, 2, 3] as const,
-  3: [0.5, 1.5, 2, 3] as const,
-};
 
 /**
  * A1 — počet tablet z předepsané dávky.
@@ -26,21 +16,28 @@ export const A1 = register({
   category: "zaklad",
   source: SUKL_DLP,
 
+  sourceFor: doseSourceFor,
+
   generate(rng, difficulty) {
-    const product = pickProduct(rng, {
-      kind: "tablet",
-      strengthUnit: "mg",
-      minStrength: 1,
-      maxStrength: 1000,
+    /**
+     * Ordinace je dávka ze SPC vylosované tablety, ne násobek její síly:
+     * dřív vycházelo třeba 180 mg gliklazidu (nejvýš 120 mg denně) nebo
+     * 1,5 tablety, kterou podle SPC rozdělit nejde. Jedna celá tableta
+     * se nezadává — odpověď by stála v zadání. Na třetí úrovni je dávka
+     * v gramech, a tak jen od 100 mg výš.
+     */
+    const { item, doseMg } = pickDose(rng, dosedProducts("tablet"), (dose, candidate) => {
+      const count = tabletCount(dose, candidate);
+      if (count === null || count === 1) return false;
+      if (difficulty === 1 && !Number.isInteger(count)) return false;
+      return difficulty !== 3 || dose >= 100;
     });
-    const multiple = rng.pick(MULTIPLES[difficulty]);
-    const doseMg = product.strength * multiple;
 
     return {
-      code: product.code,
-      productName: product.name,
-      substance: product.substance,
-      strengthMg: product.strength,
+      code: item.product.code,
+      productName: item.product.name,
+      substance: item.product.substance,
+      strengthMg: item.contentMg,
       doseMg,
       doseUnit: difficulty === 3 ? "g" : "mg",
       doseShown: difficulty === 3 ? doseMg / 1000 : doseMg,

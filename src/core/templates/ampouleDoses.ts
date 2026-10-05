@@ -5,25 +5,34 @@ import type { Source, Vars } from "../types";
 
 /**
  * Přípravek s ověřenou dávkou pro dospělého — podklad pro základní úlohy
- * (A3, A4, A6, A8). Ordinace v zadání se nelosuje jako násobek balení,
+ * (A1 až A8, E1, E5). Ordinace v zadání se nelosuje jako násobek balení,
  * ale bere se z dávek, které uvádí SPC.
  */
 export type DosedProduct = {
   product: Product;
   dose: AdultDose;
-  /** Obsah jedné ampule v mg. U perorálních roztoků obsah referenčního objemu. */
+  /**
+   * Obsah jedné ampule v mg. U perorálních roztoků obsah referenčního
+   * objemu, u tablety a lahvičky s práškem obsah jednoho kusu.
+   */
   contentMg: number;
-  /** Objem jedné ampule v ml. U perorálních roztoků referenční objem. */
+  /** Objem jedné ampule v ml. U perorálních roztoků referenční objem, u tablety a prášku 0. */
   contentMl: number;
+  /** U tablety a prášku 0 — koncentrace vzniká až rozpuštěním. */
   concentrationMgPerMl: number;
 };
 
 const EPS = 1e-9;
 
-export function dosedProducts(kind: Extract<ProductKind, "ampoule" | "oralLiquid">): DosedProduct[] {
+export function dosedProducts(
+  kind: Extract<ProductKind, "ampoule" | "oralLiquid" | "tablet" | "powderVial">,
+): DosedProduct[] {
   return selectProducts({ kind, strengthUnit: "mg" }).flatMap((product) => {
     const dose = adultDoseFor(product.code);
     if (!dose) return [];
+    if (kind === "tablet" || kind === "powderVial") {
+      return [{ product, dose, contentMg: product.strength, contentMl: 0, concentrationMgPerMl: 0 }];
+    }
     if (kind === "oralLiquid") {
       return [{
         product,
@@ -80,4 +89,17 @@ export function roundVolume(doseMg: number, item: DosedProduct, step = 0.1): boo
 export function doseSourceFor(vars: Vars): Source[] {
   const dose = adultDoseFor(String(vars.code));
   return dose ? [adultDoseSource(dose)] : [];
+}
+
+/**
+ * Počet tablet, který se dá podat: celé tablety, půlka jen u tablety,
+ * kterou podle SPC lze rozdělit na stejné dávky, a nejvýš čtyři kusy.
+ */
+export function tabletCount(doseMg: number, item: DosedProduct): number | null {
+  const count = doseMg / item.contentMg;
+  const halves = count * 2;
+  if (Math.abs(halves - Math.round(halves)) > 1e-6 || count > 4 + EPS) return null;
+  const whole = Math.abs(count - Math.round(count)) < 1e-6;
+  if (!whole && !item.dose.divisibleQuote) return null;
+  return Math.round(halves) / 2;
 }
