@@ -194,9 +194,9 @@ describe("C — dávkování podle povrchu těla", () => {
     expect(solution.value).toBeCloseTo(100, 6);
   });
 
-  it("C5: strop z protokolu se uplatní, když je pod spočítanou dávkou", () => {
-    expect(getTemplate("C5").solve({ perM2: 175, bsaM2: 2, capMg: 300 }, D).value).toBe(300);
-    expect(getTemplate("C5").solve({ perM2: 175, bsaM2: 2, capMg: 400 }, D).value).toBe(350);
+  it("C5: strop povrchu se uplatní jen u pacienta nad 2,0 m²", () => {
+    expect(getTemplate("C5").solve({ perM2: 175, bsaM2: 2.3, capBsaM2: 2 }, D).value).toBe(350);
+    expect(getTemplate("C5").solve({ perM2: 175, bsaM2: 1.8, capBsaM2: 2 }, D).value).toBe(315);
   });
 
   it("C1 dává povrch v rozsahu, který u lidí dává smysl", () => {

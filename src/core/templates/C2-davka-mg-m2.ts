@@ -25,7 +25,8 @@ export const C2 = register({
     const rule = dosingRule(ruleId);
     const range = rule.single!;
 
-    const bsaM2 = difficulty === 1 ? rng.step(1.6, 2, 0.1) : rng.step(1.2, 2.3, 0.01);
+    // Dospělý onkologický pacient, stejné pásmo jako C5.
+    const bsaM2 = difficulty === 1 ? rng.step(1.6, 2, 0.1) : rng.step(1.4, 2.3, 0.01);
     const perM2 = difficulty === 1
       ? rng.pick([range.min, range.max])
       : rng.step(range.min, range.max, 5);

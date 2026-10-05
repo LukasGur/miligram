@@ -1,4 +1,4 @@
-import { concentrationOf, pickProduct } from "../products";
+import { concentrationOf, insulinMaxDoseIU, pickProduct } from "../products";
 import { syringeFor } from "../devices";
 import * as tolerances from "../tolerances";
 import type { Solution, Vars } from "../types";
@@ -6,9 +6,6 @@ import { formula, frac, given, q, result, substitute } from "./helpers";
 import { ISO_7886, register, SUKL_DLP } from "./registry";
 
 /** Přípravky značené v mezinárodních jednotkách, se kterými se počítá u lůžka. */
-/** Nejvíc jednotek inzulinu na jedno natažení, jako u I1 a I2. */
-const INSULIN_MAX_IU = 60;
-
 const ATC = ["A10AB", "A10AC", "A10AD", "A10AE", "B01AB01"] as const;
 
 /**
@@ -36,10 +33,9 @@ export const H3 = register({
     // Objem se losuje první, aby ordinace vyšla na celé jednotky.
     // Přesně 1 ml se vynechává: ordinace by se rovnala síle v zadání
     // a odpověď by šla opsat bez počítání.
-    // Inzulin nad šedesát jednotek naráz z lahvičky nikdo nenatahuje;
-    // drží se stejného stropu jako úlohy na inzulin (I1, I2).
+    // Inzulin se drží stejného stropu jedné dávky jako I1 a I2.
     const insulin = product.atc.startsWith("A10A");
-    const maxMl = Math.min(2, product.packUnitVolumeMl ?? 2, insulin ? INSULIN_MAX_IU / perMl : Infinity);
+    const maxMl = Math.min(2, product.packUnitVolumeMl ?? 2, insulin ? insulinMaxDoseIU(product) / perMl : Infinity);
     let volumeMl = 1;
     while (volumeMl === 1) {
       volumeMl = difficulty === 1

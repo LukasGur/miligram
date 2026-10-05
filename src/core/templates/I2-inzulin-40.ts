@@ -1,4 +1,4 @@
-import { concentrationOf, pickProduct } from "../products";
+import { concentrationOf, insulinMaxDoseIU, pickProduct } from "../products";
 import * as tolerances from "../tolerances";
 import type { Solution, Vars } from "../types";
 import { formula, frac, given, intermediate, q, result, substitute } from "./helpers";
@@ -29,11 +29,13 @@ export const I2 = register({
       atcPrefixes: ["A10A"],
     });
 
+    // Strop jedné dávky podle typu inzulinu: rychlý 30 IU, ostatní 60 IU.
+    const maxIU = insulinMaxDoseIU(product);
     const doseIU = difficulty === 1
-      ? rng.step(4, 40, 4)
+      ? rng.step(4, Math.min(40, maxIU), 4)
       : difficulty === 2
-        ? rng.step(6, 48, 2)
-        : rng.step(7, 60, 1);
+        ? rng.step(6, Math.min(48, maxIU), 2)
+        : rng.step(7, maxIU, 1);
 
     return {
       code: product.code,

@@ -13,6 +13,9 @@ import type { Solution, Vars } from "../types";
 import { formula, frac, given, intermediate, q, result, substitute, tex } from "./helpers";
 import { ISO_7886, register } from "./registry";
 
+/** Nejvyšší GFR, se kterým se v praxi dosazuje do Calvertova vzorce. */
+const MAX_GFR_ML_PER_MIN = 125;
+
 /**
  * L2 — od Calverta k objemu koncentrátu.
  *
@@ -33,10 +36,18 @@ export const L2 = register({
     const female = rng.int(0, 1);
     const ageYears = rng.step(38, 76, 1);
     const weightKg = rng.step(52, 96, 1);
-    const creatinineUmolPerL = rng.step(65, 135, 5);
+    let creatinineUmolPerL = rng.step(65, 135, 5);
+
+    /**
+     * Mladý těžší pacient s nízkým kreatininem by měl clearance kolem
+     * 150 ml/min a karboplatinu přes 1,2 g. SPC strop GFR neuvádí, praxe
+     * dosazuje nejvýš 125 ml/min; zadání se proto do té oblasti nedostane.
+     */
+    const clearance = () => creatinineClearance({ ageYears, weightKg, creatinineUmolPerL, female: female === 1 });
+    while (fromCreatinine && clearance() > MAX_GFR_ML_PER_MIN) creatinineUmolPerL += 5;
 
     const gfrMlPerMin = fromCreatinine
-      ? creatinineClearance({ ageYears, weightKg, creatinineUmolPerL, female: female === 1 })
+      ? clearance()
       : difficulty === 1
         ? rng.step(60, 100, 10)
         : rng.step(45, 110, 5);

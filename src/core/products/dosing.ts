@@ -45,6 +45,8 @@ export type DosingRule = {
   /**
    * Nejmenší dítě, pro které SPC dávku v téhle lékové formě uvádí.
    * Tablety kojenci nespolknou, takže pod touhle hmotností se nelosuje.
+   * U citace, která platí až od určitého věku, je to hmotnost dítěte,
+   * které tím věkem s jistotou prošlo.
    */
   minWeightKg?: number;
   /**
@@ -202,6 +204,11 @@ export const DOSING_RULES = {
     spc: "SPC212156.pdf",
     single: { min: 50, max: 80, unit: "mg/kg" },
     dosesPerDay: [1],
+    // Citace platí „od 15 dnů do 12 let“. Novorozenec do 14 dnů má
+    // 20–50 mg/kg a nejvýš 50 mg/kg; dítě s 3,5 kg by lékař četl jako
+    // novorozence a 80 mg/kg jako předávkování. 4,5 kg je kojenec kolem
+    // měsíce, mimo novorozence i mimo kontraindikaci s vápníkem do 28 dnů.
+    minWeightKg: 4.5,
     quote:
       "50–80 mg/kg jednou denně. 50 mg/kg nebo vyšší se u kojenců a dětí " +
       "ve věku do 12 let podávají infuzí.",

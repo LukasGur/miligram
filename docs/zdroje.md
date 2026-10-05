@@ -156,9 +156,12 @@ a jejich zdroje:
   SPC224021), tabulka dávkování začíná „do 6 let, 9–12 kg, 125 mg“.
 - **Enoxaparin (H4)** — dávka z rozmezí SPC (profylaxe 20–40 mg, léčba
   1–1,5 mg/kg), balení s větším obsahem než dávka.
-- **Ceftriaxon u dětí (B1)** — SPC212156: pod 50 kg 50–80 mg/kg jednou
+- **Ceftriaxon u dětí (B1, K4)** — SPC212156: pod 50 kg 50–80 mg/kg jednou
   denně, strop 4 g jen u vyšších pásem. Dávka nad 2 g u dítěte kolem
-  30 kg je tedy podle SPC, ne chyba.
+  30 kg je tedy podle SPC, ne chyba. Tabulka platí „od 15 dnů do 12 let“;
+  novorozenec do 14 dnů má 20–50 mg/kg a nejvýš 50 mg/kg. Dítě se proto
+  losuje od 4,5 kg (kojenec kolem měsíce), aby ho lékař nečetl jako
+  novorozence. Ověřeno 5. 10. 2026.
 - **Ředění (D1, D4, D6)** — koncentrace, objem a dávka z bodu 4.2 nebo
   6.6 SPC (tolerance 2 %, SPC zaokrouhluje: ampule amiodaronu v 250 ml
   je 0,59, SPC píše 0,6). Návrhová rozhodnutí: dávka v mg/m² pro povrch
@@ -180,6 +183,24 @@ a jejich zdroje:
 - **Pacient (C1, C3, C4, J3, L3)** — hmotnost k výšce v pásmu BMI 18–38,
   pod 150 cm 14–22. Návrhové rozhodnutí, ne údaj ze zdroje.
 - **Mikrokapky (F3)** — do 100 ml/h. Návrhové rozhodnutí.
+- **Rychlost z kapek (F5)** — nejvýš 500 ml/h jako F1 a F2. Návrhové
+  rozhodnutí.
+- **Inzulin naráz z lahvičky (H3, I1, I2)** — rychlý (ATC A10AB) nejvýš
+  30 IU, bazální a směsný nejvýš 60 IU. SPC uvádí jen denní potřebu
+  0,3–1,0 IU/kg, strop jedné dávky nemá. Návrhové rozhodnutí.
+- **Meropenem (E3)** — konečná koncentrace z rozmezí SPC 1–20 mg/ml, ale
+  vak nejvýš 250 ml: spodek rozmezí by dal 1 g v litru na infuzi
+  15–30 minut. Návrhové rozhodnutí.
+- **Povrch těla (C2, C5)** — dospělý onkologický pacient 1,4–2,5 m².
+  C5 stropuje povrch na 2,0 m² („pracoviště počítá nejvýš z povrchu
+  2,0 m²“), takže strop se uplatní jen u velkého pacienta; SPC strop
+  neuvádí, je součástí zadání. Dřív se losoval strop v mg kolem
+  spočítané dávky, což byla u malého pacienta skrytá redukce.
+- **Karboplatina (L1, L2, J3)** — nejvýš 1050 mg, AUC 7 × (125 + 25).
+  SPC strop GFR neuvádí; v L2 se kreatinin losuje tak, aby clearance
+  nepřesáhla 125 ml/min (dřív vycházelo až 157 ml/min a 1274 mg).
+- Meze hlídá test `realisticke-meze.test.ts` spolu s testy v
+  templates-B, templates-D, templates-EFG, templates-K a adultDoses.
 
 ## Co se nepoužívá
 

@@ -6,6 +6,9 @@ import { formula, frac, given, q, result, substitute } from "./helpers";
 import { register } from "./registry";
 import { packageLabel } from "../products/label";
 
+/** Největší vak, do kterého se dávka meropenemu ředí. */
+const MAX_VOLUME_ML = 250;
+
 /**
  * E3 — objem nosného roztoku pro zadanou konečnou koncentraci.
  *
@@ -24,9 +27,15 @@ export const E3 = register({
 
     // Dávka, jakou SPC meropenemu uvádí: 500 mg nebo 1 g.
     const doseMg = rng.pick([500, 1000] as const);
+    /**
+     * Spodek rozmezí by dal 1 g v litru, a to na infuzi 15–30 minut nikdo
+     * nepodá. Koncentrace se proto losuje tak, aby vak měl nejvýš 250 ml
+     * (návrhové rozhodnutí, docs/zdroje.md, oddíl 8).
+     */
+    const minTarget = Math.max(range.min, Math.ceil((doseMg / MAX_VOLUME_ML) * 2) / 2);
     const targetMgPerMl = difficulty === 1
       ? rng.pick([5, 10, 20] as const)
-      : rng.step(range.min, range.max, 0.5);
+      : rng.step(minTarget, range.max, 0.5);
 
     return {
       productName: packageLabel(rule.product),

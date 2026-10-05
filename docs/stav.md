@@ -406,6 +406,15 @@ extrémy odpovídají praxi (noradrenalin 0,02 µg/kg/min, adrenalin
 0,025 mg novorozenci, ceftriaxon 3,4 g u 45 kg dítěte podle SPC).
 Meze hlídají testy v templates-B a templates-D.
 
+**Trvalé testy mezí pro ostatní šablony (5. 10. 2026)** —
+`realisticke-meze.test.ts` hlídá C, E3, F5, G, H3, I, L a ceftriaxon
+v B1 a K4; ostatní šablony meze měly už dřív (A, E1, E5, F, H4, K).
+Opraveno: ceftriaxon u dítěte až od 4,5 kg (50–80 mg/kg platí od 15. dne),
+inzulin naráz nejvýš 30 IU rychlý a 60 IU ostatní (dřív až 96 IU),
+meropenem do vaku nejvýš 250 ml (dřív až litr), C5 stropuje povrch
+na 2,0 m² místo miligramů, karboplatina v L2 nejvýš 1050 mg, F5 do
+500 ml/h, povrch v C2 od 1,4 m². Podrobnosti v zdroje.md, oddíl 8.
+
 ## Co dělat dál
 
 **Rozpracovaný plán: [plan.md](plan.md)** — účty a pastilky na serveru

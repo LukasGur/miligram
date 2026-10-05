@@ -18,9 +18,11 @@ export const F5 = register({
 
   generate(rng, difficulty) {
     const dropFactor = difficulty === 1 ? rng.pick([20, 60] as const) : rng.pick(DROP_FACTORS);
+    // Rychlost nejvýš 500 ml/h jako v F1 a F2: u setu 10 kapek/ml by
+    // 90 kapek za minutu dalo 540 ml/h.
     const dropsPerMin = difficulty === 1
       ? rng.pick([20, 30, 40, 60] as const)
-      : rng.int(8, 90);
+      : rng.int(8, Math.min(90, Math.floor((500 * dropFactor) / 60)));
 
     return { dropFactor, dropsPerMin } satisfies Vars;
   },

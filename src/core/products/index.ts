@@ -98,3 +98,15 @@ export function productByCode(code: string): Product {
   if (!product) throw new Error(`Přípravek s kódem SÚKL ${code} není ve fondu.`);
   return product;
 }
+
+/**
+ * Nejvíc jednotek inzulinu na jedno natažení z lahvičky.
+ *
+ * SPC uvádí jen denní potřebu 0,3–1,0 IU/kg, strop jedné dávky nemá.
+ * Meze jsou proto návrhové rozhodnutí (docs/zdroje.md, oddíl 8): rychlý
+ * inzulin k jídlu (ATC A10AB) nad 30 IU naráz lékař přečte jako chybu,
+ * bazální a směsný se dávkuje jednou až dvakrát denně a unese 60 IU.
+ */
+export function insulinMaxDoseIU(product: Product): number {
+  return product.atc.startsWith("A10AB") ? 30 : 60;
+}

@@ -16,7 +16,8 @@ const RULES: readonly { id: DosingRuleId; minKg: number; maxKg: number; stepKg: 
   // PARALEN 125 mg jsou tablety; tabulka v SPC začíná na 9 kg.
   { id: "paracetamolDeti", minKg: 9, maxKg: 12, stepKg: 0.5 },
   { id: "ibuprofenBaby", minKg: 5, maxKg: 12, stepKg: 0.5 },
-  { id: "ceftriaxonDeti", minKg: 3.5, maxKg: 12, stepKg: 0.5 },
+  // Dávka 50–80 mg/kg platí až od 15. dne věku (minWeightKg v pravidle).
+  { id: "ceftriaxonDeti", minKg: 4.5, maxKg: 12, stepKg: 0.5 },
 ];
 
 /**
