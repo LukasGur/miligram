@@ -3,7 +3,7 @@ import { syringeFor } from "../devices";
 import { dosingRule, dosingSource, liquidPresentationOf, type DosingRuleId } from "../products/dosing";
 import * as tolerances from "../tolerances";
 import type { Solution, Vars } from "../types";
-import { formula, frac, given, intermediate, q, result, substitute } from "./helpers";
+import { formula, frac, given, intermediate, q, result, substitute, weightForHeight } from "./helpers";
 import { ISO_7886, register, SUKL_DLP } from "./registry";
 
 const RULES: readonly DosingRuleId[] = ["paklitaxel", "karboplatina"];
@@ -26,7 +26,7 @@ export const C3 = register({
     const presentation = liquidPresentationOf(ruleId);
 
     const heightCm = difficulty === 1 ? rng.step(160, 190, 10) : rng.step(145, 195, 1);
-    const weightKg = difficulty === 1 ? rng.step(60, 90, 10) : rng.step(45, 110, 1);
+    const weightKg = weightForHeight(rng, heightCm, difficulty === 1 ? 10 : 1, { minKg: 45, maxKg: 110 });
     const perM2 = difficulty === 1 ? range.max : rng.step(range.min, range.max, 5);
 
     return {

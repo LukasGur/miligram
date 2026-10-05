@@ -180,3 +180,37 @@ describe("G2 — perfuzor v µg/kg/min", () => {
     }
   });
 });
+
+describe("pacient má výšku a hmotnost, jaké se potkají", () => {
+  const SEEDS_BMI = Array.from({ length: 60 }, (_, i) => `bmi${i}`);
+  const bmi = (heightCm: number, weightKg: number) => weightKg / (heightCm / 100) ** 2;
+
+  it("BMI v C1, C3, J3 a L3 leží v pásmu pro danou výšku", () => {
+    for (const id of ["C1", "C3", "J3", "L3"]) {
+      for (const difficulty of DIFFICULTIES) {
+        for (const seed of SEEDS_BMI) {
+          const { vars } = buildExercise(id, seed, difficulty);
+          const height = Number(vars.heightCm);
+          const value = bmi(height, Number(vars.weightKg));
+          const [low, high] = height < 150 ? [14, 22] : [18, 38];
+          expect(value, `${id}/${difficulty}/${seed}: ${height} cm, ${vars.weightKg} kg`).toBeGreaterThanOrEqual(low - 0.5);
+          expect(value, `${id}/${difficulty}/${seed}: ${height} cm, ${vars.weightKg} kg`).toBeLessThanOrEqual(high + 0.5);
+        }
+      }
+    }
+  });
+
+  it("C4: druhý pacient má větší povrch těla a oba rozumné BMI", () => {
+    for (const difficulty of DIFFICULTIES) {
+      for (const seed of SEEDS_BMI) {
+        const { vars } = buildExercise("C4", seed, difficulty);
+        const [hA, wA, hB, wB] = [vars.heightA, vars.weightA, vars.heightB, vars.weightB].map(Number);
+        expect(hB * wB, `${difficulty}/${seed}`).toBeGreaterThan(hA * wA);
+        for (const [h, w] of [[hA, wA], [hB, wB]]) {
+          expect(bmi(h, w), `${difficulty}/${seed}`).toBeGreaterThanOrEqual(17.5);
+          expect(bmi(h, w), `${difficulty}/${seed}`).toBeLessThanOrEqual(38.5);
+        }
+      }
+    }
+  });
+});

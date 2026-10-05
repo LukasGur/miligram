@@ -1,3 +1,4 @@
+import type { Rng } from "../random";
 import type { SolutionStep } from "../types";
 
 /**
@@ -107,4 +108,39 @@ export function result(value: number, symbol: string, decimals = 2): SolutionSte
 /** Zaokrouhlí na tři platné číslice, aby zadání nemělo nesmyslný ocas. */
 export function tidy(value: number): number {
   return Number(value.toPrecision(3));
+}
+
+/* ----------------------------------------------------------------------
+   Pacient
+
+   Výška a hmotnost se nelosují nezávisle: vycházel by člověk 191 cm
+   a 46 kg (BMI 12,6) nebo 136 cm a 99 kg. Hmotnost se bere k výšce
+   v pásmu BMI, které se na oddělení skutečně potká — u dospělých
+   od podváhy po těžkou obezitu, u menších dětí jejich užší pásmo.
+   ---------------------------------------------------------------------- */
+
+/** Pásmo BMI podle výšky. Pod 150 cm jde v zadáních o děti. */
+export function bmiBand(heightCm: number): readonly [number, number] {
+  return heightCm < 150 ? [14, 22] : [18, 38];
+}
+
+/**
+ * Hmotnost k dané výšce. `minKg`/`maxKg` pásmo dál zúží, pokud to jde;
+ * kdyby se s BMI minuly, platí BMI a vezme se jeho bližší okraj.
+ */
+export function weightForHeight(
+  rng: Rng,
+  heightCm: number,
+  stepKg: number,
+  limits: { minKg?: number; maxKg?: number } = {},
+): number {
+  const [low, high] = bmiBand(heightCm);
+  const square = (heightCm / 100) ** 2;
+  const bmiMin = Math.ceil((low * square) / stepKg) * stepKg;
+  const bmiMax = Math.floor((high * square) / stepKg) * stepKg;
+  const min = Math.max(bmiMin, Math.ceil((limits.minKg ?? 0) / stepKg) * stepKg);
+  const max = Math.min(bmiMax, Math.floor((limits.maxKg ?? Infinity) / stepKg) * stepKg);
+  if (min <= max) return rng.step(min, max, stepKg);
+  // Meze se s pásmem minuly: hmotnost na tom okraji pásma, ke kterému chtěly.
+  return (limits.minKg ?? 0) > bmiMax ? bmiMax : bmiMin;
 }

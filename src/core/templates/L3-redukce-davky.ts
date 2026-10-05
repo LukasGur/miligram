@@ -3,7 +3,7 @@ import { dosingRule, dosingSource, type DosingRuleId } from "../products/dosing"
 import { DOSE_REDUCTION_PERCENT, DOSE_REDUCTION_SPC } from "../products/oncology";
 import * as tolerances from "../tolerances";
 import type { Solution, Vars } from "../types";
-import { formula, frac, given, intermediate, q, result, substitute, tex } from "./helpers";
+import { formula, frac, given, intermediate, q, result, substitute, tex, weightForHeight } from "./helpers";
 import { register } from "./registry";
 
 /** Cytostatika, u kterých SPC uvádí dávku na metr čtvereční. */
@@ -32,7 +32,7 @@ export const L3 = register({
     }
 
     const heightCm = difficulty === 1 ? rng.step(160, 185, 5) : rng.step(150, 192, 1);
-    const weightKg = difficulty === 1 ? rng.step(60, 90, 10) : rng.step(48, 105, 1);
+    const weightKg = weightForHeight(rng, heightCm, difficulty === 1 ? 10 : 1, { minKg: 48, maxKg: 105 });
     const fullDosePerM2 = difficulty === 1 ? range.min : rng.step(range.min, range.max, 5);
     const reductionPercent = difficulty === 1
       ? DOSE_REDUCTION_PERCENT.min

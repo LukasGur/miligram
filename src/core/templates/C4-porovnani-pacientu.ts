@@ -1,6 +1,6 @@
 import { bodySurfaceArea } from "../formulas";
 import type { Solution, Vars } from "../types";
-import { formula, frac, given, intermediate, q, result, substitute } from "./helpers";
+import { formula, frac, given, intermediate, q, result, substitute, weightForHeight } from "./helpers";
 import { register } from "./registry";
 
 const MOSTELLER = {
@@ -22,11 +22,11 @@ export const C4 = register({
 
   generate(rng, difficulty) {
     const heightA = difficulty === 1 ? rng.step(160, 180, 10) : rng.step(150, 190, 1);
-    const weightA = difficulty === 1 ? rng.step(60, 80, 10) : rng.step(50, 90, 1);
+    const weightA = weightForHeight(rng, heightA, difficulty === 1 ? 10 : 1, { minKg: 50, maxKg: 90 });
 
     // Druhý pacient je vždy výrazně jiný, aby rozdíl nebyl v šumu.
     const heightB = difficulty === 1 ? heightA + 10 : heightA + rng.int(5, 25);
-    const weightB = difficulty === 1 ? weightA + 20 : weightA + rng.int(10, 40);
+    const weightB = weightForHeight(rng, heightB, difficulty === 1 ? 10 : 1, { minKg: weightA + 10, maxKg: weightA + 40 });
 
     return { heightA, weightA, heightB, weightB } satisfies Vars;
   },

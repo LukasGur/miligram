@@ -1,6 +1,6 @@
 import { bodySurfaceArea } from "../formulas";
 import type { Solution, Vars } from "../types";
-import { formula, frac, given, q, result, substitute } from "./helpers";
+import { formula, frac, given, q, result, substitute, weightForHeight } from "./helpers";
 import { register } from "./registry";
 
 const MOSTELLER = {
@@ -23,7 +23,8 @@ export const C1 = register({
   generate(rng, difficulty) {
     // Rozsahy pokrývají dospělé i větší děti; L1 dává kulaté hodnoty.
     const heightCm = difficulty === 1 ? rng.step(150, 190, 10) : rng.step(110, 195, 1);
-    const weightKg = difficulty === 1 ? rng.step(50, 90, 10) : rng.step(20, 120, 1);
+    const weightKg =
+      difficulty === 1 ? weightForHeight(rng, heightCm, 10, { minKg: 50, maxKg: 90 }) : weightForHeight(rng, heightCm, 1);
 
     return {
       heightCm,

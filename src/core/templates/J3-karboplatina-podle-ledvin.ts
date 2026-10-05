@@ -2,7 +2,7 @@ import { bodySurfaceArea, bsaBasedDose } from "../formulas";
 import { bandFor, renalRule, renalSource } from "../products/renal";
 import * as tolerances from "../tolerances";
 import type { Solution, Vars } from "../types";
-import { formula, given, intermediate, q, result, substitute, tex } from "./helpers";
+import { formula, given, intermediate, q, result, substitute, tex, weightForHeight } from "./helpers";
 import { register } from "./registry";
 
 const RULE = "karboplatina" as const;
@@ -28,7 +28,7 @@ export const J3 = register({
 
   generate(rng, difficulty) {
     const heightCm = difficulty === 1 ? rng.step(160, 185, 5) : rng.step(150, 192, 1);
-    const weightKg = difficulty === 1 ? rng.step(60, 90, 10) : rng.step(48, 105, 1);
+    const weightKg = weightForHeight(rng, heightCm, difficulty === 1 ? 10 : 1, { minKg: 48, maxKg: 105 });
 
     return {
       heightCm,
