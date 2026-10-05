@@ -1,7 +1,7 @@
 import { describe, expect, it } from "vitest";
 import "../templates";
 import { buildExercise, getTemplate } from "../templates";
-import type { Difficulty } from "../types";
+import { DIFFICULTIES, type Difficulty } from "../types";
 
 const D2 = 2 as Difficulty;
 const SEEDS = Array.from({ length: 40 }, (_, i) => `a${i}`);
@@ -104,6 +104,19 @@ describe("A — žádný příklad bez počítání", () => {
     for (const seed of ALL) {
       const { vars } = buildExercise("A8", seed, difficulty);
       expect(Number(vars.givenMl)).not.toBe(Number(vars.referenceMl));
+    }
+  });
+});
+
+describe("A7 — předpis, jaký se píše", () => {
+  it("nejvýš dvě tablety naráz a délka léčby z obvyklých délek", () => {
+    const usual = new Set([28, 30, 56, 60, 84, 90]);
+    for (const difficulty of DIFFICULTIES) {
+      for (const seed of Array.from({ length: 60 }, (_, i) => `a7-${i}`)) {
+        const { vars } = buildExercise("A7", seed, difficulty);
+        expect(Number(vars.perDose), `${difficulty}/${seed}`).toBeLessThanOrEqual(2);
+        if (Number(vars.days) >= 28) expect(usual.has(Number(vars.days)), `${difficulty}/${seed}: ${vars.days}`).toBe(true);
+      }
     }
   });
 });

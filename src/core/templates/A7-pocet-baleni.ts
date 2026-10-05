@@ -22,21 +22,23 @@ export const A7 = register({
      * Režim i délka léčby podle SPC. Dřív se losovalo „2 tbl 3× denně
      * po 60 dní“ i u klopidogrelu 300 mg. Kúra antibiotika trvá, kolik
      * uvádí SPC; u léčby, kterou SPC popisuje jako dlouhodobou, se
-     * předepisuje na 28 až 90 dní.
+     * předepisuje na měsíc až tři, v délkách, jaké se na recept píšou.
      */
     const candidates = dosedProducts("tablet").filter(
       (candidate) => candidate.dose.timesPerDay && candidate.dose.course && candidate.product.packCount,
     );
     const { item, doseMg } = pickDose(rng, candidates, (dose, candidate) => {
       const count = tabletCount(dose, candidate);
-      return count !== null && (difficulty !== 1 || count === 1);
+      // Na dlouhou léčbu se předepisuje síla, ze které jsou nejvýš dvě
+      // tablety naráz. „4 tbl 2× denně po 82 dní“ dávalo 33 balení.
+      return count !== null && count <= 2 && (difficulty !== 1 || count === 1);
     });
     const perDose = tabletCount(doseMg, item) ?? 1;
     const timesPerDay = rng.pick(item.dose.timesPerDay ?? [1]);
     const course = item.dose.course ?? "longTerm";
     const days =
       course === "longTerm"
-        ? difficulty === 1 ? rng.pick([28, 30, 90] as const) : rng.int(28, 90)
+        ? difficulty === 1 ? rng.pick([28, 30, 90] as const) : rng.pick([28, 30, 56, 60, 84, 90] as const)
         : difficulty === 1 ? rng.pick([course.min, course.max]) : rng.int(course.min, course.max);
 
     return {
