@@ -1,9 +1,14 @@
 import { mixedConcentration } from "../formulas";
-import { concentrationOf, selectProducts } from "../products";
+import { PERCENT_SOLUTION_LIST, percentSolutionSource } from "../products/solutions";
 import * as tolerances from "../tolerances";
 import type { Solution, Vars } from "../types";
 import { formula, frac, given, q, result, substitute } from "./helpers";
-import { register, SUKL_DLP } from "./registry";
+import { register } from "./registry";
+
+/** Glukóza od nejslabší po nejsilnější. */
+const GLUCOSE = PERCENT_SOLUTION_LIST.filter(([, item]) => item.substance === "GLUKÓZA").sort(
+  ([, a], [, b]) => a.mgPerMl - b.mgPerMl,
+);
 
 /**
  * D7 — koncentrace po smíchání dvou roztoků téže látky.
@@ -15,44 +20,37 @@ import { register, SUKL_DLP } from "./registry";
 export const D7 = register({
   id: "D7",
   category: "redeni",
-  source: SUKL_DLP,
+  // Glukóza ve čtyřech koncentracích ze SPC jednoho výrobce: smíchání
+  // 5% a 40% glukózy je běžná příprava, ne vymyšlená úloha.
+  source: GLUCOSE.map(([id]) => percentSolutionSource(id)),
 
   generate(rng, difficulty) {
     /**
-     * Obě složky musí být tatáž látka v různé koncentraci, jinak by míchání
-     * nedávalo smysl. Ve fondu takové dvojice existují u glukózy a chloridu.
+     * Obě složky musí být tatáž látka v různé koncentraci. Dřív se dvojice
+     * hledaly v celém fondu a vycházelo třeba 500 ml docetaxelu slité se
+     * 60 ml Taxoteru — pět gramů cytostatika v jednom vaku. Teď jen glukóza
+     * a objemy podle balení, které výrobce dodává.
      */
-    const candidates = selectProducts({ kind: "infusionBag", strengthUnit: "mg", minStrength: 1 })
-      .concat(selectProducts({ kind: "concentrate", strengthUnit: "mg", minStrength: 1 }));
+    const low = rng.int(0, GLUCOSE.length - 2);
+    const weaker = GLUCOSE[low][1];
+    const stronger = GLUCOSE[rng.int(low + 1, GLUCOSE.length - 1)][1];
 
-    const bySubstance = new Map<string, typeof candidates>();
-    for (const item of candidates) {
-      const list = bySubstance.get(item.substance) ?? [];
-      list.push(item);
-      bySubstance.set(item.substance, list);
-    }
-    const pairs = [...bySubstance.values()].filter((list) => {
-      const concentrations = new Set(list.map((p) => concentrationOf(p)));
-      return concentrations.size >= 2;
-    });
-    if (pairs.length === 0) throw new Error("Ve fondu není dvojice roztoků téže látky v různé koncentraci.");
-
-    const group = rng.pick(pairs).slice().sort((a, b) => concentrationOf(a) - concentrationOf(b));
-    const weaker = group[0];
-    const stronger = group[group.length - 1];
-
-    const volumeA = difficulty === 1 ? rng.pick([100, 250, 500] as const) : rng.step(50, 500, 50);
-    const volumeB = difficulty === 1 ? rng.pick([100, 250] as const) : rng.step(20, 250, 10);
+    const volumeFor = (packs: readonly number[], step: number) =>
+      difficulty === 1 ? rng.pick(packs) : rng.step(step, Math.max(...packs), step);
+    const volumeA = volumeFor(weaker.packSizesMl, 50);
+    // Stejné objemy by dovolily spočítat prostý průměr; zadání se jim vyhne.
+    let volumeB = volumeFor(stronger.packSizesMl, 10);
+    while (volumeB === volumeA) volumeB = volumeFor(stronger.packSizesMl, 10);
 
     return {
       substance: weaker.substance,
-      codeA: weaker.code,
-      productA: weaker.name,
-      concentrationA: concentrationOf(weaker),
+      codeA: weaker.suklCode,
+      productA: weaker.product,
+      concentrationA: weaker.mgPerMl,
       volumeA,
-      codeB: stronger.code,
-      productB: stronger.name,
-      concentrationB: concentrationOf(stronger),
+      codeB: stronger.suklCode,
+      productB: stronger.product,
+      concentrationB: stronger.mgPerMl,
       volumeB,
     } satisfies Vars;
   },

@@ -4,7 +4,8 @@ import * as tolerances from "../tolerances";
 import type { Solution, Vars } from "../types";
 import { formula, given, intermediate, q, result, substitute } from "./helpers";
 import { register, SUKL_DLP } from "./registry";
-import { choosePerfusorDilution } from "./perfusor";
+import { choosePerfusorDilution, DOPAMINE_CODES } from "./perfusor";
+import { dosingSource } from "../products/dosing";
 
 /**
  * G5 — o kolik ml/h změnit rychlost.
@@ -16,16 +17,16 @@ import { choosePerfusorDilution } from "./perfusor";
 export const G5 = register({
   id: "G5",
   category: "vazoaktivni",
-  source: [SUKL_DLP, PUMP_SOURCE],
+  source: [SUKL_DLP, PUMP_SOURCE, dosingSource("dopamin")],
 
   generate(rng, difficulty) {
     const weightKg = rng.step(50, 95, 5);
-    const fromDose = difficulty === 1 ? rng.pick([5, 10] as const) : rng.step(1, 15, 0.5);
+    const fromDose = difficulty === 1 ? rng.pick([5, 10] as const) : rng.step(2, 15, 0.5);
     const step = difficulty === 1 ? rng.pick([2, 5] as const) : rng.step(0.5, 5, 0.5);
     const toDose = fromDose + step;
 
     // Ředění se volí podle vyšší dávky, aby ani po zvýšení pumpa nevyjela z rozsahu.
-    const dilution = choosePerfusorDilution(rng, { perKgMin: toDose, weightKg });
+    const dilution = choosePerfusorDilution(rng, { perKgMin: toDose, weightKg }, { codes: DOPAMINE_CODES });
 
     return {
       code: dilution.product.code,
@@ -47,9 +48,11 @@ export const G5 = register({
     const fromDose = Number(vars.fromDose);
     const toDose = Number(vars.toDose);
 
-    const fromRate = microgramsPerKgMinToMlPerHour(fromDose, weightKg, concentration);
-    const toRate = microgramsPerKgMinToMlPerHour(toDose, weightKg, concentration);
-    const difference = toRate - fromRate;
+    // Rychlosti se na pumpě nastavují na setiny, a z nastavených hodnot
+    // se počítá i rozdíl. Jinak by 7,88 − 7,59 v postupu dalo 0,28.
+    const fromRate = round2(microgramsPerKgMinToMlPerHour(fromDose, weightKg, concentration));
+    const toRate = round2(microgramsPerKgMinToMlPerHour(toDose, weightKg, concentration));
+    const difference = round2(toRate - fromRate);
 
     return {
       value: difference,
@@ -67,3 +70,7 @@ export const G5 = register({
 
   answer: { unit: "mlPerHour", tolerance: tolerances.pumpRate(), decimals: 2 },
 });
+
+function round2(value: number): number {
+  return Math.round(value * 100) / 100;
+}

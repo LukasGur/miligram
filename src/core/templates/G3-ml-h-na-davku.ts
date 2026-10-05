@@ -3,7 +3,8 @@ import * as tolerances from "../tolerances";
 import type { Solution, Vars } from "../types";
 import { formula, frac, given, intermediate, q, result, substitute } from "./helpers";
 import { register, SUKL_DLP } from "./registry";
-import { choosePerfusorDilution } from "./perfusor";
+import { choosePerfusorDilution, DOPAMINE_CODES } from "./perfusor";
+import { dosingSource } from "../products/dosing";
 
 /**
  * G3 — kolik pacient dostává.
@@ -14,14 +15,14 @@ import { choosePerfusorDilution } from "./perfusor";
 export const G3 = register({
   id: "G3",
   category: "vazoaktivni",
-  source: SUKL_DLP,
+  source: [SUKL_DLP, dosingSource("dopamin")],
 
   generate(rng, difficulty) {
     const weightKg = rng.step(50, 95, 5);
-    const referenceDose = difficulty === 1 ? rng.pick([5, 10] as const) : rng.step(1, 20, 0.5);
+    const referenceDose = difficulty === 1 ? rng.pick([5, 10] as const) : rng.step(2, 20, 0.5);
 
     // Ředění se odvodí od referenční dávky, aby rychlost vyšla realisticky.
-    const dilution = choosePerfusorDilution(rng, { perKgMin: referenceDose, weightKg });
+    const dilution = choosePerfusorDilution(rng, { perKgMin: referenceDose, weightKg }, { codes: DOPAMINE_CODES });
     const rateMlPerHour = Number(dilution.rateMlPerHour.toFixed(1));
 
     return {

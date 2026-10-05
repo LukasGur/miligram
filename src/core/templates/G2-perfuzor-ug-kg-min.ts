@@ -5,7 +5,8 @@ import * as tolerances from "../tolerances";
 import type { Solution, Vars } from "../types";
 import { frac, q, step, tex, unit } from "./helpers";
 import { register, SUKL_DLP } from "./registry";
-import { choosePerfusorDilution } from "./perfusor";
+import { choosePerfusorDilution, DOPAMINE_CODES } from "./perfusor";
+import { dosingSource } from "../products/dosing";
 
 /**
  * G2 — kontinuální infuze v µg/kg/min.
@@ -16,15 +17,15 @@ import { choosePerfusorDilution } from "./perfusor";
 export const G2 = register({
   id: "G2",
   category: "vazoaktivni",
-  source: [SUKL_DLP, PUMP_SOURCE],
+  source: [SUKL_DLP, PUMP_SOURCE, dosingSource("dopamin")],
 
   generate(rng, difficulty) {
     const weightKg = rng.step(50, 95, 5);
     const dosePerKgMin = difficulty === 1
       ? rng.pick([2, 5, 10] as const)
-      : rng.step(0.5, 20, 0.5);
+      : rng.step(2, 20, 0.5);
 
-    const dilution = choosePerfusorDilution(rng, { perKgMin: dosePerKgMin, weightKg });
+    const dilution = choosePerfusorDilution(rng, { perKgMin: dosePerKgMin, weightKg }, { codes: DOPAMINE_CODES });
     const { product, syringeMl, ampoules, totalMg, concentrationMgPerMl } = dilution;
 
     return {

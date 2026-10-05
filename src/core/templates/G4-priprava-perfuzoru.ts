@@ -1,9 +1,9 @@
-import { pickProduct, vialContentMg } from "../products";
+import { vialContentMg } from "../products";
 import * as tolerances from "../tolerances";
 import type { Solution, Vars } from "../types";
 import { formula, frac, given, intermediate, q, result, substitute } from "./helpers";
 import { register, SUKL_DLP } from "./registry";
-import { SYRINGE_VOLUMES_ML, VASOACTIVE_ATC } from "./perfusor";
+import { realisticDilution } from "./perfusor";
 
 /**
  * G4 — kolik ampulí do stříkačky.
@@ -17,18 +17,12 @@ export const G4 = register({
   category: "vazoaktivni",
   source: SUKL_DLP,
 
-  generate(rng, difficulty) {
-    const product = pickProduct(rng, {
-      kind: "concentrate",
-      strengthUnit: "mg",
-      atcPrefixes: VASOACTIVE_ATC,
-    });
-    const contentMg = vialContentMg(product);
-    const syringeMl = rng.pick(SYRINGE_VOLUMES_ML);
-
+  generate(rng) {
+    // Ředění, které se pro dávku ze SPC opravdu chystá (perfusor.ts).
     // Cílová koncentrace se odvodí od celého počtu ampulí, aby zadání
     // vedlo na celé číslo a nešlo o hádání zlomků.
-    const ampoules = difficulty === 1 ? rng.int(1, 3) : rng.int(1, 6);
+    const { product, syringeMl, ampoules } = realisticDilution(rng);
+    const contentMg = vialContentMg(product);
     const targetConcentration = Number(((contentMg * ampoules) / syringeMl).toPrecision(4));
 
     return {

@@ -243,6 +243,22 @@ export const DOSING_RULES = {
       "krevního tlaku, udržovací dávka je 2-12 μg/min.",
   },
 
+  /**
+   * SPC uvádí 2–5 µg/kg/min jako „velmi malé dávky“ a β-mimetický účinek
+   * do 50 µg/kg/min. Úlohy berou výřez 2–20 µg/kg/min uvnitř citovaného
+   * rozpětí, stejně jako u dobutaminu; nic mimo citaci.
+   */
+  dopamin: {
+    suklCode: "0004380",
+    product: "Tensamin 40 mg/ml koncentrát pro infuzní roztok",
+    substance: "DOPAMIN",
+    spc: "SPC163908.pdf",
+    single: { min: 2, max: 20, unit: "µg/kg/min" },
+    quote:
+      "Velmi malé dávky dopaminu (2-5 mikrogramů/kg/min.) jsou indikovány profylakticky při hraničních " +
+      "a nestabilních oběhových situacích … Dávky do 50 mikrogramů/kg/min mají β-mimetický účinek.",
+  },
+
   dobutamin: {
     suklCode: "0252131",
     product: "Dobutamin hameln 5 mg/ml infuzní roztok",

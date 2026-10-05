@@ -1,9 +1,9 @@
-import { pickProduct, vialContentMg } from "../products";
+import { vialContentMg } from "../products";
 import * as tolerances from "../tolerances";
 import type { Solution, Vars } from "../types";
 import { formula, given, intermediate, q, result, substitute } from "./helpers";
 import { register, SUKL_DLP } from "./registry";
-import { SYRINGE_VOLUMES_ML, VASOACTIVE_ATC } from "./perfusor";
+import { realisticDilution } from "./perfusor";
 
 /**
  * G6 — kolik ředidla natáhnout.
@@ -17,18 +17,11 @@ export const G6 = register({
   category: "vazoaktivni",
   source: SUKL_DLP,
 
-  generate(rng, difficulty) {
-    const product = pickProduct(rng, {
-      kind: "concentrate",
-      strengthUnit: "mg",
-      atcPrefixes: VASOACTIVE_ATC,
-    });
+  generate(rng) {
+    // Ředění, které se pro dávku ze SPC opravdu chystá (perfusor.ts);
+    // ampule se do stříkačky vejdou i s ředidlem.
+    const { product, syringeMl, ampoules } = realisticDilution(rng);
     const ampouleMl = product.packUnitVolumeMl ?? product.volumeMl ?? 1;
-    const syringeMl = rng.pick(SYRINGE_VOLUMES_ML);
-
-    // Počet ampulí se omezí tak, aby se do stříkačky vešly i s ředidlem.
-    const maxAmpoules = Math.max(1, Math.floor((syringeMl * 0.6) / ampouleMl));
-    const ampoules = difficulty === 1 ? 1 : rng.int(1, Math.min(6, maxAmpoules));
 
     return {
       code: product.code,

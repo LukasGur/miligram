@@ -1,9 +1,17 @@
 import { microgramsPerKgMinToMlPerHour, microgramsPerMinToMlPerHour } from "../formulas";
 import { selectProducts, vialContentMg, type Product } from "../products";
+import { dosingRule } from "../products/dosing";
 import type { Rng } from "../random";
 
 /** Objemy stříkaček do lineárního dávkovače. */
 export const SYRINGE_VOLUMES_ML = [20, 50] as const;
+
+/** Nejvíc, kolik ze stříkačky smí zabrat koncentrát; zbytek je ředidlo. */
+const MAX_STOCK_SHARE = 0.6;
+
+function vialVolume(product: Product): number {
+  return product.packUnitVolumeMl ?? product.volumeMl ?? 1;
+}
 
 /** ATC skupiny látek, které se podávají kontinuálně v perfuzoru. */
 export const VASOACTIVE_ATC = ["C01C", "C01D", "N01A", "N05C"] as const;
@@ -30,22 +38,36 @@ export type Dilution = {
 export function choosePerfusorDilution(
   rng: Rng,
   dose: { perKgMin: number; weightKg: number } | { perMin: number },
-  options: { minRate?: number; maxRate?: number; ampouleCounts?: readonly number[] } = {},
+  options: {
+    /**
+     * Kódy SÚKL přípravků, ke kterým dávka patří. Povinné: dřív se k dávce
+     * dopaminu nebo noradrenalinu losoval jakýkoli lék z perfuzoru a
+     * vycházelo třeba 10 µg/kg/min levosimendanu, padesátkrát víc, než
+     * připouští jeho SPC.
+     */
+    codes: readonly string[];
+    minRate?: number;
+    maxRate?: number;
+    ampouleCounts?: readonly number[];
+  },
 ): Dilution {
-  const { minRate = 0.5, maxRate = 60, ampouleCounts = [1, 2, 3, 4] } = options;
+  const { codes, minRate = 0.5, maxRate = 60, ampouleCounts = [1, 2, 3, 4] } = options;
 
   const rateFor = (concentration: number) =>
     "perKgMin" in dose
       ? microgramsPerKgMinToMlPerHour(dose.perKgMin, dose.weightKg, concentration)
       : microgramsPerMinToMlPerHour(dose.perMin, concentration);
 
-  const candidates = selectProducts({
+  const products = selectProducts({
     kind: "concentrate",
     strengthUnit: "mg",
     atcPrefixes: VASOACTIVE_ATC,
-  }).flatMap((product) =>
+  }).filter((product) => codes.includes(product.code));
+
+  const candidates = products.flatMap((product) =>
     SYRINGE_VOLUMES_ML.flatMap((syringeMl) =>
-      ampouleCounts.map((ampoules) => {
+      // Ampule se musí vejít do stříkačky i s ředidlem.
+      ampouleCounts.filter((ampoules) => ampoules * vialVolume(product) <= syringeMl * MAX_STOCK_SHARE).map((ampoules) => {
         /**
          * Obsah ampule krát počet ampulí nechává v plovoucí čárce zbytky:
          * 0,2 mg × 3 vyjde 0,6000000000000001. Zadání pak ukazuje jiné
@@ -77,4 +99,27 @@ export function choosePerfusorDilution(
         ? option
         : best,
     );
+}
+
+/** Kódy SÚKL přípravků, ke kterým patří dávkovací pravidlo. */
+export const NORADRENALINE_CODES = [dosingRule("noradrenalin").suklCode] as const;
+export const DOPAMINE_CODES = [dosingRule("dopamin").suklCode] as const;
+
+/**
+ * Ředění, jaké se na oddělení opravdu chystá: přípravek s ověřeným
+ * dávkováním a počet ampulí, při kterém pumpa u dávky z rozmezí SPC běží
+ * v rozumných mezích. Pro úlohy na přípravu stříkačky (G4, G6), které
+ * samy dávku neřeší — dřív v nich vycházelo 1 200 mg dopaminu v 50 ml.
+ */
+export function realisticDilution(rng: Rng): Dilution {
+  if (rng.pick([true, false])) {
+    const range = dosingRule("noradrenalin").single!;
+    return choosePerfusorDilution(rng, { perMin: rng.step(range.min, range.max, 1) }, { codes: NORADRENALINE_CODES });
+  }
+  const range = dosingRule("dopamin").single!;
+  return choosePerfusorDilution(
+    rng,
+    { perKgMin: rng.step(range.min, range.max, 1), weightKg: rng.step(50, 95, 5) },
+    { codes: DOPAMINE_CODES },
+  );
 }
