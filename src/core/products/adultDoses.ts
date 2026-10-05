@@ -315,6 +315,14 @@ const LIST: readonly AdultDose[] = [
       "Status epilepticus: dospělí 4 mg intravenózně.",
   },
   {
+    // Dávka podle hmotnosti (5–10 mg/kg) je v B1; tady jen úvodní injekce v mg.
+    suklCode: "0054238", product: "Orfiril 100 mg/ml injekční roztok", spc: "SPC221721.pdf", verifiedAt: VERIFIED_AT_ORAL,
+    singleMg: [300, 400, 500, 600, 700, 800, 900], rangeMg: { min: 300, max: 900 },
+    quote:
+      "U dospělých je počáteční dávka natrium-valproátu zpravidla 5-10 mg/kg tělesné hmotnosti. Doporučuje se " +
+      "nejprve podání 300 - 900 mg natrium-valproátu (1-3 ampule) v pomalé intravenózní injekci (3-5 minut).",
+  },
+  {
     suklCode: "0239963", product: "Midazolam Accord 1 mg/ml injekční/infuzní roztok", spc: "SPC216091.pdf",
     singleMg: [1, 2, 2.5], rangeMg: { min: 1, max: 2.5 },
     quote:

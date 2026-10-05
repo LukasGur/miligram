@@ -8,12 +8,12 @@ import { ISO_7886, register, SUKL_DLP } from "./registry";
 import { packageLabel } from "../products/label";
 
 /** Rozmezí, u kterých SPC uvádí denní dávku dělenou do podání. */
-const RULES: readonly DosingRuleId[] = ["amoxicilin", "ibuprofenDeti", "amoxicilinKlavulanat"];
+const RULES: readonly DosingRuleId[] = ["amoxicilin", "ibuprofenDeti", "amoxicilinKlavulanat", "valproatDeti"];
 
 /**
  * B2 — denní dávka rozdělená do podání.
  *
- * Tři kroky: denní dávka, dílčí dávka, objem suspenze. Nejčastější chyba
+ * Tři kroky: denní dávka, dílčí dávka, objem suspenze nebo roztoku. Nejčastější chyba
  * je zapomenout dělit — proto je mezikrok v řešení vždy vidět zvlášť.
  */
 export const B2 = register({
@@ -28,7 +28,7 @@ export const B2 = register({
     if (!range) throw new Error(`Pravidlo ${ruleId} nemá denní dávku.`);
 
     const presentation = liquidPresentationOf(ruleId);
-    const weightKg = difficulty === 1 ? rng.step(10, 30, 5) : rng.step(4, 40, 0.5);
+    const weightKg = difficulty === 1 ? rng.step(10, 30, 5) : rng.step(Math.max(4, rule.minWeightKg ?? 0), 40, 0.5);
     const perKgPerDay = difficulty === 1
       ? rng.pick([range.min, range.max])
       : rng.step(range.min, range.max, 5);
@@ -37,6 +37,7 @@ export const B2 = register({
     return {
       ruleId,
       productName: packageLabel(rule.product),
+      liquidForm: rule.liquidForm ?? "suspension",
       substance: rule.substance,
       code: rule.suklCode,
       strengthMg: presentation.strengthMg,

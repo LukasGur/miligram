@@ -258,3 +258,37 @@ describe("léková forma sedí na věk", () => {
     }
   });
 });
+
+describe("valproát v mezích SPC", () => {
+  const SEEDS_VPA = Array.from({ length: 400 }, (_, i) => `vpa${i}`);
+
+  it("dospělý na Orfirilu dostane úvodní injekci 300–900 mg", () => {
+    let seen = 0;
+    for (const difficulty of DIFFICULTIES) {
+      for (const seed of SEEDS_VPA) {
+        const { vars, solution } = buildExercise("B1", seed, difficulty);
+        if (vars.ruleId !== "valproatDospeli") continue;
+        seen++;
+        expect(Number(vars.weightKg), seed).toBeGreaterThanOrEqual(60);
+        expect(solution.value, `${difficulty}/${seed}`).toBeGreaterThanOrEqual(300);
+        expect(solution.value, `${difficulty}/${seed}`).toBeLessThanOrEqual(900);
+      }
+    }
+    expect(seen).toBeGreaterThan(0);
+  });
+
+  it("dítě na Convulexu má perorální roztok a hmotnost z tabulky SPC", () => {
+    let seen = 0;
+    for (const difficulty of DIFFICULTIES) {
+      for (const seed of SEEDS_VPA) {
+        const { vars } = buildExercise("B2", seed, difficulty);
+        if (vars.ruleId !== "valproatDeti") continue;
+        seen++;
+        expect(vars.liquidForm).toBe("solution");
+        expect(Number(vars.weightKg), seed).toBeGreaterThanOrEqual(5.5);
+        expect(Number(vars.dosesPerDay)).toBeGreaterThanOrEqual(2);
+      }
+    }
+    expect(seen).toBeGreaterThan(0);
+  });
+});

@@ -47,6 +47,15 @@ export type DosingRule = {
    * Tablety kojenci nespolknou, takže pod touhle hmotností se nelosuje.
    */
   minWeightKg?: number;
+  /**
+   * Hmotnost pacienta, pro kterého citace platí, když to není dítě.
+   * Dávka pro dospělého u dětské hmotnosti by byla vymyšlená.
+   */
+  weightKg?: { min: number; max: number };
+  /** Léková forma pro zadání; bez ní se počítá se suspenzí. */
+  liquidForm?: "solution" | "suspension";
+  /** Kdy byl záznam ověřen, liší-li se od zbytku tabulky. */
+  verifiedAt?: string;
   /** Nasycovací dávka, je-li v SPC uvedená. */
   loading?: DoseRange;
   /**
@@ -79,7 +88,7 @@ const SPC_SOURCE = (rule: DosingRule): Source => ({
   citation: `SÚKL, SPC přípravku ${rule.product}, bod 4.2: „${rule.quote}“`,
   url: "https://opendata.sukl.cz/?q=katalog/spc-souhrn-udaju-o-lecivem-pripravku-summary-product-characteristics",
   suklCode: rule.suklCode,
-  verifiedAt: "2026-09-02",
+  verifiedAt: rule.verifiedAt ?? "2026-09-02",
 });
 
 export const DOSING_RULES = {
@@ -198,6 +207,39 @@ export const DOSING_RULES = {
     dosesPerDay: [3],
     presentation: { strengthMg: 1000 },
     quote: "Vhodným dávkovacím režimem mohlo být 20 mg/kg každých 8 hodin; akutní bakteriální meningitida 40 mg/kg.",
+  },
+
+  valproatDospeli: {
+    suklCode: "0054238",
+    product: "Orfiril 100 mg/ml injekční roztok",
+    substance: "KYSELINA VALPROOVÁ",
+    spc: "SPC221721.pdf",
+    single: { min: 5, max: 10, unit: "mg/kg" },
+    // 90 kg × 10 mg/kg = 900 mg, horní mez úvodní injekce podle citace.
+    weightKg: { min: 60, max: 90 },
+    verifiedAt: "2026-10-05",
+    quote:
+      "U dospělých je počáteční dávka natrium-valproátu zpravidla 5-10 mg/kg tělesné hmotnosti. " +
+      "Doporučuje se nejprve podání 300 - 900 mg natrium-valproátu (1-3 ampule) v pomalé intravenózní injekci " +
+      "(3-5 minut) a poté pokračovat v léčbě dlouhodobou infuzí nebo opakovanými krátkodobými infuzemi " +
+      "s valproátem až do celkové maximální denní dávky 2400 mg valproátu (t.j. 8 ampulí).",
+  },
+
+  valproatDeti: {
+    suklCode: "0163880",
+    product: "Convulex 300 mg/ml perorální roztok",
+    substance: "KYSELINA VALPROOVÁ",
+    spc: "SPC233561.pdf",
+    daily: { min: 20, max: 30, unit: "mg/kg/den" },
+    dosesPerDay: [2, 3],
+    // Přehledová tabulka v SPC začíná řádkem „3–6 měsíců, 5,5–7,5 kg“.
+    minWeightKg: 5.5,
+    liquidForm: "solution",
+    verifiedAt: "2026-10-05",
+    quote:
+      "Během monoterapie natrium-valproátem lze celkovou denní dávku podávat najednou večer (až do maximální " +
+      "dávky 15 mg/kg/den), při vyšších dávkách je obvykle rozdělena do více dílčích dávek. … Pediatrická " +
+      "populace … Toho je obecně dosaženo v rozmezí dávky 20 – 30 mg/kg tělesné hmotnosti/den.",
   },
 
   enoxaparin: {

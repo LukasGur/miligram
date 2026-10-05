@@ -7,7 +7,7 @@ import { register } from "./registry";
 import { packageLabel } from "../products/label";
 
 /** Rozmezí, u kterých SPC uvádí dávku na jedno podání v mg/kg. */
-const RULES: readonly DosingRuleId[] = ["paracetamolDeti", "ibuprofenBaby", "ceftriaxonDeti"];
+const RULES: readonly DosingRuleId[] = ["paracetamolDeti", "ibuprofenBaby", "ceftriaxonDeti", "valproatDospeli"];
 
 /**
  * B1 — jednotlivá dávka podle hmotnosti.
@@ -27,8 +27,12 @@ export const B1 = register({
     const range = rule.single;
     if (!range) throw new Error(`Pravidlo ${ruleId} nemá dávku na jedno podání.`);
 
-    // Hmotnost odpovídá dětskému pacientovi, pro kterého jsou tahle SPC psaná.
-    const weightKg = difficulty === 1 ? rng.step(10, 40, 5) : rng.step(Math.max(3.5, rule.minWeightKg ?? 0), 45, 0.5);
+    // Hmotnost odpovídá pacientovi, pro kterého je SPC psané: dítěti,
+    // u dávky pro dospělé rozmezí uvedenému u pravidla.
+    const adult = rule.weightKg;
+    const weightKg = adult
+      ? difficulty === 1 ? rng.step(adult.min, adult.max, 10) : rng.step(adult.min, adult.max, 1)
+      : difficulty === 1 ? rng.step(10, 40, 5) : rng.step(Math.max(3.5, rule.minWeightKg ?? 0), 45, 0.5);
     const perKg = difficulty === 1
       ? rng.pick([range.min, range.max])
       : rng.step(range.min, range.max, orderStep(range));

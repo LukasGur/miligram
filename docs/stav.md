@@ -390,7 +390,10 @@ nehrál, má sérii zpátky hned; kdo už začal od jedničky, tomu se stará
   ptá i na natažení dávky podle skutečné koncentrace, J4 i dospělý na
   cefepimu, tabulka dávek pro dospělé má o 12 přípravků víc (Keppra,
   Lyrica, Equilion, cefazolin, cefotaxim 2 g, Axetine 1,5 g, Nolpaza,
-  naloxon, terlipresin, oktreotid). Vědomě ponecháno: J5 (odpověď určuje
+  naloxon, terlipresin, oktreotid). Valproát: B1 dospělý na Orfirilu
+  (5–10 mg/kg, 300–900 mg), B2 dítě na Convulexu (20–30 mg/kg/den),
+  Orfiril i v tabulce pro dospělé. Vědomě ponecháno: perorální
+  aripiprazol (pevná dávka, výpočet by nic nenaučil), J5 (odpověď určuje
   jen pásmo clearance; cefepim by tam byl zavádějící, mění interval),
   B4 bez nadroparinu (SPC dávkuje tabulkou s pevnými objemy, ne přesným
   výpočtem), první obtížnost s kulatými čísly má zadání málo záměrně.

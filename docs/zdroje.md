@@ -110,6 +110,11 @@ na kúru se dřív losovaly jako násobky síly. Vycházelo 180 mg gliklazidu
 nebo 7,5 g metamizolu z kapek. Teď A1, A2, A5, A7, E1 a E5 zadávají
 jen dávky z tabulky.
 
+Valproát (5. 10. 2026): Orfiril 100 mg/ml (0054238, SPC221721) má
+úvodní injekci 300–900 mg; nejvýš 2400 mg/den. Perorální aripiprazol
+v tabulce záměrně není: dává se pevná dávka v mg a „15 mg z roztoku
+1 mg/ml“ nic nenaučí. Injekční Abilify v tabulce zůstává.
+
 Ředění (D1, D2, D4, D6) a infuze (F1–F6) dávku netvrdí, a tak tabulku
 nepotřebují. Drží se toho, co je v balení podle DLP: natahuje se nejvýš
 obsah balení, pacient dostane nejvýš obsah vaku, rychlosti se počítají
@@ -138,6 +143,13 @@ a jejich zdroje:
 - **Ceftriaxon u dětí (B1)** — SPC212156: pod 50 kg 50–80 mg/kg jednou
   denně, strop 4 g jen u vyšších pásem. Dávka nad 2 g u dítěte kolem
   30 kg je tedy podle SPC, ne chyba.
+- **Valproát (B1, B2)** — dospělý na Orfirilu (SPC221721) 5–10 mg/kg
+  jen u hmotnosti 60–90 kg, aby dávka zůstala v citovaných 300–900 mg
+  úvodní injekce. Dítě na Convulexu 300 mg/ml perorální roztok
+  (0163880, SPC233561) 20–30 mg/kg/den ve 2–3 dávkách, od 5,5 kg
+  (první řádek tabulky SPC). Pacient je dítě nebo „pacient“, nikdy
+  žena ve fertilním věku: bod 4.2 začíná programem prevence početí.
+  Ověřeno 5. 10. 2026.
 - **Pacient (C1, C3, C4, J3, L3)** — hmotnost k výšce v pásmu BMI 18–38,
   pod 150 cm 14–22. Návrhové rozhodnutí, ne údaj ze zdroje.
 - **Mikrokapky (F3)** — do 100 ml/h. Návrhové rozhodnutí.

@@ -12,6 +12,11 @@ export, offline-first. Podrobnosti k příkazům a struktuře jsou v README.md.
   a dávkovací rozmezí musí mít v kódu pole `source` a `verifiedAt`
   a pocházet ze SÚKL/ŠÚKL/SPC/AISLP/BNF. Nedohledané šablony se značí
   `needsReview: true` a do produkčního setu nepatří.
+- **Dávka v zadání i ve výsledku musí být taková, jakou by někdo
+  opravdu podal** — v rozmezí, které SPC uvádí pro danou situaci,
+  pacienta a lékovou formu. Správné číslo ze zdroje nestačí: „TAXOTERE
+  je 2% roztok, pacient dostal 500 ml“ dávalo 10 g docetaxelu, smrtelnou
+  dávku. Meze jsou v `docs/zdroje.md`, oddíl 8, a hlídá je test.
 - **Postupy výpočtu smí pocházet i z doporučeného postupu odborné
   společnosti** (ISPAD, ČDS ČLS JEP a podobně), s plnou citací včetně
   ročníku a stran. Je to jiný druh zdroje než souhrn údajů o přípravku:
