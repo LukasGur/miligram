@@ -27,6 +27,14 @@ export type ProductFilter = {
   containers?: readonly Container[];
 };
 
+/**
+ * Nosné infuzní roztoky: glukóza a krystaloidy. Jen u nich dává smysl
+ * libovolná rychlost a doba infuze. U léku ve vaku je rychlost součástí
+ * dávkování (levofloxacin nejméně 60 min, dexmedetomidin v µg/kg/h),
+ * a „250 ml/h dexmedetomidinu“ by bylo nebezpečné cvičení.
+ */
+export const BASE_SOLUTION_ATC = ["B05BA03", "B05BB"] as const;
+
 export function selectProducts(filter: ProductFilter): Product[] {
   return PRODUCTS.filter((product) => {
     if (product.kind !== filter.kind) return false;

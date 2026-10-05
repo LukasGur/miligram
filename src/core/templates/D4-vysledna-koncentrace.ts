@@ -1,5 +1,6 @@
 import { mixedConcentration } from "../formulas";
-import { concentrationOf, pickProduct } from "../products";
+import { concentrationOf } from "../products";
+import { carrierVolumeMl, dilutableConcentrates, drawVolumeMl } from "./concentrateDraw";
 import * as tolerances from "../tolerances";
 import type { Solution, Vars } from "../types";
 import { formula, frac, given, q, result, substitute } from "./helpers";
@@ -19,16 +20,13 @@ export const D4 = register({
   source: SUKL_DLP,
 
   generate(rng, difficulty) {
-    const product = pickProduct(rng, {
-      kind: "concentrate",
-      strengthUnit: "mg",
-      minStrength: 1,
-    });
+    const product = rng.pick(dilutableConcentrates(1));
     const stockConcentration = concentrationOf(product);
-    const vialMl = product.packUnitVolumeMl ?? product.volumeMl ?? 1;
 
-    const stockVolumeMl = difficulty === 1 ? vialMl : rng.step(1, Math.max(2, vialMl * 2), 0.5);
-    const totalVolumeMl = rng.pick(TOTAL_VOLUMES_ML);
+    // Přidává se nejvýš to, co je v balení, a do objemu aspoň čtyřikrát
+    // většího. Dřív šlo přidat 200 ml do infuze o celkovém objemu 100 ml.
+    const stockVolumeMl = drawVolumeMl(rng, product, difficulty);
+    const totalVolumeMl = carrierVolumeMl(rng, stockVolumeMl, TOTAL_VOLUMES_ML);
 
     return {
       code: product.code,

@@ -1,6 +1,6 @@
 import { dropsPerMinute, infusionRateMlPerHour } from "../formulas";
 import { DROP_FACTOR_SOURCE, MICRODRIP_FACTOR } from "../devices";
-import { pickProduct } from "../products";
+import { BASE_SOLUTION_ATC, pickProduct } from "../products";
 import * as tolerances from "../tolerances";
 import type { Solution, Vars } from "../types";
 import { formula, frac, given, intermediate, q, result, substitute } from "./helpers";
@@ -20,7 +20,7 @@ export const F3 = register({
   source: [SUKL_DLP, DROP_FACTOR_SOURCE],
 
   generate(rng, difficulty) {
-    const product = pickProduct(rng, { kind: "infusionBag", minVolumeMl: 1 });
+    const product = pickProduct(rng, { kind: "infusionBag", minVolumeMl: 1, atcPrefixes: BASE_SOLUTION_ATC });
     const bagMl = product.packUnitVolumeMl ?? 500;
     const hours = difficulty === 1 ? rng.pick([1, 2, 4, 8] as const) : rng.step(0.5, 12, 0.5);
 

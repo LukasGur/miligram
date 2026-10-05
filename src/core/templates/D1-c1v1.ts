@@ -1,6 +1,7 @@
 import { volumeOfStock } from "../formulas";
 import { syringeFor } from "../devices";
-import { concentrationOf, pickProduct } from "../products";
+import { concentrationOf } from "../products";
+import { dilutableConcentrates, dilutionTarget } from "./concentrateDraw";
 import * as tolerances from "../tolerances";
 import type { Solution, Vars } from "../types";
 import { formula, frac, given, q, result, substitute } from "./helpers";
@@ -22,23 +23,25 @@ export const D1 = register({
   source: [SUKL_DLP, ISO_7886],
 
   generate(rng, difficulty) {
-    const product = pickProduct(rng, {
-      kind: "concentrate",
-      strengthUnit: "mg",
-      minStrength: 10,
-    });
+    const product = rng.pick(dilutableConcentrates(10));
     const stockConcentration = concentrationOf(product);
 
-    const targetVolumeMl = rng.pick(TARGET_VOLUMES_ML);
-    // Cílová koncentrace je vždy zlomek výchozí, jinak by ředění nedávalo smysl.
-    const ratio = difficulty === 1 ? rng.pick([0.1, 0.25, 0.5] as const) : rng.step(0.05, 0.6, 0.05);
+    // Zadání vychází z objemu, který se natáhne z balení, ne z poměru:
+    // náhodný poměr dával desítky lahviček cytostatika (concentrateDraw.ts).
+    const { targetVolumeMl, targetConcentration } = dilutionTarget(
+      rng,
+      product,
+      stockConcentration,
+      difficulty,
+      TARGET_VOLUMES_ML,
+    );
 
     return {
       code: product.code,
       productName: product.name,
       substance: product.substance,
       stockConcentration,
-      targetConcentration: Number((stockConcentration * ratio).toPrecision(3)),
+      targetConcentration,
       targetVolumeMl,
     } satisfies Vars;
   },

@@ -1,5 +1,5 @@
 import { massInVolume, percentToMgPerMl } from "../formulas";
-import { concentrationOf, pickProduct } from "../products";
+import { concentrationOf, selectProducts } from "../products";
 import * as tolerances from "../tolerances";
 import type { Solution, Vars } from "../types";
 import { formula, frac, given, intermediate, q, result, substitute, tex } from "./helpers";
@@ -18,17 +18,21 @@ export const D2 = register({
   source: SUKL_DLP,
 
   generate(rng, difficulty) {
-    const product = pickProduct(rng, {
-      kind: rng.pick(["infusionBag", "concentrate"] as const),
-      strengthUnit: "mg",
-      minStrength: 1,
-    });
+    // Jen hotové infuzní vaky. Koncentrát se pacientovi nepodává, ten se
+    // nejdřív ředí — a „pacient dostal 500 ml TAXOTERE“ dávalo 10 g
+    // docetaxelu, mnohonásobek smrtelné dávky.
+    const product = rng.pick(
+      selectProducts({ kind: "infusionBag", strengthUnit: "mg", minStrength: 1 }).filter(
+        (bag) => bag.packUnitVolumeMl !== undefined && bag.packUnitVolumeMl >= 50,
+      ),
+    );
     const concentration = concentrationOf(product);
     const percent = concentration / 10;
 
-    const volumeMl = difficulty === 1
-      ? rng.pick([100, 250, 500] as const)
-      : rng.step(20, 1000, 10);
+    // Nejvýš obsah jednoho vaku podle SÚKL: na první úrovni celý vak,
+    // výš i jeho část, třeba když infuzi zastavili dřív.
+    const bagMl = product.packUnitVolumeMl ?? 100;
+    const volumeMl = difficulty === 1 ? bagMl : rng.step(10, bagMl, 10);
 
     return {
       code: product.code,

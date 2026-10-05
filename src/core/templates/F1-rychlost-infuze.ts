@@ -1,6 +1,6 @@
 import { infusionRateMlPerHour } from "../formulas";
 import { PUMP_SOURCE } from "../devices";
-import { pickProduct } from "../products";
+import { BASE_SOLUTION_ATC, pickProduct } from "../products";
 import * as tolerances from "../tolerances";
 import type { Solution, Vars } from "../types";
 import { formula, frac, given, q, result, substitute } from "./helpers";
@@ -18,7 +18,7 @@ export const F1 = register({
   source: [SUKL_DLP, PUMP_SOURCE],
 
   generate(rng, difficulty) {
-    const product = pickProduct(rng, { kind: "infusionBag", minVolumeMl: 1 });
+    const product = pickProduct(rng, { kind: "infusionBag", minVolumeMl: 1, atcPrefixes: BASE_SOLUTION_ATC });
     const bagMl = product.packUnitVolumeMl ?? 500;
 
     const hours = difficulty === 1

@@ -1,5 +1,6 @@
 import { volumeOfStock } from "../formulas";
-import { concentrationOf, pickProduct } from "../products";
+import { concentrationOf } from "../products";
+import { dilutableConcentrates, dilutionTarget } from "./concentrateDraw";
 import * as tolerances from "../tolerances";
 import type { Solution, Vars } from "../types";
 import { formula, frac, given, intermediate, q, result, substitute } from "./helpers";
@@ -20,17 +21,23 @@ export const D6 = register({
   source: SUKL_DLP,
 
   generate(rng, difficulty) {
-    const product = pickProduct(rng, { kind: "concentrate", strengthUnit: "mg", minStrength: 10 });
+    const product = rng.pick(dilutableConcentrates(10));
     const stockConcentration = concentrationOf(product);
-    const targetVolumeMl = rng.pick(TARGET_VOLUMES_ML);
-    const ratio = difficulty === 1 ? rng.pick([0.1, 0.2, 0.5] as const) : rng.step(0.05, 0.6, 0.05);
+    // Natahuje se z balení, ne podle poměru (concentrateDraw.ts).
+    const { targetVolumeMl, targetConcentration } = dilutionTarget(
+      rng,
+      product,
+      stockConcentration,
+      difficulty,
+      TARGET_VOLUMES_ML,
+    );
 
     return {
       code: product.code,
       productName: product.name,
       substance: product.substance,
       stockConcentration,
-      targetConcentration: Number((stockConcentration * ratio).toPrecision(3)),
+      targetConcentration,
       targetVolumeMl,
     } satisfies Vars;
   },
