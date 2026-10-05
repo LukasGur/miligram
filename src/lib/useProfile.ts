@@ -1,7 +1,7 @@
 "use client";
 
 import { useLiveQuery } from "dexie-react-hooks";
-import { currentStreak, streakThrough } from "@/core/economy";
+import { currentStreak, localDay, previousBest, streakThrough } from "@/core/economy";
 import { curriculumState, type CurriculumState } from "./curriculum";
 import { db, emptyProfile, PROFILE_ID, PROGRESS_ID, type LessonProgress, type Profile } from "./db";
 import { solvedToday, unsolvedToday, weekActivity, type WeekDay } from "./today";
@@ -46,6 +46,20 @@ export function streakFacts(profile: Profile): {
     streakFreezes: profile.streakFreezes ?? 0,
     lastLessonDay: streakThrough(profile.lastLessonDay, profile.coveredDays),
   };
+}
+
+/**
+ * Nejdelší dřívější série pro notifikaci o rekordu (`previousBest`).
+ * Počítá se z lekcí v telefonu a dnů, které podržela ochrana nebo obnova.
+ */
+export function usePreviousBest(covered: readonly string[] | undefined): number | undefined {
+  return useLiveQuery(async () => {
+    const lessons = await db().lessons.toArray();
+    return previousBest(
+      lessons.map((lesson) => localDay(new Date(lesson.finishedAt))),
+      covered ?? [],
+    );
+  }, [covered?.join(",")]);
 }
 
 /**

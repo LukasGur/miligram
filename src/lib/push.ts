@@ -284,6 +284,8 @@ export type DeviceFacts = {
   streakDays?: number;
   streakFreezes?: number;
   lastLessonDay?: string | null;
+  /** Nejdelší dřívější série, bez té současné (notifikace o rekordu). */
+  streakBest?: number;
 };
 
 export function timeZone(): string {
@@ -326,6 +328,7 @@ export async function savePrefs(
   if (patch.streakDays !== undefined) row.streak_days = patch.streakDays;
   if (patch.streakFreezes !== undefined) row.streak_freezes = Math.min(patch.streakFreezes, 10);
   if (patch.lastLessonDay !== undefined) row.last_lesson_day = patch.lastLessonDay;
+  if (patch.streakBest !== undefined) row.streak_best = Math.min(patch.streakBest, 100000);
 
   const { error } = await client.from("notification_prefs").upsert(row, { onConflict: "user_id" });
   if (error) throw new Error(error.message);

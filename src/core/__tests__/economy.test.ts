@@ -7,8 +7,12 @@ import {
   PILLS_PER_CORRECT,
   rewardForLesson,
   REPAIR_COOLDOWN_DAYS,
+  REPAIR_COST,
+  REPAIR_MAX_MISSED,
+  REPAIR_MIN_STREAK,
   repairOffer,
   SIGNUP_BONUS,
+  previousBest,
   streakFromDays,
   streakThrough,
   type StreakState,
@@ -150,6 +154,18 @@ describe("bonus za registraci", () => {
   });
 });
 
+describe("obnova v notifikaci", () => {
+  it("server ji nabízí za stejných podmínek jako aplikace", async () => {
+    const { readFileSync } = await import("node:fs");
+    const sql = readFileSync("supabase/migrations/0018_pestre_notifikace.sql", "utf8");
+    expect(sql).toContain(`>= ${REPAIR_COST}`);
+    expect(sql).toContain(`p_streak_days >= ${REPAIR_MIN_STREAK}`);
+    expect(sql).toContain(`interval '${REPAIR_COOLDOWN_DAYS} days'`);
+    // Chybí jeden až REPAIR_MAX_MISSED dní: od poslední lekce uplynuly dva až tři.
+    expect(sql).toContain(`between 2 and ${REPAIR_MAX_MISSED + 1}`);
+  });
+});
+
 /** Sedm dní v řadě končících daným dnem. */
 function tyden(konec: string): string[] {
   const [y, m, d] = konec.split("-").map(Number);
@@ -220,5 +236,24 @@ describe("obnovení série", () => {
 
   it("po obnovení se nenabízí znovu", () => {
     expect(repairOffer({ lessonDays: dny, coveredDays: ["2026-09-11"], freezes: 0, today: "2026-09-12" })).toBeNull();
+  });
+});
+
+describe("dřívější rekord série", () => {
+  it("současná řada se nepočítá", () => {
+    expect(previousBest(["2026-09-01", "2026-09-02", "2026-09-03"])).toBe(0);
+  });
+
+  it("vezme nejdelší z dřívějších řad", () => {
+    const days = ["2026-09-01", "2026-09-02", "2026-09-03", "2026-09-05", "2026-09-07", "2026-09-08"];
+    expect(previousBest(days)).toBe(3);
+  });
+
+  it("pokrytý den řadu nepřeruší, ale nepřičte se", () => {
+    expect(previousBest(["2026-09-01", "2026-09-03", "2026-09-06"], ["2026-09-02"])).toBe(2);
+  });
+
+  it("bez historie je nula", () => {
+    expect(previousBest([])).toBe(0);
   });
 });

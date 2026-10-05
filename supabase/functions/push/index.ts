@@ -67,6 +67,9 @@ Deno.serve(async (request) => {
   const { data, error } = await supabase.rpc("claim_push_batch", { p_limit: 200 });
   if (error) return Response.json({ error: error.message }, { status: 500 });
 
+  // Den odeslání řídí obměnu textů (compose.ts). Stačí UTC: připomínky
+  // chodí mezi šestou ráno a půlnocí místního času, kdy se den shoduje.
+  const day = Math.floor(Date.now() / 86_400_000);
   const sent: number[] = [];
   const failed: number[] = [];
   const gone: string[] = [];
@@ -74,7 +77,7 @@ Deno.serve(async (request) => {
 
   await Promise.all(
     (data as Claimed[]).map(async (row) => {
-      const notice = compose(row.kind, row.params, row.tag, row.locale, row.id);
+      const notice = compose(row.kind, row.params, row.tag, row.locale, { user: row.user_id, day });
       const payload = JSON.stringify(notice);
       let delivered = false;
 

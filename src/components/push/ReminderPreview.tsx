@@ -69,8 +69,8 @@ export function ReminderPreview({
         className="animate-notice mt-5"
         app={t("previewApp")}
         time={time}
-        title={tPush("streakTitle", { days: streak })}
-        body={tPush("streakBody", { fresh: streak === 0 ? "yes" : "no", variant: "a" })}
+        title={tPush(streak === 0 ? "variants.N1.title" : "variants.V1.title", { days: streak })}
+        body={tPush(streak === 0 ? "variants.N1.body" : "variants.V1.body", { days: streak })}
       />
     </div>
   );

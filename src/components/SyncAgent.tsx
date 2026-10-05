@@ -28,7 +28,7 @@ import { pushOnFor, restorePushDevice, savePrefs, timeZone, usePushStatus } from
 import { pullNews } from "@/lib/restore";
 import { supabase } from "@/lib/supabase";
 import { syncOutbox } from "@/lib/sync";
-import { streakFacts, usePendingEvents, useProfile } from "@/lib/useProfile";
+import { streakFacts, usePendingEvents, usePreviousBest, useProfile } from "@/lib/useProfile";
 import { useSession } from "@/lib/useSession";
 
 /**
@@ -57,6 +57,7 @@ export function SyncAgent() {
   const pushOn = pushOnFor(pushStatus, userId);
   // Den, kam série sahá, ne jen poslední lekce — po obnovení je to včerejšek.
   const { streakDays, streakFreezes, lastLessonDay } = streakFacts(profile);
+  const streakBest = usePreviousBest(profile.coveredDays);
 
   useEffect(() => {
     const client = supabase();
@@ -233,8 +234,8 @@ export function SyncAgent() {
   }, [userId]);
 
   /**
-   * Co server potřebuje do textů notifikací: jazyk a sérii, jak ji vidí
-   * telefon (ochrany série server nezná). Srovná se po každé lekci, po
+   * Co server potřebuje do textů notifikací: jazyk, sérii, jak ji vidí
+   * telefon (ochrany série server nezná), a dřívější rekord série. Srovná se po každé lekci, po
    * přepnutí jazyka a po návratu sítě.
    */
   useEffect(() => {
@@ -243,7 +244,7 @@ export function SyncAgent() {
 
     // Zapisuje se jen změna. Dřív šel zápis při každém spuštění a návratu
     // domů (v logu 32× za den) se stejnými hodnotami.
-    const facts = { locale, streakDays, streakFreezes, lastLessonDay };
+    const facts = { locale, streakDays, streakFreezes, lastLessonDay, streakBest };
     const fingerprint = JSON.stringify({ userId, zone: timeZone(), ...facts });
     let cancelled = false;
     const save = () => {
@@ -259,7 +260,7 @@ export function SyncAgent() {
       cancelled = true;
       window.removeEventListener("online", save);
     };
-  }, [userId, pushOn, locale, streakDays, streakFreezes, lastLessonDay]);
+  }, [userId, pushOn, locale, streakDays, streakFreezes, lastLessonDay, streakBest]);
 
   return null;
 }

@@ -223,8 +223,8 @@ function ReminderPerkPreview() {
       className="mx-auto max-w-72"
       app={t("previewApp")}
       time="19:00"
-      title={tPush("streakTitle", { days: 12 })}
-      body={tPush("streakBody", { fresh: "no", variant: "a" })}
+      title={tPush("variants.V1.title", { days: 12 })}
+      body={tPush("variants.V1.body")}
     />
   );
 }

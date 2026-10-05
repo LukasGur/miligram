@@ -245,6 +245,29 @@ export function streakFromDays(
   return { days, lastDay };
 }
 
+/**
+ * Nejdelší dřívější série — všechny řady kromě té poslední.
+ *
+ * Pro notifikaci o rekordu: kdyby se počítala i současná řada, byl by
+ * při první sérii rekord každý den. Takhle přijde jen jednou, v den,
+ * kdy se současná řada dotáhne na dosavadní maximum. Počítání je stejné
+ * jako u `streakFromDays`: pokrytý den řadu nepřeruší, ale nepřičte se.
+ */
+export function previousBest(lessonDays: readonly string[], coveredDays: readonly string[] = []): number {
+  const played = new Set(lessonDays);
+  const days = [...new Set([...lessonDays, ...coveredDays])].sort();
+  const runs: number[] = [];
+  let run = 0;
+  for (let i = 0; i < days.length; i += 1) {
+    if (i > 0 && days[i] !== nextDay(days[i - 1])) {
+      runs.push(run);
+      run = 0;
+    }
+    if (played.has(days[i])) run += 1;
+  }
+  return runs.length === 0 ? 0 : Math.max(...runs);
+}
+
 export type LessonReward = LessonResult & { pills: number };
 
 export function rewardForLesson(answers: readonly boolean[], kind: LessonKind = "lesson"): LessonReward {

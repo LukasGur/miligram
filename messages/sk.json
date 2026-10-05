@@ -685,34 +685,500 @@
     "historyEdited": "Po prevzatí sa odpoveď zmenila na {value}."
   },
   "push": {
-    "streakTitle": "{days, plural, =0 {Dnešná dávka čaká 💊} one {# deň po sebe 🔥} few {# dni po sebe 🔥} other {# dní po sebe 🔥}}",
-    "streakBody": "{fresh, select, yes {{variant, select, a {Päť minút počítania a dnešok máš odškrtnutý.} b {Sedem príkladov čaká. Začni novú sériu ešte dnes.} other {Mililitre sa samy nespočítajú. Dnešná lekcia čaká.}}} other {{variant, select, a {Stačí jedna lekcia a séria porastie.} b {Sedem príkladov zaberie päť minút. Udrž sériu.} other {Dnešné príklady čakajú. Stačí päť minút.}}}}",
-    "lastChanceTitle": "{days, plural, one {Séria dlhá # deň visí na vlásku ⏳} few {Séria dlhá # dni visí na vlásku ⏳} other {Séria dlhá # dní visí na vlásku ⏳}}",
-    "lastChanceBody": "Do polnoci stačí jedna lekcia. Zvládneš to.",
-    "duelChallengeTitle": "⚔️ Výzva na súboj",
-    "duelChallengeBody": "{handle} ťa vyzýva. Prijmi do 48 hodín, inak výzva prepadne.",
-    "duelPlayedTitle": "{stage, select, offered {Výzva čaká 👀} other {Si na ťahu 👀}}",
-    "duelPlayedBody": "{stage, select, offered {{handle} má odohrané a čaká, či súboj prijmeš.} other {{handle} má odohrané. Skóre uvidíš, keď dohráš.}}",
-    "duelFinishedTitle": "{outcome, select, won {Víťazstvo! 🏆} lost {Tentoraz prehra} other {Remíza 🤝}}",
-    "duelFinishedBody": "{outcome, select, lost {Súboj s {handle} skončil {mine}:{theirs}. Odveta?} other {Súboj s {handle} skončil {mine}:{theirs}.}}",
-    "duelAcceptedTitle": "Súboj prijatý ⚔️",
-    "duelAcceptedBody": "{handle} ide do toho. Obaja máte 48 hodín na dohranie.",
-    "duelDeclinedTitle": "Výzva odmietnutá",
-    "duelDeclinedBody": "{handle} tentoraz nehrá. Nič sa neráta, skús to inokedy.",
-    "duelExpiringTitle": "Súboj končí o 6 hodín ⏳",
-    "duelExpiringBody": "Dohraj súboj s {handle}, inak prehráš kontumačne.",
-    "duelForfeitTitle": "{outcome, select, won {Výhra kontumačne 🏆} other {Súboj prepadol}}",
-    "duelForfeitBody": "{outcome, select, won {Súboj s {handle} nebol včas dohraný. Výhra je tvoja, +15 pastiliek.} other {Lehota súboja s {handle} vypršala. Ráta sa ako prehra.}}",
-    "friendRequestTitle": "Nová žiadosť o priateľstvo 👋",
-    "friendRequestBody": "{handle} si ťa chce pridať medzi kamarátov.",
-    "friendAcceptedTitle": "Nové priateľstvo 🤝",
-    "friendAcceptedBody": "{handle} je teraz medzi kamarátmi. Čo tak súboj?",
-    "giftTitle": "Darček! 🎁",
-    "giftBody": "{handle} ti posiela ochranu série. Pripíše sa, keď otvoríš aplikáciu.",
-    "leagueLastDayTitle": "Posledný deň ligy 🔥",
-    "leagueLastDayBody": "{zone, select, up {Si {rank}. a postupuješ. Udrž to!} chase {Si {rank}. a na postup chýba {gap} XP.} down {Si {rank}. a padáš do nižšej ligy. Do bezpečia chýba {safe} XP.} other {Si {rank}. z {size}. Dnes ešte môžeš pridať XP.}}",
-    "leagueResultTitle": "{move, select, up {Postup! 🏆} down {Týždeň skončil} other {Nový týždeň ligy}}",
-    "leagueResultBody": "{move, select, up {S {rank}. miestom postupuješ do {tier}. ligy.} down {S {rank}. miestom zostupuješ do {tier}. ligy. Tento týždeň to môžeš otočiť.} other {Minulý týždeň {rank}. miesto z {size}. Nový týždeň práve začína.}}",
+    "variants": {
+      "O1": {
+        "title": "Séria {lost} dní spadla 💔",
+        "body": "Ešte ju môžeš obnoviť, ale len {deadline, select, today {do dnešnej polnoci} other {do zajtrajšej polnoci}}. Potom už nadobro."
+      },
+      "O2": {
+        "title": "{lost} dní práce v koši? 🗑️",
+        "body": "Nie tak rýchlo. Sériu sa dá obnoviť {deadline, select, today {do dnešnej polnoci} other {do zajtrajšej polnoci}}. Potom sa začína od nuly."
+      },
+      "O3": {
+        "title": "Resuscitácia série 🫀",
+        "body": "Séria {lost} dní ešte nie je stratená. Obnoviť ju môžeš {deadline, select, today {do dnešnej polnoci} other {do zajtrajšej polnoci}}."
+      },
+      "M1": {
+        "title": "Dnes to bude týždeň 🏅",
+        "body": "Ešte jedna lekcia a odznak za 7 dní po sebe je tvoj. Teraz by bola škoda cúvnuť."
+      },
+      "M2": {
+        "title": "6 dní máš, siedmy chýba 🏅",
+        "body": "Týždeň po sebe je prvý odznak série. Dávkovanie: jedna lekcia, ešte dnes."
+      },
+      "M3": {
+        "title": "Dnes 30. deň 🏅",
+        "body": "Mesiac po sebe. Takú adherenciu by ti závidela každá ambulancia."
+      },
+      "M4": {
+        "title": "29 dní. Chýba jeden 🏅",
+        "body": "Od odznaku za mesiac po sebe ťa delí jediná lekcia. Päť minút a môžeš sa chváliť."
+      },
+      "M5": {
+        "title": "Deň 100 🏆",
+        "body": "Stovka. Jedna lekcia a si tam, kam sa skoro nikto nedostane."
+      },
+      "M6": {
+        "title": "99 dní po sebe 🏆",
+        "body": "Tri cifry na dosah. Jedna lekcia a séria má prvýkrát stovku."
+      },
+      "R1": {
+        "title": "Rekord na dosah 📈",
+        "body": "{days, plural, one {# deň} few {# dni} other {# dní}} je tvoje maximum. Dnešná lekcia ho prepíše. Alebo aj nie, to je na tebe."
+      },
+      "R2": {
+        "title": "{days, plural, one {# deň} few {# dni} other {# dní}}, osobné maximum 📈",
+        "body": "Deň {next} by bol nový rekord. Stačí sedem príkladov."
+      },
+      "R3": {
+        "title": "Nový rekord čaká 📈",
+        "body": "Tvoja najdlhšia séria je dlhá presne ako tá dnešná. Jedna lekcia a je dlhšia."
+      },
+      "R4": {
+        "title": "Deň {next}? Ten tu ešte nebol 📈",
+        "body": "Neprebádané územie. Dnešná lekcia z neho urobí nový rekord."
+      },
+      "D1": {
+        "title": "{handle} čaká na tvoj ťah ⚔️",
+        "body": "Rozohraný súboj a nedotknutá séria. Dnes máš čo dobiehať."
+      },
+      "D2": {
+        "title": "Súboj s {handle} stále čaká ⚔️",
+        "body": "Súper nečaká večne a séria tiež nie. Začni, čím chceš."
+      },
+      "L1": {
+        "title": "Na postup chýba {gap} XP 📊",
+        "body": "Lekcia bez chyby dáva 90 XP. Zvyšok je trojčlenka."
+      },
+      "L2": {
+        "title": "{rank}. miesto. Hmm 📊",
+        "body": "Do postupovej trojky ti chýba {gap} XP. Ostatní medzitým počítajú."
+      },
+      "L3": {
+        "title": "Zostupová zóna ⬇️",
+        "body": "Do bezpečia chýba {safe} XP. Jedna lekcia dá až 90."
+      },
+      "L4": {
+        "title": "Liga ti uteká ⬇️",
+        "body": "Si {rank}. a padáš. {safe} XP a si z toho von."
+      },
+      "L5": {
+        "title": "{rank}. miesto a postup 🏆",
+        "body": "Pozícia drží, kým ostatní spia. Oni ale nespia."
+      },
+      "L6": {
+        "title": "Postupová trojka 🏆",
+        "body": "Si v nej. Jedna dnešná lekcia a bude sa ťa horšie dobiehať."
+      },
+      "F1": {
+        "title": "{days, plural, one {# deň} few {# dni} other {# dní}} po sebe 🔥",
+        "body": "Ochranu série máš. Ale poistka nie je liečba, len poistka."
+      },
+      "F2": {
+        "title": "Ochrana na sklade 🛡️",
+        "body": "Neznamená to, že ju dnes musíš použiť. Sedem príkladov a zostane nedotknutá."
+      },
+      "F3": {
+        "title": "Spoliehaš sa na ochranu? 🛡️",
+        "body": "Tá stojí 60 pastiliek. Lekcia je zadarmo a ešte ti nejaké pridá."
+      },
+      "N1": {
+        "title": "Dnešná dávka čaká 💊",
+        "body": "Nula dní po sebe. Najlepšie číslo na začiatok, horšie na koniec."
+      },
+      "N2": {
+        "title": "Čistý list 📋",
+        "body": "Dnes sa píše prvý deň novej série. Pero máš ty."
+      },
+      "N3": {
+        "title": "Deň 1 začína dnes 💊",
+        "body": "Alebo zajtra. Alebo pozajtra. Alebo proste teraz, o päť minút je hotovo."
+      },
+      "N4": {
+        "title": "Mililitre sa samy nespočítajú 💉",
+        "body": "Séria je na nule. Jedna lekcia a je na jednotke."
+      },
+      "N5": {
+        "title": "Nová séria, nová šanca 💊",
+        "body": "Sedem príkladov a máš prvý deň. Ten najťažší je vždy ten prvý."
+      },
+      "A1": {
+        "title": "Ranná dávka 💊",
+        "body": "Nalačno, pred raňajkami, sedem príkladov. Deň {next} série čaká."
+      },
+      "A2": {
+        "title": "{days, plural, one {# deň} few {# dni} other {# dní}} po sebe ☕",
+        "body": "Káva a jedna lekcia. Potom si celý deň môžeš robiť, čo chceš."
+      },
+      "A3": {
+        "title": "Ranná vizita 🩺",
+        "body": "Séria: {days, plural, one {# deň} few {# dni} other {# dní}}, stav stabilizovaný. Odporúčanie: jedna lekcia ešte dopoludnia."
+      },
+      "A4": {
+        "title": "Dobré ráno, {days, plural, one {# deň} few {# dni} other {# dní}} 🔥",
+        "body": "Ráno vypočítané, večer voľno. Jednoduchá trojčlenka."
+      },
+      "P1": {
+        "title": "Obedňajšia pauza? 🥪",
+        "body": "Sedem príkladov sa zmestí medzi polievku a hlavné jedlo. Séria {days} dní sa ti poďakuje."
+      },
+      "P2": {
+        "title": "{days, plural, one {# deň} few {# dni} other {# dní}} po sebe 🔥",
+        "body": "Popoludňajší útlm sa lieči. Napríklad trojčlenkou."
+      },
+      "P3": {
+        "title": "Popoludňajšia ordinácia 🩺",
+        "body": "Pacient: tvoja séria. Diagnóza: akútny nedostatok príkladov. Terapia: jedna lekcia."
+      },
+      "P4": {
+        "title": "Polovica dňa je preč ⏱️",
+        "body": "Séria {days} dní zatiaľ nič nedostala. Napravíš to za päť minút."
+      },
+      "V1": {
+        "title": "{days, plural, one {# deň} few {# dni} other {# dní}} po sebe 🔥",
+        "body": "Seriál počká. Séria nie."
+      },
+      "V2": {
+        "title": "Večerná dávka 💊",
+        "body": "Jedna lekcia pred spaním. Vedľajšie účinky: dobrý pocit a dlhšia séria."
+      },
+      "V3": {
+        "title": "Dnes zatiaľ nula príkladov 🌙",
+        "body": "Séria {days} dní to vidí. A trochu sa bojí."
+      },
+      "V4": {
+        "title": "Služba končí, séria nie 🌙",
+        "body": "Päť minút na gauči a deň {next} je zapísaný."
+      },
+      "W1": {
+        "title": "Víkend nie je výhovorka 🔥",
+        "body": "Séria {days} dní nepozná voľno. Päť minút a máš ho celé."
+      },
+      "W2": {
+        "title": "Víkendová služba 🩺",
+        "body": "Žiadna vizita, žiadny seminár. Len sedem príkladov a deň {next} série."
+      },
+      "W3": {
+        "title": "{days, plural, one {# deň} few {# dni} other {# dní}} po sebe ☀️",
+        "body": "Brunch, výlet, čokoľvek. Ale najprv lekcia, nech máš čisté svedomie."
+      },
+      "W4": {
+        "title": "Víkend na gauči 🛋️",
+        "body": "Ideálna poloha na sedem príkladov. Séria {days} dní súhlasí."
+      },
+      "X1": {
+        "title": "{days, plural, one {# deň} few {# dni} other {# dní}} po sebe 🔥",
+        "body": "Dávkovanie: jedna lekcia denne. Neprekračovať? Pokojne prekroč."
+      },
+      "X2": {
+        "title": "Recept na dnešok 📝",
+        "body": "Rp. Lekcia č. I. S. raz denne, najlepšie hneď."
+      },
+      "X3": {
+        "title": "{days, plural, one {# deň} few {# dni} other {# dní}} po sebe 🔥",
+        "body": "Séria je ako kvetina. Tiež nemá rada, keď na ňu zabudneš."
+      },
+      "X4": {
+        "title": "Tvoja séria je tu stále 👀",
+        "body": "{days, plural, one {# deň} few {# dni} other {# dní}}. A nemieni sa nechať zabudnúť."
+      },
+      "X5": {
+        "title": "Mililitre sa samy nespočítajú 💉",
+        "body": "Skúšali sme to. Fakt nie. Séria {days} dní čaká na teba."
+      },
+      "X6": {
+        "title": "{days, plural, one {# deň} few {# dni} other {# dní}} po sebe 🔥",
+        "body": "Sedem príkladov, päť minút, nula výhovoriek."
+      },
+      "X7": {
+        "title": "Indikácia: dnešok 📋",
+        "body": "Kontraindikácie: žiadne. Odporúčaná dávka: jedna lekcia."
+      },
+      "X8": {
+        "title": "Platí to medzi vami? 💍",
+        "body": "Ty a séria {days} dní. Odpoveď stačí vo forme lekcie."
+      },
+      "X9": {
+        "title": "Gtt/min sa samy nespočítajú 💧",
+        "body": "Kvapky za minútu, mg na kilo, ml za hodinu. Dnes stačí sedem z nich."
+      },
+      "X11": {
+        "title": "Malá pripomienka 💊",
+        "body": "Séria {days} dní sa neudrží sama. Teda udrží, ale len do polnoci."
+      },
+      "X12": {
+        "title": "Jedna tableta denne 💊",
+        "body": "Teda lekcia. Prehĺta sa ľahšie, než vyzerá. Deň {next} čaká."
+      },
+      "C1": {
+        "title": "Ochrana série v ohrození 🛡️",
+        "body": "Do polnoci jedna lekcia, inak ju séria dnes spotrebuje."
+      },
+      "C2": {
+        "title": "Séria {days} dní zatiaľ prežije ⏳",
+        "body": "Vďaka ochrane. Tá ale stojí 60 pastiliek a dnešná lekcia nič. Do polnoci."
+      },
+      "C3": {
+        "title": "{days} dní na jednom vlásku ⏳",
+        "body": "Toľko práce a rozhodne o nej dnešný večer. Do polnoci stačí jedna lekcia."
+      },
+      "C4": {
+        "title": "Posledná výzva pre {days} dní 📢",
+        "body": "Polnoc sa blíži, lekcia trvá päť minút. Spočítaj si to."
+      },
+      "C5": {
+        "title": "Séria {days} dní na infúzii 💧",
+        "body": "Životné funkcie slabnú. Jedna lekcia do polnoci ju postaví na nohy."
+      },
+      "C6": {
+        "title": "Séria dlhá {days, plural, one {# deň} few {# dni} other {# dní}} visí na vlásku ⏳",
+        "body": "Do polnoci stačí jedna lekcia. Zvládneš to."
+      },
+      "C7": {
+        "title": "Tik tak ⏳",
+        "body": "Séria {days} dní končí o polnoci. Ak teda dnes nespočítaš lekciu."
+      },
+      "C8": {
+        "title": "Toto je tá správa, ktorú nechceš 😬",
+        "body": "Séria {days} dní dnes padne. Ak teda do polnoci nespočítaš jednu lekciu."
+      },
+      "C9": {
+        "title": "{days, plural, one {# deň} few {# dni} other {# dní}}, alebo nula? ⏳",
+        "body": "Rozhoduje sa dnes do polnoci. Lekcia trvá päť minút."
+      },
+      "C10": {
+        "title": "Ešte nespíš? 🌙",
+        "body": "Výborne. Séria {days} dní tiež nie, čaká na jednu lekciu do polnoci."
+      },
+      "DC1": {
+        "title": "⚔️ Výzva na súboj",
+        "body": "{handle} ťa vyzýva. Prijmi do 48 hodín, inak výzva prepadne."
+      },
+      "DC2": {
+        "title": "{handle} ťa vyzýva ⚔️",
+        "body": "Sedem rovnakých príkladov, kto viac, ten vyhráva. Na prijatie máš 48 hodín."
+      },
+      "DC3": {
+        "title": "Rukavica hodená 🧤",
+        "body": "{handle} chce súboj. Zdvihneš ju? Výzva platí 48 hodín."
+      },
+      "DC4": {
+        "title": "Niekto si na teba verí ⚔️",
+        "body": "Konkrétne {handle}. Výzva platí 48 hodín."
+      },
+      "PO1": {
+        "title": "Výzva čaká 👀",
+        "body": "{handle} má odohrané a čaká, či súboj prijmeš."
+      },
+      "PO2": {
+        "title": "{handle} už má odohrané 👀",
+        "body": "Teraz je to na tebe. Prijmeš, alebo necháš výzvu prepadnúť?"
+      },
+      "PO3": {
+        "title": "Skóre je zapečatené 🔒",
+        "body": "{handle} má odohrané. Výsledok uvidíš, keď súboj prijmeš a dohráš."
+      },
+      "PT1": {
+        "title": "Si na ťahu 👀",
+        "body": "{handle} má odohrané. Skóre uvidíš, keď dohráš."
+      },
+      "PT2": {
+        "title": "Tvoj ťah ⚔️",
+        "body": "{handle} má hotovo. Ty ešte nie. Len konštatujeme."
+      },
+      "PT3": {
+        "title": "Obálka s výsledkom čaká ✉️",
+        "body": "Otvorí sa, keď dohráš súboj s {handle}."
+      },
+      "DA1": {
+        "title": "Súboj prijatý ⚔️",
+        "body": "{handle} ide do toho. Obaja máte 48 hodín na dohranie."
+      },
+      "DA2": {
+        "title": "{handle} ide do toho ⚔️",
+        "body": "Výzva prijatá. Teraz už niet cesty späť. 48 hodín."
+      },
+      "DA3": {
+        "title": "Je to oficiálne ⚔️",
+        "body": "Súboj s {handle} beží. Sedem príkladov, 48 hodín, žiadne výhovorky."
+      },
+      "DD1": {
+        "title": "Výzva odmietnutá",
+        "body": "{handle} tentoraz nehrá. Nič sa neráta, skús to inokedy."
+      },
+      "DD2": {
+        "title": "Tentoraz nie 🤷",
+        "body": "{handle} súboj neprijíma. Nič sa nedeje, ani neráta."
+      },
+      "DD3": {
+        "title": "Súboj sa nekoná",
+        "body": "{handle} tentoraz pasuje. Vyzvať sa dá aj niekoho iného."
+      },
+      "DE1": {
+        "title": "Súboj končí o 6 hodín ⏳",
+        "body": "Dohraj súboj s {handle}, inak prehráš kontumačne."
+      },
+      "DE2": {
+        "title": "6 hodín do kontumácie ⏳",
+        "body": "Súboj s {handle} čaká na tvojich sedem príkladov."
+      },
+      "DE3": {
+        "title": "Kontumácia na obzore 🏳️",
+        "body": "O 6 hodín prepadá súboj s {handle}. Prehrať bez boja je škoda."
+      },
+      "FW1": {
+        "title": "Víťazstvo! 🏆",
+        "body": "Súboj s {handle} skončil {mine}:{theirs}."
+      },
+      "FW2": {
+        "title": "{mine}:{theirs} pre teba 🏆",
+        "body": "Súboj s {handle} je tvoj. +15 pastiliek."
+      },
+      "FW3": {
+        "title": "Výhra 🏆",
+        "body": "Súboj s {handle} skončil {mine}:{theirs}. Pekne vypočítané."
+      },
+      "FW4": {
+        "title": "Víťazstvo sa ráta 🏆",
+        "body": "{mine}:{theirs} v súboji s {handle}. Odveta asi na seba nenechá dlho čakať."
+      },
+      "FL1": {
+        "title": "Tentoraz prehra",
+        "body": "Súboj s {handle} skončil {mine}:{theirs}. Odveta?"
+      },
+      "FL2": {
+        "title": "{mine}:{theirs}. Odveta? ⚔️",
+        "body": "Súboj s {handle} tentoraz nevyšiel. Nabudúce sa ráta znova."
+      },
+      "FL3": {
+        "title": "Toto kolo pre {handle}",
+        "body": "{mine}:{theirs}. Kolá sa ale dajú opakovať. Stačí vyzvať späť."
+      },
+      "FD1": {
+        "title": "Remíza 🤝",
+        "body": "Súboj s {handle} skončil {mine}:{theirs}."
+      },
+      "FD2": {
+        "title": "{mine}:{theirs}, remíza 🤝",
+        "body": "S {handle} ste si kvit. +5 pastiliek a dôvod na odvetu."
+      },
+      "FP1": {
+        "title": "7:7, dokonalá remíza 🤝",
+        "body": "S {handle} ani jedna chyba. +10 pastiliek pre každého."
+      },
+      "FP2": {
+        "title": "Bez chyby na oboch stranách ✨",
+        "body": "Súboj s {handle} skončil 7:7. Takto vyzerá remíza, za ktorú sa nehanbí nikto."
+      },
+      "KW1": {
+        "title": "Výhra kontumačne 🏆",
+        "body": "Súboj s {handle} nebol včas dohraný. Výhra je tvoja, +15 pastiliek."
+      },
+      "KW2": {
+        "title": "Výhra bez boja 🏳️",
+        "body": "Súboj s {handle} prepadol a výhra pripadá tebe. +15 pastiliek."
+      },
+      "KL1": {
+        "title": "Súboj prepadol",
+        "body": "Lehota súboja s {handle} vypršala. Ráta sa ako prehra."
+      },
+      "KL2": {
+        "title": "48 hodín ubehlo ⌛",
+        "body": "Súboj s {handle} prepadol a ráta sa ako prehra. Nabudúce stačí sedem príkladov včas."
+      },
+      "FR1": {
+        "title": "Nová žiadosť o priateľstvo 👋",
+        "body": "{handle} si ťa chce pridať medzi kamarátov."
+      },
+      "FR2": {
+        "title": "{handle} klope na dvere 👋",
+        "body": "Chce ťa medzi kamarátov. Potom sa môžete vyzývať na súboje."
+      },
+      "FR3": {
+        "title": "Máš fanúšika 👋",
+        "body": "{handle} si ťa chce pridať medzi kamarátov."
+      },
+      "FA1": {
+        "title": "Nové priateľstvo 🤝",
+        "body": "{handle} je teraz medzi kamarátmi. Čo tak súboj?"
+      },
+      "FA2": {
+        "title": "{handle} je v partii 🤝",
+        "body": "Žiadosť prijatá. Kto vyzve prvý?"
+      },
+      "FA3": {
+        "title": "Priateľstvo potvrdené 🤝",
+        "body": "S {handle} teraz navzájom vidíte série aj ligu. A môžete sa vyzvať."
+      },
+      "G1": {
+        "title": "Darček! 🎁",
+        "body": "{handle} ti posiela ochranu série. Pripíše sa, keď otvoríš aplikáciu."
+      },
+      "G2": {
+        "title": "{handle} ti kryje chrbát 🛡️",
+        "body": "Posiela ti ochranu série. Pripíše sa, keď otvoríš aplikáciu."
+      },
+      "G3": {
+        "title": "Balíček z lekárne 🎁",
+        "body": "Od {handle}: jedna ochrana série. Vyzdvihneš si ju otvorením aplikácie."
+      },
+      "LD1": {
+        "title": "Posledný deň ligy 🔥",
+        "body": "Si {rank}. a postupuješ. Udrž to!"
+      },
+      "LD2": {
+        "title": "Postup na dosah 🏆",
+        "body": "Si {rank}. a lige zostáva jeden deň. Nezaspi na vavrínoch."
+      },
+      "LD3": {
+        "title": "Posledný deň ligy 🔥",
+        "body": "Si {rank}. a na postup chýba {gap} XP."
+      },
+      "LD4": {
+        "title": "{gap} XP do postupu 📊",
+        "body": "Dnes je posledný deň ligy. Lekcia bez chyby dá 90 XP."
+      },
+      "LD5": {
+        "title": "Posledný deň ligy 🔥",
+        "body": "Si {rank}. a padáš do nižšej ligy. Do bezpečia chýba {safe} XP."
+      },
+      "LD6": {
+        "title": "Posledná šanca na záchranu ⬇️",
+        "body": "Si {rank}. a do bezpečia chýba {safe} XP. Liga dnes končí."
+      },
+      "LD7": {
+        "title": "Posledný deň ligy 🔥",
+        "body": "Si {rank}. z {size}. Dnes ešte môžeš pridať XP."
+      },
+      "LD8": {
+        "title": "Liga dnes končí 🔥",
+        "body": "{rank}. miesto z {size}. Každá lekcia ešte posúva."
+      },
+      "LR1": {
+        "title": "Postup! 🏆",
+        "body": "S {rank}. miestom postupuješ do {tier}. ligy."
+      },
+      "LR2": {
+        "title": "Vitaj v {tier}. lige 🏆",
+        "body": "{rank}. miesto minulý týždeň znamená postup. Konkurencia je tu tvrdšia."
+      },
+      "LR3": {
+        "title": "Týždeň skončil",
+        "body": "S {rank}. miestom zostupuješ do {tier}. ligy. Tento týždeň to môžeš otočiť."
+      },
+      "LR4": {
+        "title": "Nový týždeň, nová liga",
+        "body": "Minulý týždeň {rank}. miesto a zostup do {tier}. ligy. Odtiaľto sa dobre postupuje."
+      },
+      "LR5": {
+        "title": "Nový týždeň ligy",
+        "body": "Minulý týždeň {rank}. miesto z {size}. Nový týždeň práve začína."
+      },
+      "LR6": {
+        "title": "Liga od nuly 🔄",
+        "body": "Minulý týždeň {rank}. z {size}. Teraz majú všetci nula XP, vrátane tých hore."
+      }
+    },
     "actionLesson": "Spustiť lekciu"
   },
   "notifications": {
