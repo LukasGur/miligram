@@ -17,7 +17,7 @@ import type { DuelResult } from "@/lib/remote";
 import type { BadgeState } from "@/core/badges";
 import { freshLocalBadges } from "@/lib/social";
 import { BadgeGlyph } from "@/components/social/BadgeGlyph";
-import { recordAnswer, recordLesson, spendPills, type LessonAttempt } from "@/lib/db";
+import { markGaveUp, markHelped, recordAnswer, recordLesson, spendPills, type LessonAttempt } from "@/lib/db";
 import { templateFamiliarity } from "@/lib/learning";
 import { streakFacts, useProfile } from "@/lib/useProfile";
 import { HomeIcon, RepeatIcon, VersusIcon } from "@/components/icons";
@@ -72,6 +72,7 @@ export function LessonView({
   spec,
   duelId,
   attempts: resumed,
+  helped: resumedHelped,
   onExit,
   onAgain,
   onDuelDone,
@@ -90,6 +91,8 @@ export function LessonView({
   duelId?: string;
   /** Pokusy z rozehrané lekce, na které se navazuje. */
   attempts?: readonly LessonAttempt[];
+  /** Semínka, u kterých už padla nápověda nebo vzor (src/lib/db.ts). */
+  helped?: readonly string[];
   onExit: () => void;
   /** Spustí další lekci rovnou ze shrnutí, bez návratu domů. */
   onAgain: () => void;
@@ -103,6 +106,13 @@ export function LessonView({
   // Rozehraná lekce začíná tam, kde uživatel přestal. Pořadí se dopočítá
   // z pokusů, takže se nemusí ukládat vedle.
   const [attempts, setAttempts] = useState<LessonAttempt[]>([...(resumed ?? [])]);
+  /**
+   * Vyhodnocená odpověď, u které student ještě neklepl na Pokračovat.
+   * V databázi už je; do průběhu se přidá až s Pokračovat, aby příklad
+   * i s verdiktem zůstal na obrazovce.
+   */
+  const [checked, setChecked] = useState<LessonAttempt | null>(null);
+  const [helped, setHelped] = useState<readonly string[]>(resumedHelped ?? []);
   const { profile } = useProfile();
   /**
    * Zápis se smí provést jen jednou. Vykreslení se opakovat může,
@@ -179,7 +189,55 @@ export function LessonView({
   const item = plan.items[index];
   const unseen = learn && familiarity !== undefined && !familiarity.seen.has(item.templateId);
   const unmastered = learn && familiarity !== undefined && !familiarity.mastered.has(item.templateId);
-  const pills = profile.pills + pending;
+  /**
+   * Pastilky za vyhodnocenou odpověď přičítá do hlavičky obrazovka příkladu
+   * sama, až doletí. Tady se proto do Pokračovat odečtou, ať je v zůstatku
+   * jen jednou — ať už je databáze stihla potvrdit, nebo ne.
+   */
+  const checkedCredit = checked !== null && attempt === 0 && checked.correct ? PILLS_PER_CORRECT : 0;
+  const pills = profile.pills + pending - checkedCredit;
+  const progressOptions = { plan: spec || given ? plan : undefined, stageId: spec?.stage, duelId };
+
+  /**
+   * Poslední uzavřený příklad lekci uzavírá. Zapisuje se v obsluze
+   * události, ne při vykreslení shrnutí — událost nastane jednou.
+   * Volá se po vyhodnocení i po vzdání: vzdáním se dá uzavřít taky.
+   */
+  function finishIfDone(next: readonly LessonAttempt[], credit: number) {
+    if (nextIndex(plan, next) !== null || recorded.current) return;
+    recorded.current = true;
+    setWalletBefore(profile.pills + pending + credit);
+    const outcomes = firstTryOutcomes(plan, next);
+    const reward = rewardForLesson(outcomes, plan.kind);
+    void recordLesson({
+      lessonId,
+      kind: plan.kind,
+      // Na server jde jeden záznam na příklad a v něm první pokus.
+      // Opakování je na učení; kdyby se posílalo, přičetlo by XP.
+      answers: plan.items.map((item, position) => ({
+        templateId: item.templateId,
+        seed: item.seed,
+        difficulty: item.difficulty,
+        correct: outcomes[position],
+        hinted: next.some((one) => one.seed === item.seed && one.hinted),
+      })),
+      reward,
+    });
+
+    // Výsledek souboje jde rovnou na server. Do fronty nepatří:
+    // bez připojení nemá souboj koho porovnávat a čekající výzva
+    // je srozumitelnější než výsledek, který dorazí za tři dny.
+    //
+    // Klient Supabase se dotahuje až tady. Souboj je menšina lekcí
+    // a 240 kB navíc by jinak čekalo na každou z nich.
+    if (duelId) {
+      const score = duelScore(
+        plan.items.map((item) => item.seed),
+        next,
+      );
+      void reportDuel(duelId, { correct: reward.correct, count: reward.count, ...score });
+    }
+  }
 
   return (
     <ExerciseView
@@ -201,20 +259,25 @@ export function LessonView({
       pills={pills}
       onExit={onExit}
       onHint={() => spendPills(HINT_COST, `hint:${exercise.templateId}`)}
-      onAnswered={({ correct, hinted, gaveUp }) => {
+      helped={helped.includes(item.seed)}
+      onHelped={() => {
+        if (helped.includes(item.seed)) return;
+        setHelped((current) => [...current, item.seed]);
+        void markHelped(lessonId, item.seed, progressOptions);
+      }}
+      onChecked={({ correct, hinted }) => {
         // Semínko je identita položky v plánu, ne semínko zobrazeného
         // příkladu: to se u vráceného příkladu mění, aby přišla jiná čísla.
         const zapis: LessonAttempt = {
           templateId: exercise.templateId,
-          seed: plan.items[index].seed,
+          seed: item.seed,
           difficulty: exercise.difficulty,
           index,
           correct,
-          hinted,
-          ...(gaveUp ? { gaveUp: true } : {}),
+          // Nápověda vzatá před odchodem z aplikace se počítá taky.
+          hinted: hinted || helped.includes(item.seed),
         };
-        const next = [...attempts, zapis];
-        setAttempts(next);
+        setChecked(zapis);
         // Připíše se v recordAnswer; do té doby se drží v zobrazení.
         const credit = attempt === 0 && correct ? PILLS_PER_CORRECT : 0;
         setPending((value) => value + credit);
@@ -223,49 +286,19 @@ export function LessonView({
         // dohrát, odpověď už padla.
         // Plán se ukládá i u denní lekce: sestavil se ze stavu, který se
         // během lekce mění, takže z předpisu by po návratu vyšel jiný.
-        void recordAnswer(lessonId, zapis, {
-          plan: spec || given ? plan : undefined,
-          stageId: spec?.stage,
-          duelId,
-        });
-
-        // Poslední vyřešený příklad lekci uzavírá. Zapisuje se tady,
-        // v obsluze události, ne při vykreslení shrnutí — událost nastane
-        // jednou.
-        if (nextIndex(plan, next) === null && !recorded.current) {
-          recorded.current = true;
-          setWalletBefore(profile.pills + pending + credit);
-          const outcomes = firstTryOutcomes(plan, next);
-          const reward = rewardForLesson(outcomes, plan.kind);
-          void recordLesson({
-            lessonId,
-            kind: plan.kind,
-            // Na server jde jeden záznam na příklad a v něm první pokus.
-            // Opakování je na učení; kdyby se posílalo, přičetlo by XP.
-            answers: plan.items.map((item, position) => ({
-              templateId: item.templateId,
-              seed: item.seed,
-              difficulty: item.difficulty,
-              correct: outcomes[position],
-              hinted: next.some((one) => one.seed === item.seed && one.hinted),
-            })),
-            reward,
-          });
-
-          // Výsledek souboje jde rovnou na server. Do fronty nepatří:
-          // bez připojení nemá souboj koho porovnávat a čekající výzva
-          // je srozumitelnější než výsledek, který dorazí za tři dny.
-          //
-          // Klient Supabase se dotahuje až tady. Souboj je menšina lekcí
-          // a 240 kB navíc by jinak čekalo na každou z nich.
-          if (duelId) {
-            const score = duelScore(
-              plan.items.map((item) => item.seed),
-              next,
-            );
-            void reportDuel(duelId, { correct: reward.correct, count: reward.count, ...score });
-          }
+        void recordAnswer(lessonId, zapis, progressOptions);
+        finishIfDone([...attempts, zapis], credit);
+      }}
+      onContinue={({ gaveUp }) => {
+        if (checked === null) return;
+        const zapis = gaveUp ? { ...checked, gaveUp: true } : checked;
+        const next = [...attempts, zapis];
+        if (gaveUp) {
+          void markGaveUp(lessonId, zapis.seed);
+          finishIfDone(next, 0);
         }
+        setChecked(null);
+        setAttempts(next);
       }}
     />
   );

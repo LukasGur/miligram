@@ -144,6 +144,12 @@ export type LessonProgress = {
    * dopočítá, co předložit dál, takže se pořadí nedrží nikde jinde.
    */
   attempts: readonly LessonAttempt[];
+  /**
+   * Semínka příkladů, u kterých si student vzal nápovědu nebo otevřel
+   * vzor, ale ještě neodpověděl. Zaplacená nápověda tak po návratu
+   * zůstane odkrytá a v souboji se pořád počítá jako pomoc.
+   */
+  helped?: readonly string[];
   startedAt: string;
   updatedAt: string;
 };
@@ -497,10 +503,97 @@ export async function recordAnswer(
       stageId: options.stageId ?? running?.stageId,
       duelId: options.duelId ?? running?.duelId,
       attempts,
+      helped: running?.helped,
       startedAt: running?.startedAt ?? timestamp,
       updatedAt: timestamp,
     });
   });
+}
+
+type ProgressOptions = { plan?: LessonPlan; stageId?: StageId; duelId?: string };
+
+/**
+ * Student si u příkladu vzal nápovědu nebo otevřel vzor. Zapisuje se
+ * hned, ne až s odpovědí: kdo by odešel z aplikace a vrátil se, měl by
+ * jinak nápovědu zaplacenou, ale schovanou, a v souboji by pomoc zmizela.
+ */
+export async function markHelped(
+  lessonId: string,
+  seed: string,
+  options: ProgressOptions = {},
+  now = new Date(),
+): Promise<void> {
+  const timestamp = now.toISOString();
+  const database = db();
+  await database.transaction("rw", database.progress, async () => {
+    const current = await database.progress.get(PROGRESS_ID);
+    const running = current?.lessonId === lessonId ? current : undefined;
+    if (running?.helped?.includes(seed)) return;
+    await database.progress.put({
+      id: PROGRESS_ID,
+      lessonId,
+      plan: options.plan ?? running?.plan,
+      stageId: options.stageId ?? running?.stageId,
+      duelId: options.duelId ?? running?.duelId,
+      attempts: running?.attempts ?? [],
+      helped: [...(running?.helped ?? []), seed],
+      startedAt: running?.startedAt ?? timestamp,
+      updatedAt: timestamp,
+    });
+  });
+}
+
+/**
+ * Vzdání. Chybná odpověď je zapsaná už od vyhodnocení; tady se k ní jen
+ * poznamená, že se příklad v lekci nevrátí.
+ */
+export async function markGaveUp(lessonId: string, seed: string, now = new Date()): Promise<void> {
+  const database = db();
+  await database.transaction("rw", database.progress, async () => {
+    const current = await database.progress.get(PROGRESS_ID);
+    if (current?.lessonId !== lessonId) return;
+    const last = current.attempts.findLastIndex((attempt) => attempt.seed === seed);
+    if (last === -1) return;
+    const attempts = current.attempts.map((attempt, index) => (index === last ? { ...attempt, gaveUp: true } : attempt));
+    await database.progress.put({ ...current, attempts, updatedAt: now.toISOString() });
+  });
+}
+
+/**
+ * Všechno, co už v lekci padlo: pokusy a vzaté nápovědy.
+ *
+ * Z rozehrané lekce, když je to ona. Jinak z uložených odpovědí — souboj
+ * se dá otevřít znovu ze seznamu soubojů i potom, co se rozehranou stala
+ * jiná lekce, a začít načisto by znamenalo smazat si chyby.
+ */
+export async function lessonState(
+  lessonId: string,
+): Promise<{ attempts: LessonAttempt[]; helped: string[] }> {
+  const database = db();
+  const progress = await database.progress.get(PROGRESS_ID);
+  if (progress?.lessonId === lessonId) {
+    return { attempts: [...progress.attempts], helped: [...(progress.helped ?? [])] };
+  }
+
+  const stored = await database.answers.where("lessonId").equals(lessonId).toArray();
+  stored.sort((a, b) => a.index - b.index);
+  const attempts: LessonAttempt[] = [];
+  for (const answer of stored) {
+    const base = {
+      templateId: answer.templateId,
+      seed: answer.seed,
+      difficulty: answer.difficulty,
+      index: answer.index,
+      hinted: answer.hinted,
+    };
+    // Z odpovědi je vidět první pokus, počet pokusů a jestli to nakonec
+    // vyšlo. Na pořadí ani skóre víc potřeba není.
+    attempts.push({ ...base, correct: answer.firstTry });
+    const failures = answer.attempts - 1 - (answer.correct && !answer.firstTry ? 1 : 0);
+    for (let i = 0; i < failures; i += 1) attempts.push({ ...base, correct: false });
+    if (answer.correct && !answer.firstTry) attempts.push({ ...base, correct: true });
+  }
+  return { attempts, helped: [] };
 }
 
 /** Zahodí rozehranou lekci. Uložené odpovědi zůstávají — práce se nemaže. */

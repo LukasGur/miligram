@@ -17,7 +17,7 @@ import { DAILY_REVIEW_ITEMS, LESSON_LENGTH, newLessonId, type LessonPlan } from 
 import { useLocale } from "@/i18n/LocaleProvider";
 import type { WeekDay } from "@/lib/today";
 import type { DailySpec, StageId } from "@/core/curriculum";
-import { clearProgress, type LessonAttempt } from "@/lib/db";
+import { clearProgress, lessonState, type LessonAttempt } from "@/lib/db";
 import { dailySpec } from "@/lib/curriculum";
 import { useCurriculum, useLessonProgress, useProfile, useToday } from "@/lib/useProfile";
 import { onOpenIntent, type OpenIntent } from "@/lib/openIntent";
@@ -157,6 +157,7 @@ function Home() {
     spec?: DailySpec;
     duelId?: string;
     attempts?: readonly LessonAttempt[];
+    helped?: readonly string[];
   } | null>(null);
 
   const { profile, streak } = useProfile();
@@ -195,11 +196,20 @@ function Home() {
    * Souboj se sestaví z identifikátoru a tématu (src/core/lesson.ts).
    * Plán se k rozehrané lekci uloží, takže po návratu přijdou tytéž
    * příklady. Sestavení tahá šablony, a tak až tady.
+   *
+   * Co už v souboji padlo, se načte z databáze. Dřív se souboj otevřený
+   * ze seznamu hrál od začátku: student znal příklady a chyba zmizela.
    */
   async function playDuel(duel: PlayableDuel) {
-    const { planDuelLesson } = await loadLesson();
+    const [{ planDuelLesson }, done] = await Promise.all([loadLesson(), lessonState(duel.lessonId)]);
     setAccountOpen(false);
-    setLesson({ id: duel.lessonId, plan: planDuelLesson(duel.lessonId, duel.topic), duelId: duel.id });
+    setLesson({
+      id: duel.lessonId,
+      plan: planDuelLesson(duel.lessonId, duel.topic),
+      duelId: duel.id,
+      attempts: done.attempts,
+      helped: done.helped,
+    });
   }
 
   function startDaily() {
@@ -209,6 +219,7 @@ function Home() {
         plan: unfinished.plan,
         duelId: unfinished.duelId,
         attempts: unfinished.attempts,
+        helped: unfinished.helped,
       });
     } else {
       startStage();
@@ -264,6 +275,7 @@ function Home() {
         spec={lesson.spec}
         duelId={lesson.duelId}
         attempts={lesson.attempts}
+        helped={lesson.helped}
         onExit={() => setLesson(null)}
         onAgain={() => startStage(lesson.spec?.stage)}
         onDuelDone={(duelId) => {

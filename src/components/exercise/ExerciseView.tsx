@@ -13,7 +13,7 @@ import { HINT_COST, PILLS_PER_CORRECT } from "@/core/economy";
 import type { Exercise } from "@/core/types";
 import { useAnswerUnit, useExercisePrompt } from "@/i18n/exerciseText";
 import { AnswerDisplay } from "./AnswerDisplay";
-import { Calculator, type CalculatorEntry } from "./Calculator";
+import { Calculator, EMPTY_CALCULATOR, type CalculatorEntry, type CalculatorState } from "./Calculator";
 import { CalculatorHistory } from "./CalculatorHistory";
 import { Keypad } from "./Keypad";
 import { TickScale } from "@/components/ui/TickScale";
@@ -38,8 +38,11 @@ export function ExerciseView({
   example,
   attempt,
   onExit,
-  onAnswered,
+  onChecked,
+  onContinue,
   onHint,
+  onHelped,
+  helped = false,
   pills,
 }: {
   exercise: Exercise;
@@ -61,9 +64,19 @@ export function ExerciseView({
   /** Kolikátý pokus tohle je. Od druhého se nabídne jít dál. */
   attempt: number;
   onExit: () => void;
-  onAnswered: (result: { correct: boolean; hinted: boolean; gaveUp?: boolean }) => void;
+  /**
+   * Odpověď je vyhodnocená. Zapisuje se hned, ne až s Pokračovat: kdo
+   * po verdiktu odejde z aplikace, nesmí se vrátit k nevyplněnému příkladu.
+   */
+  onChecked: (result: { correct: boolean; hinted: boolean }) => void;
+  /** Pokračovat, nebo po druhé chybě vzdát. */
+  onContinue: (result: { gaveUp?: boolean }) => void;
   /** Zaplatí nápovědu; vrátí, jestli prošla. */
   onHint: () => Promise<boolean>;
+  /** Nápověda nebo vzor se otevřely poprvé — zapíše se to hned. */
+  onHelped: () => void;
+  /** Pomoc vzatá před odchodem z aplikace: nápověda zůstává odkrytá. */
+  helped?: boolean;
   pills: number;
 }) {
   const t = useTranslations("lesson");
@@ -75,7 +88,7 @@ export function ExerciseView({
   const [verdict, setVerdict] = useState<Verdict | null>(null);
   const [solutionOpen, setSolutionOpen] = useState(false);
   /** Kolik kroků nápovědy je odkrytých. Nula = nápověda nevzatá. */
-  const [revealed, setRevealed] = useState(0);
+  const [revealed, setRevealed] = useState(helped ? 1 : 0);
   const [exampleOpen, setExampleOpen] = useState(false);
   const [hintOpen, setHintOpen] = useState(false);
   const closeHint = useCallback(() => setHintOpen(false), []);
@@ -88,6 +101,8 @@ export function ExerciseView({
   const hinted = revealed > 0 || usedExample;
   const closeExample = useCallback(() => setExampleOpen(false), []);
   const [calculatorOpen, setCalculatorOpen] = useState(false);
+  /** Rozepsaný výpočet přežije zavření kalkulačky (viz CalculatorState). */
+  const [calculator, setCalculator] = useState<CalculatorState>(EMPTY_CALCULATOR);
   /**
    * Co se v příkladu spočítalo, pro „Můj výpočet“ po vyhodnocení. Žije jen
    * do Pokračovat — vrácený příklad je nová instance a začíná načisto.
@@ -144,11 +159,13 @@ export function ExerciseView({
     if (await onHint()) {
       setRevealed(1);
       setHintOpen(true);
+      onHelped();
     }
   }
 
   function openExample() {
     setExampleOpen(true);
+    if (!usedExample) onHelped();
     setUsedExample(true);
     writeLocal(STORAGE_KEYS.exampleCoachSeen, "1");
   }
@@ -157,6 +174,7 @@ export function ExerciseView({
     if (value === null) return;
     const result = evaluateAnswer(value, exercise.solution.value, exercise.answer.tolerance);
     setVerdict(result);
+    onChecked({ correct: result.correct, hinted });
     if (result.correct && !repeat) {
       if (reducedMotion()) {
         setLanded(true);
@@ -272,13 +290,13 @@ export function ExerciseView({
                     {historyOpen ? tCalculator("hideHistory") : tCalculator("history")}
                   </SecondaryAction>
                 ) : stuck ? (
-                  <GiveUp onPress={() => onAnswered({ correct: false, hinted, gaveUp: true })} />
+                  <GiveUp onPress={() => onContinue({ gaveUp: true })} />
                 ) : null}
               </div>
 
               {history.length > 0 && stuck ? (
                 <div className="mt-2 flex [&>*]:flex-1">
-                  <GiveUp onPress={() => onAnswered({ correct: false, hinted, gaveUp: true })} />
+                  <GiveUp onPress={() => onContinue({ gaveUp: true })} />
                 </div>
               ) : null}
 
@@ -361,6 +379,8 @@ export function ExerciseView({
           {verdict !== null ? null : calculatorOpen ? (
             <div className="mt-2">
               <Calculator
+                state={calculator}
+                onState={setCalculator}
                 onCalculate={(entry) => setHistory((current) => [...current, entry])}
                 onUse={(value) => {
                   const answer = value.slice(0, MAX_INPUT_LENGTH);
@@ -390,7 +410,7 @@ export function ExerciseView({
           {calculatorOpen && verdict === null ? null : (
             <button
               type="button"
-              onClick={verdict === null ? check : () => onAnswered({ correct: verdict.correct, hinted })}
+              onClick={verdict === null ? check : () => onContinue({})}
               {...pressable}
               disabled={verdict === null && !canCheck}
               className="press press-wide bg-accent data-pressed:bg-accent-press mt-3 min-h-14 w-full rounded-control text-body font-semibold text-white disabled:opacity-40"

@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import type { Dispatch, SetStateAction } from "react";
 import { useTranslations } from "next-intl";
 import { BackspaceIcon, CloseIcon } from "@/components/icons";
 import { pressable } from "@/lib/press";
@@ -21,11 +21,32 @@ import { evaluate, format, parse, render, type Operator, type Token } from "@/co
  * Každý dopočítaný výraz hlásí ven. Po vyhodnocení si ho student může
  * projít a zjistit, jestli se uklikl, nebo počítal jinak než postup.
  */
+/**
+ * Rozepsaný výpočet. Drží ho obrazovka příkladu, ne kalkulačka: kdo ji
+ * zavře, aby se podíval na vzor nebo nápovědu, najde po návratu výpočet
+ * tam, kde ho nechal. Načisto začíná až další příklad.
+ */
+export type CalculatorState = {
+  tokens: Token[];
+  pending: string;
+  /**
+   * Na displeji je výsledek právě zapsaného „=“. Převzetí ho pak nezapíše
+   * podruhé; jakákoli další klávesa zápis zase otevře.
+   */
+  settled: boolean;
+};
+
+export const EMPTY_CALCULATOR: CalculatorState = { tokens: [], pending: "", settled: false };
+
 export function Calculator({
+  state,
+  onState,
   onCalculate,
   onUse,
   onClose,
 }: {
+  state: CalculatorState;
+  onState: Dispatch<SetStateAction<CalculatorState>>;
   /** Dopočítaný výraz: po „=“, nebo po „Použít“ bez něj. */
   onCalculate: (entry: CalculatorEntry) => void;
   /** Převezme výsledek do odpovědi a zavře kalkulačku. */
@@ -34,13 +55,12 @@ export function Calculator({
 }) {
   const t = useTranslations("calculator");
   const tLesson = useTranslations("lesson");
-  const [tokens, setTokens] = useState<Token[]>([]);
-  const [pending, setPending] = useState("");
-  /**
-   * Na displeji je výsledek právě zapsaného „=“. Převzetí ho pak nezapíše
-   * podruhé; jakákoli další klávesa zápis zase otevře.
-   */
-  const [settled, setSettled] = useState(false);
+  const { tokens, pending, settled } = state;
+  const setTokens = (next: SetStateAction<Token[]>) =>
+    onState((current) => ({ ...current, tokens: typeof next === "function" ? next(current.tokens) : next }));
+  const setPending = (next: SetStateAction<string>) =>
+    onState((current) => ({ ...current, pending: typeof next === "function" ? next(current.pending) : next }));
+  const setSettled = (next: boolean) => onState((current) => ({ ...current, settled: next }));
 
   const complete: Token[] = (() => {
     const value = parse(pending);

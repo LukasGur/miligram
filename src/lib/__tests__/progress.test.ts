@@ -1,6 +1,8 @@
 import "fake-indexeddb/auto";
 import { beforeEach, describe, expect, it } from "vitest";
-import { clearProgress, db, readProgress, recordAnswer, recordLesson } from "../db";
+import { clearProgress, db, lessonState, markGaveUp, markHelped, readProgress, recordAnswer, recordLesson } from "../db";
+import { duelScore } from "@/core/duel";
+import { nextIndex } from "@/core/lessonRun";
 import { solvedToday } from "../today";
 
 const pokus = (seed: string, correct = true, index = 0) => ({
@@ -162,5 +164,56 @@ describe("rozehraná lekce", () => {
       reward: { xp: 30, pills: 12, correct: 1, count: 1, flawless: true },
     });
     expect(profile.pills).toBe(12);
+  });
+});
+
+describe("návrat do lekce", () => {
+  /**
+   * Souboj se dá otevřít znovu ze seznamu soubojů. Dřív začal načisto —
+   * student znal příklady a chyba z prvního pokusu zmizela.
+   */
+  it("souboj otevřený znovu pokračuje i s chybou", async () => {
+    await recordAnswer("s", pokus("s:0", true, 0), { duelId: "d" });
+    await recordAnswer("s", pokus("s:1", false, 1), { duelId: "d" });
+
+    const { attempts } = await lessonState("s");
+    expect(attempts.map((one) => [one.seed, one.correct])).toEqual([
+      ["s:0", true],
+      ["s:1", false],
+    ]);
+  });
+
+  it("chyba přežije i rozehrání jiné lekce", async () => {
+    await recordAnswer("s", pokus("s:0", false, 0), { duelId: "d" });
+    await recordAnswer("s", pokus("s:0", true, 0), { duelId: "d" });
+    await recordAnswer("s", pokus("s:1", true, 1), { duelId: "d" });
+    // Jiná lekce převezme řádek rozehrané lekce.
+    await recordAnswer("jina", pokus("jina:0", true, 0));
+
+    const { attempts } = await lessonState("s");
+    const seeds = ["s:0", "s:1", "s:2"];
+    // První pokus u s:0 byl chybný a zůstává chybný.
+    expect(attempts.filter((one) => one.seed === "s:0").map((one) => one.correct)).toEqual([false, true]);
+    expect(duelScore(seeds, attempts).points).toBe(1);
+    expect(nextIndex({ items: seeds.map((seed) => ({ seed, templateId: "A1", difficulty: 1 })) } as never, attempts)).toBe(2);
+  });
+
+  it("vzatá nápověda zůstane zapsaná i bez odpovědi", async () => {
+    await markHelped("s", "s:0", { duelId: "d" });
+    expect(await lessonState("s")).toMatchObject({ attempts: [], helped: ["s:0"] });
+
+    // Odpověď nápovědu nesmaže.
+    await recordAnswer("s", pokus("s:0", true, 0));
+    expect((await readProgress())?.helped).toEqual(["s:0"]);
+    expect((await readProgress())?.duelId).toBe("d");
+  });
+
+  it("vzdání se poznamená k poslední chybě", async () => {
+    await recordAnswer("l", pokus("l:0", false));
+    await recordAnswer("l", pokus("l:0", false));
+    await markGaveUp("l", "l:0");
+
+    const attempts = (await readProgress())?.attempts ?? [];
+    expect(attempts.map((one) => Boolean(one.gaveUp))).toEqual([false, true]);
   });
 });
