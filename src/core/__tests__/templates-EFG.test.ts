@@ -62,7 +62,11 @@ describe("E — rekonstituce", () => {
         expect(item, `${vars.productName} ${vars.diluentMl} ml`).toBeDefined();
         expect([source].flat().map((s) => s.citation).join(" ")).toContain(item!.quote);
         if (vars.form === "volume") expect(solution.value).toBeGreaterThan(0);
-        else expect(Number(vars.displacementMl)).toBeGreaterThan(0);
+        else if (vars.form === "draw") {
+          // Natahuje se jen část lahvičky, a méně, než kolik roztoku vznikne.
+          expect(Number(vars.doseMg)).toBeLessThan(Number(vars.vialMg));
+          expect(solution.value).toBeLessThan(Number(vars.vialMg) / Number(vars.approxMgPerMl));
+        } else expect(Number(vars.displacementMl)).toBeGreaterThan(0);
       }
     }
   });
