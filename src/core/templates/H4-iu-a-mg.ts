@@ -19,10 +19,30 @@ export const H4 = register({
   source: [SUKL_DLP, dosingSource("enoxaparin")],
 
   generate(rng, difficulty) {
+    /**
+     * Nejdřív dávka, pak balení. Dávka drží rozmezí z SPC: profylaxe
+     * 20 nebo 40 mg, léčba 1 mg/kg dvakrát denně nebo 1,5 mg/kg jednou.
+     * Dřív se losoval násobek balení, a z lahvičky 300 mg tak vycházelo
+     * 600 mg enoxaparinu na dávku.
+     */
+    const doseMg =
+      difficulty === 1
+        ? rng.pick([20, 40, 60, 80, 100])
+        : difficulty === 2
+          ? rng.step(30, 150, 10)
+          : Math.round((rng.pick([1, 1.5]) * rng.step(50, 120, 1)) / 5) * 5;
+
+    /**
+     * Balení, ze kterého se dávka bere: předplněná stříkačka nebo lahvička,
+     * vždy s víc, než je dávka. Stejná dávka jako na obalu by se jen opsala
+     * ze závorky, takže tu není.
+     */
     const product = pickProduct(rng, {
       kind: "ampoule",
       strengthUnit: "mg",
       atcPrefixes: ["B01AB05"],
+      containers: ["prefilledSyringe", "vial"],
+      minStrength: doseMg + 1,
       maxStrength: 300,
     });
     const activityIU = product.activityIU;
@@ -30,16 +50,6 @@ export const H4 = register({
       throw new Error(`${product.name} nemá dvojí značení, přepočet z něj odvodit nelze.`);
     }
     const iuPerMg = activityIU / product.strength;
-
-    /**
-     * Zadané množství se losuje jako násobek síly balení, ať zadání
-     * odpovídá tomu, co lze reálně podat. Násobek 1 mezi nimi schválně
-     * není: obě čísla celého balení jsou v zadání vedle sebe, takže by
-     * se student neptal na výpočet, ale opisoval ze závorky.
-     */
-    const shareOptions =
-      difficulty === 1 ? [0.5, 2] : difficulty === 2 ? [0.5, 1.5, 2] : [0.25, 0.75, 1.25, 2.5];
-    const share = rng.pick(shareOptions);
 
     return {
       code: product.code,
@@ -49,8 +59,8 @@ export const H4 = register({
       labelIU: activityIU,
       iuPerMg,
       direction: rng.int(0, 1) === 1 ? "iuToMg" : "mgToIu",
-      givenMg: Number((product.strength * share).toFixed(2)),
-      givenIU: Number((activityIU * share).toFixed(0)),
+      givenMg: doseMg,
+      givenIU: Math.round(doseMg * iuPerMg),
     } satisfies Vars;
   },
 

@@ -112,6 +112,18 @@ describe("H4 — jednotky a miligramy u enoxaparinu", () => {
     expect(solution.value).toBeCloseTo(60, 9);
   });
 
+  it("dávka je v rozmezí SPC a menší než obsah balení", () => {
+    for (const difficulty of DIFFICULTIES) {
+      for (const seed of SEEDS) {
+        const { vars } = buildExercise("H4", seed, difficulty);
+        const mg = Number(vars.givenMg);
+        expect(mg, `${difficulty}/${seed}`).toBeGreaterThanOrEqual(20);
+        expect(mg, `${difficulty}/${seed}`).toBeLessThanOrEqual(180);
+        expect(mg, `${difficulty}/${seed}`).toBeLessThan(Number(vars.labelMg));
+      }
+    }
+  });
+
   it("přepočet se bere z dvojího značení balení, ne z konstanty", () => {
     for (const seed of SEEDS) {
       const { vars } = buildExercise("H4", seed, D);
