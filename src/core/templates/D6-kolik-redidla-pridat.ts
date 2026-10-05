@@ -1,6 +1,5 @@
 import { volumeOfStock } from "../formulas";
-import { concentrationOf } from "../products";
-import { dilutableConcentrates, dilutionTarget } from "./concentrateDraw";
+import { dilutionSourceFor, pickSpcDilution } from "./concentrateDraw";
 import * as tolerances from "../tolerances";
 import type { Solution, Vars } from "../types";
 import { formula, frac, given, intermediate, q, result, substitute } from "./helpers";
@@ -19,15 +18,13 @@ export const D6 = register({
   id: "D6",
   category: "redeni",
   source: SUKL_DLP,
+  sourceFor: dilutionSourceFor,
 
   generate(rng, difficulty) {
-    const product = rng.pick(dilutableConcentrates(10));
-    const stockConcentration = concentrationOf(product);
-    // Natahuje se z balení, ne podle poměru (concentrateDraw.ts).
-    const { targetVolumeMl, targetConcentration } = dilutionTarget(
+    // Ředí se jen do koncentrace, kterou uvádí SPC (products/dilution.ts),
+    // a natahuje se z balení, ne podle poměru (concentrateDraw.ts).
+    const { product, stockConcentration, targetVolumeMl, targetConcentration } = pickSpcDilution(
       rng,
-      product,
-      stockConcentration,
       difficulty,
       TARGET_VOLUMES_ML,
     );

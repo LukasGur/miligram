@@ -115,7 +115,15 @@ Valproát (5. 10. 2026): Orfiril 100 mg/ml (0054238, SPC221721) má
 v tabulce záměrně není: dává se pevná dávka v mg a „15 mg z roztoku
 1 mg/ml“ nic nenaučí. Injekční Abilify v tabulce zůstává.
 
-Ředění (D1, D2, D4, D6) a infuze (F1–F6) dávku netvrdí, a tak tabulku
+Ředění koncentrátů (D1, D4, D6) bere od 5. 10. 2026 jen přípravky,
+u kterých SPC uvádí výslednou koncentraci, a ředí jen do ní
+(`src/core/products/dilution.ts`, citace u příkladu). U cytostatik
+a klindamycinu musí sedět i množství léku. Zbylo 9 přípravků: amiodaron,
+milrinon (Asicord), klindamycin, levosimendan (Simdax), landiolol
+(Rapibloc), KCl 7,45 % a 15 %, topotekan, etoposid. Proč ostatní ne, je
+v hlavičce souboru.
+
+D2 a infuze (F1–F6) dávku netvrdí, a tak tabulku
 nepotřebují. Drží se toho, co je v balení podle DLP: natahuje se nejvýš
 obsah balení, pacient dostane nejvýš obsah vaku, rychlosti se počítají
 jen u nosných roztoků. Perfuzor (G1–G6) má dávku jen z rozmezí látky,
@@ -143,6 +151,17 @@ a jejich zdroje:
 - **Ceftriaxon u dětí (B1)** — SPC212156: pod 50 kg 50–80 mg/kg jednou
   denně, strop 4 g jen u vyšších pásem. Dávka nad 2 g u dítěte kolem
   30 kg je tedy podle SPC, ne chyba.
+- **Ředění koncentrátů (D1, D4, D6)** — výsledná koncentrace z bodu 4.2
+  nebo 6.6 SPC (tolerance 2 %, SPC zaokrouhluje: ampule amiodaronu
+  v 250 ml je 0,59, SPC píše 0,6). Topotekan 1,2–3 mg a etoposid
+  80–200 mg jsou dávka v mg/m² ze SPC pro povrch 1,6–2,0 m² (návrhové
+  rozhodnutí), klindamycin 300–1200 mg z tabulky ředění v SPC. Dřív
+  vycházelo „0,5 ml topotekanu do 1000 ml“ (0,5 µg/ml místo 25–50)
+  nebo 30 mg paklitaxelu.
+- **Paralen 125 mg (B3, B7)** — podaná dávka je násobek půl tablety
+  (62,5 mg): bod 3 SPC224021 dovoluje tabletu rozdělit na stejné
+  dávky, tabulka v bodu 4.2 pracuje s půlkami. Žádná tableta v aplikaci
+  se podle SPC nečtvrtí (dělicí kříž mají jen Rivotril 2 mg a Xanax 2 mg).
 - **Valproát (B1, B2)** — dospělý na Orfirilu (SPC221721) 5–10 mg/kg
   jen u hmotnosti 60–90 kg, aby dávka zůstala v citovaných 300–900 mg
   úvodní injekce. Dítě na Convulexu 300 mg/ml perorální roztok

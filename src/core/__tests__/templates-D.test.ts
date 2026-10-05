@@ -3,7 +3,9 @@ import "../templates";
 import { allTemplates, buildExercise, getTemplate } from "../templates";
 import { mixedConcentration, percentToRatio, ratioToPercent } from "../formulas";
 import { ELECTROLYTE_LIST } from "../products/electrolytes";
-import type { Difficulty } from "../types";
+import { concentrationAllowed, DILUTION_RULES, dilutionRuleFor } from "../products/dilution";
+import { spcDilutions } from "../templates/concentrateDraw";
+import { DIFFICULTIES, type Difficulty } from "../types";
 
 const D = 2 as Difficulty;
 const SEEDS = Array.from({ length: 40 }, (_, i) => `d${i}`);
@@ -145,5 +147,42 @@ describe("stav banky šablon", () => {
     const ids = allTemplates().map((t) => t.id).sort();
     expect(new Set(ids).size).toBe(ids.length);
     expect(ids.length).toBeGreaterThanOrEqual(32);
+  });
+});
+
+describe("ředění jen podle SPC (D1, D4, D6)", () => {
+  const SEEDS_SPC = Array.from({ length: 300 }, (_, i) => `spc${i}`);
+
+  it("každé pravidlo cituje SPC a dá v každé obtížnosti aspoň jedno ředění", () => {
+    for (const rule of DILUTION_RULES) {
+      expect(rule.spc, rule.product).toMatch(/^(SPC\d+\.pdf|EMA: .+\.pdf)$/);
+      expect(rule.quotes.length, rule.product).toBeGreaterThan(0);
+      for (const difficulty of DIFFICULTIES) {
+        expect(spcDilutions(rule, difficulty, [50, 100, 250, 500]).length, `${rule.product}/${difficulty}`).toBeGreaterThan(0);
+      }
+    }
+  });
+
+  it("výsledná koncentrace i množství léku leží v mezích ze SPC", () => {
+    for (const id of ["D1", "D4", "D6"]) {
+      for (const difficulty of DIFFICULTIES) {
+        for (const seed of SEEDS_SPC) {
+          const { vars, source } = buildExercise(id, seed, difficulty);
+          const rule = dilutionRuleFor(String(vars.code));
+          expect(rule, `${id}/${seed}: ${vars.productName}`).toBeDefined();
+          const stock = Number(vars.stockConcentration);
+          const [drawnMl, totalMl] = id === "D4"
+            ? [Number(vars.stockVolumeMl), Number(vars.totalVolumeMl)]
+            : [(Number(vars.targetConcentration) * Number(vars.targetVolumeMl)) / stock, Number(vars.targetVolumeMl)];
+          const label = `${id}/${difficulty}/${seed}: ${vars.productName} ${drawnMl} ml → ${totalMl} ml`;
+          expect(concentrationAllowed(rule!, (stock * drawnMl) / totalMl), label).toBe(true);
+          if (rule!.doseMg) {
+            expect(stock * drawnMl, label).toBeGreaterThanOrEqual(rule!.doseMg.min - 1e-9);
+            expect(stock * drawnMl, label).toBeLessThanOrEqual(rule!.doseMg.max + 1e-9);
+          }
+          expect(JSON.stringify(source), label).toContain(`SPC přípravku ${rule!.product}`);
+        }
+      }
+    }
   });
 });

@@ -1,6 +1,5 @@
 import { mixedConcentration } from "../formulas";
-import { concentrationOf } from "../products";
-import { carrierVolumeMl, dilutableConcentrates, drawVolumeMl } from "./concentrateDraw";
+import { dilutionSourceFor, pickSpcDilution } from "./concentrateDraw";
 import * as tolerances from "../tolerances";
 import type { Solution, Vars } from "../types";
 import { formula, frac, given, q, result, substitute } from "./helpers";
@@ -18,15 +17,17 @@ export const D4 = register({
   id: "D4",
   category: "redeni",
   source: SUKL_DLP,
+  sourceFor: dilutionSourceFor,
 
   generate(rng, difficulty) {
-    const product = rng.pick(dilutableConcentrates(1));
-    const stockConcentration = concentrationOf(product);
-
-    // Přidává se nejvýš to, co je v balení, a do objemu aspoň čtyřikrát
-    // většího. Dřív šlo přidat 200 ml do infuze o celkovém objemu 100 ml.
-    const stockVolumeMl = drawVolumeMl(rng, product, difficulty);
-    const totalVolumeMl = carrierVolumeMl(rng, stockVolumeMl, TOTAL_VOLUMES_ML);
+    // Přidává se nejvýš to, co je v balení, do objemu aspoň čtyřikrát
+    // většího, a výsledná koncentrace leží v rozmezí ze SPC. Dřív šlo
+    // přidat 0,5 ml topotekanu do 1000 ml (0,5 µg/ml, SPC chce 25–50).
+    const { product, stockConcentration, drawnMl: stockVolumeMl, targetVolumeMl: totalVolumeMl } = pickSpcDilution(
+      rng,
+      difficulty,
+      TOTAL_VOLUMES_ML,
+    );
 
     return {
       code: product.code,

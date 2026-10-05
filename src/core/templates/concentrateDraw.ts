@@ -1,6 +1,7 @@
-import { selectProducts, type Product } from "../products";
+import { concentrationOf, productByCode, type Product } from "../products";
+import { concentrationAllowed, DILUTION_RULES, dilutionRuleFor, dilutionSource, type DilutionRule } from "../products/dilution";
 import type { Rng } from "../random";
-import type { Difficulty } from "../types";
+import type { Difficulty, Source, Vars } from "../types";
 
 /**
  * Kolik koncentrátu se do ředění natáhne.
@@ -12,9 +13,9 @@ import type { Difficulty } from "../types";
  * nejvýš tři lahvičky a nejvýš {@link MAX_DRAW_ML} ml. Teprve k tomu se
  * vybere objem, do kterého se ředí.
  *
- * Nic dalšího se tu netvrdí — žádná dávka ani cílová koncentrace ze SPC.
- * Strop jen brání tomu, aby zadání předepsalo víc léku, než kolik ho
- * v balení vůbec je.
+ * Výsledná koncentrace musí ležet v rozmezí, které pro přípravek uvádí
+ * SPC (`products/dilution.ts`). Strop balení jen brání tomu, aby zadání
+ * předepsalo víc léku, než kolik ho v balení vůbec je.
  */
 export const MAX_DRAW_ML = 40;
 
@@ -35,59 +36,73 @@ export function maxDrawMl(product: Product): number {
   return Math.min(pack, vial * MAX_VIALS, MAX_DRAW_ML);
 }
 
-/**
- * Koncentráty pro úlohy na ředění. Jen ty, ze kterých jde natáhnout aspoň
- * půl mililitru — z menšího objemu se úloha s krokem 0,5 ml nesestaví.
- */
-export function dilutableConcentrates(minStrength: number): Product[] {
-  return selectProducts({ kind: "concentrate", strengthUnit: "mg", minStrength }).filter(
-    (product) => maxDrawMl(product) >= 0.5,
-  );
-}
-
-/**
- * Natažený objem. Na první úrovni celé lahvičky (u velkých lahví kulatý
- * objem), výš po půl mililitru.
- */
-export function drawVolumeMl(rng: Rng, product: Product, difficulty: Difficulty): number {
+/** Natažené objemy, které připadají v úvahu: na první úrovni celé lahvičky. */
+function drawOptionsMl(product: Product, difficulty: Difficulty): number[] {
   const max = maxDrawMl(product);
   const vial = vialVolumeMl(product);
   if (difficulty === 1) {
-    const whole = [1, 2, 3].map((count) => count * vial).filter((volume) => volume <= max);
-    if (whole.length > 0) return rng.pick(whole);
-    const round = [5, 10, 20, 40].filter((volume) => volume <= max);
-    return round.length > 0 ? rng.pick(round) : max;
+    const whole = [1, 2, 3].map((count) => count * vial).filter((volume) => volume <= max + 1e-9);
+    if (whole.length > 0) return whole;
+    return [5, 10, 20, 40].filter((volume) => volume <= max);
   }
-  return rng.step(0.5, max, 0.5);
+  const options: number[] = [];
+  for (let volume = 0.5; volume <= max + 1e-9; volume += 0.5) options.push(Number(volume.toFixed(1)));
+  return options;
 }
 
-/** Objem, do kterého se ředí: z běžných objemů, aspoň čtyřnásobek nataženého. */
-export function carrierVolumeMl(rng: Rng, drawnMl: number, volumes: readonly number[]): number {
-  const fitting = volumes.filter((volume) => volume >= drawnMl * MIN_DILUTION);
-  return fitting.length > 0 ? rng.pick(fitting) : volumes[volumes.length - 1];
+export type SpcDilution = {
+  product: Product;
+  stockConcentration: number;
+  drawnMl: number;
+  targetVolumeMl: number;
+  targetConcentration: number;
+};
+
+/**
+ * Všechna ředění, která SPC dovoluje: natažený objem z balení, objem
+ * z běžných vaků (nebo z SPC, uvádí-li ho), výsledná koncentrace v rozmezí
+ * a zapsatelná na tři platné číslice beze zbytku. Jinak by zaokrouhlená
+ * koncentrace v zadání dávala odpověď typu 33,51 ml místo 33,5 ml.
+ */
+export function spcDilutions(rule: DilutionRule, difficulty: Difficulty, volumes: readonly number[]): SpcDilution[] {
+  const options = dilutionsFrom(rule, drawOptionsMl(productByCode(rule.suklCode), difficulty), volumes);
+  if (options.length > 0 || difficulty !== 1) return options;
+  // Celá lahvička je někdy víc než dávka (topotekan 4 mg, dávka do 3 mg);
+  // na první úrovni se pak natahují celé mililitry.
+  const max = maxDrawMl(productByCode(rule.suklCode));
+  return dilutionsFrom(rule, Array.from({ length: Math.floor(max) }, (_, i) => i + 1), volumes);
+}
+
+function dilutionsFrom(rule: DilutionRule, draws: readonly number[], volumes: readonly number[]): SpcDilution[] {
+  const product = productByCode(rule.suklCode);
+  const stockConcentration = concentrationOf(product);
+  const out: SpcDilution[] = [];
+  for (const drawnMl of draws) {
+    for (const targetVolumeMl of rule.totalVolumesMl ?? volumes) {
+      if (targetVolumeMl < drawnMl * MIN_DILUTION) continue;
+      const exact = (stockConcentration * drawnMl) / targetVolumeMl;
+      const targetConcentration = Number(exact.toPrecision(3));
+      if (Math.abs(targetConcentration - exact) > 1e-9 * Math.max(1, exact)) continue;
+      if (!concentrationAllowed(rule, exact)) continue;
+      const mg = stockConcentration * drawnMl;
+      if (rule.doseMg && (mg < rule.doseMg.min - 1e-9 || mg > rule.doseMg.max + 1e-9)) continue;
+      out.push({ product, stockConcentration, drawnMl, targetVolumeMl, targetConcentration });
+    }
+  }
+  return out;
 }
 
 /**
- * Natažený objem, objem ředění a cílová koncentrace, která jde napsat
- * na tři platné číslice beze zbytku. Jinak by zaokrouhlená koncentrace
- * v zadání dávala odpověď typu 33,51 ml místo 33,5 ml.
+ * Ředění pro úlohu: nejdřív přípravek (každý má stejnou šanci, ať ho SPC
+ * dovoluje ředit jakkoli široce), pak jedno z jeho dovolených ředění.
  */
-export function dilutionTarget(
-  rng: Rng,
-  product: Product,
-  stockConcentration: number,
-  difficulty: Difficulty,
-  volumes: readonly number[],
-): { drawnMl: number; targetVolumeMl: number; targetConcentration: number } {
-  let fallback: { drawnMl: number; targetVolumeMl: number; targetConcentration: number } | null = null;
-  for (let tries = 0; tries < 24; tries += 1) {
-    const drawnMl = drawVolumeMl(rng, product, difficulty);
-    const targetVolumeMl = carrierVolumeMl(rng, drawnMl, volumes);
-    const exact = (stockConcentration * drawnMl) / targetVolumeMl;
-    const targetConcentration = Number(exact.toPrecision(3));
-    const candidate = { drawnMl, targetVolumeMl, targetConcentration };
-    if (Math.abs(targetConcentration - exact) < 1e-9 * Math.max(1, exact)) return candidate;
-    fallback ??= candidate;
-  }
-  return fallback!;
+export function pickSpcDilution(rng: Rng, difficulty: Difficulty, volumes: readonly number[]): SpcDilution {
+  const usable = DILUTION_RULES.map((rule) => spcDilutions(rule, difficulty, volumes)).filter((options) => options.length > 0);
+  return rng.pick(rng.pick(usable));
+}
+
+/** Citace SPC s výslednou koncentrací k příkladu. */
+export function dilutionSourceFor(vars: Vars): Source[] {
+  const rule = dilutionRuleFor(String(vars.code));
+  return rule ? [dilutionSource(rule)] : [];
 }
