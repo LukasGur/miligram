@@ -50,8 +50,12 @@ export type AdultDose = {
    * dlouhodobou nebo udržovací, se počítá s předpisem na 28–90 dní.
    */
   course?: { min: number; max: number } | "longTerm";
-  /** Rekonstituce lahvičky podle bodu 6.6 SPC (E1). */
-  reconstitution?: { diluentMl: number; quote: string };
+  /**
+   * Rekonstituce lahvičky podle SPC (E1), zpravidla bod 6.6. Kde SPC
+   * uvádí jen výslednou koncentraci (meropenem 50 mg/ml), je objem z ní
+   * dopočítaný a citace je z bodu, kde koncentrace stojí.
+   */
+  reconstitution?: { diluentMl: number; quote: string; section?: string };
 };
 
 const VERIFIED_AT = "2026-09-24";
@@ -706,7 +710,15 @@ const LIST: readonly AdultDose[] = [
   },
   {
     suklCode: "0225456", product: "Meronem 1 g prášek pro injekční/infuzní roztok", spc: "SPC225238.pdf", verifiedAt: VERIFIED_AT_ORAL,
-    singleMg: [2000], rangeMg: { min: 500, max: 2000 },
+    singleMg: [500, 2000], rangeMg: { min: 500, max: 2000 },
+    // 1 g na 50 mg/ml je 20 ml. Ověřeno 5. 10. 2026.
+    reconstitution: {
+      diluentMl: 20,
+      section: "6.3",
+      quote:
+        "Roztok pro bolusovou injekci se připraví rekonstitucí léčivého přípravku ve vodě na injekci " +
+        "na konečnou koncentraci 50 mg/ml.",
+    },
     quote: "Dávka podaná každých 8 hodin: 500 mg nebo 1 g … Bronchopulmonální infekce u cystické fibrózy 2 g.",
   },
 ];
@@ -723,7 +735,7 @@ export function adultDoseSource(dose: AdultDose): Source {
     : "https://opendata.sukl.cz/?q=katalog/spc-souhrn-udaju-o-lecivem-pripravku-summary-product-characteristics";
   const parts = [`bod 4.2: „${dose.quote}“`];
   if (dose.divisibleQuote) parts.push(`bod 3: „${dose.divisibleQuote}“`);
-  if (dose.reconstitution) parts.push(`bod 6.6: „${dose.reconstitution.quote}“`);
+  if (dose.reconstitution) parts.push(`bod ${dose.reconstitution.section ?? "6.6"}: „${dose.reconstitution.quote}“`);
   return {
     citation: `SPC přípravku ${dose.product}, ${parts.join("; ")}`,
     url: where,

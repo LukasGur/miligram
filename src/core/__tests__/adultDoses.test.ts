@@ -45,7 +45,15 @@ describe("základní úlohy zadávají dávku ze SPC", () => {
           const { vars, source } = buildExercise(id, seed, difficulty);
           const dose = adultDoseFor(String(vars.code));
           expect(dose, `${id}/${difficulty}/${seed}`).toBeDefined();
-          expect(dose!.singleMg, `${id}/${difficulty}/${seed} ${vars.productName}`).toContain(Number(vars.doseMg));
+          if (vars.child === "yes") {
+            // Dětská dávka ceftriaxonu: 50–80 mg/kg na padesátky, menší než lahvička.
+            const mg = Number(vars.doseMg);
+            expect(mg % 50, `${id}/${difficulty}/${seed}`).toBe(0);
+            expect(mg, `${id}/${difficulty}/${seed}`).toBeLessThan(Number(vars.vialMg));
+            expect([source].flat().map((s) => s.citation).join(" ")).toContain("50–80 mg/kg");
+          } else {
+            expect(dose!.singleMg, `${id}/${difficulty}/${seed} ${vars.productName}`).toContain(Number(vars.doseMg));
+          }
           // U příkladu musí být vidět, odkud dávka pochází.
           const citations = [source].flat().map((s) => s.citation).join(" ");
           expect(citations).toContain(dose!.quote);

@@ -5,6 +5,7 @@ import * as tolerances from "../tolerances";
 import type { Solution, Vars } from "../types";
 import { frac, step, tex, unit } from "./helpers";
 import { ISO_7886, register, SUKL_DLP } from "./registry";
+import { dosingRule, dosingSource } from "../products/dosing";
 
 /** Objemy rozpouštědla, které SPC lyofilizátů uvádějí nejčastěji. */
 
@@ -20,7 +21,8 @@ export const E1 = register({
   category: "rekonstituce",
   source: [SUKL_DLP, ISO_7886],
 
-  sourceFor: doseSourceFor,
+  // Dětská dávka cituje dávkování ceftriaxonu u dětí, dospělá tabulku dávek.
+  sourceFor: (vars) => [...doseSourceFor(vars), ...(vars.child === "yes" ? [dosingSource("ceftriaxonDeti")] : [])],
 
   generate(rng, difficulty) {
     /**
@@ -30,7 +32,26 @@ export const E1 = register({
      * i výslednou koncentraci, a dávka menší než obsah lahvičky.
      */
     const candidates = dosedProducts("powderVial").filter((candidate) => candidate.dose.reconstitution);
-    const { item, doseMg } = pickDose(rng, candidates, lessThanContent);
+
+    /**
+     * U dětí se z lahvičky natahuje jen část: ceftriaxon 50–80 mg/kg
+     * podle SPC, ordinovaný v mg na padesátky. Dospělé dávky ze SPC bývají
+     * celá lahvička nebo víc, a tak by úloha znala jen pár kombinací.
+     */
+    const ceftriaxone = candidates.filter((candidate) => candidate.product.substance === "CEFTRIAXON");
+    const child = ceftriaxone.length > 0 && rng.pick([true, false]);
+    let item: (typeof candidates)[number];
+    let doseMg: number;
+    if (child) {
+      const rule = dosingRule("ceftriaxonDeti");
+      const range = rule.single!;
+      item = rng.pick(ceftriaxone);
+      const weightKg = rng.step(5, 30, 0.5);
+      const raw = rng.step(range.min, range.max, 5) * weightKg;
+      doseMg = Math.min(Math.round(raw / 50) * 50, item.contentMg - 50);
+    } else {
+      ({ item, doseMg } = pickDose(rng, candidates, lessThanContent));
+    }
 
     return {
       code: item.product.code,
@@ -41,6 +62,7 @@ export const E1 = register({
       doseMg,
       doseUnit: difficulty === 3 ? "g" : "mg",
       doseShown: difficulty === 3 ? doseMg / 1000 : doseMg,
+      child: child ? "yes" : "no",
     } satisfies Vars;
   },
 
