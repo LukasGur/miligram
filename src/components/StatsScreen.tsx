@@ -84,7 +84,7 @@ export function StatsScreen({
                   <button
                     type="button"
                     onClick={() => onTrain({ kind: "mistakes", items: mistakes })}
-                    className="bg-accent active:bg-accent-press mt-3 min-h-12 w-full rounded-control text-body font-semibold text-white"
+                    className="bg-accent active:bg-accent-press mt-3 min-h-12 w-full rounded-control text-body font-semibold text-on-accent"
                   >
                     {t("mistakesStart", { count: mistakes.length })}
                   </button>

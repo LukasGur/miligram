@@ -334,7 +334,7 @@ export function Primary({
       onClick={onClick}
       disabled={disabled || busy}
       aria-busy={busy}
-      className="bg-accent active:bg-accent-press mt-4 flex min-h-12 w-full items-center justify-center gap-2 rounded-control text-body font-semibold text-white transition-colors duration-75 disabled:opacity-40"
+      className="bg-accent active:bg-accent-press mt-4 flex min-h-12 w-full items-center justify-center gap-2 rounded-control text-body font-semibold text-on-accent transition-colors duration-75 disabled:opacity-40"
     >
       {busy ? <Spinner /> : null}
       {children}

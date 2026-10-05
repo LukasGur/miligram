@@ -49,7 +49,7 @@ export function BadgeSheet({
 
   return (
     <div className="fixed inset-0 z-50 flex flex-col justify-end">
-      <button type="button" aria-label={t("close")} onClick={onClose} className="animate-scrim bg-ink/25 absolute inset-0" />
+      <button type="button" aria-label={t("close")} onClick={onClose} className="animate-scrim bg-scrim absolute inset-0" />
 
       <div
         role="dialog"
@@ -82,7 +82,7 @@ export function BadgeSheet({
                   <span
                     className={`grid size-7 shrink-0 place-items-center rounded-full ${
                       done
-                        ? "bg-accent text-white"
+                        ? "bg-accent text-on-accent"
                         : next
                           ? "border-accent border-2"
                           : "border-line border-2"

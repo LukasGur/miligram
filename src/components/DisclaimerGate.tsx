@@ -52,7 +52,7 @@ export function DisclaimerGate({ children }: { children: ReactNode }) {
           type="button"
           autoFocus
           onClick={() => writeLocal(STORAGE_KEYS.disclaimerAcceptedAt, new Date().toISOString())}
-          className="bg-accent active:bg-accent-press min-h-14 w-full rounded-control text-body font-semibold text-white"
+          className="bg-accent active:bg-accent-press min-h-14 w-full rounded-control text-body font-semibold text-on-accent"
         >
           {t("confirm")}
         </button>

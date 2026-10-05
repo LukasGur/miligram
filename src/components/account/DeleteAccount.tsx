@@ -84,7 +84,7 @@ function ConfirmSheet({ client, handle, onClose }: { client: Client; handle: str
         type="button"
         aria-label={t("deleteCancel")}
         onClick={onClose}
-        className="animate-scrim bg-ink/25 absolute inset-0"
+        className="animate-scrim bg-scrim absolute inset-0"
       />
       <div
         role="dialog"

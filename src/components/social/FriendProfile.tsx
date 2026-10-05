@@ -179,7 +179,7 @@ export function FriendProfile({
                     onBack();
                   })
                 }
-                className="bg-ink flex min-h-11 flex-1 items-center justify-center gap-2 rounded-control text-label font-semibold text-white disabled:opacity-40"
+                className="bg-ink flex min-h-11 flex-1 items-center justify-center gap-2 rounded-control text-label font-semibold text-paper disabled:opacity-40"
               >
                 {removing.busy ? <Spinner className="size-4" /> : null}
                 {t("remove")}

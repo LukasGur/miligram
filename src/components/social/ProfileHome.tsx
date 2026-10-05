@@ -246,7 +246,7 @@ function DuelsCard({
           </span>
         </span>
         {needMe > 0 ? (
-          <span className="readout bg-accent grid h-6 min-w-6 place-items-center rounded-full px-1.5 text-micro font-semibold text-white" data-numeric>
+          <span className="readout bg-accent grid h-6 min-w-6 place-items-center rounded-full px-1.5 text-micro font-semibold text-on-accent" data-numeric>
             {format.number(needMe)}
           </span>
         ) : null}

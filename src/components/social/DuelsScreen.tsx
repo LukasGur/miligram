@@ -207,7 +207,7 @@ function ActionCard({
               type="button"
               disabled={busy}
               onClick={() => run("accept", () => actions.onRespond(duel, true, true))}
-              className="bg-accent active:bg-accent-press flex min-h-12 flex-[2] items-center justify-center gap-2 rounded-control text-body font-semibold text-white disabled:opacity-40"
+              className="bg-accent active:bg-accent-press flex min-h-12 flex-[2] items-center justify-center gap-2 rounded-control text-body font-semibold text-on-accent disabled:opacity-40"
             >
               {pending === "accept" ? <Spinner /> : null}
               {t("acceptAndPlay")}
@@ -237,7 +237,7 @@ function ActionCard({
             type="button"
             disabled={busy}
             onClick={() => actions.onPlay(duel)}
-            className="bg-accent active:bg-accent-press min-h-12 flex-[2] rounded-control text-body font-semibold text-white disabled:opacity-40"
+            className="bg-accent active:bg-accent-press min-h-12 flex-[2] rounded-control text-body font-semibold text-on-accent disabled:opacity-40"
           >
             {t("play")}
           </button>

@@ -68,7 +68,7 @@ export function HintSheet({
             type="button"
             onClick={onNext}
             {...pressable}
-            className="press press-wide bg-accent data-pressed:bg-accent-press min-h-12 w-full rounded-control text-body font-semibold text-white"
+            className="press press-wide bg-accent data-pressed:bg-accent-press min-h-12 w-full rounded-control text-body font-semibold text-on-accent"
           >
             {t("hintNext")}
           </button>

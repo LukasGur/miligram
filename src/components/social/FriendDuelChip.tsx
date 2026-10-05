@@ -80,7 +80,7 @@ function Badge({ state }: { state: FriendDuelState }) {
     <span
       aria-hidden
       className={`border-paper absolute -right-0.5 -bottom-0.5 grid size-[1.375rem] place-items-center rounded-full border-2 ${
-        waiting ? "bg-surface text-ink-soft" : "bg-accent text-white"
+        waiting ? "bg-surface text-ink-soft" : "bg-accent text-on-accent"
       }`}
     >
       {state === "free" ? (

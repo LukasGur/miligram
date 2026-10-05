@@ -25,6 +25,13 @@
   --color-accent-press: #2b21b8;
   --color-accent-wash: #eeedfb;
   --color-accent-wash-press: #d9d6f6;
+  /* Text na plné ploše akcentu. Ve světlém bílý, v tmavém tmavý —
+     světlé indigo, které v tmavém nese text, by s bílou nemělo kontrast. */
+  --color-on-accent: #ffffff;
+
+  /* Ztmavení pod listem. Vlastní token, protože „ink/25“ by v tmavém
+     režimu obrazovku zesvětlilo. */
+  --color-scrim: rgb(14 17 22 / 0.25);
 
   --color-danger: #c81e1e;
   --color-danger-wash: #fdecec;
@@ -102,6 +109,58 @@
 
   --ease-decel: cubic-bezier(0.16, 1, 0.3, 1);
   --ease-standard: cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+/* --- tmavý režim ---------------------------------------------------------
+   Podle systému. Grafit s nádechem indiga, ne čistá černá: na OLED se černá
+   při posunu rozmazává a bílý text na ní oslní. Akcent je světlejší, aby
+   měl jako text kontrast přes 6:1; plná tlačítka proto nesou tmavý text.
+   Červená zůstává jen chybě, med pastilkám. Každá dvojice text/podklad
+   má kontrast nejméně 4,5:1.                                                */
+@media (prefers-color-scheme: dark) {
+  :root {
+    color-scheme: dark;
+
+    --color-paper: #0f1217;
+    --color-surface: #181c23;
+    --color-line: #262b34;
+    --color-surface-press: #323946;
+
+    --color-ink: #e8ebf0;
+    --color-ink-soft: #98a1ae;
+
+    --color-accent: #8c87ff;
+    --color-accent-press: #a5a1ff;
+    --color-accent-wash: #1d1b3d;
+    --color-accent-wash-press: #2a2752;
+    --color-on-accent: #0f1217;
+
+    --color-danger: #f27474;
+    --color-danger-wash: #3a1416;
+
+    --color-pill: #f0b066;
+    --color-pill-wash: #33240f;
+
+    --color-scrim: rgb(0 0 0 / 0.6);
+
+    /* Monogramy obráceně: tmavý podklad, světlé iniciály téhož tónu. */
+    --color-tone-0: #a9a5ff;
+    --color-tone-0-wash: #1e1c44;
+    --color-tone-1: #7fd3c8;
+    --color-tone-1-wash: #123330;
+    --color-tone-2: #c9a2f0;
+    --color-tone-2-wash: #2a1a3d;
+    --color-tone-3: #f0a0c8;
+    --color-tone-3-wash: #3a1528;
+    --color-tone-4: #9fc2ef;
+    --color-tone-4-wash: #14263d;
+    --color-tone-5: #b4d88a;
+    --color-tone-5-wash: #1f2c10;
+    --color-tone-6: #b6bfcc;
+    --color-tone-6-wash: #232a35;
+    --color-tone-7: #8fd3e4;
+    --color-tone-7-wash: #10303a;
+  }
 }
 
 /* --- bezpečné zóny iOS ----------------------------------------------------

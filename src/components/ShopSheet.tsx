@@ -57,7 +57,7 @@ export function ShopSheet({ open, onClose }: { open: boolean; onClose: () => voi
 
   return (
     <div className="fixed inset-0 z-50 flex flex-col justify-end">
-      <button type="button" aria-label={t("title")} onClick={onClose} className="animate-scrim bg-ink/25 absolute inset-0" />
+      <button type="button" aria-label={t("title")} onClick={onClose} className="animate-scrim bg-scrim absolute inset-0" />
 
       <div
         role="dialog"
@@ -128,7 +128,7 @@ export function ShopSheet({ open, onClose }: { open: boolean; onClose: () => voi
               className={`mt-4 flex min-h-12 w-full items-center justify-between rounded-control px-4 text-body font-semibold transition-colors duration-75 ${
                 poor || full
                   ? "border-line text-ink-soft active:bg-surface-press border"
-                  : "bg-accent active:bg-accent-press text-white"
+                  : "bg-accent active:bg-accent-press text-on-accent"
               }`}
             >
               <span>{t("freezeBuyShort")}</span>

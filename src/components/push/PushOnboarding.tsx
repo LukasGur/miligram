@@ -114,7 +114,7 @@ export function PushOnboarding({
             <button
               type="button"
               onClick={onDone}
-              className="bg-accent active:bg-accent-press flex min-h-14 w-full items-center justify-center gap-2 rounded-control text-body font-semibold text-white transition-colors duration-75"
+              className="bg-accent active:bg-accent-press flex min-h-14 w-full items-center justify-center gap-2 rounded-control text-body font-semibold text-on-accent transition-colors duration-75"
             >
               {done ? <CheckIcon className="size-5" /> : null}
               {t("onboardingContinue")}
@@ -126,7 +126,7 @@ export function PushOnboarding({
                 onClick={() => void prompt.enable()}
                 disabled={phase === "busy"}
                 aria-busy={phase === "busy"}
-                className="bg-accent active:bg-accent-press flex min-h-14 w-full items-center justify-center rounded-control text-body font-semibold text-white transition-colors duration-75 disabled:opacity-60"
+                className="bg-accent active:bg-accent-press flex min-h-14 w-full items-center justify-center rounded-control text-body font-semibold text-on-accent transition-colors duration-75 disabled:opacity-60"
               >
                 {phase === "busy" ? t("enabling") : t("offerEnable")}
               </button>

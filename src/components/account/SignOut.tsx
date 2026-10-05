@@ -114,7 +114,7 @@ function ConfirmSheet({ client, userId, onClose }: { client: Client; userId: str
         type="button"
         aria-label={t("signOutCancel")}
         onClick={onClose}
-        className="animate-scrim bg-ink/25 absolute inset-0"
+        className="animate-scrim bg-scrim absolute inset-0"
       />
       <div
         role="dialog"

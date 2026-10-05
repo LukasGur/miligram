@@ -49,7 +49,7 @@ function PrivacySheet({ onClose }: { onClose: () => void }) {
   // Nad nastavením (z-50), odkud se taky otevírá.
   return createPortal(
     <div className="fixed inset-0 z-[60] flex flex-col justify-end text-left">
-      <button type="button" aria-label={t("close")} onClick={onClose} className="animate-scrim bg-ink/25 absolute inset-0" />
+      <button type="button" aria-label={t("close")} onClick={onClose} className="animate-scrim bg-scrim absolute inset-0" />
       <div
         role="dialog"
         aria-modal="true"

@@ -420,7 +420,7 @@ export function ExerciseView({
               onClick={verdict === null ? check : () => onContinue({})}
               {...pressable}
               disabled={verdict === null && !canCheck}
-              className="press press-wide bg-accent data-pressed:bg-accent-press mt-3 min-h-14 w-full rounded-control text-body font-semibold text-white disabled:opacity-40"
+              className="press press-wide bg-accent data-pressed:bg-accent-press mt-3 min-h-14 w-full rounded-control text-body font-semibold text-on-accent disabled:opacity-40"
             >
               {verdict === null
                 ? t("check")

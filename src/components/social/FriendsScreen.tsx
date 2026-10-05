@@ -75,7 +75,7 @@ export function FriendsScreen({
                   type="button"
                   disabled={action.busy}
                   onClick={() => respond(request.requester, true)}
-                  className="bg-accent active:bg-accent-press flex min-h-11 items-center gap-2 rounded-control px-4 text-label font-semibold text-white disabled:opacity-40"
+                  className="bg-accent active:bg-accent-press flex min-h-11 items-center gap-2 rounded-control px-4 text-label font-semibold text-on-accent disabled:opacity-40"
                 >
                   {pending?.requester === request.requester && pending.accept ? <Spinner className="size-4" /> : null}
                   {t("accept")}
@@ -227,7 +227,7 @@ function AddFriend({ social, first }: { social: Social; first: boolean }) {
             else setNotice(tAccount("handleInvalid"));
           }}
           disabled={busy || typed.trim().length < 3}
-          className="bg-accent active:bg-accent-press flex min-h-12 shrink-0 items-center gap-2 rounded-control px-4 text-body font-semibold text-white disabled:opacity-40"
+          className="bg-accent active:bg-accent-press flex min-h-12 shrink-0 items-center gap-2 rounded-control px-4 text-body font-semibold text-on-accent disabled:opacity-40"
         >
           {busy ? <Spinner className="size-4" /> : null}
           {tAccount("friendAdd")}

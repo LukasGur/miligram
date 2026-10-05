@@ -73,7 +73,7 @@ export function PushOffer({ streak, facts }: { streak: number; facts: DeviceFact
         type="button"
         aria-label={t("offerClose")}
         onClick={later}
-        className="animate-scrim bg-ink/25 absolute inset-0"
+        className="animate-scrim bg-scrim absolute inset-0"
       />
 
       <div
@@ -91,7 +91,7 @@ export function PushOffer({ streak, facts }: { streak: number; facts: DeviceFact
 
         {phase === "done" ? (
           <div className="animate-tick flex min-h-40 flex-col items-center justify-center gap-3 text-center" role="status">
-            <span className="bg-accent flex size-12 items-center justify-center rounded-full text-white">
+            <span className="bg-accent flex size-12 items-center justify-center rounded-full text-on-accent">
               <CheckIcon className="size-6" />
             </span>
             <p id="push-offer-title" className="text-heading font-semibold" data-numeric>
@@ -108,7 +108,7 @@ export function PushOffer({ streak, facts }: { streak: number; facts: DeviceFact
               ref={primaryRef}
               type="button"
               onClick={() => setClosed(true)}
-              className="bg-accent active:bg-accent-press mt-6 min-h-14 w-full rounded-control text-body font-semibold text-white"
+              className="bg-accent active:bg-accent-press mt-6 min-h-14 w-full rounded-control text-body font-semibold text-on-accent"
             >
               {t("deniedOk")}
             </button>
@@ -133,7 +133,7 @@ export function PushOffer({ streak, facts }: { streak: number; facts: DeviceFact
               onClick={() => void enable()}
               disabled={phase === "busy"}
               aria-busy={phase === "busy"}
-              className="bg-accent active:bg-accent-press mt-6 flex min-h-14 w-full items-center justify-center rounded-control text-body font-semibold text-white transition-opacity disabled:opacity-60"
+              className="bg-accent active:bg-accent-press mt-6 flex min-h-14 w-full items-center justify-center rounded-control text-body font-semibold text-on-accent transition-opacity disabled:opacity-60"
             >
               {phase === "busy" ? t("enabling") : t("offerEnable")}
             </button>

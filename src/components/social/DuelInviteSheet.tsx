@@ -76,7 +76,7 @@ export function DuelInviteSheet({
         tabIndex={-1}
         aria-label={t("close")}
         onClick={onClose}
-        className="animate-scrim bg-ink/25 absolute inset-0"
+        className="animate-scrim bg-scrim absolute inset-0"
       />
       <div
         role="dialog"
@@ -157,7 +157,7 @@ export function DuelInviteSheet({
                 type="button"
                 disabled={busy}
                 onClick={() => run("accept", () => actions.onRespond(duel, true, true))}
-                className="bg-accent active:bg-accent-press flex min-h-14 w-full items-center justify-center gap-2 rounded-control text-body font-semibold text-white transition-colors duration-75 disabled:opacity-40"
+                className="bg-accent active:bg-accent-press flex min-h-14 w-full items-center justify-center gap-2 rounded-control text-body font-semibold text-on-accent transition-colors duration-75 disabled:opacity-40"
               >
                 {pending === "accept" ? <Spinner /> : <VersusIcon className="size-5" />}
                 {t("acceptAndPlay")}
@@ -188,7 +188,7 @@ export function DuelInviteSheet({
               <button
                 type="button"
                 onClick={() => actions.onPlay(duel)}
-                className="bg-accent active:bg-accent-press flex min-h-14 w-full items-center justify-center gap-2 rounded-control text-body font-semibold text-white transition-colors duration-75"
+                className="bg-accent active:bg-accent-press flex min-h-14 w-full items-center justify-center gap-2 rounded-control text-body font-semibold text-on-accent transition-colors duration-75"
               >
                 <VersusIcon className="size-5" />
                 {t("play")}

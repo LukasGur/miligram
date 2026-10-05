@@ -48,7 +48,11 @@ export const metadata: Metadata = {
 };
 
 export const viewport: Viewport = {
-  themeColor: "#ffffff",
+  // Lišta prohlížeče a stavový řádek v barvě papíru, ve tmavém tmavá.
+  themeColor: [
+    { media: "(prefers-color-scheme: light)", color: "#ffffff" },
+    { media: "(prefers-color-scheme: dark)", color: "#0f1217" },
+  ],
   width: "device-width",
   initialScale: 1,
   // Zoom zůstává povolený kvůli přístupnosti; „appový“ pocit řeší

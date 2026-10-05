@@ -136,7 +136,7 @@ function BindSheet({ pending, onDone }: { pending: Pending; onDone: () => void }
 
   return (
     <div className="fixed inset-0 z-50 flex flex-col justify-end">
-      <div aria-hidden="true" className="animate-scrim bg-ink/25 absolute inset-0" />
+      <div aria-hidden="true" className="animate-scrim bg-scrim absolute inset-0" />
       <div
         ref={sheetRef}
         tabIndex={-1}

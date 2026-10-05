@@ -200,7 +200,7 @@ function Mark({
   return (
     <span className={wrap}>
       {mark === "ok" ? (
-        <span className={`${box} bg-accent grid place-items-center text-white`}>
+        <span className={`${box} bg-accent grid place-items-center text-on-accent`}>
           <svg viewBox="0 0 24 24" className="size-[70%]" aria-hidden>
             <path d="M20 6 9 17l-5-5" fill="none" stroke="currentColor" strokeWidth={3} strokeLinecap="round" strokeLinejoin="round" />
           </svg>

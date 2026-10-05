@@ -55,7 +55,7 @@ export function SettingsSheet({
         type="button"
         aria-label={t("title")}
         onClick={onClose}
-        className="bg-ink/25 absolute inset-0"
+        className="bg-scrim absolute inset-0"
       />
 
       <div
@@ -119,7 +119,7 @@ export function SettingsSheet({
                   <button
                     type="button"
                     onClick={() => void installOffer.install()}
-                    className="bg-accent active:bg-accent-press mt-3 min-h-11 rounded-control px-4 text-label font-semibold text-white"
+                    className="bg-accent active:bg-accent-press mt-3 min-h-11 rounded-control px-4 text-label font-semibold text-on-accent"
                   >
                     {tInstall("installAction")}
                   </button>

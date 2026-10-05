@@ -512,7 +512,7 @@ function Home() {
           <button
             type="button"
             onClick={startDaily}
-            className="bg-accent active:bg-accent-press min-h-14 w-full rounded-control text-body font-semibold text-white transition-colors duration-75"
+            className="bg-accent active:bg-accent-press min-h-14 w-full rounded-control text-body font-semibold text-on-accent transition-colors duration-75"
           >
             {unfinished
               ? t("resume", { done: unfinishedSolved, total: LESSON_LENGTH })

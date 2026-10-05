@@ -112,7 +112,7 @@ export function InstallBanner() {
           <button
             type="button"
             onClick={() => void install()}
-            className="bg-accent active:bg-accent-press min-h-11 shrink-0 rounded-control px-4 text-label font-semibold text-white"
+            className="bg-accent active:bg-accent-press min-h-11 shrink-0 rounded-control px-4 text-label font-semibold text-on-accent"
           >
             {t("installAction")}
           </button>

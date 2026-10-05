@@ -118,7 +118,7 @@ export function ChallengeSheet({
 
   return (
     <div className="fixed inset-0 z-50 flex flex-col justify-end">
-      <button type="button" aria-label={t("close")} onClick={onClose} className="animate-scrim bg-ink/25 absolute inset-0" />
+      <button type="button" aria-label={t("close")} onClick={onClose} className="animate-scrim bg-scrim absolute inset-0" />
 
       <div
         role="dialog"
@@ -183,7 +183,7 @@ export function ChallengeSheet({
             // znovu a je vidět, že se pracuje.
             disabled={!friend || !topic || busy || open}
             aria-busy={busy}
-            className="bg-accent active:bg-accent-press flex min-h-14 w-full items-center justify-center gap-2 rounded-control text-body font-semibold text-white transition-colors duration-75 disabled:opacity-40"
+            className="bg-accent active:bg-accent-press flex min-h-14 w-full items-center justify-center gap-2 rounded-control text-body font-semibold text-on-accent transition-colors duration-75 disabled:opacity-40"
           >
             {busy ? <Spinner /> : <VersusIcon className="size-5 shrink-0" />}
             <span className="truncate">
@@ -418,7 +418,7 @@ export function SentNotice({ handle, onDone }: { handle: string; onDone: () => v
       className="animate-rise pointer-events-none fixed inset-x-0 z-50 flex justify-center px-5"
       style={{ bottom: "calc(var(--sa-b) + 1.25rem)" }}
     >
-      <p className="bg-ink flex items-center gap-2.5 rounded-full py-2.5 pr-4 pl-2.5 text-label font-medium text-white shadow-lg">
+      <p className="bg-ink flex items-center gap-2.5 rounded-full py-2.5 pr-4 pl-2.5 text-label font-medium text-paper shadow-lg">
         <Monogram handle={handle} size="sm" />
         {t("challengeSent", { handle })}
       </p>

@@ -190,7 +190,7 @@ function Avatar({ label, mine = false }: { label: string; mine?: boolean }) {
     <div className="flex w-14 flex-col items-center gap-1">
       <span
         className={`flex size-10 items-center justify-center rounded-full text-body font-semibold uppercase ${
-          mine ? "bg-accent text-white" : "bg-paper border-line text-ink border"
+          mine ? "bg-accent text-on-accent" : "bg-paper border-line text-ink border"
         }`}
       >
         {label.charAt(0)}

@@ -216,7 +216,7 @@ export function Calculator({
         }}
         {...pressable}
         disabled={result === null}
-        className="press press-wide bg-accent data-pressed:bg-accent-press mt-2 flex min-h-13 w-full items-center justify-center rounded-control text-body font-semibold text-white disabled:opacity-40"
+        className="press press-wide bg-accent data-pressed:bg-accent-press mt-2 flex min-h-13 w-full items-center justify-center rounded-control text-body font-semibold text-on-accent disabled:opacity-40"
       >
         {t("use")}
       </button>

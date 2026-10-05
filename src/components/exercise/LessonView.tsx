@@ -560,7 +560,7 @@ function LessonSummary({
           <button
             type="button"
             onClick={onDuel ?? onExit}
-            className="bg-accent active:bg-accent-press flex min-h-14 w-full items-center justify-center gap-2 rounded-control text-body font-semibold text-white transition-colors duration-75"
+            className="bg-accent active:bg-accent-press flex min-h-14 w-full items-center justify-center gap-2 rounded-control text-body font-semibold text-on-accent transition-colors duration-75"
           >
             {onDuel ? <VersusIcon className="size-5" /> : <HomeIcon className="size-5" />}
             {onDuel ? t("duelResult") : t("home")}

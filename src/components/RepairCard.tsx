@@ -90,7 +90,7 @@ export function RepairCard() {
         disabled={busy}
         aria-busy={busy}
         {...pressable}
-        className="press press-wide bg-accent data-pressed:bg-accent-press mt-3.5 flex min-h-12 w-full items-center justify-between rounded-control px-4 text-body font-semibold text-white disabled:opacity-60"
+        className="press press-wide bg-accent data-pressed:bg-accent-press mt-3.5 flex min-h-12 w-full items-center justify-between rounded-control px-4 text-body font-semibold text-on-accent disabled:opacity-60"
       >
         <span>{t("repairAction")}</span>
         <span className="readout inline-flex items-center gap-1.5" data-numeric>

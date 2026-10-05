@@ -55,7 +55,7 @@ export function ToneSheet({ social, onClose }: { social: Social; onClose: () => 
 
   return (
     <div className="fixed inset-0 z-50 flex flex-col justify-end">
-      <button type="button" aria-label={t("close")} onClick={onClose} className="animate-scrim bg-ink/25 absolute inset-0" />
+      <button type="button" aria-label={t("close")} onClick={onClose} className="animate-scrim bg-scrim absolute inset-0" />
 
       <div
         role="dialog"
@@ -102,7 +102,7 @@ export function ToneSheet({ social, onClose }: { social: Social; onClose: () => 
                     <Monogram handle={handle || "?"} tone={value} />
                   </span>
                   {active ? (
-                    <span className="bg-accent border-paper absolute right-1 bottom-1 grid size-5 place-items-center rounded-full border-2 text-white">
+                    <span className="bg-accent border-paper absolute right-1 bottom-1 grid size-5 place-items-center rounded-full border-2 text-on-accent">
                       <CheckIcon className="size-3" />
                     </span>
                   ) : null}
@@ -124,7 +124,7 @@ export function ToneSheet({ social, onClose }: { social: Social; onClose: () => 
             onClick={() => void save()}
             disabled={busy || tone === current}
             aria-busy={busy}
-            className="bg-accent active:bg-accent-press mt-4 flex min-h-14 w-full items-center justify-center gap-2 rounded-control text-body font-semibold text-white transition-colors duration-75 disabled:opacity-40"
+            className="bg-accent active:bg-accent-press mt-4 flex min-h-14 w-full items-center justify-center gap-2 rounded-control text-body font-semibold text-on-accent transition-colors duration-75 disabled:opacity-40"
           >
             {busy ? <Spinner /> : null}
             {t("toneSave")}
