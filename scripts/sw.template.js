@@ -94,6 +94,61 @@ self.addEventListener("activate", (event) => {
   );
 });
 
+/** Jak dlouho čekat na dokument ze sítě, když v cache není. */
+const NAVIGATION_TIMEOUT_MS = 8000;
+
+/** Shell z kterékoli precache, i z předchozí verze. */
+async function anyShell() {
+  const keys = (await caches.keys()).filter((key) => key.startsWith("miligram-precache-"));
+  for (const key of keys.reverse()) {
+    const cache = await caches.open(key);
+    const shell = await cache.match(OFFLINE_SHELL);
+    if (shell) return shell;
+  }
+  return undefined;
+}
+
+async function fetchWithTimeout(request, ms) {
+  const controller = new AbortController();
+  const timer = setTimeout(() => controller.abort(), ms);
+  try {
+    return await fetch(request, { signal: controller.signal });
+  } finally {
+    clearTimeout(timer);
+  }
+}
+
+/**
+ * Když se aplikace nedá načíst vůbec. Bez Reactu a bez next-intl — ty
+ * jsou právě to, co se nenačetlo —, a tak texty v obou jazycích tady.
+ * Barvy a písmo podle tokenů v src/app/globals.css.
+ */
+function fallbackPage() {
+  const sk = (self.navigator.language || "").toLowerCase().startsWith("sk");
+  const text = sk
+    ? { title: "Miligram sa nenačítal", body: "Spojenie asi vypadlo. Skús to znova, tvoje dáta sú v telefóne v bezpečí.", retry: "Skúsiť znova" }
+    : { title: "Miligram se nenačetl", body: "Spojení nejspíš vypadlo. Zkus to znovu, tvoje data jsou v telefonu v bezpečí.", retry: "Zkusit znovu" };
+  const html = `<!doctype html><html lang="${sk ? "sk" : "cs"}"><head><meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<meta name="theme-color" content="#ffffff"><title>Miligram</title>
+<style>
+html,body{margin:0;height:100%;background:#fff;color:#0e1116;font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif}
+main{box-sizing:border-box;min-height:100%;display:flex;flex-direction:column;max-width:28rem;margin:0 auto;
+padding:calc(env(safe-area-inset-top) + 2rem) 1.5rem calc(env(safe-area-inset-bottom) + 1.5rem)}
+.mid{flex:1;display:flex;flex-direction:column;justify-content:center}
+.mark{width:2.5rem;height:2.5rem;color:#3730d9}
+h1{font-size:1.375rem;line-height:1.25;margin:1.5rem 0 .5rem;font-weight:600}
+p{color:#5a6472;font-size:1rem;line-height:1.5;margin:0}
+button{min-height:3.5rem;width:100%;border:0;border-radius:.75rem;background:#3730d9;color:#fff;font:inherit;font-weight:600;font-size:1rem}
+button:active{background:#2b21b8}
+</style></head><body><main><div class="mid">
+<svg class="mark" viewBox="0 0 24 24" aria-hidden="true"><g transform="rotate(-24 12 12)"><rect x="3" y="7" width="18" height="10" rx="5" fill="none" stroke="currentColor" stroke-width="2"/><path d="M12 7v10" stroke="currentColor" stroke-width="2"/></g></svg>
+<h1>${text.title}</h1><p>${text.body}</p></div>
+<button type="button" onclick="location.reload()">${text.retry}</button>
+</main></body></html>`;
+  return new Response(html, { status: 503, headers: { "content-type": "text/html; charset=utf-8", "cache-control": "no-store" } });
+}
+
 self.addEventListener("message", (event) => {
   if (event.data === "SKIP_WAITING") self.skipWaiting();
 });
@@ -107,16 +162,27 @@ self.addEventListener("fetch", (event) => {
 
   // Navigace: aplikace je jednostránkový shell, takže offline i online
   // vracíme přednačtený dokument a data si aplikace řeší sama.
+  //
+  // Po dlouhé nečinnosti umí iOS cache aplikace smazat, zatímco service
+  // worker zůstane. Dřív pak navigace čekala na síť bez limitu — a iPhone
+  // probuzený po týdnech mívá spojení mrtvé. Výsledek byla černá obrazovka,
+  // na kterou nepomohlo nic než zavřít aplikaci. Teď: shell z kterékoli
+  // verze precache, jinak síť s limitem, jinak stránka s „Zkusit znovu“.
   if (request.mode === "navigate") {
     event.respondWith(
       (async () => {
-        const cached = await caches.match(OFFLINE_SHELL, { cacheName: PRECACHE_NAME });
+        const cached =
+          (await caches.match(OFFLINE_SHELL, { cacheName: PRECACHE_NAME })) ?? (await anyShell());
         if (cached) return cached;
+        // Precache chybí: ať se při příští příležitosti stáhne znovu.
+        self.registration.update().catch(() => {});
         try {
-          return await fetch(request);
+          const response = await fetchWithTimeout(request, NAVIGATION_TIMEOUT_MS);
+          if (response.ok) return response;
         } catch {
-          return new Response("", { status: 504, statusText: "Offline" });
+          // Padá do záložní stránky níže.
         }
+        return fallbackPage();
       })(),
     );
     return;
