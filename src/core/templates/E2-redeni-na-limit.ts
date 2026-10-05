@@ -10,11 +10,22 @@ import type { Solution, Vars } from "../types";
 import { formula, frac, given, intermediate, q, result, substitute } from "./helpers";
 import { register } from "./registry";
 import { packageLabel } from "../products/label";
+import { dosingRule, dosingSource } from "../products/dosing";
 
 /** Pravidla, která uvádějí strop koncentrace v hotové infuzi. */
+/**
+ * Lahvičky s mezí koncentrace v infuzi: vankomycin (nejvýš 5 mg/ml)
+ * a meropenem (konečná koncentrace nejvýš 20 mg/ml, týž bod SPC jako E3).
+ */
 const RULES = RECONSTITUTION_LIST
-  .filter(([, rule]) => rule.maxInfusionMgPerMl !== undefined)
+  .filter(([, rule]) => rule.maxInfusionMgPerMl !== undefined || rule.finalRangeMgPerMl !== undefined)
   .map(([id]) => id) as readonly ReconstitutionRuleId[];
+
+/** Mez koncentrace v infuzi podle SPC. */
+function limitOf(id: ReconstitutionRuleId): number {
+  const rule = reconstitutionRule(id);
+  return rule.maxInfusionMgPerMl ?? rule.finalRangeMgPerMl!.max;
+}
 
 /**
  * E2 — nejmenší objem infuze, aby se nepřekročil strop koncentrace.
@@ -26,14 +37,29 @@ export const E2 = register({
   id: "E2",
   category: "rekonstituce",
   source: RULES.map(reconstitutionSource),
+  // Dávka vankomycinu podle hmotnosti pochází z jeho dávkování v SPC.
+  sourceFor: (vars) => (String(vars.ruleId).startsWith("vankomycin") ? [dosingSource("vankomycin")] : []),
 
   generate(rng, difficulty) {
-    const ruleId = rng.pick(RULES);
+    /**
+     * Dávka, jakou SPC uvádí. Vankomycin 15–20 mg/kg na padesátky,
+     * u lehčích pacientů a dětí z lahvičky 500 mg nebo 1 g, kam se vejde;
+     * meropenem 500 mg nebo 1 g. Dřív to byl zlomek lahvičky po 5 %.
+     */
+    const meropenem = rng.int(0, 2) === 0;
+    let ruleId: ReconstitutionRuleId;
+    let doseMg: number;
+    if (meropenem) {
+      ruleId = "meropenem1g";
+      doseMg = rng.pick([500, 1000]);
+    } else {
+      const range = dosingRule("vankomycin").single!;
+      const weightKg = difficulty === 1 ? rng.step(30, 65, 5) : rng.step(15, 66, 1);
+      const perKg = difficulty === 1 ? rng.pick([range.min, range.max]) : rng.step(range.min, range.max, 1);
+      doseMg = Math.min(1000, Math.max(250, Math.round((perKg * weightKg) / 50) * 50));
+      ruleId = doseMg <= 500 ? rng.pick(["vankomycin500", "vankomycin1g"] as const) : "vankomycin1g";
+    }
     const rule = reconstitutionRule(ruleId);
-
-    // Podává se buď celá lahvička, nebo její část podle hmotnosti pacienta.
-    const fraction = difficulty === 1 ? 1 : rng.step(0.5, 1, 0.05);
-    const doseMg = Number((rule.vialMg * fraction).toPrecision(3));
 
     return {
       ruleId,
@@ -42,7 +68,7 @@ export const E2 = register({
       vialMg: rule.vialMg,
       diluentMl: rule.diluentMl,
       reconstitutedMgPerMl: rule.reconstitutedMgPerMl,
-      maxInfusionMgPerMl: rule.maxInfusionMgPerMl ?? 5,
+      maxInfusionMgPerMl: limitOf(ruleId),
       doseMg,
     } satisfies Vars;
   },

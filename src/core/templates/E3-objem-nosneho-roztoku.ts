@@ -22,8 +22,8 @@ export const E3 = register({
     const rule = reconstitutionRule("meropenem1g");
     const range = rule.finalRangeMgPerMl!;
 
-    const fraction = difficulty === 1 ? 1 : rng.pick([0.5, 0.75, 1] as const);
-    const doseMg = rule.vialMg * fraction;
+    // Dávka, jakou SPC meropenemu uvádí: 500 mg nebo 1 g.
+    const doseMg = rng.pick([500, 1000] as const);
     const targetMgPerMl = difficulty === 1
       ? rng.pick([5, 10, 20] as const)
       : rng.step(range.min, range.max, 0.5);
