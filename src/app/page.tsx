@@ -17,6 +17,7 @@ import { DAILY_REVIEW_ITEMS, LESSON_LENGTH, newLessonId, type LessonPlan } from 
 import { useLocale } from "@/i18n/LocaleProvider";
 import type { WeekDay } from "@/lib/today";
 import type { DailySpec, StageId } from "@/core/curriculum";
+import type { Difficulty } from "@/core/types";
 import { clearProgress, lessonState, type LessonAttempt } from "@/lib/db";
 import { dailySpec } from "@/lib/curriculum";
 import { useCurriculum, useLessonProgress, useProfile, useToday } from "@/lib/useProfile";
@@ -161,7 +162,7 @@ function Home() {
   } | null>(null);
 
   const { profile, streak } = useProfile();
-  const { solved, week } = useToday();
+  const { solved, week, unsolved } = useToday();
   const progress = useLessonProgress();
   const curriculum = useCurriculum();
   /** Rozehraná lekce se nabízí, dokud v ní zbývá aspoň jeden příklad. */
@@ -210,6 +211,18 @@ function Home() {
       attempts: done.attempts,
       helped: done.helped,
     });
+  }
+
+  /**
+   * Opakování chyb hned po lekci nebo z domovské obrazovky. Tentýž plán
+   * jako opakování ze statistik: typy výpočtu s jinými čísly, bez bonusu.
+   */
+  async function startReview(items: readonly { templateId: string; difficulty: Difficulty }[]) {
+    if (items.length === 0) return;
+    const { planFromItems } = await loadLesson();
+    const id = newLessonId();
+    setStatsOpen(false);
+    setLesson({ id, plan: planFromItems(id, items) });
   }
 
   function startDaily() {
@@ -282,6 +295,7 @@ function Home() {
         helped={lesson.helped}
         onExit={() => setLesson(null)}
         onAgain={() => startStage(lesson.spec?.stage)}
+        onReview={(items) => void startReview(items)}
         onDuelDone={(duelId) => {
           setLesson(null);
           openAccount({ screen: "reveal", duelId });
@@ -324,6 +338,10 @@ function Home() {
     return (
       <StatsScreen
         onClose={() => setStatsOpen(false)}
+        onStart={() => {
+          setStatsOpen(false);
+          startDaily();
+        }}
         onTrain={async (mode) => {
           // Sestavení lekce se dotahuje až tady: je v něm fond přípravků
           // a všech 72 šablon, které domovská obrazovka nepotřebuje.
@@ -445,6 +463,22 @@ function Home() {
             <p className="text-ink-soft text-center text-label" data-numeric>
               {t("lessonMeta", { count: LESSON_LENGTH, minutes: LESSON_MINUTES })}
             </p>
+          ) : !goalMet && unsolved.length > 0 ? (
+            // Lekce je dohraná a kruh stojí: do cíle se počítají spočítané
+            // příklady a ty přeskočené ne. Bez téhle věty to vypadá jako chyba.
+            <div className="bg-surface flex w-full items-start gap-2.5 rounded-control px-3.5 py-3 text-label" role="status">
+              <span aria-hidden className="bg-accent mt-1.5 size-1.5 shrink-0 rounded-full" />
+              <p>
+                {t("goalWaiting", { count: unsolved.length })}{" "}
+                <button
+                  type="button"
+                  onClick={() => void startReview(unsolved as { templateId: string; difficulty: Difficulty }[])}
+                  className="text-accent -my-2 inline-flex min-h-11 items-center font-semibold"
+                >
+                  {t("goalWaitingAction")}
+                </button>
+              </p>
+            </div>
           ) : null}
 
           <Week week={week} />

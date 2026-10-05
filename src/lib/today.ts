@@ -32,6 +32,36 @@ export async function solvedToday(today = localDay()): Promise<number> {
   ).length;
 }
 
+/**
+ * Typy výpočtu, které dnes v dohraných lekcích zůstaly nespočítané
+ * (student je přeskočil). Kvůli nim stojí kruh cíle, i když je lekce
+ * hotová — domovská obrazovka to řekne a nabídne opravu hned.
+ * Rozehraná lekce se nepočítá: její chyby se ještě vrátí v ní samé.
+ */
+export async function unsolvedToday(
+  today = localDay(),
+): Promise<{ templateId: string; difficulty: number }[]> {
+  const database = db();
+  const finished = new Set((await database.lessons.toArray()).map((lesson) => lesson.lessonId));
+  const unique = new Map<string, { templateId: string; difficulty: number }>();
+  // V pořadí zápisu: typ, který student dnes později spočítal (třeba
+  // v opakování), už na opravu nečeká.
+  for (const answer of await database.answers.orderBy("id").toArray()) {
+    if (localDay(new Date(answer.answeredAt)) !== today) continue;
+    const key = `${answer.templateId}:${answer.difficulty}`;
+    if (answer.correct) {
+      unique.delete(key);
+      continue;
+    }
+    if (!finished.has(answer.lessonId)) continue;
+    unique.set(key, {
+      templateId: answer.templateId,
+      difficulty: answer.difficulty,
+    });
+  }
+  return [...unique.values()];
+}
+
 export type WeekDay = {
   day: string;
   /** Dohrál v ten den uživatel aspoň jednu lekci? */

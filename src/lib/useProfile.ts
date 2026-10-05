@@ -4,7 +4,7 @@ import { useLiveQuery } from "dexie-react-hooks";
 import { currentStreak, streakThrough } from "@/core/economy";
 import { curriculumState, type CurriculumState } from "./curriculum";
 import { db, emptyProfile, PROFILE_ID, PROGRESS_ID, type LessonProgress, type Profile } from "./db";
-import { solvedToday, weekActivity, type WeekDay } from "./today";
+import { solvedToday, unsolvedToday, weekActivity, type WeekDay } from "./today";
 
 /**
  * Profil pro zobrazení.
@@ -74,10 +74,15 @@ export function usePendingLessons(): number {
  * Dnešní postup a týden pozadu. Obojí se přepočítá samo, jakmile doběhne
  * zápis lekce — proto `useLiveQuery` a ne jednorázové načtení.
  */
-export function useToday(): { solved: number; week: WeekDay[] } {
+export function useToday(): {
+  solved: number;
+  week: WeekDay[];
+  unsolved: { templateId: string; difficulty: number }[];
+} {
   const solved = useLiveQuery(() => solvedToday(), [], 0);
   const week = useLiveQuery(() => weekActivity(), [], []);
-  return { solved, week };
+  const unsolved = useLiveQuery(() => unsolvedToday(), [], []);
+  return { solved, week, unsolved };
 }
 
 /**

@@ -1,7 +1,7 @@
 "use client";
 
 import { useFormatter, useTranslations } from "next-intl";
-import { MASTERY_MIN_ANSWERS, STAGES, type StageId } from "@/core/curriculum";
+import { MASTERY_MIN_ANSWERS, MASTERY_MIN_RATE, STAGES, type StageId } from "@/core/curriculum";
 import { blockingFor, type CurriculumState } from "@/lib/curriculum";
 import { CloseIcon } from "./icons";
 import { CategoryIcon } from "./ui/CategoryIcon";
@@ -25,7 +25,6 @@ export function CurriculumScreen({
   onStart: (stage: StageId) => void;
 }) {
   const t = useTranslations("curriculum");
-  const format = useFormatter();
 
   /**
    * Než student cokoli odpoví, nemá věta „stojí na látce, kterou jsi
@@ -54,6 +53,9 @@ export function CurriculumScreen({
       <main tabIndex={0} className="scroll-y flex-1">
         <div className="mx-auto w-full max-w-md px-5 pb-10">
           <p className="text-ink-soft text-label">{t("intro")}</p>
+          <p className="text-ink-soft mt-2 text-label" data-numeric>
+            {t("masteryRule", { answers: MASTERY_MIN_ANSWERS, rate: Math.round(MASTERY_MIN_RATE * 100) })}
+          </p>
 
           <ul className="divide-line mt-4 divide-y border-t">
             {STAGES.map((stage) => {
@@ -74,34 +76,50 @@ export function CurriculumScreen({
                     disabled={state === undefined}
                     className="active:bg-surface w-full py-3 text-left transition-colors duration-75"
                   >
-                    <span className="flex items-center gap-3">
+                    <span className="flex items-start gap-3">
                       <CategoryIcon
                         category={stage.categories[0]}
-                        className={`size-6 shrink-0 ${current ? "text-accent" : "text-ink-soft"}`}
+                        className={`mt-0.5 size-6 shrink-0 ${current ? "text-accent" : "text-ink-soft"}`}
                       />
                       <span className="min-w-0 flex-1">
-                        <span className="text-body block">{t(`stages.${stage.id}`)}</span>
-                        {current ? (
-                          <span className="text-accent block text-micro font-medium">{t("current")}</span>
-                        ) : standing?.mastered ? (
-                          <span className="text-ink-soft block text-micro">{t("mastered")}</span>
-                        ) : null}
-                      </span>
-                      {shown ? (
-                        <span className="readout text-label font-medium" data-numeric>
-                          {format.number(Math.round(rate * 100))}
-                          <span className="text-ink-soft ml-1 font-normal">%</span>
+                        <span className="flex items-baseline justify-between gap-3">
+                          <span className="text-body font-medium">{t(`stages.${stage.id}`)}</span>
+                          <StageStatus
+                            current={current}
+                            mastered={standing?.mastered ?? false}
+                            answered={answered}
+                            rate={shown ? Math.round(rate * 100) : null}
+                          />
                         </span>
-                      ) : (
-                        <span className="text-ink-soft text-micro">{t("tooFew")}</span>
-                      )}
-                    </span>
+                        {/* Co stupeň obsahuje, jedním řádkem. Bez toho byl
+                            program osm názvů a nedalo se podle něj vybrat. */}
+                        <span className="text-ink-soft block text-label">{t(`descriptions.${stage.id}`)}</span>
 
-                    <span className="bg-surface mt-2 flex h-1.5 overflow-hidden rounded-[1px]">
-                      <span
-                        className={`h-full rounded-[1px] ${shown ? "bg-accent" : "bg-line"}`}
-                        style={{ width: `${shown ? Math.round(rate * 100) : 0}%` }}
-                      />
+                        {/* Do deseti odpovědí dílky, kolik jich chybí; potom
+                            úspěšnost s ryskou na hranici zvládnutí. */}
+                        {shown ? (
+                          <span className="bg-line relative mt-2.5 block h-1 rounded-[1px]">
+                            <span
+                              className="bg-accent absolute inset-y-0 left-0 rounded-[1px]"
+                              style={{ width: `${Math.round(rate * 100)}%` }}
+                            />
+                            <span
+                              aria-hidden
+                              className="bg-ink absolute -inset-y-1 w-px"
+                              style={{ left: `${Math.round(MASTERY_MIN_RATE * 100)}%` }}
+                            />
+                          </span>
+                        ) : (
+                          <span aria-hidden className="mt-2.5 flex gap-0.5">
+                            {Array.from({ length: MASTERY_MIN_ANSWERS }, (_, tick) => (
+                              <span
+                                key={tick}
+                                className={`h-1 flex-1 rounded-[1px] ${tick < answered ? "bg-accent" : "bg-line"}`}
+                              />
+                            ))}
+                          </span>
+                        )}
+                      </span>
                     </span>
 
                     {/* Informace, ne zákaz: stupeň jde spustit i tak. */}
@@ -123,5 +141,35 @@ export function CurriculumScreen({
         </div>
       </main>
     </div>
+  );
+}
+
+/** Stav stupně vpravo od názvu: teď, zvládnuto, úspěšnost, nebo kolik odpovědí chybí. */
+function StageStatus({
+  current,
+  mastered,
+  answered,
+  rate,
+}: {
+  current: boolean;
+  mastered: boolean;
+  answered: number;
+  /** Úspěšnost v procentech, jakmile je z čeho počítat. */
+  rate: number | null;
+}) {
+  const t = useTranslations("curriculum");
+  const format = useFormatter();
+  const value =
+    rate !== null ? `${format.number(rate)} %` : `${format.number(Math.min(answered, MASTERY_MIN_ANSWERS))}/${format.number(MASTERY_MIN_ANSWERS)}`;
+
+  return (
+    <span
+      className={`shrink-0 text-micro whitespace-nowrap ${current || mastered ? "text-accent font-semibold" : "text-ink-soft"}`}
+      data-numeric
+    >
+      {current ? `${t("current")} · ` : mastered ? `${t("mastered")} · ` : ""}
+      <span className="readout">{value}</span>
+      {rate === null ? <span className="sr-only"> {t("answersLabel")}</span> : null}
+    </span>
   );
 }

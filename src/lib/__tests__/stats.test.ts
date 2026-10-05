@@ -269,3 +269,21 @@ describe("po nápovědě se typ vrátí", () => {
     expect(await mistakesToRepeat(5, { hints: true })).toEqual([]);
   });
 });
+
+describe("dnes nespočítané typy", () => {
+  it("vrátí přeskočené z dohraných lekcí, opravené a rozehrané ne", async () => {
+    const { unsolvedToday } = await import("../today");
+    const database = db();
+    await database.answers.clear();
+    await database.lessons.clear();
+    const now = new Date().toISOString();
+    const base = { seed: "s", firstTry: false, attempts: 2, hinted: false, answeredAt: now };
+    await database.lessons.add({ lessonId: "done", count: 7, correct: 0, flawless: false, xp: 0, pills: 0, finishedAt: now });
+    await database.answers.add({ ...base, lessonId: "done", index: 0, templateId: "A1", difficulty: 1, correct: false });
+    await database.answers.add({ ...base, lessonId: "done", index: 1, templateId: "B1", difficulty: 2, correct: false });
+    await database.answers.add({ ...base, lessonId: "running", index: 0, templateId: "C1", difficulty: 1, correct: false });
+    await database.answers.add({ ...base, lessonId: "review", index: 0, templateId: "B1", difficulty: 2, correct: true });
+
+    expect(await unsolvedToday()).toEqual([{ templateId: "A1", difficulty: 1 }]);
+  });
+});

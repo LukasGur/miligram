@@ -16,11 +16,25 @@ import { MEANINGFUL_SAMPLE, mistakesToRepeat, overview, type Mistake } from "@/l
  * Čísla se počítají z uložených odpovědí při každém otevření. `useLiveQuery`
  * je přepočítá i uprostřed prohlížení, když mezitím doběhne zápis lekce.
  */
+/**
+ * Ukázka v prázdných statistikách: co tu bude, až je z čeho počítat.
+ * Pevná a viditelně označená jako ukázka, aby se nepletla s vlastními čísly.
+ */
+const SAMPLE: readonly { category: Category; rate: number }[] = [
+  { category: "redeni", rate: 58 },
+  { category: "vazoaktivni", rate: 71 },
+  { category: "inzulin", rate: 86 },
+  { category: "prevody", rate: 93 },
+];
+
 export function StatsScreen({
   onClose,
   onTrain,
+  onStart,
 }: {
   onClose: () => void;
+  /** Prázdné statistiky: rovnou do lekce. */
+  onStart?: () => void;
   onTrain: (mode: { kind: "mistakes"; items: Mistake[] } | { kind: "category"; category: Category }) => void;
 }) {
   const t = useTranslations("stats");
@@ -50,7 +64,42 @@ export function StatsScreen({
       <main tabIndex={0} className="scroll-y flex-1">
         <div className="mx-auto w-full max-w-md px-5 pb-10">
           {stats === undefined ? null : stats.answered === 0 ? (
-            <p className="text-ink-soft text-label">{t("empty")}</p>
+            <div className="pt-2">
+              <p className="text-heading font-semibold text-balance">{t("emptyTitle")}</p>
+              <p className="text-ink-soft mt-1.5 text-label" data-numeric>
+                {t("emptyBody", { count: MEANINGFUL_SAMPLE })}
+              </p>
+
+              {/* Tlumený náhled toho, co tu bude. Pro odečítač obrazovky
+                  nic neříká, je to ilustrace. */}
+              <div aria-hidden className="border-line mt-6 rounded-panel border border-dashed px-4 pt-3 pb-4">
+                <p className="panel-label">{t("emptySample")}</p>
+                <ul className="mt-1">
+                  {SAMPLE.map(({ category, rate }) => (
+                    <li key={category} className="text-ink-soft mt-3 flex items-center gap-3 text-label">
+                      <CategoryIcon category={category} className="size-4 shrink-0" />
+                      <span className="min-w-0 flex-1 truncate">{tCategories(category)}</span>
+                      <span className="bg-surface flex h-1.5 w-16 shrink-0 overflow-hidden rounded-[1px]">
+                        <span className="bg-accent/25 h-full rounded-[1px]" style={{ width: `${rate}%` }} />
+                      </span>
+                      <span className="readout w-9 shrink-0 text-right" data-numeric>
+                        {format.number(rate)}&nbsp;%
+                      </span>
+                    </li>
+                  ))}
+                </ul>
+              </div>
+
+              {onStart ? (
+                <button
+                  type="button"
+                  onClick={onStart}
+                  className="bg-accent active:bg-accent-press mt-8 min-h-14 w-full rounded-control text-body font-semibold text-on-accent"
+                >
+                  {t("emptyStart")}
+                </button>
+              ) : null}
+            </div>
           ) : (
             <>
               <div className="border-line divide-line grid grid-cols-3 divide-x border-y py-4">

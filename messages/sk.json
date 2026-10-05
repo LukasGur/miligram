@@ -61,7 +61,9 @@
     "repairDismiss": "Nechať tak",
     "repairPoor": "{missing, plural, one {Chýba ti # pastilka} few {Chýbajú ti # pastilky} other {Chýba ti # pastiliek}}. Pribúdajú za príklady vypočítané na prvý raz.",
     "repairDone": "Séria je späť. Dnes ju predĺžiš lekciou.",
-    "repairDoneToday": "Séria je späť."
+    "repairDoneToday": "Séria je späť.",
+    "goalWaiting": "Lekcia je dohraná a séria beží. Do cieľa sa počítajú vypočítané príklady a {count, plural, one {# typ čaká} few {# typy čakajú} other {# typov čaká}} na opravu.",
+    "goalWaitingAction": "Prejsť chyby"
   },
   "settings": {
     "title": "Nastavenia",
@@ -388,7 +390,12 @@
     "exampleTool": "Vzor",
     "exampleToolLabel": "Vzor: vyriešený príklad rovnakého typu",
     "exampleCoach": "Nevieš, ako na to? Pozri sa na vyriešený vzor.",
-    "exampleAgain": "Tento typ ti príde znova v ďalšej lekcii, tentoraz bez vzoru."
+    "exampleAgain": "Tento typ ti príde znova v ďalšej lekcii, tentoraz bez vzoru.",
+    "summaryHeadline": "{tone, select, almost {Takmer bez chyby.} mid {Dobrý základ. {missed, plural, one {Jedno miesto} few {# miesta} other {# miest}} na doladenie.} other {Táto téma chce ešte jedno kolo.}}",
+    "summaryWeak": "Zaseklo sa to: {topics}.",
+    "summaryLowNote": "Prejdi si chyby hneď, kým ich máš v hlave.",
+    "summaryDots": "{correct, number} z {count, number} na prvý pokus",
+    "reviewMistakes": "Prejsť chyby · {count, number}"
   },
   "account": {
     "title": "Účet",
@@ -537,7 +544,6 @@
     "lessons": "Lekcií",
     "answered": "Príkladov",
     "rate": "Úspešnosť",
-    "empty": "Zatiaľ nie je z čoho počítať. Dohraj lekciu a vráť sa.",
     "mistakesTitle": "Opakovanie chýb",
     "mistakesBody": "Predloží ten istý výpočet, na ktorom si pohorel, ale s inými číslami, nech nestačí zapamätať si výsledok.",
     "mistakesStart": "{count, plural, one {Opakovať # chybu} few {Opakovať # chyby} other {Opakovať # chýb}}",
@@ -546,7 +552,11 @@
     "categoriesHint": "Zoradené od najslabšej. Úspešnosť sa ukazuje od {count, number} odpovedí.",
     "train": "Trénovať",
     "tooFew": "málo odpovedí",
-    "helpUsed": "{hinted, number}× nápoveda"
+    "helpUsed": "{hinted, number}× nápoveda",
+    "emptyTitle": "Tu uvidíš, ktorá látka ti ide a ktorá sa zasekáva.",
+    "emptyBody": "Úspešnosť podľa látky sa ukáže od {count, number} odpovedí v téme. Stačí na to jedna lekcia.",
+    "emptySample": "Ukážka",
+    "emptyStart": "Začať lekciu"
   },
   "curriculum": {
     "title": "Program",
@@ -566,7 +576,19 @@
       "inzulin": "Inzulín",
       "perfuzory": "Vazoaktívne lieky",
       "povrch": "Povrch tela a onkológia"
-    }
+    },
+    "descriptions": {
+      "jednotky": "Tablety, ampulky, prevody mg, µg a IU",
+      "koncentrace": "Percentá, pomery 1:1000, riedenie a mmol",
+      "hmotnost": "mg/kg, denné stropy, sirupy pre deti",
+      "priprava": "Rozpúšťanie práškov, kvapky a ml/h",
+      "ledviny": "Klírens kreatinínu a úprava dávky",
+      "inzulin": "Jednotky, striekačky, perá a korekcia",
+      "perfuzory": "µg/kg/min a rýchlosť perfúzora",
+      "povrch": "Povrch tela, mg/m² a Calvert"
+    },
+    "masteryRule": "Stupeň je zvládnutý od {answers, number} odpovedí a viac ako {rate, number} % na prvý pokus.",
+    "answersLabel": "odpovedí"
   },
   "calculator": {
     "title": "Kalkulačka",
