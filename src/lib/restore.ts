@@ -137,7 +137,7 @@ export async function restoreLessons(gateway: RestoreGateway, since?: string): P
  * Ochrany použité před peněženkou na serveru nikde zapsané nejsou; série,
  * kterou telefon napočítal při hraní, je tehdy přesnější než přepočet.
  */
-export async function rebuildStreak(): Promise<void> {
+export async function rebuildStreak(options: { trustHistory?: boolean } = {}): Promise<void> {
   const database = db();
   await database.transaction("rw", database.profile, database.lessons, async () => {
     const lessons = await database.lessons.toArray();
@@ -145,7 +145,9 @@ export async function rebuildStreak(): Promise<void> {
     const days = lessons.map((lesson) => localDay(new Date(lesson.finishedAt)));
     const current = (await database.profile.get(PROFILE_ID)) ?? emptyProfile();
     const rebuilt = streakFromDays(days, current.coveredDays ?? []);
-    const sameEnd = rebuilt.lastDay !== null && rebuilt.lastDay === current.lastLessonDay;
+    // Po vrácení odmítnutého obnovení platí historie: uložená série je
+    // ta obnovená, a ta by jinak jako delší vyhrála.
+    const sameEnd = !options.trustHistory && rebuilt.lastDay !== null && rebuilt.lastDay === current.lastLessonDay;
 
     await database.profile.put({
       ...current,
@@ -194,4 +196,29 @@ export async function pullNews(userId: string, gateway: RestoreGateway): Promise
     updatedAt: new Date().toISOString(),
   });
   return result;
+}
+
+/**
+ * Server obnovení série odmítl (lhůta, třicet dní mezi obnoveními na dvou
+ * telefonech). Pastilky se vrátí samy při srovnání peněženky; tady se
+ * vrátí i pokryté dny, jinak by telefon ukazoval obnovenou sérii a server
+ * s kamarády tu skutečnou.
+ */
+export async function forgetRejectedRepairs(days: readonly string[]): Promise<void> {
+  if (days.length === 0) return;
+  const database = db();
+  await database.transaction("rw", database.profile, async () => {
+    const current = (await database.profile.get(PROFILE_ID)) ?? emptyProfile();
+    const rejected = new Set(days);
+    // Obnovení, které neprošlo, lhůtu třiceti dní nespouští. Skutečné
+    // datum posledního obnovení doplní server při srovnání peněženky.
+    const rest = { ...current };
+    delete rest.lastRepair;
+    await database.profile.put({
+      ...rest,
+      coveredDays: (current.coveredDays ?? []).filter((day) => !rejected.has(day)),
+      updatedAt: new Date().toISOString(),
+    });
+  });
+  await rebuildStreak({ trustHistory: true });
 }

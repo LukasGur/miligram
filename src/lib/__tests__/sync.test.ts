@@ -1,6 +1,6 @@
 import "fake-indexeddb/auto";
 import { beforeEach, describe, expect, it } from "vitest";
-import { db, recordLesson, spendPills } from "../db";
+import { db, emptyProfile, recordLesson, spendPills } from "../db";
 import { RejectedError, syncOutbox, type LessonEventRow, type SyncGateway, type WalletEventRow } from "../sync";
 
 const LESSON = {
@@ -182,5 +182,47 @@ describe("odeslání fronty", () => {
 
     const ids = received.flat().map((row) => row.client_event_id);
     expect(new Set(ids).size).toBe(2);
+  });
+});
+
+describe("odmítnuté obnovení série", () => {
+  it("vrátí pokryté dny a sérii přepočítá z historie", async () => {
+    const { repairStreak } = await import("../repair");
+    const database = db();
+    // Série 8 dní do 1. 10., pak 2. a 3. 10. vynechané, 4. 10. hrál znovu.
+    const played = ["2026-09-24", "2026-09-25", "2026-09-26", "2026-09-27", "2026-09-28", "2026-09-29", "2026-09-30", "2026-10-01", "2026-10-04"];
+    for (const [index, day] of played.entries()) {
+      await database.lessons.add({ lessonId: `l${index}`, count: 7, correct: 7, flawless: true, xp: 30, pills: 24, finishedAt: `${day}T10:00:00` });
+    }
+    await database.profile.put({ ...emptyProfile(), pills: 500, streakDays: 1, lastLessonDay: "2026-10-04" });
+
+    await repairStreak({ lost: 8, missing: ["2026-10-02", "2026-10-03"], until: "2026-10-04" }, new Date("2026-10-04T12:00:00"));
+    expect((await database.profile.get(1))!.streakDays).toBe(9);
+
+    const gateway: SyncGateway = {
+      async pushWalletEvents(rows) {
+        if (rows.some((row) => row.kind === "repair")) throw new RejectedError("check_violation");
+      },
+      async pushLessonEvents() {},
+    };
+    await syncOutbox(gateway);
+
+    const profile = (await database.profile.get(1))!;
+    expect(profile.coveredDays ?? []).toEqual([]);
+    expect(profile.lastRepair).toBeUndefined();
+    expect(profile.streakDays).toBe(1);
+  });
+});
+
+describe("úklid fronty", () => {
+  it("smaže odeslané události starší třiceti dní, čekající nechá", async () => {
+    const { pruneOutbox } = await import("../sync");
+    const outbox = db().outbox;
+    await outbox.add({ uid: "old", type: "wallet", payload: {}, createdAt: "2026-08-01T00:00:00Z", syncedAt: "2026-08-01T00:00:00Z" });
+    await outbox.add({ uid: "fresh", type: "wallet", payload: {}, createdAt: "2026-09-30T00:00:00Z", syncedAt: "2026-09-30T00:00:00Z" });
+    await outbox.add({ uid: "waiting", type: "wallet", payload: {}, createdAt: "2026-08-01T00:00:00Z" });
+
+    expect(await pruneOutbox(new Date("2026-10-05T00:00:00Z"))).toBe(1);
+    expect((await outbox.toArray()).map((event) => event.uid).sort()).toEqual(["fresh", "waiting"]);
   });
 });

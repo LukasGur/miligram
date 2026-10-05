@@ -84,3 +84,22 @@ export function clearInstallPrompt() {
 // Chrome událost vystřelí dřív, než se stihne připojit první komponenta,
 // takže odposlech spouštíme hned při načtení modulu.
 if (typeof window !== "undefined") captureInstallPrompt();
+
+/**
+ * Požádá prohlížeč, aby data aplikace při nedostatku místa nemazal.
+ *
+ * Bez účtu je celá historie jen v IndexedDB a prohlížeč smí takové
+ * úložiště i s cache service workeru uvolnit, když telefonu dochází
+ * místo. Aplikace na ploše (Chrome, Safari) dostane souhlas bez dotazu;
+ * Firefox se jednou zeptá. Volá se po dohrané lekci, tedy až je co
+ * chránit, a nikdy nic neblokuje.
+ */
+export async function requestPersistentStorage(): Promise<void> {
+  try {
+    if (typeof navigator === "undefined" || !navigator.storage?.persist) return;
+    if (await navigator.storage.persisted()) return;
+    await navigator.storage.persist();
+  } catch {
+    // Nepovinné: bez souhlasu aplikace funguje dál jako dosud.
+  }
+}

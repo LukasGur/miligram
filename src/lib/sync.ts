@@ -1,5 +1,6 @@
 import type { LessonKind } from "@/core/scoring";
 import { db, type OutboxEvent, type WalletPayload } from "./db";
+import { forgetRejectedRepairs } from "./restore";
 
 /**
  * Odeslání fronty událostí.
@@ -60,6 +61,8 @@ export async function syncOutbox(gateway: SyncGateway): Promise<SyncResult> {
 
   let sent = 0;
   let rejected = 0;
+  /** Dny z obnovení série, které server odmítl. Telefon je vrátí. */
+  const rejectedRepairs: string[] = [];
 
   /** Označit se smí až po potvrzeném zápisu, jinak by výpadek událost tiše zahodil. */
   const settle = async (events: OutboxEvent[], changes: Partial<OutboxEvent>) => {
@@ -100,11 +103,16 @@ export async function syncOutbox(gateway: SyncGateway): Promise<SyncResult> {
             const now = new Date().toISOString();
             await settle([event], { syncedAt: now, rejectedAt: now });
             rejected += 1;
+            const payload = event.payload as WalletPayload;
+            if (event.type === "wallet" && payload.kind === "repair" && payload.day) rejectedRepairs.push(payload.day);
           }
         }
       }
     }
   }
+
+  await forgetRejectedRepairs(rejectedRepairs);
+  await pruneOutbox();
 
   const pending = await database.outbox.filter((event) => event.syncedAt === undefined).count();
   return { sent, pending, rejected };
@@ -136,4 +144,20 @@ function toRow(event: OutboxEvent): LessonEventRow {
     answers: payload.answers ?? [],
     finished_at: event.createdAt,
   };
+}
+
+/** Jak dlouho drží telefon už odeslané události. */
+const KEEP_SENT_DAYS = 30;
+
+/**
+ * Odeslané události se mažou po třiceti dnech. Fronta jinak rostla
+ * s každou lekcí a pastilkou navždy; historie lekcí a odpovědí zůstává
+ * ve vlastních tabulkách a server má svoji kopii. Čekající události se
+ * nemažou nikdy.
+ */
+export async function pruneOutbox(now = new Date()): Promise<number> {
+  const cutoff = new Date(now.getTime() - KEEP_SENT_DAYS * 86_400_000).toISOString();
+  return db()
+    .outbox.filter((event) => event.syncedAt !== undefined && event.syncedAt < cutoff)
+    .delete();
 }

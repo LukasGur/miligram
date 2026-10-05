@@ -27,6 +27,7 @@ import { Balance } from "@/components/ui/Balance";
 import { Flyer, bump, reducedMotion, type Flight } from "@/components/ui/Flyer";
 import { Tally } from "@/components/ui/Tally";
 import { ExerciseView } from "./ExerciseView";
+import { requestPersistentStorage } from "@/lib/pwa";
 
 /**
  * Nabídka připomínek se dotahuje až ve shrnutí. Je v ní stav přihlášení,
@@ -223,6 +224,9 @@ export function LessonView({
       })),
       reward,
     });
+
+    // Teď už je v telefonu co ztratit; prohlížeč ať úložiště nemaže.
+    void requestPersistentStorage();
 
     // Výsledek souboje jde rovnou na server. Do fronty nepatří:
     // bez připojení nemá souboj koho porovnávat a čekající výzva
