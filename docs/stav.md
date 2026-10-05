@@ -1,6 +1,6 @@
 # Kde jsme
 
-Poslední aktualizace: **29. 9. 2026**
+Poslední aktualizace: **5. 10. 2026**
 
 ## Hotovo
 
@@ -338,6 +338,25 @@ nehrál, má sérii zpátky hned; kdo už začal od jedničky, tomu se stará
 - **Limit e-mailů** zůstává 30 za hodinu na celý projekt; na postupné
   vydání mezi desítky lidí stačí. Kdyby kódy přestaly chodit, zvednout
   `rate_limit_email_sent` v `scripts/supabase/auth-emails.mjs`.
+
+**Připomínky z testování (5. 10. 2026):**
+
+- **Odpověď se ukládá s vyhodnocením**, ne až s Pokračovat. Kdo po
+  verdiktu odešel z aplikace, mohl příklad spočítat znovu. Zapisuje se
+  i vzatá nápověda nebo vzor (`markHelped`), aby zůstala zaplacená
+  a v souboji se počítala.
+- **Souboj nejde začít znovu.** Otevřený ze seznamu soubojů načte
+  pokusy z databáze (`lessonState`), i když mezitím běžela jiná lekce.
+- **Kalkulačka** si rozepsaný výpočet drží do dalšího příkladu.
+- **Notifikace vedou na místo.** Service worker cíl odloží do cache
+  `miligram-intent` a aplikace si ho vyzvedne (iOS ztrácel adresu
+  i zprávu). Zprávy o souboji míří na `?duel=<id>`, výzva otevře kartu
+  souboje nad Souboji (`DuelInviteSheet`). Edge Function `push` v4.
+- **Černá obrazovka po dlouhé nečinnosti:** navigace má limit 8 s,
+  shell z kterékoli precache a záložní stránku se Zkusit znovu.
+- **Dávky odpovídají realitě** — viz `docs/zdroje.md`, oddíl 7:
+  ředění a infuze v mezích balení, perfuzor jen s dávkou té látky,
+  tablety, roztoky a lahvičky s dávkami ze SPC.
 
 ## Co dělat dál
 
