@@ -27,7 +27,7 @@ export const B1 = register({
     if (!range) throw new Error(`Pravidlo ${ruleId} nemá dávku na jedno podání.`);
 
     // Hmotnost odpovídá dětskému pacientovi, pro kterého jsou tahle SPC psaná.
-    const weightKg = difficulty === 1 ? rng.step(10, 40, 5) : rng.step(3.5, 45, 0.5);
+    const weightKg = difficulty === 1 ? rng.step(10, 40, 5) : rng.step(Math.max(3.5, rule.minWeightKg ?? 0), 45, 0.5);
     const perKg = difficulty === 1
       ? rng.pick([range.min, range.max])
       : rng.step(range.min, range.max, orderStep(range));

@@ -12,7 +12,8 @@ import { register } from "./registry";
  */
 const RULES: readonly { id: DosingRuleId; minKg: number; maxKg: number; stepKg: number }[] = [
   { id: "adrenalinResuscitace", minKg: 2.5, maxKg: 5, stepKg: 0.1 },
-  { id: "paracetamolDeti", minKg: 4, maxKg: 12, stepKg: 0.5 },
+  // PARALEN 125 mg jsou tablety; tabulka v SPC začíná na 9 kg.
+  { id: "paracetamolDeti", minKg: 9, maxKg: 12, stepKg: 0.5 },
   { id: "ibuprofenBaby", minKg: 5, maxKg: 12, stepKg: 0.5 },
   { id: "ceftriaxonDeti", minKg: 3.5, maxKg: 12, stepKg: 0.5 },
 ];

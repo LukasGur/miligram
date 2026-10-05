@@ -243,3 +243,18 @@ describe("dávky, jaké by lékař napsal", () => {
     }
   });
 });
+
+describe("léková forma sedí na věk", () => {
+  it("tablety paracetamolu jen od hmotnosti, pro kterou je SPC uvádí", () => {
+    const SEEDS_AGE = Array.from({ length: 80 }, (_, i) => `age${i}`);
+    for (const id of ["B1", "B3", "B7", "K4"]) {
+      for (const difficulty of DIFFICULTIES) {
+        for (const seed of SEEDS_AGE) {
+          const { vars } = buildExercise(id, seed, difficulty);
+          const min = dosingRule(vars.ruleId as DosingRuleId).minWeightKg ?? 0;
+          expect(Number(vars.weightKg), `${id}/${difficulty}/${seed}`).toBeGreaterThanOrEqual(min);
+        }
+      }
+    }
+  });
+});

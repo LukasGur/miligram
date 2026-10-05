@@ -42,6 +42,11 @@ export type DosingRule = {
   maxDaily?: DoseRange;
   /** Nepřekročitelná dávka na jedno podání, v mg. */
   maxSingleMg?: number;
+  /**
+   * Nejmenší dítě, pro které SPC dávku v téhle lékové formě uvádí.
+   * Tablety kojenci nespolknou, takže pod touhle hmotností se nelosuje.
+   */
+  minWeightKg?: number;
   /** Nasycovací dávka, je-li v SPC uvedená. */
   loading?: DoseRange;
   /**
@@ -86,6 +91,8 @@ export const DOSING_RULES = {
     single: { min: 10, max: 15, unit: "mg/kg" },
     maxDaily: { min: 60, max: 60, unit: "mg/kg/den" },
     dosesPerDay: [3, 4],
+    // Tabulka dávkování v SPC začíná řádkem „do 6 let, 9–12 kg, 125 mg“.
+    minWeightKg: 9,
     quote:
       "Celková denní dávka za 24 hodin nemá překročit 60 mg/kg tělesné hmotnosti dítěte; " +
       "dělí se na 3–4 dílčí dávky. Pro jednorázové podání je dávka 10–15 mg/kg tělesné hmotnosti.",

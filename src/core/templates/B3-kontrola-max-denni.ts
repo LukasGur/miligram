@@ -24,7 +24,7 @@ export const B3 = register({
     const limit = rule.maxDaily;
     if (!limit) throw new Error(`Pravidlo ${ruleId} nemá maximální denní dávku.`);
 
-    const weightKg = difficulty === 1 ? rng.step(10, 30, 5) : rng.step(4, 45, 0.5);
+    const weightKg = difficulty === 1 ? rng.step(10, 30, 5) : rng.step(Math.max(4, rule.minWeightKg ?? 0), 45, 0.5);
 
     /**
      * Kolik už dnes dostal: jedna až dvě dávky z rozmezí jednotlivé dávky

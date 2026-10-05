@@ -24,7 +24,7 @@ export const B7 = register({
     const rule = dosingRule(ruleId);
     const single = rule.single!;
 
-    const weightKg = difficulty === 1 ? rng.step(10, 30, 5) : rng.step(4, 45, 0.5);
+    const weightKg = difficulty === 1 ? rng.step(10, 30, 5) : rng.step(Math.max(4, rule.minWeightKg ?? 0), 45, 0.5);
     const perDoseMg = Number(
       (weightBasedDose(
         difficulty === 1 ? rng.pick([single.min, single.max]) : rng.step(single.min, single.max, orderStep(single)),
