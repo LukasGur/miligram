@@ -121,6 +121,17 @@ describe("K5 — kontrola předepsaného objemu", () => {
     expect(solution.value).toBe(20);
   });
 
+  it("rozmezí v zadání je denní rozmezí ze SPC, ne dávka na jedno podání", () => {
+    for (const difficulty of DIFFICULTIES) {
+      for (const seed of SEEDS) {
+        const { vars } = buildExercise("K5", seed, difficulty);
+        const daily = dosingRule(vars.ruleId as DosingRuleId).daily;
+        expect(daily, `${vars.ruleId}`).toBeDefined();
+        expect([vars.rangeMin, vars.rangeMax]).toEqual([daily!.min, daily!.max]);
+      }
+    }
+  });
+
   it("předepsaný objem je vždy hodnota, kterou jde natáhnout po půl mililitru", () => {
     for (const difficulty of DIFFICULTIES) {
       for (const seed of SEEDS) {

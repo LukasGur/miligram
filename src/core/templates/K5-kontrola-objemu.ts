@@ -4,7 +4,12 @@ import type { Solution, Vars } from "../types";
 import { formula, frac, given, intermediate, q, result, substitute, tex } from "./helpers";
 import { register } from "./registry";
 
-const RULES: readonly DosingRuleId[] = ["ibuprofenDeti", "ibuprofenBaby", "amoxicilin", "amoxicilinKlavulanat"];
+/**
+ * Jen přípravky, jejichž SPC uvádí rozmezí denní dávky. Zadání ho cituje
+ * jako „mg/kg/den“; Ibalgin Baby má v SPC dávku na jedno podání a strop
+ * za den, a jeho 5–10 mg/kg se tu dřív vydávalo za denní rozmezí.
+ */
+const RULES: readonly DosingRuleId[] = ["ibuprofenDeti", "amoxicilin", "amoxicilinKlavulanat"];
 
 /**
  * K5 — odpovídá předepsaný objem dávce podle SPC?
@@ -24,8 +29,8 @@ export const K5 = register({
     const rule = dosingRule(ruleId);
     const presentation = liquidPresentationOf(ruleId);
     const concentration = presentation.strengthMg / presentation.referenceMl;
-    const range = rule.daily ?? rule.single;
-    if (!range) throw new Error(`Pravidlo ${ruleId} nemá dávkovací rozmezí.`);
+    const range = rule.daily;
+    if (!range) throw new Error(`Pravidlo ${ruleId} nemá v SPC rozmezí denní dávky.`);
 
     const weightKg = difficulty === 1 ? rng.step(10, 30, 5) : rng.step(6, 36, 0.5);
     const dosesPerDay = rng.pick(rule.dosesPerDay ?? [3]);
