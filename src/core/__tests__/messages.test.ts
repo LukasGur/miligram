@@ -18,7 +18,7 @@ const SEEDS = Array.from({ length: 8 }, (_, i) => `m${i}`);
 
 describe("překlady zadání a kroků", () => {
   it("obě jazykové sady mají stejné klíče", () => {
-    for (const section of ["units", "steps", "rounding", "prompts"] as const) {
+    for (const section of ["units", "steps", "rounding", "prompts", "why"] as const) {
       expect(Object.keys(sk.exercise[section]).sort(), section)
         .toEqual(Object.keys(cs.exercise[section]).sort());
     }
@@ -29,6 +29,16 @@ describe("překlady zadání a kroků", () => {
       const prompts = messages.exercise.prompts as Record<string, string>;
       for (const template of allTemplates()) {
         expect(prompts[template.id], `${locale}/${template.id}`).toBeTruthy();
+      }
+    }
+  });
+
+  it("každá šablona má větu „proč“ bez pomlčky mezi větami", () => {
+    for (const [locale, messages] of LOCALES) {
+      const why = messages.exercise.why as Record<string, string>;
+      for (const template of allTemplates()) {
+        expect(why[template.id], `${locale}/${template.id}`).toBeTruthy();
+        expect(why[template.id], `${locale}/${template.id}`).not.toMatch(/ [—–] /);
       }
     }
   });

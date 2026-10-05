@@ -1,8 +1,10 @@
 # Věty „proč se to tak počítá“ — ke kontrole
 
+> **Schváleno 5. 10. 2026, platné znění je v `messages/*.json`
+> (`exercise.why`).** Tenhle soubor je původní návrh ke kontrole.
+
 Jedna věta ke každé šabloně. Ukáže se nahoře v listu „Vyřešený vzor“
-(docs/plan.md, B4). **Zatím nejsou v aplikaci** — vzor se bez nich
-obejde a zapojí se, až je autor schválí.
+(docs/plan.md, B4).
 
 Pravidla, podle kterých jsou psané:
 

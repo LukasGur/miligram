@@ -301,8 +301,8 @@ typu. Kdo věděl, jak na to, musel ho pokaždé odklepnout — zrušeno.
 - u zvládnutého typu je nápověda za 15 pastilek a odkrývá postup po
   krocích: popis a vzorec, u kroku bez vzorce dosazení bez výsledku
 - opakování chyb ve statistikách pomoc za chybu nemá
-- věta „proč se to tak počítá“ se v listu vzoru ukáže, až bude
-  v překladech (`exercise.why.<šablona>`, návrh v docs/proc-texty.md)
+- nahoře v listu vzoru je věta „proč se to tak počítá“ pro všech
+  72 šablon (`exercise.why.<šablona>`, schváleno 5. 10. 2026)
 
 **Obnovení série (28. 9. 2026, plán fáze C)** — spadlou sérii jde krátce
 po ztrátě obnovit za 200 pastilek: jen u série aspoň 7 dní, do konce
@@ -423,9 +423,10 @@ nehrál, má sérii zpátky hned; kdo už začal od jedničky, tomu se stará
    odesílání na transakční službu (Resend) — mění se jen SMTP údaje.
 4. **Ověřit ligu na skutečném provozu.** Postup a sestup se počítají až
    při první lekci v novém týdnu, takže se to pozná nejdřív za týden.
-5. **Revize slovenštiny rodilým mluvčím.** Texty jsou napsané, ne
-   přeložené strojem, ale nikdo je zatím nečetl. Názvy přípravků zůstávají
-   české — fond je z české databáze.
+5. ~~Revize slovenštiny rodilým mluvčím.~~ **Uzavřeno 5. 10. 2026,
+   texty zůstávají, jak jsou.** Autor je označil za zkontrolované:
+   slovenští studenti budou nejspíš počítat česky, protože češtinu mají
+   i v testech. Názvy přípravků zůstávají české, fond je z české databáze.
 
 ## Rozhodnutí, která už padla
 

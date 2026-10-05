@@ -75,7 +75,7 @@ Přepnutí účtu nesmíchá data; upozornění před smazáním; pohyb pastilek
 se nezapočítá dvakrát; počáteční stav i bonus jen jednou na účet;
 obnovená série sedí i s ochranami.
 
-## Fáze B — učící krok ✅ B1–B3 (28. 9. 2026), B4 čeká na kontrolu textů
+## Fáze B — učící krok ✅ (B1–B3 28. 9. 2026, B4 5. 10. 2026)
 
 Platí v denní lekci a tréninku. **Souboj zůstává beze změny** — oba
 hrají za stejných podmínek.
@@ -94,9 +94,10 @@ placená nápověda po krocích zůstává u zvládnutých typů.
 Věty „proč“ pro 72 šablon, CS i SK. Před nasazením je projde autor
 (přehledný seznam k přečtení), teprve pak push.
 
-Napsané v `docs/proc-texty.md`, čekají na kontrolu. Po schválení se
-vloží do `messages/*.json` jako `exercise.why.<šablona>` — karta je
-ukáže sama, kód je hotový.
+Schválené 5. 10. 2026 a vložené do `messages/*.json` jako
+`exercise.why.<šablona>`. Proti `docs/proc-texty.md` jsou věty bez
+pomlček mezi větami a J4 mluví o funkci ledvin, ne jen o eGFR (dospělý
+na cefepimu má clearance kreatininu).
 
 ## Fáze C — obnovení série ✅ (28. 9. 2026)
 
