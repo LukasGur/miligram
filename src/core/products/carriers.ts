@@ -56,3 +56,29 @@ export function pickCarrier(
   const [volumeMl, code] = rng.pick(carrier.packs.filter(fits));
   return { code, name: carrier.name, substance: carrier.substance, packUnitVolumeMl: volumeMl };
 }
+
+/**
+ * Rozumné meze rychlosti nosné infuze. Dřív se objem a doba losovaly
+ * zvlášť a vycházelo „1 000 ml za 30 minut“ (2 000 ml/h) nebo „50 ml
+ * za 18 hodin“. Vak má dokapat nejdřív za půl hodiny a nejpozději
+ * za den; mez je návrhové rozhodnutí, ne údaj ze zdroje.
+ */
+export const RATE_LIMITS = { minMlPerHour: 10, maxMlPerHour: 500 } as const;
+
+/** Rychlost v ml/h, která se do mezí vejde. */
+export function rateFits(mlPerHour: number): boolean {
+  return mlPerHour >= RATE_LIMITS.minMlPerHour && mlPerHour <= RATE_LIMITS.maxMlPerHour;
+}
+
+/** Vybere z možností jen ty, které projdou; když neprojde žádná, celé pole. */
+export function pickFitting<T>(rng: Rng, options: readonly T[], fits: (option: T) => boolean): T {
+  const fitting = options.filter(fits);
+  return rng.pick(fitting.length > 0 ? fitting : options);
+}
+
+/** Řada hodnot od–do po kroku, pro výběr s mezemi. */
+export function range(from: number, to: number, step: number): number[] {
+  const values: number[] = [];
+  for (let value = from; value <= to + 1e-9; value += step) values.push(Number(value.toFixed(6)));
+  return values;
+}

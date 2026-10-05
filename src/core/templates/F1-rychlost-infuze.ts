@@ -1,6 +1,6 @@
 import { infusionRateMlPerHour } from "../formulas";
 import { PUMP_SOURCE } from "../devices";
-import { CARRIER_SOURCE, pickCarrier } from "../products/carriers";
+import { CARRIER_SOURCE, pickCarrier, pickFitting, range, rateFits } from "../products/carriers";
 import * as tolerances from "../tolerances";
 import type { Solution, Vars } from "../types";
 import { formula, frac, given, q, result, substitute } from "./helpers";
@@ -21,9 +21,11 @@ export const F1 = register({
     const product = pickCarrier(rng);
     const bagMl = product.packUnitVolumeMl ?? 500;
 
-    const hours = difficulty === 1
-      ? rng.pick([2, 4, 6, 8, 12, 24] as const)
-      : rng.step(0.5, 24, 0.5);
+    const hours = pickFitting(
+      rng,
+      difficulty === 1 ? [2, 4, 6, 8, 12, 24] : range(0.5, 24, 0.5),
+      (h) => rateFits(bagMl / h),
+    );
 
     return {
       code: product.code,

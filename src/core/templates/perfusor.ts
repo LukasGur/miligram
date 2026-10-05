@@ -1,5 +1,5 @@
 import { microgramsPerKgMinToMlPerHour, microgramsPerMinToMlPerHour } from "../formulas";
-import { selectProducts, vialContentMg, type Product } from "../products";
+import { concentrationOf, selectProducts, vialContentMg, type Product } from "../products";
 import { dosingRule } from "../products/dosing";
 import type { Rng } from "../random";
 
@@ -25,6 +25,11 @@ export type Dilution = {
   concentrationMgPerMl: number;
   /** Rychlost, která z tohoto ředění pro zadanou dávku vyjde. */
   rateMlPerHour: number;
+  /**
+   * Hotový roztok do perfuzoru (50 ml po 5 mg/ml dobutaminu): nic se
+   * neředí, celé balení je obsah stříkačky.
+   */
+  premixed: boolean;
 };
 
 /**
@@ -64,7 +69,28 @@ export function choosePerfusorDilution(
     atcPrefixes: VASOACTIVE_ATC,
   }).filter((product) => codes.includes(product.code));
 
-  const candidates = products.flatMap((product) =>
+  /**
+   * Hotové roztoky do perfuzoru. Na JIP se stříkačka často neředí, ale
+   * natáhne celá z lahvičky 50 ml — obsah stříkačky je obsah balení.
+   */
+  const premixed = selectProducts({ kind: "infusionBag", strengthUnit: "mg", atcPrefixes: VASOACTIVE_ATC })
+    .filter((product) => codes.includes(product.code) && product.packUnitVolumeMl !== undefined)
+    .map((product) => {
+      const syringeMl = product.packUnitVolumeMl!;
+      const totalMg = Number((concentrationOf(product) * syringeMl).toPrecision(12));
+      const concentrationMgPerMl = totalMg / syringeMl;
+      return {
+        product,
+        ampoules: 1,
+        syringeMl,
+        totalMg,
+        concentrationMgPerMl,
+        rateMlPerHour: rateFor(concentrationMgPerMl),
+        premixed: true,
+      };
+    });
+
+  const candidates = [...premixed, ...products.flatMap((product) =>
     SYRINGE_VOLUMES_ML.flatMap((syringeMl) =>
       // Ampule se musí vejít do stříkačky i s ředidlem.
       ampouleCounts.filter((ampoules) => ampoules * vialVolume(product) <= syringeMl * MAX_STOCK_SHARE).map((ampoules) => {
@@ -82,10 +108,11 @@ export function choosePerfusorDilution(
           totalMg,
           concentrationMgPerMl,
           rateMlPerHour: rateFor(concentrationMgPerMl),
+          premixed: false,
         };
       }),
     ),
-  ).filter((option) => option.rateMlPerHour >= minRate && option.rateMlPerHour <= maxRate);
+  )].filter((option) => option.rateMlPerHour >= minRate && option.rateMlPerHour <= maxRate);
 
   if (candidates.length === 0) {
     throw new Error("Pro zadanou dávku nevychází žádné ředění v rozsahu pumpy.");
@@ -101,9 +128,26 @@ export function choosePerfusorDilution(
     );
 }
 
-/** Kódy SÚKL přípravků, ke kterým patří dávkovací pravidlo. */
+/**
+ * Kódy SÚKL přípravků, ke kterým patří dávkovací pravidlo. Koncentráty
+ * k ředění (G4, G6 chystají stříkačku) a k tomu hotové roztoky téže látky
+ * pro úlohy na rychlost.
+ */
 export const NORADRENALINE_CODES = [dosingRule("noradrenalin").suklCode] as const;
 export const DOPAMINE_CODES = [dosingRule("dopamin").suklCode] as const;
+/** Norepinephrine hameln 0,2 mg/ml, hotový roztok do perfuzoru po 50 ml (DLP). */
+export const NORADRENALINE_RATE_CODES = [...NORADRENALINE_CODES, "0245944"] as const;
+
+/**
+ * Látky dávkované v µg/kg/min pro G2, G3 a G5: dopamin z koncentrátu
+ * a dobutamin z hotového roztoku 5 mg/ml. Obě SPC uvádějí 2–20 µg/kg/min.
+ */
+export const PER_KG_RULES = ["dopamin", "dobutamin"] as const;
+export type PerKgRule = (typeof PER_KG_RULES)[number];
+export const PER_KG_CODES: Record<PerKgRule, readonly string[]> = {
+  dopamin: DOPAMINE_CODES,
+  dobutamin: [dosingRule("dobutamin").suklCode],
+};
 
 /**
  * Ředění, jaké se na oddělení opravdu chystá: přípravek s ověřeným

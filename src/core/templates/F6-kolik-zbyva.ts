@@ -1,6 +1,6 @@
 import { infusionTimeMinutes } from "../formulas";
 import { PUMP_SOURCE } from "../devices";
-import { CARRIER_SOURCE, pickCarrier } from "../products/carriers";
+import { CARRIER_SOURCE, pickCarrier, pickFitting, range } from "../products/carriers";
 import * as tolerances from "../tolerances";
 import type { Solution, Vars } from "../types";
 import { formula, given, intermediate, q, result, substitute } from "./helpers";
@@ -21,9 +21,12 @@ export const F6 = register({
   generate(rng, difficulty) {
     const product = pickCarrier(rng);
     const bagMl = product.packUnitVolumeMl ?? 500;
-    const rateMlPerHour = difficulty === 1
-      ? rng.pick([50, 100, 125] as const)
-      : rng.step(20, 250, 5);
+    // Vak má dokapat nejdřív za půl hodiny a nejpozději za den.
+    const rateMlPerHour = pickFitting(
+      rng,
+      difficulty === 1 ? [50, 100, 125] : range(20, 250, 5),
+      (rate) => rate <= bagMl * 2 && rate >= bagMl / 24,
+    );
 
     const totalMinutes = infusionTimeMinutes(bagMl, rateMlPerHour);
     // Uplynulý čas je vždy menší než celkový, jinak by otázka neměla smysl.

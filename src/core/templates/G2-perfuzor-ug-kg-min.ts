@@ -5,7 +5,7 @@ import * as tolerances from "../tolerances";
 import type { Solution, Vars } from "../types";
 import { frac, q, step, tex, unit } from "./helpers";
 import { register, SUKL_DLP } from "./registry";
-import { choosePerfusorDilution, DOPAMINE_CODES } from "./perfusor";
+import { choosePerfusorDilution, PER_KG_CODES, PER_KG_RULES, type PerKgRule } from "./perfusor";
 import { dosingSource } from "../products/dosing";
 
 /**
@@ -17,18 +17,22 @@ import { dosingSource } from "../products/dosing";
 export const G2 = register({
   id: "G2",
   category: "vazoaktivni",
-  source: [SUKL_DLP, PUMP_SOURCE, dosingSource("dopamin")],
+  source: [SUKL_DLP, PUMP_SOURCE],
+  // Dávkování podle látky, která v perfuzoru je.
+  sourceFor: (vars) => [dosingSource(vars.ruleId as PerKgRule)],
 
   generate(rng, difficulty) {
+    const ruleId = rng.pick(PER_KG_RULES);
     const weightKg = rng.step(50, 95, 5);
     const dosePerKgMin = difficulty === 1
       ? rng.pick([2, 5, 10] as const)
       : rng.step(2, 20, 0.5);
 
-    const dilution = choosePerfusorDilution(rng, { perKgMin: dosePerKgMin, weightKg }, { codes: DOPAMINE_CODES });
+    const dilution = choosePerfusorDilution(rng, { perKgMin: dosePerKgMin, weightKg }, { codes: PER_KG_CODES[ruleId] });
     const { product, syringeMl, ampoules, totalMg, concentrationMgPerMl } = dilution;
 
     return {
+      ruleId,
       code: product.code,
       productName: product.name,
       substance: product.substance,

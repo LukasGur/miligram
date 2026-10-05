@@ -1,6 +1,6 @@
 import { dropsPerMinute } from "../formulas";
 import { DROP_FACTORS, DROP_FACTOR_SOURCE } from "../devices";
-import { CARRIER_SOURCE, pickCarrier } from "../products/carriers";
+import { CARRIER_SOURCE, pickCarrier, pickFitting, range, rateFits } from "../products/carriers";
 import * as tolerances from "../tolerances";
 import type { Solution, Vars } from "../types";
 import { frac, q, step, tex, unit } from "./helpers";
@@ -27,9 +27,19 @@ export const F2 = register({
       ? rng.pick([20, 15] as const)
       : rng.pick(DROP_FACTORS);
 
-    const hours = difficulty === 1
-      ? rng.pick([2, 4, 6, 8, 12] as const)
-      : rng.step(1, 12, 0.5);
+    /**
+     * Gravitační infuze: mikrokapkový set do 100 ml/h, ostatní v mezích
+     * nosné infuze, a vždy tak, aby se kapky daly spočítat (5–120 za minutu).
+     */
+    const hours = pickFitting(
+      rng,
+      difficulty === 1 ? [2, 4, 6, 8, 12] : range(1, 12, 0.5),
+      (h) => {
+        const mlPerHour = bagMl / h;
+        const drops = (mlPerHour * dropFactor) / 60;
+        return rateFits(mlPerHour) && (dropFactor !== 60 || mlPerHour <= 100) && drops >= 5 && drops <= 120;
+      },
+    );
 
     return {
       code: product.code,

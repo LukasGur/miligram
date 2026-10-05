@@ -4,7 +4,7 @@ import * as tolerances from "../tolerances";
 import type { Solution, Vars } from "../types";
 import { formula, given, intermediate, q, result, substitute } from "./helpers";
 import { register, SUKL_DLP } from "./registry";
-import { choosePerfusorDilution, DOPAMINE_CODES } from "./perfusor";
+import { choosePerfusorDilution, PER_KG_CODES, PER_KG_RULES, type PerKgRule } from "./perfusor";
 import { dosingSource } from "../products/dosing";
 
 /**
@@ -17,18 +17,22 @@ import { dosingSource } from "../products/dosing";
 export const G5 = register({
   id: "G5",
   category: "vazoaktivni",
-  source: [SUKL_DLP, PUMP_SOURCE, dosingSource("dopamin")],
+  source: [SUKL_DLP, PUMP_SOURCE],
+  // Dávkování podle látky, která v perfuzoru je.
+  sourceFor: (vars) => [dosingSource(vars.ruleId as PerKgRule)],
 
   generate(rng, difficulty) {
+    const ruleId = rng.pick(PER_KG_RULES);
     const weightKg = rng.step(50, 95, 5);
     const fromDose = difficulty === 1 ? rng.pick([5, 10] as const) : rng.step(2, 15, 0.5);
     const step = difficulty === 1 ? rng.pick([2, 5] as const) : rng.step(0.5, 5, 0.5);
     const toDose = fromDose + step;
 
     // Ředění se volí podle vyšší dávky, aby ani po zvýšení pumpa nevyjela z rozsahu.
-    const dilution = choosePerfusorDilution(rng, { perKgMin: toDose, weightKg }, { codes: DOPAMINE_CODES });
+    const dilution = choosePerfusorDilution(rng, { perKgMin: toDose, weightKg }, { codes: PER_KG_CODES[ruleId] });
 
     return {
+      ruleId,
       code: dilution.product.code,
       productName: dilution.product.name,
       substance: dilution.product.substance,

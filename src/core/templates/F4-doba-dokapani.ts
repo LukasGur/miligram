@@ -1,6 +1,6 @@
 import { infusionTimeMinutes } from "../formulas";
 import { PUMP_SOURCE } from "../devices";
-import { CARRIER_SOURCE, pickCarrier } from "../products/carriers";
+import { CARRIER_SOURCE, pickCarrier, pickFitting, range } from "../products/carriers";
 import * as tolerances from "../tolerances";
 import type { Solution, Vars } from "../types";
 import { formula, frac, given, q, result, substitute } from "./helpers";
@@ -21,9 +21,12 @@ export const F4 = register({
     const product = pickCarrier(rng);
     const bagMl = product.packUnitVolumeMl ?? 500;
 
-    const rateMlPerHour = difficulty === 1
-      ? rng.pick([50, 100, 125, 250] as const)
-      : rng.step(20, 300, 5);
+    // Vak má dokapat nejdřív za půl hodiny a nejpozději za den.
+    const rateMlPerHour = pickFitting(
+      rng,
+      difficulty === 1 ? [50, 100, 125, 250] : range(20, 300, 5),
+      (rate) => rate <= bagMl * 2 && rate >= bagMl / 24,
+    );
 
     return {
       code: product.code,

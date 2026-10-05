@@ -5,7 +5,7 @@ import * as tolerances from "../tolerances";
 import type { Solution, Vars } from "../types";
 import { formula, frac, given, intermediate, q, result, substitute } from "./helpers";
 import { register, SUKL_DLP } from "./registry";
-import { choosePerfusorDilution, NORADRENALINE_CODES } from "./perfusor";
+import { choosePerfusorDilution, NORADRENALINE_RATE_CODES } from "./perfusor";
 
 /**
  * G1 — µg/min na ml/h.
@@ -27,13 +27,15 @@ export const G1 = register({
       ? rng.pick([range.min, 5, range.max])
       : rng.step(range.min, range.max, 0.5);
 
-    const dilution = choosePerfusorDilution(rng, { perMin: dosePerMin }, { codes: NORADRENALINE_CODES });
+    const dilution = choosePerfusorDilution(rng, { perMin: dosePerMin }, { codes: NORADRENALINE_RATE_CODES });
 
     return {
       code: dilution.product.code,
       productName: dilution.product.name,
       substance: dilution.product.substance,
       ampoules: dilution.ampoules,
+      // Hotový roztok se do stříkačky nenatahuje z ampulí ani neředí.
+      form: dilution.premixed ? "premixed" : "diluted",
       syringeMl: dilution.syringeMl,
       totalMg: dilution.totalMg,
       concentrationMgPerMl: dilution.concentrationMgPerMl,

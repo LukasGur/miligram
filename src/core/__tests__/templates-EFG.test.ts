@@ -199,3 +199,33 @@ describe("G — kontinuální infuze", () => {
     }
   });
 });
+
+describe("nosné infuze v rozumných mezích", () => {
+  const SEEDS_F = Array.from({ length: 80 }, (_, i) => `f-${i}`);
+  it("F1, F2: rychlost 10–500 ml/h, kapky 5–120 za minutu", () => {
+    for (const difficulty of DIFFICULTIES) {
+      for (const seed of SEEDS_F) {
+        const f1 = buildExercise("F1", seed, difficulty);
+        const rate1 = f1.solution.value;
+        expect(rate1, `F1 ${difficulty}/${seed}`).toBeGreaterThanOrEqual(10);
+        expect(rate1, `F1 ${difficulty}/${seed}`).toBeLessThanOrEqual(500);
+        const f2 = buildExercise("F2", seed, difficulty);
+        expect(f2.solution.value, `F2 ${difficulty}/${seed}`).toBeGreaterThanOrEqual(5);
+        expect(f2.solution.value, `F2 ${difficulty}/${seed}`).toBeLessThanOrEqual(120);
+      }
+    }
+  });
+
+  it("F4, F6: vak dokape za půl hodiny až den", () => {
+    for (const difficulty of DIFFICULTIES) {
+      for (const seed of SEEDS_F) {
+        for (const id of ["F4", "F6"]) {
+          const { vars } = buildExercise(id, seed, difficulty);
+          const hours = Number(vars.bagMl) / Number(vars.rateMlPerHour);
+          expect(hours, `${id} ${difficulty}/${seed}`).toBeGreaterThanOrEqual(0.5);
+          expect(hours, `${id} ${difficulty}/${seed}`).toBeLessThanOrEqual(24);
+        }
+      }
+    }
+  });
+});
