@@ -116,6 +116,50 @@ export const ELECTROLYTES = {
       "Jeden ml roztoku obsahuje magnesii sulfas heptahydricus 200 mg. " +
       "Magnesii sulfas heptahydricus 1 g = magnesium 98,6 mg nebo 8,1 mEq nebo 4,1 mmol.",
   },
+
+  /**
+   * Bikarbonát se ordinuje v mmol HCO3-, ne sodíku; SPC uvádí oba ionty
+   * ve stejném množství. Doplněno 5. 10. 2026.
+   */
+  natriumHydrogenkarbonat84: {
+    suklCode: "0011976",
+    product: "Hydrogenuhličitan sodný B. Braun 8,4% infuzní roztok",
+    spc: "SPC189750.pdf",
+    mgPerMl: 84,
+    percent: 8.4,
+    ion: "HCO3-",
+    mmolPerMl: 1,
+    valence: 1,
+    molarMassGPerMol: 84,
+    salt: { formula: "NaHCO3", ions: ["Na+", "HCO3-"] },
+    quote: "1000 ml roztoku obsahuje natrii hydrogenocarbonas 84,0 g. Koncentrace elektrolytů: Na+ 1000 mmol/l, HCO3- 1000 mmol/l.",
+  },
+
+  natriumHydrogenkarbonat42: {
+    suklCode: "0098236",
+    product: "Hydrogenuhličitan sodný B. Braun 4,2% infuzní roztok",
+    spc: "SPC189747.pdf",
+    mgPerMl: 42,
+    percent: 4.2,
+    ion: "HCO3-",
+    mmolPerMl: 0.5,
+    valence: 1,
+    molarMassGPerMol: 84,
+    salt: { formula: "NaHCO3", ions: ["Na+", "HCO3-"] },
+    quote: "1000 ml roztoku obsahuje natrii hydrogenocarbonas 42,0 g. Koncentrace elektrolytů: Na+ 500 mmol/l, HCO3- 500 mmol/l.",
+  },
+
+  natriumChlorid10: {
+    suklCode: "0239549",
+    product: "Natrium chloratum BBP 100 mg/ml koncentrát pro infuzní roztok",
+    spc: "SPC191466.pdf",
+    mgPerMl: 100,
+    percent: 10,
+    ion: "Na+",
+    mmolPerMl: 1.711,
+    valence: 1,
+    quote: "Jeden ml roztoku obsahuje 100 mg chloridu sodného. … 1 ml obsahuje 39,357 mg sodíku, to odpovídá 1,711 mmol.",
+  },
 } as const satisfies Record<string, Electrolyte>;
 
 export type ElectrolyteId = keyof typeof ELECTROLYTES;

@@ -17,7 +17,15 @@ const SALT_LIST = MOLAR_MASS_LIST.filter(([, item]) => item.salt !== undefined);
 
 /** „Na+“ → Na⁺ v sazbě. */
 function ionTex(ion: string): string {
-  return `\\mathrm{${ion.replace(/(\d*[+-])$/, "^{$1}")}}`;
+  // Číslice na konci je u jednoprvkového iontu náboj (Mg2+ → Mg²⁺),
+  // u víceprvkového počet atomů (HCO3- → HCO₃⁻).
+  const match = ion.match(/^(.*?)(\d*)([+-])$/);
+  if (!match) return `\\mathrm{${ion}}`;
+  const [, base, digits, sign] = match;
+  const elements = base.match(/[A-Z]/g)?.length ?? 0;
+  return elements > 1 && digits
+    ? `\\mathrm{${base}_{${digits}}^{${sign}}}`
+    : `\\mathrm{${base}^{${digits}${sign}}}`;
 }
 
 /**
