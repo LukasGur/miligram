@@ -121,6 +121,27 @@ Fond také vylučuje přípravky jen s cestou podání IPT, ITH nebo ICM
 a rozlišuje typ obalu (lahvička, pero, zásobní vložka, předplněná
 stříkačka) — viz `scripts/sukl/README.md`.
 
+### 8. Realistické meze zadání (audit 5. 10. 2026)
+
+Zadání musí odpovídat tomu, co se na oddělení skutečně potká. Meze
+a jejich zdroje:
+
+- **Dětské jednotlivé dávky sirupů (K6)** — Inflanor 20 mg/ml (0274535,
+  SPC214323): 20–30 mg/kg/den ve 3–4 dávkách, nejmenší dávka 2,5 ml
+  (50 mg); Klacid 125 mg/5 ml (0267343, SPC221569): 7,5 mg/kg dvakrát
+  denně, nejvýš 500 mg dvakrát denně; Sumamed 20 mg/ml (0273525,
+  SPC229394): 10 mg/kg/den. Ověřeno 5. 10. 2026.
+- **Tablety paracetamolu jen od 9 kg** — PARALEN 125 mg (0254422,
+  SPC224021), tabulka dávkování začíná „do 6 let, 9–12 kg, 125 mg“.
+- **Enoxaparin (H4)** — dávka z rozmezí SPC (profylaxe 20–40 mg, léčba
+  1–1,5 mg/kg), balení s větším obsahem než dávka.
+- **Ceftriaxon u dětí (B1)** — SPC212156: pod 50 kg 50–80 mg/kg jednou
+  denně, strop 4 g jen u vyšších pásem. Dávka nad 2 g u dítěte kolem
+  30 kg je tedy podle SPC, ne chyba.
+- **Pacient (C1, C3, C4, J3, L3)** — hmotnost k výšce v pásmu BMI 18–38,
+  pod 150 cm 14–22. Návrhové rozhodnutí, ne údaj ze zdroje.
+- **Mikrokapky (F3)** — do 100 ml/h. Návrhové rozhodnutí.
+
 ## Co se nepoužívá
 
 Blogy, kvízové weby, studentská fóra, výstupy jazykových modelů, neověřená PDF.

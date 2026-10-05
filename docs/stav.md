@@ -358,6 +358,29 @@ nehrál, má sérii zpátky hned; kdo už začal od jedničky, tomu se stará
   ředění a infuze v mezích balení, perfuzor jen s dávkou té látky,
   tablety, roztoky a lahvičky s dávkami ze SPC.
 
+**Audit celé aplikace (5. 10. 2026)** — report:
+<https://claude.ai/artifact/UU8wFdWo2xYPZWNncXwdM5>, návrh obrazovek:
+<https://claude.ai/artifact/Qu533hdbTC9gEpiptrig3Z>.
+
+- **Fakta v zadáních.** K5 vydávalo rozmezí na jedno podání za denní,
+  D3 psalo o ampuli 1:10 000. H4 dávalo 600 mg enoxaparinu, pacienti
+  191 cm a 46 kg, dětem 488 mg ibuprofenu naráz, mikrokapky 500 kapek
+  za minutu, převody „50 mg → ng“. Opraveno a hlídá to test; meze
+  v docs/zdroje.md, oddíl 8. Přípravky v zadání se jmenují jako na
+  krabičce (`packageLabel`), ampule se skloňují.
+- **Data.** Po dohrané lekci aplikace žádá o trvalé úložiště
+  (`requestPersistentStorage`), odeslané události starší 30 dní se mažou,
+  obnovení série odmítnuté serverem telefon vrátí.
+- **UX.** Po chybě „Zkusit s jinými čísly“ jen když tentýž příklad přijde
+  hned, jinak „Další příklad“; vzdání „Přeskočit, vrátí se v opakování“.
+  Shrnutí lekce podle výsledku s „Projít chyby“, věta pod kruhem cíle,
+  prázdné statistiky s ukázkou, program s obsahem stupňů, zásoby řeknou
+  předem, kolik chybí, bublina vzoru nezakrývá odpověď.
+- **Tmavý režim** podle systému (tokeny v globals.css, `on-accent`,
+  `scrim`).
+- **Proužek v lekci** po klepnutí na notifikaci (`IntentBanner`); service
+  worker posílá i titulek a text notifikace.
+
 ## Co dělat dál
 
 **Rozpracovaný plán: [plan.md](plan.md)** — účty a pastilky na serveru
@@ -479,7 +502,7 @@ nehrál, má sérii zpátky hned; kdo už začal od jedničky, tomu se stará
 ## Příkazy
 
 ```bash
-pnpm test        # 425 testů jádra, překladů, sazby, databáze a statistik
+pnpm test        # 608 testů jádra, překladů, sazby, databáze a statistik
 pnpm typecheck
 pnpm lint
 pnpm dev         # https, LAN, pro test na telefonu
