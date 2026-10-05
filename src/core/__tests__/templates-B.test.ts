@@ -292,3 +292,23 @@ describe("valproát v mezích SPC", () => {
     expect(seen).toBeGreaterThan(0);
   });
 });
+
+describe("dávka z tablet jde podat", () => {
+  it("Paralen 125 mg jen v násobcích půl tablety (B3, B7)", () => {
+    const SEEDS_TBL = Array.from({ length: 300 }, (_, i) => `tbl${i}`);
+    let seen = 0;
+    for (const id of ["B3", "B7"]) {
+      for (const difficulty of DIFFICULTIES) {
+        for (const seed of SEEDS_TBL) {
+          const { vars } = buildExercise(id, seed, difficulty);
+          const step = dosingRule(vars.ruleId as DosingRuleId).doseStepMg;
+          if (!step) continue;
+          seen++;
+          const halves = Number(vars.perDoseMg) / step;
+          expect(Math.abs(halves - Math.round(halves)), `${id}/${difficulty}/${seed}: ${vars.perDoseMg}`).toBeLessThan(1e-9);
+        }
+      }
+    }
+    expect(seen).toBeGreaterThan(0);
+  });
+});

@@ -26,12 +26,13 @@ export const B7 = register({
     const single = rule.single!;
 
     const weightKg = difficulty === 1 ? rng.step(10, 30, 5) : rng.step(Math.max(4, rule.minWeightKg ?? 0), 45, 0.5);
-    const perDoseMg = Number(
-      (weightBasedDose(
-        difficulty === 1 ? rng.pick([single.min, single.max]) : rng.step(single.min, single.max, orderStep(single)),
-        weightKg,
-      )).toPrecision(3),
+    const exactMg = weightBasedDose(
+      difficulty === 1 ? rng.pick([single.min, single.max]) : rng.step(single.min, single.max, orderStep(single)),
+      weightKg,
     );
+    // Z tablet jde podat jen násobek půl tablety, jinak tři platné číslice.
+    const step = rule.doseStepMg;
+    const perDoseMg = step ? Math.max(step, Math.round(exactMg / step) * step) : Number(exactMg.toPrecision(3));
     const timesPerDay = rng.pick([3, 4, 5, 6] as const);
 
     return {

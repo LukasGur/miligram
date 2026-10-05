@@ -39,7 +39,7 @@ export const B3 = register({
     if (!single) throw new Error(`Pravidlo ${ruleId} nemá dávku na jedno podání.`);
     const perKgDose = difficulty === 1 ? rng.pick([single.min, single.max]) : rng.step(single.min, single.max, orderStep(single));
     const dosesGiven = schedule === 1 ? 1 : rng.int(1, Math.min(schedule - 1, 3));
-    const roundTo = difficulty === 1 ? 5 : 1;
+    const roundTo = rule.doseStepMg ?? (difficulty === 1 ? 5 : 1);
     const perDoseMg = Math.max(roundTo, Math.round(weightBasedDose(perKgDose, weightKg) / roundTo) * roundTo);
 
     return {

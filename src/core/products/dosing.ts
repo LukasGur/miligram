@@ -48,6 +48,12 @@ export type DosingRule = {
    */
   minWeightKg?: number;
   /**
+   * Nejmenší dávka, kterou z lékové formy jde podat (půl tablety, kterou
+   * podle bodu 3 SPC lze rozdělit na stejné dávky). Podaná dávka v zadání
+   * je jejím násobkem — 450 mg z tablet po 125 mg nikdo nepodá.
+   */
+  doseStepMg?: number;
+  /**
    * Hmotnost pacienta, pro kterého citace platí, když to není dítě.
    * Dávka pro dospělého u dětské hmotnosti by byla vymyšlená.
    */
@@ -102,6 +108,9 @@ export const DOSING_RULES = {
     dosesPerDay: [3, 4],
     // Tabulka dávkování v SPC začíná řádkem „do 6 let, 9–12 kg, 125 mg“.
     minWeightKg: 9,
+    // Bod 3 SPC: „Tabletu lze rozdělit na stejné dávky.“ Tabulka v bodu 4.2
+    // pracuje s násobky půl tablety (125; 187,5; 250; 375; 500 mg).
+    doseStepMg: 62.5,
     quote:
       "Celková denní dávka za 24 hodin nemá překročit 60 mg/kg tělesné hmotnosti dítěte; " +
       "dělí se na 3–4 dílčí dávky. Pro jednorázové podání je dávka 10–15 mg/kg tělesné hmotnosti.",
