@@ -115,12 +115,20 @@ Valproát (5. 10. 2026): Orfiril 100 mg/ml (0054238, SPC221721) má
 v tabulce záměrně není: dává se pevná dávka v mg a „15 mg z roztoku
 1 mg/ml“ nic nenaučí. Injekční Abilify v tabulce zůstává.
 
-Ředění koncentrátů (D1, D4, D6) bere od 5. 10. 2026 jen přípravky,
-u kterých SPC uvádí výslednou koncentraci, a ředí jen do ní
-(`src/core/products/dilution.ts`, citace u příkladu). U cytostatik
-a klindamycinu musí sedět i množství léku. Zbylo 9 přípravků: amiodaron,
-milrinon (Asicord), klindamycin, levosimendan (Simdax), landiolol
-(Rapibloc), KCl 7,45 % a 15 %, topotekan, etoposid. Proč ostatní ne, je
+Ředění koncentrátů a ampulí (D1, D4, D6) bere od 5. 10. 2026 jen
+přípravky, u kterých SPC říká, co se reálně namíchá: výslednou
+koncentraci, nebo objem a dávku (`src/core/products/dilution.ts`,
+doslovné citace u příkladu). Je jich 33, z oddělení a JIP
+(noradrenalin, dobutamin, dopamin, amiodaron, milrinon, levosimendan,
+landiolol, fenytoin, levetiracetam, midazolam, KCl 7,45 % a 15 %,
+magnesium, furosemid, ondansetron, granisetron, metoklopramid,
+dexketoprofen, tramadol, terbutalin, klindamycin, amikacin) a 11
+cytostatik. Přípravek v příkladu je ten, z jehož SPC údaj je; u látek,
+kde to má fond od jiného výrobce, se v příkladu objeví jiný přípravek
+(noradrenalin Zentiva, ondansetron Kalceks …). Výjimka je dopamin:
+žádné české SPC ředění neuvádí, je z britského SPC (EMC, Dopamine
+hydrochloride 40 mg/ml, product 100811) a platí pro Tensamin, který má
+stejnou sílu i lékovou formu; citace to říká. Vynechané a proč je
 v hlavičce souboru.
 
 D2 a infuze (F1–F6) dávku netvrdí, a tak tabulku
@@ -151,13 +159,13 @@ a jejich zdroje:
 - **Ceftriaxon u dětí (B1)** — SPC212156: pod 50 kg 50–80 mg/kg jednou
   denně, strop 4 g jen u vyšších pásem. Dávka nad 2 g u dítěte kolem
   30 kg je tedy podle SPC, ne chyba.
-- **Ředění koncentrátů (D1, D4, D6)** — výsledná koncentrace z bodu 4.2
-  nebo 6.6 SPC (tolerance 2 %, SPC zaokrouhluje: ampule amiodaronu
-  v 250 ml je 0,59, SPC píše 0,6). Topotekan 1,2–3 mg a etoposid
-  80–200 mg jsou dávka v mg/m² ze SPC pro povrch 1,6–2,0 m² (návrhové
-  rozhodnutí), klindamycin 300–1200 mg z tabulky ředění v SPC. Dřív
-  vycházelo „0,5 ml topotekanu do 1000 ml“ (0,5 µg/ml místo 25–50)
-  nebo 30 mg paklitaxelu.
+- **Ředění (D1, D4, D6)** — koncentrace, objem a dávka z bodu 4.2 nebo
+  6.6 SPC (tolerance 2 %, SPC zaokrouhluje: ampule amiodaronu v 250 ml
+  je 0,59, SPC píše 0,6). Návrhová rozhodnutí: dávka v mg/m² pro povrch
+  těla 1,6–2,0 m², v mg/kg pro 60–90 kg, vaky 50–500 ml (D4 i 1000),
+  kde SPC objem neuvádí, natahuje se nejvýš 3 lahvičky a 40 ml
+  (cytostatika podle velikosti balení až 75 ml). Dřív vycházelo „0,5 ml
+  topotekanu do 1000 ml“ (0,5 µg/ml místo 25–50) nebo 30 mg paklitaxelu.
 - **Paralen 125 mg (B3, B7)** — podaná dávka je násobek půl tablety
   (62,5 mg): bod 3 SPC224021 dovoluje tabletu rozdělit na stejné
   dávky, tabulka v bodu 4.2 pracuje s půlkami. Žádná tableta v aplikaci

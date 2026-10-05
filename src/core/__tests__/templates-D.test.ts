@@ -3,7 +3,7 @@ import "../templates";
 import { allTemplates, buildExercise, getTemplate } from "../templates";
 import { mixedConcentration, percentToRatio, ratioToPercent } from "../formulas";
 import { ELECTROLYTE_LIST } from "../products/electrolytes";
-import { concentrationAllowed, DILUTION_RULES, dilutionRuleFor } from "../products/dilution";
+import { concentrationAllowed, DILUTION_RULES, dilutionRuleFor, doseAllowed } from "../products/dilution";
 import { spcDilutions } from "../templates/concentrateDraw";
 import { DIFFICULTIES, type Difficulty } from "../types";
 
@@ -155,11 +155,25 @@ describe("ředění jen podle SPC (D1, D4, D6)", () => {
 
   it("každé pravidlo cituje SPC a dá v každé obtížnosti aspoň jedno ředění", () => {
     for (const rule of DILUTION_RULES) {
-      expect(rule.spc, rule.product).toMatch(/^(SPC\d+\.pdf|EMA: .+\.pdf)$/);
+      expect(rule.spc, rule.product).toMatch(/^(SPC\d+\.pdf|EMA: .+\.pdf|EMC: https:\/\/www\.medicines\.org\.uk\/.+)$/);
       expect(rule.quotes.length, rule.product).toBeGreaterThan(0);
       for (const difficulty of DIFFICULTIES) {
         expect(spcDilutions(rule, difficulty, [50, 100, 250, 500]).length, `${rule.product}/${difficulty}`).toBeGreaterThan(0);
       }
+    }
+  });
+
+  it("britské SPC jen tam, kde české ředění neuvádí (dopamin)", () => {
+    const foreign = DILUTION_RULES.filter((rule) => rule.spc.startsWith("EMC:")).map((rule) => rule.substance);
+    expect(foreign).toEqual(["DOPAMIN"]);
+  });
+
+  it("každé pravidlo říká, co se reálně namíchá", () => {
+    for (const rule of DILUTION_RULES) {
+      // Koncentrace ze SPC, nebo objem a dávka; samotná horní mez nestačí.
+      const known = rule.mgPerMl !== undefined || (rule.totalVolumesMl !== undefined && rule.doseMg !== undefined);
+      expect(known, rule.product).toBe(true);
+      if (rule.maxMgPerMl !== undefined && rule.mgPerMl === undefined) expect(rule.doseMg, rule.product).toBeDefined();
     }
   });
 
@@ -176,10 +190,8 @@ describe("ředění jen podle SPC (D1, D4, D6)", () => {
             : [(Number(vars.targetConcentration) * Number(vars.targetVolumeMl)) / stock, Number(vars.targetVolumeMl)];
           const label = `${id}/${difficulty}/${seed}: ${vars.productName} ${drawnMl} ml → ${totalMl} ml`;
           expect(concentrationAllowed(rule!, (stock * drawnMl) / totalMl), label).toBe(true);
-          if (rule!.doseMg) {
-            expect(stock * drawnMl, label).toBeGreaterThanOrEqual(rule!.doseMg.min - 1e-9);
-            expect(stock * drawnMl, label).toBeLessThanOrEqual(rule!.doseMg.max + 1e-9);
-          }
+          expect(doseAllowed(rule!, stock * drawnMl), label).toBe(true);
+          if (rule!.totalVolumesMl) expect(rule!.totalVolumesMl, label).toContain(totalMl);
           expect(JSON.stringify(source), label).toContain(`SPC přípravku ${rule!.product}`);
         }
       }

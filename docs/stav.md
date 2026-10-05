@@ -399,9 +399,9 @@ nehrál, má sérii zpátky hned; kdo už začal od jedničky, tomu se stará
   výpočtem), první obtížnost s kulatými čísly má zadání málo záměrně.
 
 **Audit realistických dávek (5. 10. 2026)** — všech 72 šablon, tři
-obtížnosti, 300 semínek. Opraveno: ředění koncentrátů (D1, D4, D6) jen
-do koncentrace ze SPC, u cytostatik i v reálné dávce (z 38 přípravků
-zbylo 9); Paralen 125 mg jen po půlkách tablety (B3, B7). Ostatní
+obtížnosti, 300 semínek. Opraveno: ředění (D1, D4, D6) jen tak, jak ho
+popisuje SPC, včetně dávky; 33 přípravků, 22 z oddělení a JIP a 11
+cytostatik, dopamin z britského SPC; Paralen 125 mg jen po půlkách tablety (B3, B7). Ostatní
 extrémy odpovídají praxi (noradrenalin 0,02 µg/kg/min, adrenalin
 0,025 mg novorozenci, ceftriaxon 3,4 g u 45 kg dítěte podle SPC).
 Meze hlídají testy v templates-B a templates-D.
