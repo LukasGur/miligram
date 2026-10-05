@@ -1,10 +1,10 @@
 import { dropsPerMinute } from "../formulas";
 import { DROP_FACTORS, DROP_FACTOR_SOURCE } from "../devices";
-import { BASE_SOLUTION_ATC, pickProduct } from "../products";
+import { CARRIER_SOURCE, pickCarrier } from "../products/carriers";
 import * as tolerances from "../tolerances";
 import type { Solution, Vars } from "../types";
 import { frac, q, step, tex, unit } from "./helpers";
-import { register, SUKL_DLP } from "./registry";
+import { register } from "./registry";
 
 /**
  * F2 — kapky za minutu.
@@ -15,10 +15,10 @@ import { register, SUKL_DLP } from "./registry";
 export const F2 = register({
   id: "F2",
   category: "infuze",
-  source: [SUKL_DLP, DROP_FACTOR_SOURCE],
+  source: [CARRIER_SOURCE, DROP_FACTOR_SOURCE],
 
   generate(rng, difficulty) {
-    const product = pickProduct(rng, { kind: "infusionBag", minVolumeMl: 1, atcPrefixes: BASE_SOLUTION_ATC });
+    const product = pickCarrier(rng);
     const bagMl = product.packUnitVolumeMl ?? 500;
 
     // Faktor 60 je mikrokapkový set; na první úrovni se nelosuje,

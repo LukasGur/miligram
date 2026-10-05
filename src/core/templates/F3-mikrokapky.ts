@@ -1,10 +1,10 @@
 import { dropsPerMinute, infusionRateMlPerHour } from "../formulas";
 import { DROP_FACTOR_SOURCE, MICRODRIP_FACTOR } from "../devices";
-import { BASE_SOLUTION_ATC, pickProduct } from "../products";
+import { CARRIER_SOURCE, pickCarrier } from "../products/carriers";
 import * as tolerances from "../tolerances";
 import type { Solution, Vars } from "../types";
 import { formula, frac, given, intermediate, q, result, substitute } from "./helpers";
-import { register, SUKL_DLP } from "./registry";
+import { register } from "./registry";
 
 /**
  * F3 — mikrokapkový set 60 gtt/ml.
@@ -20,10 +20,10 @@ const MAX_MICRODRIP_ML_H = 100;
 export const F3 = register({
   id: "F3",
   category: "infuze",
-  source: [SUKL_DLP, DROP_FACTOR_SOURCE],
+  source: [CARRIER_SOURCE, DROP_FACTOR_SOURCE],
 
   generate(rng, difficulty) {
-    const product = pickProduct(rng, { kind: "infusionBag", minVolumeMl: 1, atcPrefixes: BASE_SOLUTION_ATC });
+    const product = pickCarrier(rng);
     const bagMl = product.packUnitVolumeMl ?? 500;
     /**
      * Mikrokapkový set je na malé rychlosti; 60 kapek za minutu je 60 ml/h.

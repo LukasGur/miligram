@@ -1,10 +1,10 @@
 import { infusionTimeMinutes } from "../formulas";
 import { PUMP_SOURCE } from "../devices";
-import { BASE_SOLUTION_ATC, pickProduct } from "../products";
+import { CARRIER_SOURCE, pickCarrier } from "../products/carriers";
 import * as tolerances from "../tolerances";
 import type { Solution, Vars } from "../types";
 import { formula, frac, given, q, result, substitute } from "./helpers";
-import { register, SUKL_DLP } from "./registry";
+import { register } from "./registry";
 
 /**
  * F4 — za jak dlouho infuze dokape.
@@ -15,10 +15,10 @@ import { register, SUKL_DLP } from "./registry";
 export const F4 = register({
   id: "F4",
   category: "infuze",
-  source: [SUKL_DLP, PUMP_SOURCE],
+  source: [CARRIER_SOURCE, PUMP_SOURCE],
 
   generate(rng, difficulty) {
-    const product = pickProduct(rng, { kind: "infusionBag", minVolumeMl: 1, atcPrefixes: BASE_SOLUTION_ATC });
+    const product = pickCarrier(rng);
     const bagMl = product.packUnitVolumeMl ?? 500;
 
     const rateMlPerHour = difficulty === 1
