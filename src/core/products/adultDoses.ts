@@ -641,6 +641,30 @@ const LIST: readonly AdultDose[] = [
     quote: "Ambulantní léčba: Dávka pro dospělé je 1,5–3 mg až 3× denně.",
   },
 
+  // Ampule s pevnou dávkou pro dospělé, doplněné 5. 10. 2026 (A3, A4, A6).
+  {
+    suklCode: "0136551", product: "Forvel 0,4 mg/ml injekční/infuzní roztok", spc: "SPC224664.pdf", verifiedAt: VERIFIED_AT_ORAL,
+    singleMg: [0.1, 0.2, 0.4, 1, 2], rangeMg: { min: 0.1, max: 2 },
+    quote:
+      "Intravenózní injekce 0,1 až 0,2 mg naloxon-hydrochloridu (přibližně 1,5–3 μg/kg) je obvykle dostačující. … " +
+      "Diagnóza podezření na akutní předávkování opioidy nebo intoxikaci, dospělí: počáteční dávka je obvykle 0,4–2 mg " +
+      "naloxon-hydrochloridu intravenózně.",
+  },
+  {
+    suklCode: "0131390", product: "Terlipresin acetát EVER Pharma 0,2 mg/ml injekční roztok", spc: "SPC219518.pdf", verifiedAt: VERIFIED_AT_ORAL,
+    singleMg: [1, 1.5, 2], rangeMg: { min: 1, max: 2 },
+    quote:
+      "Tělesná hmotnost nižší než 50 kg: 1 mg terlipresin-acetátu (5 ml) - tělesná hmotnost 50 kg až 70 kg: 1,5 mg " +
+      "terlipresin-acetátu (7,5 ml) - tělesná hmotnost vyšší než 70 kg: 2 mg terlipresin-acetátu (10 ml).",
+  },
+  {
+    suklCode: "0015245", product: "Sandostatin 0,1 mg/ml injekční roztok", spc: "SPC206393.pdf", verifiedAt: VERIFIED_AT_ORAL,
+    singleMg: [0.05, 0.1, 0.2], rangeMg: { min: 0.05, max: 0.2 },
+    quote:
+      "Zahajovací léčba 0,05 mg jednou nebo dvakrát denně formou subkutánní injekce. … dávka se může postupně " +
+      "zvyšovat na 0,1 až 0,2 mg 3x denně.",
+  },
+
   // Další perorální roztoky (A2).
   {
     suklCode: "0054177", product: "Risperdal 1 mg/ml perorální roztok", spc: "SPC231512.pdf", verifiedAt: VERIFIED_AT_ORAL,
