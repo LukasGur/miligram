@@ -740,11 +740,15 @@
       },
       "D1": {
         "title": "{handle} čaká na tvoj ťah ⚔️",
-        "body": "Rozohraný súboj a nedotknutá séria. Dnes máš čo dobiehať."
+        "body": "Dohraj súboj a séria je na dnes vybavená. Dve muchy, jedna lekcia."
       },
       "D2": {
         "title": "Súboj s {handle} stále čaká ⚔️",
-        "body": "Súper nečaká večne a séria tiež nie. Začni, čím chceš."
+        "body": "Sedem príkladov a máš oboje: ťah v súboji aj deň {next} série."
+      },
+      "D3": {
+        "title": "Dve muchy jednou ranou ⚔️",
+        "body": "Súboj s {handle} sa ráta aj do série. Deň {next} čaká."
       },
       "L1": {
         "title": "Na postup chýba {gap} XP 📊",

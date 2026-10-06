@@ -180,7 +180,7 @@ z fronty přes FCM až do service workeru.
 **Pestřejší notifikace** (5. 10. 2026) — připomínka série chodila pořád
 stejná: varianta se brala z čísla řádku ve společné frontě a ze tří vět
 vycházela skoro vždy táž. Teď má každý druh zprávy podle situace skupinu
-variant (123 textů, CZ i SK, `push.variants`), výběr je v `compose.ts`.
+variant (124 textů, CZ i SK, `push.variants`), výběr je v `compose.ts`.
 Denní připomínka zná situace v pořadí: obnova spadlé série, milník
 (7, 30, 100), dřívější rekord, souboj na tahu, liga a ochrana (ty obden),
 nová série, jinak texty podle denní doby a víkendu střídané s obecnými.
@@ -188,7 +188,7 @@ Varianty se střídají den ode dne a bez opakování, každý příjemce
 odjinud. Tón je drzý, ale rýpe jen do lenosti, ne do chyb; tvary podle
 rodu se nepoužívají (test). Data dodává migrace 0018 (`reminder_context`)
 a telefon posílá dřívější rekord série (`streak_best`, `previousBest`).
-Edge Function `push` v5. Text „from Miligram“ za titulkem přidává iOS
+Edge Function `push` v6. Lekce souboje se počítá do série, a texty o souboji to říkají. Text „from Miligram“ za titulkem přidává iOS
 u webových aplikací a vypnout nejde.
 
 **Profil, liga a souboje** (26. 9. 2026) — obrazovka účtu byla poskládané

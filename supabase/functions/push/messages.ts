@@ -57,11 +57,15 @@ export const MESSAGES = {
       },
       "D1": {
         "title": "{handle} čeká na tvůj tah ⚔️",
-        "body": "Rozehraný souboj a nedotčená série. Dnes máš co dohánět."
+        "body": "Dohraj souboj a série je pro dnešek vyřízená. Dvě mouchy, jedna lekce."
       },
       "D2": {
         "title": "Souboj s {handle} pořád čeká ⚔️",
-        "body": "Soupeř nečeká věčně a série taky ne. Začni, čím chceš."
+        "body": "Sedm příkladů a máš obojí: tah v souboji i den {next} série."
+      },
+      "D3": {
+        "title": "Dvě mouchy jednou ranou ⚔️",
+        "body": "Souboj s {handle} se počítá i do série. Den {next} čeká."
       },
       "L1": {
         "title": "Na postup chybí {gap} XP 📊",
@@ -554,11 +558,15 @@ export const MESSAGES = {
       },
       "D1": {
         "title": "{handle} čaká na tvoj ťah ⚔️",
-        "body": "Rozohraný súboj a nedotknutá séria. Dnes máš čo dobiehať."
+        "body": "Dohraj súboj a séria je na dnes vybavená. Dve muchy, jedna lekcia."
       },
       "D2": {
         "title": "Súboj s {handle} stále čaká ⚔️",
-        "body": "Súper nečaká večne a séria tiež nie. Začni, čím chceš."
+        "body": "Sedem príkladov a máš oboje: ťah v súboji aj deň {next} série."
+      },
+      "D3": {
+        "title": "Dve muchy jednou ranou ⚔️",
+        "body": "Súboj s {handle} sa ráta aj do série. Deň {next} čaká."
       },
       "L1": {
         "title": "Na postup chýba {gap} XP 📊",

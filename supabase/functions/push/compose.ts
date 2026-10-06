@@ -95,7 +95,7 @@ const FROM_FIVE_DAYS = new Set<VariantId>(["P1", "P4", "V3", "W1", "W4", "X5", "
 const POOLS = {
   repair: ["O1", "O2", "O3"],
   record: ["R1", "R2", "R3", "R4"],
-  duel: ["D1", "D2"],
+  duel: ["D1", "D2", "D3"],
   leagueUp: ["L5", "L6"],
   leagueChase: ["L1", "L2"],
   leagueDown: ["L3", "L4"],
