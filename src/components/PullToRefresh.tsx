@@ -16,6 +16,9 @@ import { refreshScreen } from "@/lib/refresh";
  * pro přenačtení (`/?open=account`). Lekce ho nemá: tam by potažení jen
  * překáželo počítání.
  *
+ * Potvrzení je štítek s bílým podkladem přes obsah. Bez podkladu ležel
+ * text přes jméno v profilu a přes čísla ve statistikách a nešel přečíst.
+ *
  * Indikátor je tableta z loga. Tah kreslí její obrys, na prahu se vyplní
  * a naskočí rýha, po puštění se točí, dokud obnova neskončí. Modrá, ne
  * medová: medová tableta je pastilka, tedy měna.
@@ -27,6 +30,9 @@ const THRESHOLD = 72;
 /** Kde obsah drží, než obnova doběhne. */
 const HOLD = 56;
 const INDICATOR = 30;
+/** Jak dlouho štítek „Aktuální“ drží a jak dlouho mizí. */
+const CHIP_SHOW_MS = 1400;
+const CHIP_EXIT_MS = 200;
 
 /** Odpor gumy: první centimetry jdou lehce, dál čím dál tížeji. */
 function resist(raw: number): number {
@@ -46,7 +52,7 @@ export function PullToRefresh() {
   const t = useTranslations("common");
   const indicator = useRef<SVGSVGElement>(null);
   const stroke = useRef<SVGCircleElement>(null);
-  const [toast, setToast] = useState<{ top: number; left: number } | null>(null);
+  const [toast, setToast] = useState<{ top: number; left: number; leaving: boolean } | null>(null);
 
   useEffect(() => {
     const svg = indicator.current;
@@ -146,9 +152,12 @@ export function PullToRefresh() {
         move(scroller, 0, true);
         hide();
         const box = scroller.getBoundingClientRect();
-        setToast({ top: box.top + 14, left: box.left + box.width / 2 });
+        setToast({ top: box.top + 10, left: box.left + box.width / 2, leaving: false });
         window.clearTimeout(toastTimer);
-        toastTimer = window.setTimeout(() => setToast(null), 1400);
+        toastTimer = window.setTimeout(() => {
+          setToast((current) => (current ? { ...current, leaving: true } : null));
+          toastTimer = window.setTimeout(() => setToast(null), CHIP_EXIT_MS);
+        }, CHIP_SHOW_MS);
         busy = false;
       });
     };
@@ -197,10 +206,11 @@ export function PullToRefresh() {
       <div role="status" aria-live="polite" className="pointer-events-none">
         {toast ? (
           <p
-            className="animate-tick text-ink-soft fixed z-30 flex -translate-x-1/2 items-center gap-1.5 text-label font-medium"
+            className="refresh-chip bg-paper text-ink fixed z-30 flex items-center gap-1.5 rounded-full py-1.5 pr-3.5 pl-3 text-label font-medium"
+            data-leaving={toast.leaving}
             style={{ top: toast.top, left: toast.left }}
           >
-            <CheckIcon className="size-3.5" />
+            <CheckIcon className="text-accent size-3.5" />
             {t("refreshed")}
           </p>
         ) : null}
