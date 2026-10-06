@@ -61,7 +61,7 @@ export function StatsScreen({
         </button>
       </header>
 
-      <main tabIndex={0} className="scroll-y flex-1">
+      <main tabIndex={0} data-refresh="/?open=stats" className="scroll-y flex-1">
         <div className="mx-auto w-full max-w-md px-5 pb-10">
           {stats === undefined ? null : stats.answered === 0 ? (
             <div className="pt-2">

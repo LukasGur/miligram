@@ -50,7 +50,7 @@ export function CurriculumScreen({
         </button>
       </header>
 
-      <main tabIndex={0} className="scroll-y flex-1">
+      <main tabIndex={0} data-refresh="/?open=program" className="scroll-y flex-1">
         <div className="mx-auto w-full max-w-md px-5 pb-10">
           <p className="text-ink-soft text-label">{t("intro")}</p>
           <p className="text-ink-soft mt-2 text-label" data-numeric>

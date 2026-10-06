@@ -211,6 +211,24 @@ function watchResume() {
   window.addEventListener("online", refreshVisible);
 }
 
+/**
+ * Obnova potažením dolů: stáhne znovu všechno, na co se někdo dívá, i když
+ * je to čerstvé. Ostatní dotazy zneplatní, ať se stáhnou při otevření.
+ *
+ * Vrací, jestli všechno doběhlo bez chyby. Na zaseknutý dotaz čeká, dokud
+ * ho neukončí limit požadavku (src/lib/supabase.ts); kratší limit drží
+ * volající (src/lib/refresh.ts).
+ */
+export async function refreshAllQueries(): Promise<boolean> {
+  const running: Promise<unknown>[] = [];
+  for (const [key, entry] of cache) {
+    if (entry.listeners.size > 0 && entry.loader) running.push(load(key, entry.loader));
+    else entry.fresh = false;
+  }
+  const results = await Promise.allSettled(running);
+  return results.every((result) => result.status === "fulfilled");
+}
+
 /** Zapomene uložený výsledek — po odhlášení nesmí zůstat viset cizí data. */
 export function forgetRemoteQueries(): void {
   cache.clear();

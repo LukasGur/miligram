@@ -30,6 +30,7 @@ import { HandleForm, ProfileHome, useBadges } from "@/components/social/ProfileH
 import { ToneSheet } from "@/components/social/ToneSheet";
 import { markWeekSeen, unseenWeek, WeekResult } from "@/components/social/WeekResult";
 import { SignIn } from "./SignIn";
+import { StuckLoading } from "@/components/ui/StuckLoading";
 
 export type PlayableDuel = { id: string; lessonId: string; topic: DuelTopic };
 
@@ -116,7 +117,7 @@ export function AccountScreen({
             <CloseIcon className="size-6" />
           </button>
         </header>
-        <main tabIndex={0} className="scroll-y flex-1">
+        <main tabIndex={0} data-refresh="/?open=account" className="scroll-y flex-1">
           <div className="mx-auto w-full max-w-md px-5 pb-10">
             {!isRemoteConfigured() || client === null ? (
               <section>
@@ -124,7 +125,7 @@ export function AccountScreen({
                 <p className="text-ink-soft mt-1.5 text-label">{t("disabledBody")}</p>
               </section>
             ) : !ready ? (
-              <p className="text-ink-soft text-label">{t("loading")}</p>
+              <StuckLoading target="/?open=account" onBack={onClose} />
             ) : (
               <SignIn />
             )}
@@ -274,7 +275,7 @@ function SignedIn({
   }
 
   if (social.profile.loading && social.profile.data === undefined) {
-    return <Shell onClose={onClose}><p className="text-ink-soft text-label">{tSocial("loading")}</p></Shell>;
+    return <Shell onClose={onClose}><StuckLoading target="/?open=account" onBack={onClose} /></Shell>;
   }
 
   // Bez přezdívky není podle čeho člověka najít: jen formulář.
@@ -318,7 +319,7 @@ function SignedIn({
         );
       case "reveal": {
         const duel = social.duels.data?.find((one) => one.id === route.duelId);
-        if (!duel) return <Shell onClose={back}><p className="text-ink-soft text-label">{tSocial("loading")}</p></Shell>;
+        if (!duel) return <Shell onClose={back}><StuckLoading target="/?open=duels" onBack={back} /></Shell>;
         const stillFriends = social.friends.data?.some((friend) => friend.userId === duel.opponentId) ?? false;
         return (
           <DuelReveal
@@ -452,7 +453,7 @@ function Shell({ onClose, title, children }: { onClose: () => void; title?: stri
           <CloseIcon className="size-6" />
         </button>
       </header>
-      <main tabIndex={0} className="scroll-y flex-1">
+      <main tabIndex={0} data-refresh="/?open=account" className="scroll-y flex-1">
         <div className="mx-auto w-full max-w-md px-5 pb-10">{children}</div>
       </main>
     </div>

@@ -80,7 +80,6 @@ export function LessonView({
   helped: resumedHelped,
   onExit,
   onAgain,
-  onReview,
   onDuelDone,
   challenge,
   onAccount,
@@ -102,11 +101,6 @@ export function LessonView({
   onExit: () => void;
   /** Spustí další lekci rovnou ze shrnutí, bez návratu domů. */
   onAgain: () => void;
-  /**
-   * Projít chyby hned: tytéž typy výpočtu s jinými čísly, jako opakování
-   * ze statistik. Dokud jsou v hlavě, oprava sedne nejlíp.
-   */
-  onReview?: (items: readonly ReviewItem[]) => void;
   /** Po dohraném souboji: přejít rovnou k jeho výsledku. */
   onDuelDone?: (duelId: string) => void;
   challenge?: LessonChallengeProps;
@@ -181,7 +175,6 @@ export function LessonView({
       <LessonSummary
         outcomes={firstTryOutcomes(plan, attempts)}
         items={plan.items}
-        onReview={duelId ? undefined : onReview}
         kind={plan.kind}
         unsolved={plan.items.length - solved}
         walletBefore={walletBefore}
@@ -381,7 +374,6 @@ const PER_FLYER = 2;
 function LessonSummary({
   outcomes,
   items,
-  onReview,
   kind,
   unsolved,
   walletBefore,
@@ -394,9 +386,8 @@ function LessonSummary({
 }: {
   /** Jak dopadl první pokus u každého příkladu. Odměna je z toho. */
   outcomes: readonly boolean[];
-  /** Příklady lekce v pořadí; z chybných se skládá opakování. */
+  /** Příklady lekce v pořadí; z chybných se skládají látky, kde to drhlo. */
   items: readonly ReviewItem[];
-  onReview?: (items: readonly ReviewItem[]) => void;
   kind?: LessonKind;
   /** Kolik příkladů student vzdal. Bez toho nedává denní cíl smysl. */
   unsolved: number;
@@ -425,19 +416,12 @@ function LessonSummary({
   const bonus = reward.pills - earned;
 
   /**
-   * Co napoprvé nevyšlo: typy výpočtu k opravě a látky, ve kterých to
-   * drhlo. Opakuje se typ (šablona a obtížnost), ne příklad — přijde
-   * s jinými čísly, jako opakování ze statistik.
+   * Co napoprvé nevyšlo. Tlačítko na opakování chyb tu není: chybný příklad
+   * se v lekci vracel, dokud nevyšel, a další kolo hned po něm působilo
+   * jako totéž podruhé. Typ výpočtu se vrátí s jinými čísly v některé
+   * z dalších denních lekcí a zůstává v opakování chyb ve statistikách.
    */
   const missed = outcomes.filter((ok) => !ok).length;
-  const mistakes = useMemo(() => {
-    const unique = new Map<string, ReviewItem>();
-    items.forEach((item, position) => {
-      if (outcomes[position]) return;
-      unique.set(`${item.templateId}:${item.difficulty}`, { templateId: item.templateId, difficulty: item.difficulty });
-    });
-    return [...unique.values()];
-  }, [items, outcomes]);
   const weakTopics = [
     ...new Set(
       items
@@ -454,7 +438,6 @@ function LessonSummary({
       : reward.correct * 7 >= reward.count * 3
         ? "mid"
         : "low";
-  const reviewFirst = onReview !== undefined && !onDuel && mistakes.length > 0;
 
   const balanceRef = useRef<HTMLSpanElement>(null);
   const targetRef = useRef<SVGSVGElement>(null);
@@ -567,8 +550,6 @@ function LessonSummary({
             <p className="text-ink-soft mt-1.5 text-label" data-numeric>
               {t("summaryUnsolved", { count: unsolved })}
             </p>
-          ) : tone === "low" && reviewFirst ? (
-            <p className="text-ink-soft mt-1.5 text-label">{t("summaryLowNote")}</p>
           ) : null}
 
           {/* Nulové řádky se neukazují: „+0“ po těžké lekci jen přisolí. */}
@@ -638,29 +619,22 @@ function LessonSummary({
         <div className="mx-auto w-full max-w-md px-5 pt-3">
           <button
             type="button"
-            onClick={onDuel ?? (reviewFirst ? () => onReview(mistakes) : onExit)}
+            onClick={onDuel ?? onExit}
             className="bg-accent active:bg-accent-press flex min-h-14 w-full items-center justify-center gap-2 rounded-control text-body font-semibold text-on-accent transition-colors duration-75"
           >
-            {onDuel ? (
-              <VersusIcon className="size-5" />
-            ) : reviewFirst ? (
-              <RepeatIcon className="size-5" />
-            ) : (
-              <HomeIcon className="size-5" />
-            )}
-            {onDuel ? t("duelResult") : reviewFirst ? t("reviewMistakes", { count: mistakes.length }) : t("home")}
+            {onDuel ? <VersusIcon className="size-5" /> : <HomeIcon className="size-5" />}
+            {onDuel ? t("duelResult") : t("home")}
           </button>
 
-          {/* Tichá volba. Po chybách domů, po povedené lekci další lekce
-              (po splněném cíli je správné odejít, ne hrát dál), po souboji
-              domů. */}
+          {/* Tichá volba. Po lekci další lekce (po splněném cíli je správné
+              odejít, ne hrát dál), po souboji domů. */}
           <button
             type="button"
-            onClick={onDuel || reviewFirst ? onExit : onAgain}
+            onClick={onDuel ? onExit : onAgain}
             className="text-ink-soft mt-1 flex min-h-11 w-full items-center justify-center gap-2 text-label"
           >
-            {onDuel || reviewFirst ? <HomeIcon className="size-4" /> : <RepeatIcon className="size-4" />}
-            {onDuel || reviewFirst ? t("home") : t("again")}
+            {onDuel ? <HomeIcon className="size-4" /> : <RepeatIcon className="size-4" />}
+            {onDuel ? t("home") : t("again")}
           </button>
         </div>
       </footer>

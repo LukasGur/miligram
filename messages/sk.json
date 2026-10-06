@@ -12,7 +12,11 @@
     "loading": "Načítavam",
     "crashTitle": "Niečo sa nepodarilo",
     "crashBody": "Aplikácia sa zasekla. Dáta v telefóne sú v poriadku, stačí ju načítať znova.",
-    "crashReload": "Načítať znova"
+    "crashReload": "Načítať znova",
+    "stuckTitle": "Načítanie sa zaseklo",
+    "stuckBody": "Spojenie sa po návrate do aplikácie nenadviazalo. Načítaj obrazovku znova, dáta v telefóne zostanú.",
+    "stuckReload": "Načítať znova",
+    "refreshed": "Aktuálne"
   },
   "disclaimer": {
     "title": "Študijný nástroj",
@@ -467,9 +471,7 @@
     "exampleAgain": "Tento typ ti príde znova v ďalšej lekcii, tentoraz bez vzoru.",
     "summaryHeadline": "{tone, select, almost {Takmer bez chyby.} mid {Dobrý základ. {missed, plural, one {Jedno miesto} few {# miesta} other {# miest}} na doladenie.} other {Táto téma chce ešte jedno kolo.}}",
     "summaryWeak": "Zaseklo sa to: {topics}.",
-    "summaryLowNote": "Prejdi si chyby hneď, kým ich máš v hlave.",
     "summaryDots": "{correct, number} z {count, number} na prvý pokus",
-    "reviewMistakes": "Prejsť chyby · {count, number}",
     "bannerOpen": "Otvoriť",
     "bannerDismiss": "Zavrieť oznámenie"
   },

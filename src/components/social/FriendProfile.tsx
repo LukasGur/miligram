@@ -26,6 +26,7 @@ import { BadgeGlyph } from "./BadgeGlyph";
 import { BadgeSheet } from "./BadgeSheet";
 import type { Social } from "./data";
 import { PrimaryButton, Screen, SectionTitle } from "./Screen";
+import { StuckLoading } from "@/components/ui/StuckLoading";
 
 /**
  * Profil přítele.
@@ -58,14 +59,21 @@ export function FriendProfile({
   const recent = useRemoteQuery(`duelsWith:${social.userId}:${friendId}`, () =>
     duelsWith(social.client, social.userId, friendId),
   );
-  const myWeek = social.friendWeek.data?.find((row) => row.userId === social.userId)?.xp ?? 0;
+  const myWeek = Math.max(
+    social.friendWeek.data?.find((row) => row.userId === social.userId)?.xp ?? 0,
+    social.weekXp,
+  );
   const [confirmRemove, setConfirmRemove] = useState(false);
   const removing = useAction();
 
   if (!friend) {
     return (
       <Screen onBack={onBack}>
-        <p className="text-ink-soft mt-4 text-label">{social.friends.loading ? t("loading") : t("friendGone")}</p>
+        {social.friends.loading ? (
+          <StuckLoading target="/?open=account" onBack={onBack} />
+        ) : (
+          <p className="text-ink-soft mt-4 text-label">{t("friendGone")}</p>
+        )}
       </Screen>
     );
   }

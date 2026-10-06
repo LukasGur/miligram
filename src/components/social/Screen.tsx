@@ -14,6 +14,7 @@ export function Screen({
   onClose,
   aside,
   footer,
+  refresh = "/?open=account",
   children,
 }: {
   title?: string;
@@ -21,6 +22,8 @@ export function Screen({
   onClose?: () => void;
   aside?: React.ReactNode;
   footer?: React.ReactNode;
+  /** Kam se aplikace přenačte, když obnova potažením nepomůže. */
+  refresh?: string;
   children: React.ReactNode;
 }) {
   const t = useTranslations("social");
@@ -56,7 +59,7 @@ export function Screen({
         ) : null}
       </header>
 
-      <main tabIndex={0} className="scroll-y flex-1">
+      <main tabIndex={0} data-refresh={refresh} className="scroll-y flex-1">
         <div className="mx-auto w-full max-w-md px-5 pb-8">{children}</div>
       </main>
 

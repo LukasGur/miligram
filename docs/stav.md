@@ -430,6 +430,22 @@ meropenem do vaku nejvýš 250 ml (dřív až litr), C5 stropuje povrch
 na 2,0 m² místo miligramů, karboplatina v L2 nejvýš 1050 mg, F5 do
 500 ml/h, povrch v C2 od 1,4 m². Podrobnosti v zdroje.md, oddíl 8.
 
+**Obnova obrazovky (6. 10. 2026)** — tři připomínky z testování:
+
+- Potažení dolů (`PullToRefresh`, `src/lib/refresh.ts`) na domovské
+  obrazovce, statistikách, programu a v profilu. Stáhne znovu data
+  obrazovky a pošle čekající lekce. Když do 6 s nedoběhne nebo obrazovka
+  visí na načítání, aplikace se přenačte rovnou na ni. Lekce potažení nemá.
+- Načítání po 8 s přejde v „Načítání se zaseklo“ s tlačítkem
+  (`StuckLoading`). Profil po probuzení visel, i když pojistky z 28. 9.
+  platily; přesnou příčinu (nejspíš přihlášení po probuzení) se nepodařilo
+  najít, řeší se následek.
+- Vlastní týdenní XP v lize, žebříčku a u kamaráda se bere z telefonu
+  (vyšší z telefonu a serveru). Dřív bylo u kamaráda po lekci 0, dokud
+  lekce nedoputovala na server.
+- Konec lekce bez „Projít chyby“: chyby se opakovaly už v lekci. Typ
+  se vrátí v denní lekci a zůstává v opakování ve statistikách.
+
 ## Co dělat dál
 
 **Rozpracovaný plán: [plan.md](plan.md)** — účty a pastilky na serveru

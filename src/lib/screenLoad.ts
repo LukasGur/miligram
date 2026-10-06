@@ -36,9 +36,17 @@ function markReload() {
 }
 
 /**
- * `target` je adresa, na kterou se po přenačtení skočí (`/?open=account`),
- * aby člověk skončil tam, kam klepl.
+ * Přenačte aplikaci na `target` (`/?open=account`), aby člověk skončil tam,
+ * kam klepl. Vrací false, když se přenačítalo před chvílí — pojistka proti
+ * smyčce.
  */
+export function reloadTo(target: string): boolean {
+  if (recentlyReloaded()) return false;
+  markReload();
+  window.location.replace(target);
+  return true;
+}
+
 export function guardedLoad<T>(load: () => Promise<T>, target: string): Promise<T> {
   let timer: number | undefined;
   const timeout = new Promise<never>((_, reject) => {
@@ -47,9 +55,7 @@ export function guardedLoad<T>(load: () => Promise<T>, target: string): Promise<
 
   return Promise.race([load(), timeout])
     .catch((error: unknown) => {
-      if (recentlyReloaded()) throw error;
-      markReload();
-      window.location.replace(target);
+      if (!reloadTo(target)) throw error;
       // Stránka odchází; nic dalšího se už vykreslovat nemá.
       return new Promise<never>(() => {});
     })

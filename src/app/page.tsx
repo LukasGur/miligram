@@ -25,6 +25,7 @@ import { onOpenIntent, type IntentNote, type OpenIntent } from "@/lib/openIntent
 import { IntentBanner } from "@/components/IntentBanner";
 import { guardedLoad } from "@/lib/screenLoad";
 import { ScreenLoading } from "@/components/ScreenLoading";
+import { PullToRefresh } from "@/components/PullToRefresh";
 import { usePulse } from "@/lib/pulse";
 import { Monogram } from "@/components/ui/Monogram";
 import type { AccountStart, PlayableDuel } from "@/components/account/AccountScreen";
@@ -67,7 +68,7 @@ const loadLesson = () => import("@/core/lesson");
  */
 const AccountScreen = dynamic(
   () => guardedLoad(loadAccountScreen, "/?open=account").then((module) => module.AccountScreen),
-  { ssr: false, loading: () => <ScreenLoading /> },
+  { ssr: false, loading: () => <ScreenLoading target="/?open=account" /> },
 );
 
 /**
@@ -81,12 +82,12 @@ const SettingsSheet = dynamic(
 
 const CurriculumScreen = dynamic(
   () => guardedLoad(loadCurriculumScreen, "/?open=program").then((module) => module.CurriculumScreen),
-  { ssr: false, loading: () => <ScreenLoading /> },
+  { ssr: false, loading: () => <ScreenLoading target="/?open=program" /> },
 );
 
 const StatsScreen = dynamic(
   () => guardedLoad(loadStatsScreen, "/?open=stats").then((module) => module.StatsScreen),
-  { ssr: false, loading: () => <ScreenLoading /> },
+  { ssr: false, loading: () => <ScreenLoading target="/?open=stats" /> },
 );
 
 /**
@@ -97,7 +98,7 @@ const StatsScreen = dynamic(
  */
 const LessonView = dynamic(
   () => guardedLoad(loadLessonView, "/").then((module) => module.LessonView),
-  { ssr: false, loading: () => <ScreenLoading /> },
+  { ssr: false, loading: () => <ScreenLoading target="/" /> },
 );
 
 /**
@@ -126,6 +127,7 @@ export default function HomePage() {
     <>
       <SyncAgent />
       <AccountGate />
+      <PullToRefresh />
       <Home />
     </>
   );
@@ -325,7 +327,6 @@ function Home() {
           helped={lesson.helped}
           onExit={() => setLesson(null)}
           onAgain={() => startStage(lesson.spec?.stage)}
-          onReview={(items) => void startReview(items)}
           onDuelDone={(duelId) => {
             setLesson(null);
             openAccount({ screen: "reveal", duelId });
@@ -468,7 +469,7 @@ function Home() {
         </div>
       </header>
 
-      <main tabIndex={0} className="scroll-y mx-auto flex w-full max-w-md flex-1 flex-col px-5">
+      <main tabIndex={0} data-refresh="/" className="scroll-y mx-auto flex w-full max-w-md flex-1 flex-col px-5">
         {/* Spadlá série se dá krátce po ztrátě obnovit. Nahoře, protože
             lhůta běží — a jinak se karta vůbec neukáže. */}
         <RepairCard />

@@ -26,6 +26,7 @@ import { announceBonus } from "@/lib/bonus";
 import { claimGift, markBonusChecked, readProfile } from "@/lib/db";
 import { pushOnFor, restorePushDevice, savePrefs, timeZone, usePushStatus } from "@/lib/push";
 import { pullNews } from "@/lib/restore";
+import { REFRESH_EVENT } from "@/lib/refresh";
 import { supabase } from "@/lib/supabase";
 import { syncOutbox } from "@/lib/sync";
 import { streakFacts, usePendingEvents, usePreviousBest, useProfile } from "@/lib/useProfile";
@@ -35,7 +36,8 @@ import { useSession } from "@/lib/useSession";
  * Výměna se serverem na pozadí: odeslání fronty a obnova historie.
  *
  * Nic nevykresluje. Spustí se, když je co poslat a je komu — tedy po
- * dokončené lekci, po přihlášení a ve chvíli, kdy se vrátí síť.
+ * dokončené lekci, po přihlášení, ve chvíli, kdy se vrátí síť, a po
+ * potažení obrazovky dolů (REFRESH_EVENT).
  *
  * Chyby se tady zamlčují schválně. Fronta zůstane nedotčená a zkusí se
  * znovu; hlásit výpadek sítě uprostřed jiné práce by uživateli k ničemu
@@ -71,9 +73,11 @@ export function SyncAgent() {
 
     flush();
     window.addEventListener("online", flush);
+    window.addEventListener(REFRESH_EVENT, flush);
     return () => {
       cancelled = true;
       window.removeEventListener("online", flush);
+    window.removeEventListener(REFRESH_EVENT, flush);
     };
   }, [userId, pending]);
 
@@ -110,9 +114,11 @@ export function SyncAgent() {
 
     pull();
     window.addEventListener("online", pull);
+    window.addEventListener(REFRESH_EVENT, pull);
     return () => {
       cancelled = true;
       window.removeEventListener("online", pull);
+    window.removeEventListener(REFRESH_EVENT, pull);
     };
   }, [userId]);
 
@@ -141,9 +147,11 @@ export function SyncAgent() {
     const retry = () => void collect().catch(() => {});
     retry();
     window.addEventListener("online", retry);
+    window.addEventListener(REFRESH_EVENT, retry);
     return () => {
       cancelled = true;
       window.removeEventListener("online", retry);
+    window.removeEventListener(REFRESH_EVENT, retry);
     };
   }, [userId]);
 
@@ -190,10 +198,12 @@ export function SyncAgent() {
     const retry = () => void refresh().catch(() => {});
     retry();
     window.addEventListener("online", retry);
+    window.addEventListener(REFRESH_EVENT, retry);
     document.addEventListener("visibilitychange", retry);
     return () => {
       cancelled = true;
       window.removeEventListener("online", retry);
+    window.removeEventListener(REFRESH_EVENT, retry);
       document.removeEventListener("visibilitychange", retry);
     };
   }, [userId, pending]);

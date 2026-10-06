@@ -55,7 +55,7 @@ export function LeagueScreen({
   const gap = standing ? leagueGap(standing.rows, social.userId) : null;
 
   return (
-    <Screen title={t("leagueTitle")} onBack={onBack}>
+    <Screen title={t("leagueTitle")} onBack={onBack} refresh="/?open=league">
       <ol className="mt-1 grid grid-cols-5 gap-1" aria-label={t("leagueLadder")}>
         {Array.from({ length: TOP_TIER }, (_, index) => {
           const rung = index + 1;

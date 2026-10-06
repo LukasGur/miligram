@@ -196,6 +196,16 @@ export function RepeatIcon({ className }: IconProps) {
   );
 }
 
+/** Načíst znovu: oblouk se šipkou. */
+export function RefreshIcon({ className }: IconProps) {
+  return (
+    <Icon className={className}>
+      <path d="M20 12a8 8 0 1 1-2.34-5.66" />
+      <path d="M20 4v5h-5" />
+    </Icon>
+  );
+}
+
 export function UsersIcon({ className }: IconProps) {
   return (
     <Icon className={className}>

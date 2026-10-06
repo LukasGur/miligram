@@ -12,6 +12,7 @@ import { useAction } from "@/lib/useAction";
 import { DeadlineBar } from "./DeadlineBar";
 import { useNow } from "./data";
 import { PrimaryButton, Screen, SecondaryButton } from "./Screen";
+import { StuckLoading } from "@/components/ui/StuckLoading";
 
 export type DuelActions = {
   onPlay: (duel: Duel) => void;
@@ -57,6 +58,7 @@ export function DuelsScreen({
 
   return (
     <Screen
+      refresh="/?open=duels"
       title={t("duelsTitle")}
       onBack={onBack}
       aside={
@@ -69,7 +71,7 @@ export function DuelsScreen({
       footer={<PrimaryButton onClick={actions.onNew}>{t("newDuel")}</PrimaryButton>}
     >
       {loading && duels.length === 0 ? (
-        <p className="text-ink-soft mt-2 text-label">{t("loading")}</p>
+        <StuckLoading target="/?open=duels" compact />
       ) : duels.length === 0 ? (
         <Empty />
       ) : null}
