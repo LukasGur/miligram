@@ -8,6 +8,7 @@
 import { createClient } from "npm:@supabase/supabase-js@2";
 import * as webpush from "jsr:@negrel/webpush@0.5.0";
 import { compose, type PushKind } from "./compose.ts";
+import { isPushEndpoint, withTimeout } from "./endpoint.ts";
 
 type Subscription = { endpoint: string; p256dh: string; auth: string };
 
@@ -83,16 +84,23 @@ Deno.serve(async (request) => {
 
       await Promise.all(
         (row.subscriptions ?? []).map(async (subscription) => {
+          // Mimo známé push služby se nic neposílá; odběr se smaže.
+          if (!isPushEndpoint(subscription.endpoint)) {
+            gone.push(subscription.endpoint);
+            return;
+          }
           try {
-            await app
-              .subscribe({ endpoint: subscription.endpoint, keys: { p256dh: subscription.p256dh, auth: subscription.auth } })
-              .pushTextMessage(payload, {
-                ttl: TTL[row.kind] ?? DEFAULT_TTL,
-                urgency: row.kind === "lastChance" ? webpush.Urgency.High : webpush.Urgency.Normal,
-                // Téma nahradí na push službě starší nedoručenou zprávu se
-                // stejnou značkou. Smí mít jen znaky base64url a nejvýš 32.
-                topic: row.tag.replace(/[^A-Za-z0-9_-]/g, "").slice(0, 32) || undefined,
-              });
+            await withTimeout(
+              app
+                .subscribe({ endpoint: subscription.endpoint, keys: { p256dh: subscription.p256dh, auth: subscription.auth } })
+                .pushTextMessage(payload, {
+                  ttl: TTL[row.kind] ?? DEFAULT_TTL,
+                  urgency: row.kind === "lastChance" ? webpush.Urgency.High : webpush.Urgency.Normal,
+                  // Téma nahradí na push službě starší nedoručenou zprávu se
+                  // stejnou značkou. Smí mít jen znaky base64url a nejvýš 32.
+                  topic: row.tag.replace(/[^A-Za-z0-9_-]/g, "").slice(0, 32) || undefined,
+                }),
+            );
             delivered = true;
             ok.push(subscription.endpoint);
           } catch (error) {

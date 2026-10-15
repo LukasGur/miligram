@@ -11,7 +11,7 @@ import {
   mainCategory,
   friendDuelState,
 } from "../duel";
-import { DIFFICULTY_RAMP } from "../lessonPlan";
+import { DIFFICULTY_RAMP, LESSON_LENGTH } from "../lessonPlan";
 import { CATEGORIES } from "../types";
 
 describe("výsledek souboje", () => {
@@ -138,6 +138,19 @@ describe("shoda s databází", () => {
     expect(sql).toContain(`(array[${DIFFICULTY_RAMP.join(", ")}])[((i.ord - 1) % ${DIFFICULTY_RAMP.length}) + 1]`);
     expect(sql).toContain("when public.duel_miss_ramp(a_items) > public.duel_miss_ramp(b_items) then 1");
     expect(sql).toContain("where i.mark <> 'ok'");
+  });
+
+  it("migrace 0019 přijme jen výsledek, jaký skládá duelScore", async () => {
+    const { readFileSync } = await import("node:fs");
+    const sql = readFileSync("supabase/migrations/0019_bezpecnost.sql", "utf8");
+    expect(sql).toContain(`valid := new.count = ${LESSON_LENGTH} and`);
+    const marks = duelScore(["a", "b", "c"], [
+      { seed: "a", correct: true, hinted: false },
+      { seed: "b", correct: false, hinted: false },
+      { seed: "c", correct: true, hinted: true },
+    ]).items;
+    for (const mark of new Set(marks)) expect(sql).toContain(`'${mark}'`);
+    expect(sql).toContain("not in ('ok', 'miss', 'hint')");
   });
 });
 

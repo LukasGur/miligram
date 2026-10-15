@@ -1,6 +1,6 @@
 # Kde jsme
 
-Poslední aktualizace: **5. 10. 2026**
+Poslední aktualizace: **15. 10. 2026**
 
 ## Hotovo
 
@@ -446,7 +446,27 @@ na 2,0 m² místo miligramů, karboplatina v L2 nejvýš 1050 mg, F5 do
 - Konec lekce bez „Projít chyby“: chyby se opakovaly už v lekci. Typ
   se vrátí v denní lekci a zůstává v opakování ve statistikách.
 
+**Bezpečnostní opravy (15. 10. 2026)** — podle kontroly Claude Security
+z 6. 10. (7 nálezů, žádný kritický). Migrace 0019, Edge Function `push`:
+
+- Žádost o přátelství vzniká jen jako čekající a při přijetí se nedá
+  přepsat, od koho je. Dřív šlo obejít souhlas druhé strany.
+- Push odběry jen od známých služeb (FCM, Apple, Mozilla, Windows; vzor
+  v `supabase/functions/push/endpoint.ts` a v migraci, test hlídá shodu),
+  nejvýš 10 zařízení na účet, odeslání s limitem 10 s.
+- Minutová úloha `push_minute()`: každý krok má vlastní záchrannou síť,
+  jeden špatný řádek už nezastaví připomínky všem ani lhůty soubojů.
+  `last_lesson_day` musí být konečné datum.
+- Výsledek souboje musí mít 7 značek a body podle počtu „ok“. Výsledek
+  bez značek už server nepřijme.
+
 ## Co dělat dál
+
+0b. **Hodnocení souboje na serveru.** Server teď hlídá jen tvar výsledku
+   (migrace 0019); čistých 7 bodů bez hraní ohlídat neumí, protože
+   odpovědi nevidí. Plná oprava: telefon pošle odpovědi, Edge Function
+   lekci sestaví z `lesson_id` a tématu a ohodnotí. Vyžaduje generátor
+   příkladů v Deno.
 
 **Rozpracovaný plán: [plan.md](plan.md)** — účty a pastilky na serveru
 (oprava úniku dat mezi účty), učící krok, obnovení série.
