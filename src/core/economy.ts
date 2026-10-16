@@ -69,6 +69,12 @@ export type StreakState = {
    * série za ně sahá dál, než je poslední lekce.
    */
   covered?: readonly string[];
+  /**
+   * Poslední den, o kterém už bylo rozhodnuto (YYYY-MM-DD). Vynechaný den
+   * do něj včetně, který ochrana nepokryla, už pokrýt nejde: ochrana
+   * koupená po půlnoci spadlou sérii nevzkřísí.
+   */
+  settled?: string | null;
 };
 
 /** Dnešek jako YYYY-MM-DD v místním čase — série se počítá podle kalendáře uživatele. */
@@ -111,7 +117,46 @@ export function streakThrough(lastDay: string | null, covered: readonly string[]
 }
 
 /**
- * Posun série po dokončené lekci.
+ * Půlnoc: každý vynechaný den spotřebuje jednu ochranu.
+ *
+ * Ochrana se spotřebuje sama v okamžiku, kdy den skončí bez lekce, ne až
+ * s další lekcí. Tak to student čeká a tak to říkají notifikace: zásoba
+ * ubude hned a druhý den už série visí jen na dnešní lekci. Telefon
+ * o půlnoci neběží, takže se to dopočítá při čtení.
+ *
+ * Bez rozjeté série se nespotřebuje nic. Když ochrany dojdou, série spadne
+ * a ty už spotřebované se nevracejí: v ty půlnoci série žila. Zbylé
+ * vynechané dny pak může pokrýt obnovení (repairOffer).
+ */
+export function settleStreak(state: StreakState, today = localDay()): { state: StreakState; used: string[] } {
+  const through = streakThrough(state.lastDay, state.covered);
+  const yesterday = previousDay(today);
+  const used: string[] = [];
+  let freezes = state.freezes;
+  if (through !== null && state.days > 0) {
+    for (let day = nextDay(through); day <= yesterday; day = nextDay(day)) {
+      // Den už propadl, když ochrana nebyla. Pozdější nákup ho nepokryje.
+      if (state.settled && day <= state.settled) break;
+      if (freezes === 0) break;
+      freezes -= 1;
+      used.push(day);
+    }
+  }
+  const settled = state.settled && state.settled > yesterday ? state.settled : yesterday;
+  return {
+    state: {
+      ...state,
+      freezes,
+      ...(used.length > 0 ? { covered: [...(state.covered ?? []), ...used] } : {}),
+      settled,
+    },
+    used,
+  };
+}
+
+/**
+ * Posun série po dokončené lekci. Vynechané dny už má za sebou
+ * `settleStreak`: buď je pokryla ochrana, nebo série spadla.
  *
  * Druhá lekce v týž den sérii nezvyšuje — jinak by se dala natáhnout
  * za jediný večer a přestala by měřit to, co má měřit.
@@ -120,32 +165,18 @@ export function advanceStreak(state: StreakState, today = localDay()): StreakSta
   if (state.lastDay === today) return state;
   const through = streakThrough(state.lastDay, state.covered);
   if (through === previousDay(today)) return { ...state, days: state.days + 1, lastDay: today };
-
-  /**
-   * Vynechaný den. Ochrana ho pokryje, ale jen jeden a jen tehdy, když
-   * uživatel přišel hned nazítří — po týdnu mlčení už není co chránit.
-   */
-  const missedOneDay = through !== null && through === previousDay(previousDay(today));
-  if (missedOneDay && state.freezes > 0) {
-    return { days: state.days + 1, lastDay: today, freezes: state.freezes - 1 };
-  }
   return { ...state, days: 1, lastDay: today };
 }
 
 /**
  * Série, jak se má zobrazit dnes. Uložená hodnota může být zastaralá:
  * když uživatel den vynechá, série je nula, i když v databázi zůstalo číslo
- * z minula. Přepisovat databázi kvůli zobrazení není potřeba — stačí to
- * počítat při čtení.
+ * z minula. Půlnoci, které telefon ještě nezapsal, se dopočítají tady.
  */
 export function currentStreak(state: StreakState, today = localDay()): number {
-  const through = streakThrough(state.lastDay, state.covered);
-  if (through === null) return 0;
-  if (through >= previousDay(today)) return state.days;
-  // Koupená ochrana drží sérii naživu i den po vynechání — teprve pak
-  // se ukáže, jestli ji uživatel využije, nebo o sérii přijde.
-  if (state.freezes > 0 && through === previousDay(previousDay(today))) return state.days;
-  return 0;
+  const settled = settleStreak(state, today).state;
+  const through = streakThrough(settled.lastDay, settled.covered);
+  return through !== null && through >= previousDay(today) ? settled.days : 0;
 }
 
 export type RepairOffer = {
@@ -168,12 +199,11 @@ export type RepairOffer = {
 export function repairOffer(input: {
   lessonDays: readonly string[];
   coveredDays?: readonly string[];
-  freezes: number;
   /** Den posledního placeného obnovení, YYYY-MM-DD. */
   lastRepair?: string | null;
   today?: string;
 }): RepairOffer | null {
-  const { lessonDays, coveredDays = [], freezes, lastRepair, today = localDay() } = input;
+  const { lessonDays, coveredDays = [], lastRepair, today = localDay() } = input;
   if (lessonDays.length === 0) return null;
   if (lastRepair && addDays(lastRepair, REPAIR_COOLDOWN_DAYS) > today) return null;
 
@@ -187,9 +217,8 @@ export function repairOffer(input: {
   let missing: string[];
   if (through < previousDay(today)) {
     // Ještě nehrál: chybí dny od konce řady po včerejšek.
+    // Co ochrany pokryly, je v coveredDays (settleStreak).
     missing = daysBetween(nextDay(through), previousDay(today));
-    // Jediný vynechaný den podrží ochrana sama, jakmile se odehraje lekce.
-    if (freezes > 0 && missing.length === 1) return null;
     end = through;
   } else {
     // Už hrál: najít mezeru před současnou řadou.

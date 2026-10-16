@@ -108,7 +108,7 @@ export function FriendsScreen({
                   <span className="min-w-0 flex-1">
                     <span className="block truncate text-body font-semibold">{friend.handle}</span>
                     <span className="text-ink-soft block text-micro" data-numeric>
-                      {t("friendWeekLine", { xp: format.number(friend.xpWeek), streak: friend.streakDays })}
+                      {t("friendWeekLine", { xp: format.number(friend.xpWeek), streak: friend.streak })}
                     </span>
                   </span>
                   <LeagueInsignia tier={friend.tier} />

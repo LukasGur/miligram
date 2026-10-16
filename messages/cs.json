@@ -51,6 +51,18 @@
     "dailyGoal": "Dnešní cíl",
     "dailyDone": "Cíl splněn",
     "weekTitle": "Týden",
+    "streakOpen": "Série {days, plural, one {# den} few {# dny} other {# dní}}, {freezes, plural, =0 {žádná ochrana} one {# ochrana} few {# ochrany} other {# ochran}} · otevřít zásoby",
+    "freezeHeld": "{count, plural, one {Ochrana podržela} other {Ochrany podržely}} sérii {days}.",
+    "freezeFell": "{count, plural, one {Ochrana podržela} other {Ochrany podržely}} sérii {days}, {missed} už žádná nezbyla.",
+    "onWeekday": {
+      "1": "v pondělí",
+      "2": "v úterý",
+      "3": "ve středu",
+      "4": "ve čtvrtek",
+      "5": "v pátek",
+      "6": "v sobotu",
+      "7": "v neděli"
+    },
     "openShop": "Zásoby a nákup",
     "dailyOf": "ze {total, number}",
     "resume": "Pokračovat · {done, number}/{total, number}",

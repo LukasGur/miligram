@@ -1,7 +1,7 @@
 "use client";
 
 import { useLiveQuery } from "dexie-react-hooks";
-import { localDay, REPAIR_COST, repairOffer, type RepairOffer } from "@/core/economy";
+import { localDay, REPAIR_COST, repairOffer, settleStreak, type RepairOffer } from "@/core/economy";
 import { db, emptyProfile, eventUid, PROFILE_ID, type WalletPayload } from "./db";
 import { rebuildStreak } from "./restore";
 
@@ -58,10 +58,18 @@ export function useRepairOffer(): RepairOffer | null | undefined {
     const database = db();
     const [lessons, profile] = await Promise.all([database.lessons.toArray(), database.profile.get(PROFILE_ID)]);
     if (!profile) return null;
+    // Půlnoci, které telefon ještě nezapsal, se dopočítají i tady:
+    // co pokryje ochrana, obnovovat netřeba.
+    const settled = settleStreak({
+      days: profile.streakDays,
+      lastDay: profile.lastLessonDay,
+      freezes: profile.streakFreezes ?? 0,
+      covered: profile.coveredDays,
+      settled: profile.settledThrough ?? null,
+    }).state;
     return repairOffer({
       lessonDays: lessons.map((lesson) => localDay(new Date(lesson.finishedAt))),
-      coveredDays: profile.coveredDays ?? [],
-      freezes: profile.streakFreezes ?? 0,
+      coveredDays: settled.covered ?? [],
       lastRepair: profile.lastRepair ?? null,
     });
   }, []);

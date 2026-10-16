@@ -1,6 +1,6 @@
 import "fake-indexeddb/auto";
 import { beforeEach, describe, expect, it } from "vitest";
-import { db, readProfile, recordLesson, spendPills } from "../db";
+import { buyStreakFreeze, db, emptyProfile, PROFILE_ID, readProfile, recordLesson, settleProfile, spendPills } from "../db";
 
 const LESSON = {
   lessonId: "abc",
@@ -104,5 +104,58 @@ describe("útrata prášků", () => {
 
   it("prázdný profil má nuly a nespadne", async () => {
     expect(await readProfile()).toMatchObject({ pills: 0, xp: 0, streakDays: 0, lastLessonDay: null });
+  });
+});
+
+describe("ochrana o půlnoci", () => {
+  /** Série 14 dní do 11. 10. a jedna ochrana koupená 12. 10. večer. */
+  async function scenario() {
+    await db().profile.put({
+      ...emptyProfile(new Date("2026-10-01T10:00:00")),
+      pills: 200,
+      streakDays: 14,
+      lastLessonDay: "2026-10-11",
+      streakFreezes: 1,
+      settledThrough: "2026-10-11",
+    });
+  }
+
+  const usedEvents = async () =>
+    (await db().outbox.toArray()).filter((event) => (event.payload as { kind?: string }).kind === "freezeUsed");
+
+  it("ráno po vynechaném dni ochrana ubude a jde na server", async () => {
+    await scenario();
+    await settleProfile(new Date("2026-10-13T08:00:00"));
+    const profile = await readProfile();
+    expect(profile.streakFreezes).toBe(0);
+    expect(profile.coveredDays).toEqual(["2026-10-12"]);
+    expect(profile.frozenDays).toEqual(["2026-10-12"]);
+    expect(await usedEvents()).toHaveLength(1);
+    expect((await usedEvents())[0]).toMatchObject({ uid: "freeze:2026-10-12" });
+  });
+
+  it("druhé otevření tentýž den nestrhne nic navíc", async () => {
+    await scenario();
+    await settleProfile(new Date("2026-10-13T08:00:00"));
+    await settleProfile(new Date("2026-10-13T20:00:00"));
+    expect((await readProfile()).streakFreezes).toBe(0);
+    expect(await usedEvents()).toHaveLength(1);
+  });
+
+  it("lekce po pokrytém dni sérii prodlouží, i když telefon půlnoc prospal", async () => {
+    await scenario();
+    const profile = await recordLesson(LESSON, new Date("2026-10-13T18:00:00"));
+    expect(profile).toMatchObject({ streakDays: 15, streakFreezes: 0, lastLessonDay: "2026-10-13" });
+    expect(await usedEvents()).toHaveLength(1);
+  });
+
+  it("ochrana koupená po spadlé sérii ji nevzkřísí", async () => {
+    await db().profile.put({ ...emptyProfile(), pills: 200, streakDays: 5, lastLessonDay: "2026-10-10", settledThrough: "2026-10-10" });
+    await settleProfile(new Date("2026-10-12T08:00:00"));
+    expect(await buyStreakFreeze(60, 2, new Date("2026-10-12T09:00:00"))).toBe("ok");
+    await settleProfile(new Date("2026-10-13T08:00:00"));
+    const profile = await db().profile.get(PROFILE_ID);
+    expect(profile?.streakFreezes).toBe(1);
+    expect(await usedEvents()).toHaveLength(0);
   });
 });

@@ -8,17 +8,18 @@ import { NetworkStatus } from "@/components/NetworkStatus";
 import { RepairCard } from "@/components/RepairCard";
 import { ShopSheet } from "@/components/ShopSheet";
 import { Wordmark } from "@/components/Wordmark";
-import { ChartIcon, ChevronRightIcon, PersonIcon, SettingsIcon } from "@/components/icons";
+import { ChartIcon, ChevronRightIcon, PersonIcon, SettingsIcon, ShieldIcon } from "@/components/icons";
 import { LogoMark } from "@/components/ui/Logo";
 import { ProgressRing } from "@/components/ui/ProgressRing";
 import { Readout } from "@/components/ui/Readout";
 import { Pastille } from "@/components/ui/Pastille";
 import { DAILY_REVIEW_ITEMS, LESSON_LENGTH, newLessonId, type LessonPlan } from "@/core/lessonPlan";
 import { useLocale } from "@/i18n/LocaleProvider";
-import type { WeekDay } from "@/lib/today";
+import type { FreezeNews, WeekDay } from "@/lib/today";
 import type { DailySpec, StageId } from "@/core/curriculum";
 import type { Difficulty } from "@/core/types";
-import { clearProgress, lessonState, type LessonAttempt } from "@/lib/db";
+import { clearProgress, lessonState, settleProfile, type LessonAttempt } from "@/lib/db";
+import { pressable } from "@/lib/press";
 import { dailySpec } from "@/lib/curriculum";
 import { useCurriculum, useLessonProgress, useProfile, useToday } from "@/lib/useProfile";
 import { onOpenIntent, type IntentNote, type OpenIntent } from "@/lib/openIntent";
@@ -170,8 +171,30 @@ function Home() {
   const bannerSeen = useRef<OpenIntent | null>(null);
   const dismissBanner = useCallback(() => setBanner(null), []);
 
-  const { profile, streak } = useProfile();
-  const { solved, week, unsolved } = useToday();
+  const { profile, streak, freezes } = useProfile();
+  const { solved, week, unsolved, freeze } = useToday();
+
+  /**
+   * Půlnoc, kterou telefon prospal: vynechané dny spotřebují ochrany.
+   * Při otevření, při návratu do aplikace a o půlnoci, když zůstane otevřená.
+   */
+  useEffect(() => {
+    let timer: number | undefined;
+    const settle = () => {
+      if (document.visibilityState !== "visible") return;
+      void settleProfile();
+      const now = new Date();
+      const midnight = new Date(now.getFullYear(), now.getMonth(), now.getDate() + 1, 0, 0, 5);
+      window.clearTimeout(timer);
+      timer = window.setTimeout(settle, midnight.getTime() - now.getTime());
+    };
+    settle();
+    document.addEventListener("visibilitychange", settle);
+    return () => {
+      window.clearTimeout(timer);
+      document.removeEventListener("visibilitychange", settle);
+    };
+  }, []);
   const progress = useLessonProgress();
   const curriculum = useCurriculum();
   /** Rozehraná lekce se nabízí, dokud v ní zbývá aspoň jeden příklad. */
@@ -513,19 +536,37 @@ function Home() {
             </div>
           ) : null}
 
-          <Week week={week} />
+          <Week week={week} freeze={freeze} />
 
           <div className="w-full">
             {/* Série a XP jsou displej: dvě čísla, na která se kouká. */}
             <div className="border-line divide-line grid grid-cols-2 divide-x border-y py-4">
-              <div className="pr-3">
+              {/* Ochrany patří k sérii, kterou chrání: štítek u čísla, aby se
+                  nemusely hledat v zásobách. Klepnutí zásoby otevře. */}
+              <button
+                type="button"
+                onClick={() => setShopOpen(true)}
+                aria-label={t("streakOpen", { days: streak, freezes })}
+                {...pressable}
+                className="press -my-1 flex min-h-11 items-end gap-2.5 py-1 pr-3 text-left"
+              >
                 <Readout
                   label={t("streak")}
                   value={format.number(streak)}
                   unit={t("streakUnit", { days: streak })}
                   size="small"
                 />
-              </div>
+                {freezes > 0 ? (
+                  <span
+                    aria-hidden
+                    className="bg-pill-wash text-pill readout mb-[3px] inline-flex h-6 items-center gap-1 rounded-full pr-2 pl-1.5 text-label font-semibold"
+                    data-numeric
+                  >
+                    <ShieldIcon className="size-3.5 shrink-0" />
+                    {format.number(freezes)}
+                  </span>
+                ) : null}
+              </button>
               <div className="pl-3">
                 <Readout label={t("xp")} value={format.number(profile.xp)} size="small" />
               </div>
@@ -616,9 +657,11 @@ function Home() {
  * Probíhající týden, pondělím počínaje. Dny, které teprve přijdou, jsou
  * jen naznačené — nejsou to zmeškané dny a nemají tak vypadat.
  */
-function Week({ week }: { week: WeekDay[] }) {
+function Week({ week, freeze }: { week: WeekDay[]; freeze: FreezeNews | null }) {
   const t = useTranslations("home");
   const { locale } = useLocale();
+  const onWeekday = (day: string) => t(`onWeekday.${new Date(`${day}T00:00:00Z`).getUTCDay() || 7}`);
+  const list = new Intl.ListFormat(locale, { type: "conjunction" });
   /* Jednopísmenné zkratky se v češtině opakují (pondělí i pátek je „P"),
      takže se dny nedají rozeznat. Dvoupísmenné ano. */
   const letters = new Intl.DateTimeFormat(locale, { weekday: "short", timeZone: "UTC" });
@@ -626,19 +669,38 @@ function Week({ week }: { week: WeekDay[] }) {
   return (
     <section className="w-full" aria-label={t("weekTitle")}>
       <ul className="flex justify-between gap-1.5">
-        {week.map(({ day, active, today, upcoming }) => (
+        {week.map(({ day, active, covered, today, upcoming }) => (
           <li key={day} className="flex flex-1 flex-col items-center gap-2">
             <span className={`panel-label ${today ? "text-ink" : ""}`}>
               {letters.format(new Date(`${day}T00:00:00Z`))}
             </span>
             <span
               className={`h-2 w-full rounded-[1px] ${
-                active ? "bg-accent" : today ? "bg-accent/25" : upcoming ? "bg-surface" : "bg-line"
+                active
+                  ? "bg-accent"
+                  : covered
+                    ? "bg-pill"
+                    : today
+                      ? "bg-accent/25"
+                      : upcoming
+                        ? "bg-surface"
+                        : "bg-line"
               }`}
             />
           </li>
         ))}
       </ul>
+      {/* Den po půlnoci, kdy zabrala ochrana. Medem jako den v pruhu nad ní. */}
+      {freeze ? (
+        <p className="animate-rise text-ink-soft mt-3 text-center text-label text-balance">
+          <ShieldIcon className="text-pill mr-1.5 inline-block size-4 align-[-3px]" />
+          {t(freeze.fell ? "freezeFell" : "freezeHeld", {
+            count: freeze.days.length,
+            days: list.format(freeze.days.map(onWeekday)),
+            missed: freeze.fell ? onWeekday(freeze.fell) : "",
+          })}
+        </p>
+      ) : null}
     </section>
   );
 }

@@ -1,10 +1,10 @@
 "use client";
 
 import { useLiveQuery } from "dexie-react-hooks";
-import { currentStreak, localDay, previousBest, streakThrough } from "@/core/economy";
+import { currentStreak, localDay, previousBest, settleStreak, streakThrough } from "@/core/economy";
 import { curriculumState, type CurriculumState } from "./curriculum";
 import { db, emptyProfile, PROFILE_ID, PROGRESS_ID, type LessonProgress, type Profile } from "./db";
-import { solvedToday, unsolvedToday, weekActivity, type WeekDay } from "./today";
+import { freezeNews, solvedToday, unsolvedToday, weekActivity, type FreezeNews, type WeekDay } from "./today";
 
 /**
  * Profil pro zobrazení.
@@ -13,20 +13,24 @@ import { solvedToday, unsolvedToday, weekActivity, type WeekDay } from "./today"
  * přepíšou hned po dokončené lekci — bez ručního obnovování a bez toho,
  * aby stav žil na dvou místech.
  */
-export function useProfile(): { profile: Profile; streak: number; ready: boolean } {
+export function useProfile(): { profile: Profile; streak: number; freezes: number; ready: boolean } {
   const stored = useLiveQuery(() => db().profile.get(PROFILE_ID), []);
   const profile = stored ?? emptyProfile();
+  const state = {
+    days: profile.streakDays,
+    lastDay: profile.lastLessonDay,
+    freezes: profile.streakFreezes ?? 0,
+    covered: profile.coveredDays,
+    settled: profile.settledThrough ?? null,
+  };
 
   return {
     profile,
     // Uložená série může být z předvčerejška; co se má zobrazit dnes,
     // se dopočítá při čtení, aby se kvůli tomu nemusela přepisovat databáze.
-    streak: currentStreak({
-      days: profile.streakDays,
-      lastDay: profile.lastLessonDay,
-      freezes: profile.streakFreezes ?? 0,
-      covered: profile.coveredDays,
-    }),
+    streak: currentStreak(state),
+    // Zásoba po půlnoci, kterou telefon možná ještě nezapsal (settleProfile).
+    freezes: settleStreak(state).state.freezes,
     ready: stored !== undefined,
   };
 }
@@ -92,11 +96,13 @@ export function useToday(): {
   solved: number;
   week: WeekDay[];
   unsolved: { templateId: string; difficulty: number }[];
+  freeze: FreezeNews | null;
 } {
   const solved = useLiveQuery(() => solvedToday(), [], 0);
   const week = useLiveQuery(() => weekActivity(), [], []);
   const unsolved = useLiveQuery(() => unsolvedToday(), [], []);
-  return { solved, week, unsolved };
+  const freeze = useLiveQuery(() => freezeNews(), [], null);
+  return { solved, week, unsolved, freeze };
 }
 
 /**

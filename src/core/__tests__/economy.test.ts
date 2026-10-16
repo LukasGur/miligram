@@ -3,9 +3,11 @@ import {
   advanceStreak,
   currentStreak,
   localDay,
+  MAX_STREAK_FREEZES,
   PILLS_FLAWLESS_BONUS,
   PILLS_PER_CORRECT,
   rewardForLesson,
+  settleStreak,
   REPAIR_COOLDOWN_DAYS,
   REPAIR_COST,
   REPAIR_MAX_MISSED,
@@ -70,35 +72,72 @@ describe("série", () => {
 });
 
 describe("ochrana série", () => {
-  it("pokryje jeden vynechaný den a spotřebuje se", () => {
+  /** Den po dni od půlnoci k lekci, jak to dělá telefon. */
+  const play = (state: StreakState, day: string) => advanceStreak(settleStreak(state, day).state, day);
+
+  it("o půlnoci pokryje vynechaný den a hned ubude", () => {
     const state = { days: 9, lastDay: "2026-09-01", freezes: 1 };
-    expect(advanceStreak(state, "2026-09-03")).toEqual({
+    const { state: settled, used } = settleStreak(state, "2026-09-03");
+    expect(used).toEqual(["2026-09-02"]);
+    expect(settled).toMatchObject({ freezes: 0, covered: ["2026-09-02"] });
+    expect(currentStreak(settled, "2026-09-03")).toBe(9);
+  });
+
+  it("lekce po pokrytém dni sérii prodlouží", () => {
+    expect(play({ days: 9, lastDay: "2026-09-01", freezes: 1 }, "2026-09-03")).toMatchObject({
       days: 10,
       lastDay: "2026-09-03",
       freezes: 0,
     });
   });
 
-  it("dva vynechané dny nepokryje", () => {
-    const state = { days: 9, lastDay: "2026-08-31", freezes: 2 };
-    // Ochrana je na výpadek, ne na návrat po týdnu — série začíná znovu
-    // a ochrana zůstává nedotčená.
-    expect(advanceStreak(state, "2026-09-03")).toEqual({
-      days: 1,
-      lastDay: "2026-09-03",
-      freezes: 2,
-    });
+  it("dva vynechané dny pokryjí dvě ochrany", () => {
+    const { state, used } = settleStreak({ days: 9, lastDay: "2026-08-31", freezes: 2 }, "2026-09-03");
+    expect(used).toEqual(["2026-09-01", "2026-09-02"]);
+    expect(currentStreak(state, "2026-09-03")).toBe(9);
+  });
+
+  it("když ochrany dojdou, série spadne a spotřebované se nevracejí", () => {
+    // Bug z 13. 10. 2026: jedna ochrana, dva vynechané dny. Ochrana zůstala
+    // ve skladu, i když sérii první půlnoc podržela.
+    const { state, used } = settleStreak({ days: 14, lastDay: "2026-10-11", freezes: 1 }, "2026-10-14");
+    expect(used).toEqual(["2026-10-12"]);
+    expect(state.freezes).toBe(0);
+    expect(currentStreak(state, "2026-10-14")).toBe(0);
+  });
+
+  it("den po vynechání už série visí jen na dnešní lekci", () => {
+    const state = settleStreak({ days: 14, lastDay: "2026-10-11", freezes: 1 }, "2026-10-13").state;
+    expect(state.freezes).toBe(0);
+    expect(currentStreak(state, "2026-10-13")).toBe(14);
+    expect(currentStreak(state, "2026-10-14")).toBe(0);
+  });
+
+  it("bez rozjeté série se nespotřebuje", () => {
+    expect(settleStreak({ days: 0, lastDay: null, freezes: 2 }, "2026-09-03").used).toEqual([]);
+    // Série spadla dřív, než ochrana byla: koupená potom ji nevzkřísí.
+    const dead = settleStreak({ days: 5, lastDay: "2026-09-01", freezes: 0 }, "2026-09-03").state;
+    expect(dead.settled).toBe("2026-09-02");
+    const bought = { ...dead, freezes: 1 };
+    expect(settleStreak(bought, "2026-09-03").used).toEqual([]);
+    expect(settleStreak(bought, "2026-09-05").used).toEqual([]);
+    expect(currentStreak(bought, "2026-09-03")).toBe(0);
+  });
+
+  it("ochrana koupená týž večer vynechaný den ještě pokryje", () => {
+    // Telefon se díval naposledy předevčírem; o včerejšku ještě nerozhodl.
+    const state = { days: 5, lastDay: "2026-09-01", freezes: 1, settled: "2026-09-01" };
+    expect(settleStreak(state, "2026-09-03").used).toEqual(["2026-09-02"]);
   });
 
   it("se nespotřebuje, když uživatel přijde v navazujícím dni", () => {
-    const state = { days: 3, lastDay: "2026-09-02", freezes: 1 };
-    expect(advanceStreak(state, "2026-09-03").freezes).toBe(1);
+    expect(play({ days: 3, lastDay: "2026-09-02", freezes: 1 }, "2026-09-03").freezes).toBe(1);
   });
 
-  it("drží zobrazenou sérii den po vynechání", () => {
-    const state = { days: 6, lastDay: "2026-09-01", freezes: 1 };
-    expect(currentStreak(state, "2026-09-03")).toBe(6);
-    expect(currentStreak({ ...state, freezes: 0 }, "2026-09-03")).toBe(0);
+  it("opakované dopočítání nic nespotřebuje podruhé", () => {
+    const once = settleStreak({ days: 6, lastDay: "2026-09-01", freezes: 2 }, "2026-09-03").state;
+    expect(settleStreak(once, "2026-09-03").used).toEqual([]);
+    expect(settleStreak(once, "2026-09-03").state.freezes).toBe(1);
   });
 });
 
@@ -137,7 +176,9 @@ describe("série z historie", () => {
 
   it("dá totéž jako série posouvaná lekci po lekci", () => {
     let state: StreakState = { days: 0, lastDay: null, freezes: 1 };
-    for (const day of ["2026-09-01", "2026-09-02", "2026-09-04", "2026-09-05"]) state = advanceStreak(state, day);
+    for (const day of ["2026-09-01", "2026-09-02", "2026-09-04", "2026-09-05"]) {
+      state = advanceStreak(settleStreak(state, day).state, day);
+    }
     expect(streakFromDays(["2026-09-01", "2026-09-02", "2026-09-04", "2026-09-05"], ["2026-09-03"]).days).toBe(state.days);
   });
 
@@ -151,6 +192,15 @@ describe("bonus za registraci", () => {
     const { readFileSync } = await import("node:fs");
     const sql = readFileSync("supabase/migrations/0014_penezenka.sql", "utf8");
     expect(sql).toContain(`values (me, 'signup', 'signup', ${SIGNUP_BONUS}, 'signup')`);
+  });
+});
+
+describe("ochrana o půlnoci na serveru", () => {
+  it("počítá se stejnou zásobou jako aplikace", async () => {
+    const { readFileSync } = await import("node:fs");
+    const sql = readFileSync("supabase/migrations/0020_ochrana_o_pulnoci.sql", "utf8");
+    // Víc vynechaných dní, než kolik jde držet ochran, server ani nepočítá.
+    expect(sql).toContain(`p_through < p_today - ${MAX_STREAK_FREEZES + 1}`);
   });
 });
 
@@ -190,7 +240,7 @@ describe("obnovení série", () => {
   const dny = tyden("2026-09-10");
 
   it("den po ztrátě: chybí jeden den", () => {
-    expect(repairOffer({ lessonDays: dny, freezes: 0, today: "2026-09-12" })).toEqual({
+    expect(repairOffer({ lessonDays: dny, today: "2026-09-12" })).toEqual({
       lost: 7,
       missing: ["2026-09-11"],
       until: "2026-09-13",
@@ -198,30 +248,34 @@ describe("obnovení série", () => {
   });
 
   it("dva dny po ztrátě: chybí dva dny, pořád ve lhůtě", () => {
-    expect(repairOffer({ lessonDays: dny, freezes: 0, today: "2026-09-13" })?.missing).toEqual([
+    expect(repairOffer({ lessonDays: dny, today: "2026-09-13" })?.missing).toEqual([
       "2026-09-11",
       "2026-09-12",
     ]);
   });
 
   it("po lhůtě už ne", () => {
-    expect(repairOffer({ lessonDays: dny, freezes: 0, today: "2026-09-14" })).toBeNull();
+    expect(repairOffer({ lessonDays: dny, today: "2026-09-14" })).toBeNull();
   });
 
   it("série, která žije, se neobnovuje", () => {
-    expect(repairOffer({ lessonDays: dny, freezes: 0, today: "2026-09-11" })).toBeNull();
+    expect(repairOffer({ lessonDays: dny, today: "2026-09-11" })).toBeNull();
   });
 
   it("krátká série se neobnovuje", () => {
-    expect(repairOffer({ lessonDays: dny.slice(1), freezes: 0, today: "2026-09-12" })).toBeNull();
+    expect(repairOffer({ lessonDays: dny.slice(1), today: "2026-09-12" })).toBeNull();
   });
 
-  it("jeden vynechaný den podrží ochrana sama", () => {
-    expect(repairOffer({ lessonDays: dny, freezes: 1, today: "2026-09-12" })).toBeNull();
+  it("obnoví jen to, co ochrany nepokryly", () => {
+    expect(repairOffer({ lessonDays: dny, coveredDays: ["2026-09-11"], today: "2026-09-13" })).toEqual({
+      lost: 7,
+      missing: ["2026-09-12"],
+      until: "2026-09-14",
+    });
   });
 
   it("už znovu hrál: obnovení spojí starou řadu s novou", () => {
-    expect(repairOffer({ lessonDays: [...dny, "2026-09-12"], freezes: 0, today: "2026-09-12" })).toEqual({
+    expect(repairOffer({ lessonDays: [...dny, "2026-09-12"], today: "2026-09-12" })).toEqual({
       lost: 7,
       missing: ["2026-09-11"],
       until: "2026-09-13",
@@ -229,13 +283,13 @@ describe("obnovení série", () => {
   });
 
   it("jednou za třicet dní", () => {
-    const input = { lessonDays: dny, freezes: 0, today: "2026-09-12" };
+    const input = { lessonDays: dny, today: "2026-09-12" };
     expect(repairOffer({ ...input, lastRepair: "2026-08-20" })).toBeNull();
     expect(repairOffer({ ...input, lastRepair: `2026-08-${13 - (REPAIR_COOLDOWN_DAYS - 30)}` })).not.toBeNull();
   });
 
   it("po obnovení se nenabízí znovu", () => {
-    expect(repairOffer({ lessonDays: dny, coveredDays: ["2026-09-11"], freezes: 0, today: "2026-09-12" })).toBeNull();
+    expect(repairOffer({ lessonDays: dny, coveredDays: ["2026-09-11"], today: "2026-09-12" })).toBeNull();
   });
 });
 

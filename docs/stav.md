@@ -460,6 +460,17 @@ z 6. 10. (7 nálezů, žádný kritický). Migrace 0019, Edge Function `push`:
 - Výsledek souboje musí mít 7 značek a body podle počtu „ok“. Výsledek
   bez značek už server nepřijme.
 
+**Ochrana série o půlnoci (16. 10. 2026)** — ochrana se odečítala, až když
+student druhý den dohrál lekci. Do té doby svítila v zásobách, a když
+nepřišel ani druhý den, série spadla a ochrana zůstala. Teď každý
+vynechaný den spotřebuje jednu ochranu, jakmile skončí (`settleStreak`),
+telefon to dopočítá při otevření a pošle `freezeUsed`. Bez rozjeté série
+se nespotřebuje nic, koupená po půlnoci spadlou sérii nevzkřísí.
+Migrace 0020: server počítá totéž (`streak_now`) pro připomínky
+i kamarády (`friend_streaks`), kamarádi už nečtou den poslední lekce.
+Na domovské obrazovce: štítek s počtem ochran u série (klepnutím zásoby),
+pokrytý den v týdnu medově a den poté jedna věta pod týdnem.
+
 ## Co dělat dál
 
 0b. **Hodnocení souboje na serveru.** Server teď hlídá jen tvar výsledku

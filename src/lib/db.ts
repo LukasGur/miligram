@@ -1,6 +1,6 @@
 import Dexie, { type Table } from "dexie";
 import type { StageId } from "@/core/curriculum";
-import { MAX_STREAK_FREEZES, PILLS_PER_CORRECT, advanceStreak, localDay, previousDay, type StreakState } from "@/core/economy";
+import { MAX_STREAK_FREEZES, PILLS_PER_CORRECT, advanceStreak, localDay, settleStreak } from "@/core/economy";
 import type { LessonPlan } from "@/core/lessonPlan";
 import type { LessonKind } from "@/core/scoring";
 
@@ -26,7 +26,7 @@ export type Profile = {
   streakDays: number;
   /** Den poslední dokončené lekce, YYYY-MM-DD v místním čase. */
   lastLessonDay: string | null;
-  /** Koupené ochrany série. Uplatní se samy, když uživatel den vynechá. */
+  /** Koupené ochrany série. O půlnoci vynechaného dne se spotřebují samy (settleStreak). */
   streakFreezes: number;
   /**
    * Účet, jehož historie se na tohle zařízení stahovala. Po přihlášení
@@ -55,6 +55,13 @@ export type Profile = {
    * z historie (obnova, nový telefon) po každé ochraně spadla na jedničku.
    */
   coveredDays?: string[];
+  /** Dny, které podržela ochrana (bez obnovení) — pro větu pod týdnem. */
+  frozenDays?: string[];
+  /**
+   * Poslední den, o kterém telefon rozhodl, jestli ho ochrana pokryje.
+   * Ochrana koupená později spadlou sérii nevzkřísí.
+   */
+  settledThrough?: string;
   /**
    * Na bonus za registraci už se zařízení ptalo. Server ho připíše jednou
    * na účet, tohle jen šetří dotaz při každém spuštění.
@@ -402,6 +409,56 @@ async function queueWallet(uid: string, payload: WalletPayload, timestamp: strin
   await outbox.add({ uid, type: "wallet", payload, createdAt: timestamp });
 }
 
+/**
+ * Půlnoci od posledního otevření: vynechané dny spotřebují ochrany
+ * (settleStreak) a každá spotřebovaná jde na server jako pohyb s dnem.
+ * Volá se uvnitř transakce nad profilem a frontou, ať se dopočítá dřív,
+ * než se cokoli koupí, vyzvedne nebo dohraje.
+ */
+async function settleWithin(current: Profile, now: Date): Promise<Profile> {
+  const today = localDay(now);
+  const { state, used } = settleStreak(
+    {
+      days: current.streakDays,
+      lastDay: current.lastLessonDay,
+      freezes: current.streakFreezes ?? 0,
+      covered: current.coveredDays,
+      settled: current.settledThrough ?? null,
+    },
+    today,
+  );
+  if (used.length === 0 && state.settled === (current.settledThrough ?? null)) return current;
+
+  const timestamp = now.toISOString();
+  const updated: Profile = {
+    ...current,
+    streakFreezes: state.freezes,
+    ...(used.length > 0
+      ? {
+          coveredDays: [...new Set([...(current.coveredDays ?? []), ...used])].sort(),
+          frozenDays: [...new Set([...(current.frozenDays ?? []), ...used])].sort(),
+        }
+      : {}),
+    ...(state.settled ? { settledThrough: state.settled } : {}),
+    updatedAt: timestamp,
+  };
+  await db().profile.put(updated);
+  for (const day of used) {
+    // Uid podle dne: dvě zařízení téhož účtu ochranu za týž den nestrhnou dvakrát.
+    await queueWallet(`freeze:${day}`, { kind: "freezeUsed", pills: 0, freezes: -1, reason: "streak", day }, timestamp);
+  }
+  return updated;
+}
+
+/** Dopočítá půlnoci, které telefon prospal. Při spuštění a návratu do aplikace. */
+export async function settleProfile(now = new Date()): Promise<void> {
+  const database = db();
+  await database.transaction("rw", database.profile, database.outbox, async () => {
+    const current = await database.profile.get(PROFILE_ID);
+    if (current) await settleWithin(current, now);
+  });
+}
+
 export async function readProfile(): Promise<Profile> {
   return (await db().profile.get(PROFILE_ID)) ?? emptyProfile();
 }
@@ -614,8 +671,8 @@ export async function recordLesson(lesson: FinishedLesson, now = new Date()): Pr
   const tables = [database.profile, database.answers, database.lessons, database.outbox, database.progress];
 
   return database.transaction("rw", tables, async () => {
-    const current = (await database.profile.get(PROFILE_ID)) ?? emptyProfile(now);
-    const streak: StreakState = advanceStreak(
+    const current = await settleWithin((await database.profile.get(PROFILE_ID)) ?? emptyProfile(now), now);
+    const streak = advanceStreak(
       {
         days: current.streakDays,
         lastDay: current.lastLessonDay,
@@ -633,11 +690,6 @@ export async function recordLesson(lesson: FinishedLesson, now = new Date()): Pr
       .count();
 
     const earned = Math.max(0, lesson.reward.pills - credited * PILLS_PER_CORRECT);
-    /**
-     * Ochrana podržela včerejšek. Den se zapíše, aby ho znala i série
-     * složená znovu z historie — na novém telefonu i u kamarádů.
-     */
-    const frozeDay = streak.freezes < (current.streakFreezes ?? 0) ? previousDay(today) : null;
 
     const updated: Profile = {
       ...current,
@@ -645,8 +697,6 @@ export async function recordLesson(lesson: FinishedLesson, now = new Date()): Pr
       xp: current.xp + lesson.reward.xp,
       streakDays: streak.days,
       lastLessonDay: streak.lastDay,
-      streakFreezes: streak.freezes,
-      ...(frozeDay ? { coveredDays: [...(current.coveredDays ?? []), frozeDay] } : {}),
       updatedAt: timestamp,
     };
 
@@ -655,13 +705,6 @@ export async function recordLesson(lesson: FinishedLesson, now = new Date()): Pr
       await queueWallet(
         `lesson:${lesson.lessonId}`,
         { kind: "earn", pills: earned, freezes: 0, reason: "lesson" },
-        timestamp,
-      );
-    }
-    if (frozeDay) {
-      await queueWallet(
-        `freeze:${frozeDay}`,
-        { kind: "freezeUsed", pills: 0, freezes: -1, reason: "streak", day: frozeDay },
         timestamp,
       );
     }
@@ -754,7 +797,8 @@ export async function buyStreakFreeze(
   const database = db();
 
   return database.transaction("rw", database.profile, database.outbox, async () => {
-    const current = (await database.profile.get(PROFILE_ID)) ?? emptyProfile(now);
+    // Nejdřív půlnoc, která už proběhla: nová ochrana pokrývá až dnešek.
+    const current = await settleWithin((await database.profile.get(PROFILE_ID)) ?? emptyProfile(now), now);
     if ((current.streakFreezes ?? 0) >= max) return "full";
     if (current.pills < cost) return "poor";
 
@@ -790,7 +834,7 @@ export async function claimGift(
   return database.transaction("rw", database.profile, database.gifts, database.outbox, async () => {
     if ((await database.gifts.get(gift.id)) !== undefined) return "known";
 
-    const current = (await database.profile.get(PROFILE_ID)) ?? emptyProfile(now);
+    const current = await settleWithin((await database.profile.get(PROFILE_ID)) ?? emptyProfile(now), now);
     if ((current.streakFreezes ?? 0) >= max) return "full";
 
     await database.profile.put({

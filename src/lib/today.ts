@@ -1,5 +1,5 @@
-import { localDay } from "@/core/economy";
-import { db } from "./db";
+import { localDay, previousDay } from "@/core/economy";
+import { db, PROFILE_ID } from "./db";
 
 /* ---------------------------------------------------------------------------
    Dnešek a týden
@@ -66,6 +66,8 @@ export type WeekDay = {
   day: string;
   /** Dohrál v ten den uživatel aspoň jednu lekci? */
   active: boolean;
+  /** Den bez lekce, který podržela ochrana nebo obnovení. */
+  covered: boolean;
   today: boolean;
   /** Den, který teprve přijde. Není to zmeškaný den, jen ještě nenastal. */
   upcoming: boolean;
@@ -79,10 +81,11 @@ export type WeekDay = {
  * Týden má v ČR i SR pevný začátek a obrazovka se mu má přizpůsobit.
  */
 export async function weekActivity(today = localDay()): Promise<WeekDay[]> {
-  const lessons = await db().lessons.toArray();
+  const [lessons, profile] = await Promise.all([db().lessons.toArray(), db().profile.get(PROFILE_ID)]);
   // Den podle kalendáře uživatele, ne podle UTC — jinak by se lekce dohraná
   // krátce po půlnoci vybarvila u včerejška.
   const played = new Set(lessons.map((lesson) => localDay(new Date(lesson.finishedAt))));
+  const covered = new Set(profile?.coveredDays ?? []);
 
   const [year, month, date] = today.split("-").map(Number);
   const reference = new Date(Date.UTC(year, month - 1, date));
@@ -92,6 +95,39 @@ export async function weekActivity(today = localDay()): Promise<WeekDay[]> {
   return Array.from({ length: 7 }, (_, index) => {
     const moment = new Date(Date.UTC(year, month - 1, date - sinceMonday + index));
     const day = moment.toISOString().slice(0, 10);
-    return { day, active: played.has(day), today: day === today, upcoming: day > today };
+    const active = played.has(day);
+    return { day, active, covered: !active && covered.has(day), today: day === today, upcoming: day > today };
   });
+}
+
+export type FreezeNews = {
+  /** Dny, které ochrana podržela, od nejstaršího. */
+  days: string[];
+  /** Den, na který ochrana nezbyla a série spadla. */
+  fell: string | null;
+};
+
+/**
+ * Co se má den po půlnoci říct o ochraně. Jen ten den: ochrana podržela
+ * včerejšek, nebo podržela předevčírem a na včerejšek už nezbyla.
+ * Den v týdenním pruhu zůstane obarvený i potom, věta ne.
+ */
+export async function freezeNews(today = localDay()): Promise<FreezeNews | null> {
+  const [lessons, profile] = await Promise.all([db().lessons.toArray(), db().profile.get(PROFILE_ID)]);
+  const frozen = new Set(profile?.frozenDays ?? []);
+  const covered = new Set(profile?.coveredDays ?? []);
+  const played = new Set(lessons.map((lesson) => localDay(new Date(lesson.finishedAt))));
+  const yesterday = previousDay(today);
+
+  const run = (end: string) => {
+    const days: string[] = [];
+    for (let day = end; frozen.has(day); day = previousDay(day)) days.unshift(day);
+    return days;
+  };
+  if (frozen.has(yesterday)) return { days: run(yesterday), fell: null };
+  const before = previousDay(yesterday);
+  if (frozen.has(before) && !covered.has(yesterday) && !played.has(yesterday)) {
+    return { days: run(before), fell: yesterday };
+  }
+  return null;
 }

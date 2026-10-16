@@ -704,8 +704,8 @@ export type FriendSummary = {
   handle: string;
   /** Kdy se z žádosti stalo přátelství. */
   since: string | null;
-  streakDays: number;
-  lastLessonDay: string | null;
+  /** Série dnes, dopočítaná serverem i s ochranami (friend_streaks, migrace 0020). */
+  streak: number;
   xpTotal: number;
   xpWeek: number;
   /** Vnitřní číslo ligy (1 nejnižší). */
@@ -727,19 +727,20 @@ export async function friendSummaries(client: SupabaseClient, userId: string): P
   const ids = [...since.keys()];
   if (ids.length === 0) return [];
 
-  const [profiles, stats, weekly] = await Promise.all([
+  const [profiles, stats, weekly, streaks] = await Promise.all([
     client.from("profiles").select("id, handle, badges, tone").in("id", ids),
-    client
-      .from("stats")
-      .select("user_id, xp_total, streak_days, last_lesson_day, streak_through, league_tier")
-      .in("user_id", ids),
+    client.from("stats").select("user_id, xp_total, league_tier").in("user_id", ids),
     client.from("weekly_xp").select("user_id, xp").eq("week_start", weekStart()).in("user_id", ids),
+    client.rpc("friend_streaks"),
   ]);
-  for (const result of [profiles, stats, weekly]) if (result.error) throw new Error(result.error.message);
+  for (const result of [profiles, stats, weekly, streaks]) if (result.error) throw new Error(result.error.message);
   rememberTones(profiles.data ?? []);
 
   const statsBy = new Map((stats.data ?? []).map((row) => [row.user_id, row]));
   const weekBy = new Map((weekly.data ?? []).map((row) => [row.user_id, Number(row.xp ?? 0)]));
+  const streakBy = new Map(
+    ((streaks.data ?? []) as { user_id: string; streak: number }[]).map((row) => [row.user_id, Number(row.streak ?? 0)]),
+  );
 
   return (profiles.data ?? [])
     .map((profile) => {
@@ -748,10 +749,7 @@ export async function friendSummaries(client: SupabaseClient, userId: string): P
         userId: profile.id,
         handle: profile.handle,
         since: since.get(profile.id) ?? null,
-        streakDays: row?.streak_days ?? 0,
-        // Kam série sahá (přes dny pokryté ochranou nebo obnovou), ne jen
-        // poslední lekce — jinak by obnovená série kamarádům ukazovala nulu.
-        lastLessonDay: row?.streak_through ?? row?.last_lesson_day ?? null,
+        streak: streakBy.get(profile.id) ?? 0,
         xpTotal: row?.xp_total ?? 0,
         xpWeek: weekBy.get(profile.id) ?? 0,
         tier: row?.league_tier ?? 1,

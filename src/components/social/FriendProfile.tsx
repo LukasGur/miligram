@@ -8,7 +8,7 @@ import { Pastille } from "@/components/ui/Pastille";
 import { Spinner } from "@/components/ui/Spinner";
 import { useAction, withTimeout } from "@/lib/useAction";
 import { badgeStatesFromLevels, showcaseOrder, type BadgeLevels, type BadgeState } from "@/core/badges";
-import { GIFT_FREEZE_COST, localDay } from "@/core/economy";
+import { GIFT_FREEZE_COST } from "@/core/economy";
 import { displayTier } from "@/core/league";
 import { spendPills } from "@/lib/db";
 import {
@@ -129,7 +129,7 @@ export function FriendProfile({
       </div>
 
       <dl className="mt-3">
-        <CompareRow label={t("statStreak")} mine={streak} theirs={visibleStreak(friend.streakDays, friend.lastLessonDay)} />
+        <CompareRow label={t("statStreak")} mine={streak} theirs={friend.streak} />
         <CompareRow label={t("xpThisWeek")} mine={myWeek} theirs={friend.xpWeek} />
         <CompareRow label={t("xpTotal")} mine={local.xp} theirs={friend.xpTotal} />
       </dl>
@@ -329,15 +329,4 @@ function Gift({ social, friendId, handle }: { social: Social; friendId: string; 
       ) : null}
     </div>
   );
-}
-
-/**
- * Série kamaráda ze serveru. Ochrany série server nezná, takže se bere
- * jen „včera nebo dnes“ — stejně jako u notifikací bez údaje z telefonu.
- */
-function visibleStreak(days: number, lastDay: string | null): number {
-  if (!lastDay) return 0;
-  const today = localDay();
-  const yesterday = localDay(new Date(Date.now() - 86_400_000));
-  return lastDay === today || lastDay === yesterday ? days : 0;
 }
