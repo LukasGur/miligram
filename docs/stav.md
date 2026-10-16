@@ -468,8 +468,9 @@ telefon to dopočítá při otevření a pošle `freezeUsed`. Bez rozjeté séri
 se nespotřebuje nic, koupená po půlnoci spadlou sérii nevzkřísí.
 Migrace 0020: server počítá totéž (`streak_now`) pro připomínky
 i kamarády (`friend_streaks`), kamarádi už nečtou den poslední lekce.
-Na domovské obrazovce: štítek s počtem ochran u série (klepnutím zásoby),
-pokrytý den v týdnu medově a den poté jedna věta pod týdnem.
+Na domovské obrazovce: indigový štít s počtem ochran v řádku popisku série
+(klepnutím zásoby), pokrytý den v týdnu jako obrys a den poté jedna věta
+pod týdnem. Med zůstává jen pastilkám.
 
 ## Co dělat dál
 

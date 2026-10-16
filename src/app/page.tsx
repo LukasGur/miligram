@@ -541,31 +541,27 @@ function Home() {
           <div className="w-full">
             {/* Série a XP jsou displej: dvě čísla, na která se kouká. */}
             <div className="border-line divide-line grid grid-cols-2 divide-x border-y py-4">
-              {/* Ochrany patří k sérii, kterou chrání: štítek u čísla, aby se
-                  nemusely hledat v zásobách. Klepnutí zásoby otevře. */}
+              {/* Ochrany patří k sérii, kterou chrání: drobný štít v řádku
+                  popisku, číslo série zůstane čisté. Klepnutí zásoby otevře. */}
               <button
                 type="button"
                 onClick={() => setShopOpen(true)}
                 aria-label={t("streakOpen", { days: streak, freezes })}
                 {...pressable}
-                className="press -my-1 flex min-h-11 items-end gap-2.5 py-1 pr-3 text-left"
+                className="press -my-1 block min-h-11 w-full py-1 pr-3 text-left"
               >
-                <Readout
-                  label={t("streak")}
-                  value={format.number(streak)}
-                  unit={t("streakUnit", { days: streak })}
-                  size="small"
-                />
-                {freezes > 0 ? (
-                  <span
-                    aria-hidden
-                    className="bg-pill-wash text-pill readout mb-[3px] inline-flex h-6 items-center gap-1 rounded-full pr-2 pl-1.5 text-label font-semibold"
-                    data-numeric
-                  >
-                    <ShieldIcon className="size-3.5 shrink-0" />
-                    {format.number(freezes)}
-                  </span>
-                ) : null}
+                <span className="flex items-center justify-between gap-2">
+                  <span className="panel-label">{t("streak")}</span>
+                  {freezes > 0 ? (
+                    <span aria-hidden className="inline-flex items-center gap-1">
+                      <ShieldIcon className="text-accent size-3.5 shrink-0" />
+                      <span className="readout text-ink text-[0.8125rem] font-semibold" data-numeric>
+                        {format.number(freezes)}
+                      </span>
+                    </span>
+                  ) : null}
+                </span>
+                <Readout value={format.number(streak)} unit={t("streakUnit", { days: streak })} size="small" />
               </button>
               <div className="pl-3">
                 <Readout label={t("xp")} value={format.number(profile.xp)} size="small" />
@@ -679,7 +675,7 @@ function Week({ week, freeze }: { week: WeekDay[]; freeze: FreezeNews | null }) 
                 active
                   ? "bg-accent"
                   : covered
-                    ? "bg-pill"
+                    ? "shadow-[inset_0_0_0_1.5px_var(--color-accent)]"
                     : today
                       ? "bg-accent/25"
                       : upcoming
@@ -690,10 +686,11 @@ function Week({ week, freeze }: { week: WeekDay[]; freeze: FreezeNews | null }) 
           </li>
         ))}
       </ul>
-      {/* Den po půlnoci, kdy zabrala ochrana. Medem jako den v pruhu nad ní. */}
+      {/* Den po půlnoci, kdy zabrala ochrana. Podržený den má v pruhu obrys:
+          den tu je, jen bez lekce. */}
       {freeze ? (
         <p className="animate-rise text-ink-soft mt-3 text-center text-label text-balance">
-          <ShieldIcon className="text-pill mr-1.5 inline-block size-4 align-[-3px]" />
+          <ShieldIcon className="text-accent mr-1.5 inline-block size-4 align-[-3px]" />
           {t(freeze.fell ? "freezeFell" : "freezeHeld", {
             count: freeze.days.length,
             days: list.format(freeze.days.map(onWeekday)),
