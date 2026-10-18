@@ -242,6 +242,65 @@
     transform: scale(0.98);
   }
 
+  /* -------------------------------------------------------------------
+     Bublina nad klávesou
+
+     Číslici pod palcem není vidět, a tak se klávesa po vzoru iOS na dobu
+     dotyku vytáhne nahoru a znak ukáže nad prstem. Krk překryje klávesu,
+     hlava je o kousek širší a nese znak; stín patří celému tvaru, proto
+     filter, ne box-shadow. Zobrazuje ji tentýž data-pressed jako stisk,
+     takže naskočí ve stejném snímku a s puštěním zmizí — bez Reactu.
+     Široká klávesa (nula v kalkulačce) má bublinu jen na jeden sloupec:
+     dvojnásob široká hlava by zakryla půl klávesnice.
+     ------------------------------------------------------------------- */
+  .key-bubble {
+    --bubble-head: 3.5rem;
+    --bubble-rise: 3rem;
+    position: absolute;
+    left: -5px;
+    right: -5px;
+    bottom: 0;
+    height: calc(100% + var(--bubble-rise));
+    z-index: 20;
+    visibility: hidden;
+    pointer-events: none;
+    filter: drop-shadow(0 0 0.5px rgb(14 17 22 / 0.35)) drop-shadow(0 6px 10px rgb(14 17 22 / 0.18));
+  }
+
+  .key-bubble::before {
+    content: "";
+    position: absolute;
+    left: 5px;
+    right: 5px;
+    top: var(--bubble-rise);
+    bottom: 0;
+    background: var(--color-paper);
+    border-radius: 0 0 var(--radius-control) var(--radius-control);
+  }
+
+  .key-bubble > span {
+    position: absolute;
+    inset: 0 0 auto;
+    height: var(--bubble-head);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    background: var(--color-paper);
+    border-radius: var(--radius-panel);
+    font-size: 2.25rem;
+    line-height: 1;
+  }
+
+  /* Sloupec široké klávesy přes dva: (100 % − mezera 8 px) / 2. */
+  .key-bubble-wide {
+    left: calc(25% - 3px);
+    right: calc(25% - 3px);
+  }
+
+  .press[data-pressed] > .key-bubble {
+    visibility: visible;
+  }
+
   .scroll-y {
     overflow-y: auto;
     overscroll-behavior-y: contain;

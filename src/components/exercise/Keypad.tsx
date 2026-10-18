@@ -59,9 +59,15 @@ function Key({
       {...pressable}
       disabled={disabled}
       aria-label={ariaLabel ?? label}
-      className="press bg-surface data-pressed:bg-surface-press readout text-ink flex min-h-12 items-center justify-center rounded-control text-title font-medium disabled:opacity-40"
+      className="press bg-surface data-pressed:bg-surface-press readout text-ink relative flex min-h-12 items-center justify-center rounded-control text-title font-medium disabled:opacity-40"
     >
       {children ?? label}
+      {/* Bublina nad prstem jen u znaků; mazání je vidět na displeji. */}
+      {label === undefined ? null : (
+        <span className="key-bubble" aria-hidden>
+          <span>{label}</span>
+        </span>
+      )}
     </button>
   );
 }

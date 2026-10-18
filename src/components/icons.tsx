@@ -324,6 +324,17 @@ export function PlusIcon({ className }: IconProps) {
   );
 }
 
+/** Lucide „diff“: plus nad mínusem, tedy ±. */
+export function PlusMinusIcon({ className }: IconProps) {
+  return (
+    <Icon className={className}>
+      <path d="M12 3v14" />
+      <path d="M5 10h14" />
+      <path d="M5 21h14" />
+    </Icon>
+  );
+}
+
 export function HourglassIcon({ className }: IconProps) {
   return (
     <Icon className={className}>

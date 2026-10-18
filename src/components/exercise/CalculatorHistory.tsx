@@ -59,7 +59,7 @@ export function CalculatorHistory({
               </span>
               {entry.used ? (
                 <span className="bg-accent-wash text-accent-press rounded-full px-2 py-0.5 text-micro font-medium">
-                  {t("historyUsed")}
+                  {entry.result < 0 ? t("historyUsedNegative") : t("historyUsed")}
                 </span>
               ) : null}
             </span>

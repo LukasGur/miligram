@@ -684,6 +684,9 @@
     "title": "Kalkulačka",
     "empty": "Zadaj výpočet",
     "use": "Použiť výsledok",
+    "useNegative": "Použiť <num>{value}</num>",
+    "useNegativeLabel": "Použiť {value}, výsledok bez mínus",
+    "noMinus": "bez mínus",
     "close": "Zavrieť",
     "clear": "Vynulovať",
     "divide": "Delené",
@@ -695,6 +698,7 @@
     "history": "Môj výpočet",
     "hideHistory": "Skryť výpočet",
     "historyUsed": "do odpovede",
+    "historyUsedNegative": "do odpovede bez mínus",
     "historyTyped": "Odpoveď {value} prišla z klávesnice, nie z kalkulačky.",
     "historyEdited": "Po prevzatí sa odpoveď zmenila na {value}."
   },

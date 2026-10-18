@@ -2,7 +2,7 @@
 
 import type { Dispatch, SetStateAction } from "react";
 import { useTranslations } from "next-intl";
-import { BackspaceIcon, CloseIcon } from "@/components/icons";
+import { BackspaceIcon, CloseIcon, PlusMinusIcon } from "@/components/icons";
 import { pressable } from "@/lib/press";
 import { evaluate, format, parse, render, type Operator, type Token } from "@/core/calculator";
 
@@ -67,6 +67,12 @@ export function Calculator({
     return value === null ? tokens : [...tokens, { kind: "number", value }];
   })();
   const result = evaluate(complete);
+  /**
+   * Odpověď v žádném příkladu záporná není. Záporný výsledek tu skoro vždy
+   * znamená odčítání v obráceném pořadí, a tak se převezme bez znaménka —
+   * ale viditelně, štítkem na tlačítku i v historii, ne potichu.
+   */
+  const negative = result !== null && result < 0;
 
   function append(character: string) {
     setSettled(false);
@@ -165,33 +171,33 @@ export function Calculator({
         <Key onPress={backspace} ariaLabel={tLesson("backspace")} tone="edit">
           <BackspaceIcon className="size-6" />
         </Key>
-        <Key onPress={() => operator("/")} ariaLabel={t("divide")} tone="operator">
+        <Key onPress={() => operator("/")} ariaLabel={t("divide")} tone="operator" bubble="÷">
           ÷
         </Key>
-        <Key onPress={() => operator("*")} ariaLabel={t("multiply")} tone="operator">
+        <Key onPress={() => operator("*")} ariaLabel={t("multiply")} tone="operator" bubble="×">
           ×
         </Key>
 
         {["7", "8", "9"].map((key) => (
-          <Key key={key} onPress={() => append(key)}>
+          <Key key={key} onPress={() => append(key)} bubble={key}>
             {key}
           </Key>
         ))}
-        <Key onPress={() => operator("-")} ariaLabel={t("minus")} tone="operator">
+        <Key onPress={() => operator("-")} ariaLabel={t("minus")} tone="operator" bubble="−">
           −
         </Key>
 
         {["4", "5", "6"].map((key) => (
-          <Key key={key} onPress={() => append(key)}>
+          <Key key={key} onPress={() => append(key)} bubble={key}>
             {key}
           </Key>
         ))}
-        <Key onPress={() => operator("+")} ariaLabel={t("plus")} tone="operator">
+        <Key onPress={() => operator("+")} ariaLabel={t("plus")} tone="operator" bubble="+">
           +
         </Key>
 
         {["1", "2", "3"].map((key) => (
-          <Key key={key} onPress={() => append(key)}>
+          <Key key={key} onPress={() => append(key)} bubble={key}>
             {key}
           </Key>
         ))}
@@ -199,10 +205,10 @@ export function Calculator({
           =
         </Key>
 
-        <Key onPress={() => append("0")} className="col-span-2">
+        <Key onPress={() => append("0")} className="col-span-2" bubble="0" wide>
           0
         </Key>
-        <Key onPress={() => append(",")} ariaLabel={tLesson("decimal")}>
+        <Key onPress={() => append(",")} ariaLabel={tLesson("decimal")} bubble=",">
           ,
         </Key>
       </div>
@@ -212,13 +218,33 @@ export function Calculator({
         onClick={() => {
           if (result === null) return;
           record();
-          onUse(format(result));
+          onUse(format(Math.abs(result)));
         }}
         {...pressable}
         disabled={result === null}
-        className="press press-wide bg-accent data-pressed:bg-accent-press mt-2 flex min-h-13 w-full items-center justify-center rounded-control text-body font-semibold text-on-accent disabled:opacity-40"
+        aria-label={negative ? t("useNegativeLabel", { value: format(-result) }) : undefined}
+        className="press press-wide bg-accent data-pressed:bg-accent-press mt-2 flex min-h-13 w-full items-center justify-center gap-2.5 rounded-control text-body font-semibold text-on-accent disabled:opacity-40"
       >
-        {t("use")}
+        {negative ? (
+          <>
+            <span>
+              {t.rich("useNegative", {
+                value: format(-result),
+                num: (chunks) => (
+                  <span className="readout" data-numeric>
+                    {chunks}
+                  </span>
+                ),
+              })}
+            </span>
+            <span className="flex items-center gap-1 rounded-full bg-white/15 py-0.5 pl-1.5 pr-2 text-micro font-medium ring-1 ring-white/25 ring-inset">
+              <PlusMinusIcon className="size-3.5" />
+              {t("noMinus")}
+            </span>
+          </>
+        ) : (
+          t("use")
+        )}
       </button>
     </section>
   );
@@ -232,12 +258,18 @@ function Key({
   ariaLabel,
   tone = "digit",
   className = "",
+  bubble,
+  wide = false,
   children,
 }: {
   onPress: () => void;
   ariaLabel?: string;
   tone?: "digit" | "operator" | "edit";
   className?: string;
+  /** Znak v bublině nad prstem. Klávesy, jejichž účinek je vidět na displeji (C, ⌫, =), ji nemají. */
+  bubble?: string;
+  /** Klávesa přes dva sloupce: bublina zůstane úzká. */
+  wide?: boolean;
   children: React.ReactNode;
 }) {
   return (
@@ -246,9 +278,14 @@ function Key({
       onClick={onPress}
       {...pressable}
       aria-label={ariaLabel}
-      className={`press ${LOOK[tone]} ${className} readout flex min-h-13 items-center justify-center rounded-control text-title font-medium`}
+      className={`press ${LOOK[tone]} ${className} readout relative flex min-h-13 items-center justify-center rounded-control text-title font-medium`}
     >
       {children}
+      {bubble === undefined ? null : (
+        <span className={`key-bubble ${wide ? "key-bubble-wide" : ""}`} aria-hidden>
+          <span>{bubble}</span>
+        </span>
+      )}
     </button>
   );
 }
