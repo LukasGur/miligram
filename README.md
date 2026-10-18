@@ -1,84 +1,108 @@
 # Miligram
 
-Trénink výpočtů dávkování léků pro české a slovenské studenty medicíny.
-Progressive Web App — instaluje se přidáním na plochu, funguje offline.
+Drug dosage calculation training for Czech and Slovak medical students.
+An offline-first Progressive Web App: add it to your home screen and it works without a connection.
 
-> **Studijní nástroj.** Aplikace neslouží k výpočtu dávek reálným pacientům.
+**Try it: [miligram-app.pages.dev](https://miligram-app.pages.dev)** (Czech and Slovak UI)
 
-## Spuštění
+<p>
+  <img src="docs/screenshots/exercise.png" width="19%" alt="Exercise with custom numeric keypad">
+  <img src="docs/screenshots/correct.png" width="19%" alt="Correct answer">
+  <img src="docs/screenshots/solution.png" width="19%" alt="Step-by-step solution">
+  <img src="docs/screenshots/lesson-complete.png" width="19%" alt="Lesson summary">
+  <img src="docs/screenshots/home.png" width="19%" alt="Home screen with daily goal">
+</p>
+
+> **A study tool.** Miligram is not meant for calculating doses for real patients.
+
+## What it does
+
+Students practise the calculations they will do on the ward: tablets and ampoules,
+mg/kg dosing, body surface area, dilutions, reconstitution, infusion rates,
+vasoactive drugs, unit conversions, insulin, renal dosing, paediatrics and oncology.
+
+- **72 exercise types in 12 topics**, generated from real products: 600+ preparations
+  taken from the Czech drug registry (SÚKL) with their actual strengths and packaging.
+- **Realistic doses.** Every generated dose stays within the range
+  the product's SmPC gives for that patient and dosage form. Tests enforce the bounds,
+  and every factual value carries its source and verification date.
+- **Step-by-step solutions** typeset with KaTeX, a solved example on request, and notes
+  on how the result is rounded in practice.
+- **Lessons of seven exercises** with rising difficulty. A wrong answer comes back later
+  in the lesson until it is solved; spaced review brings back past mistakes.
+- **Motivation without punishing learning.** Streaks, XP, a weekly league, friends and
+  head-to-head duels. Accuracy, mistakes and hints stay private, so nobody avoids hints
+  or harder topics to look good.
+
+## Under the hood
+
+- **Next.js (App Router) as a static export**, served from Cloudflare Pages. No server
+  rendering, so the whole app can be precached by a custom service worker.
+- **Local-first data.** Game state lives on the device in IndexedDB (Dexie). The app works
+  fully without an account; sync is an optional layer on top.
+- **Event-based sync.** The device queues what happened, not the resulting state, so two
+  phones that were offline cannot overwrite each other.
+- **Supabase** (Postgres, Row Level Security, Edge Functions) for accounts, friends,
+  leagues, duels and push notifications. With a static frontend there is nowhere to hide
+  access checks, so every rule lives in the database and public scores are computed
+  server side.
+- **Language-free calculation core.** `src/core` returns only tokens and numbers;
+  Czech and Slovak text is added in the view layer (`next-intl`). A test enforces it.
+- **Custom numeric keypad** instead of the system one, which on iOS covers the answer
+  button and offers characters that make no sense in an answer.
+- 660+ unit tests (Vitest), TypeScript throughout, WCAG 2.1 AA audited with axe-core.
+
+## Running locally
 
 ```bash
 pnpm install
-pnpm dev        # https na 0.0.0.0, certifikát do ./certificates
+pnpm dev        # HTTPS dev server reachable on your LAN, certificate in ./certificates
 ```
 
-`next dev --experimental-https` vygeneruje lokální certifikát a vypíše adresu
-v LAN. Tu otevři na telefonu (iPhone v Safari, Android v Chromu) — bez
-HTTPS by service worker ani „Přidat na plochu“ nefungovaly správně.
+Open the printed LAN address on a phone. HTTPS is required for the service worker and
+"Add to Home Screen".
 
-Service worker se registruje **jen v produkčním buildu**. Offline provoz
-se proto testuje takto:
+The service worker is registered only in a production build. To test offline mode:
 
 ```bash
-pnpm build      # next build (statický export do out/) + vygenerování out/sw.js
-pnpm preview    # HTTPS server nad out/, používá stejný certifikát
+pnpm build      # static export to out/ plus out/sw.js
+pnpm preview    # HTTPS server over out/
 ```
 
-## Účet a žebříček (nepovinné)
+Accounts, friends and leagues switch on once `.env.local` has Supabase credentials
+(see `.env.example`). Without them the app runs entirely on the device.
 
-Aplikace funguje bez serveru. Přihlášení, přátelé a žebříček se zapnou, až
-`.env.local` dostane údaje k Supabase — vzor je v `.env.example`. Schéma
-a politiky jsou v `supabase/migrations`; přístup hlídá Row Level Security,
-protože statický export nemá server, kam by se dala schovat kontrola práv.
-
-## Skripty
-
-| Skript | Co dělá |
+| Script | What it does |
 |---|---|
-| `pnpm dev` | Vývojový server, HTTPS, dostupný v LAN |
-| `pnpm build` | Statický export do `out/` + service worker s precache manifestem |
-| `pnpm preview` | Naservíruje `out/` přes HTTPS pro test na telefonu |
-| `pnpm icons` | Přegeneruje ikony a startovací obrazovky z `brand/icon.svg` |
-| `pnpm katex` | Přegeneruje `src/app/katex.css` a `public/fonts/katex` z balíčku katex |
+| `pnpm dev` | Dev server, HTTPS, reachable on the LAN |
+| `pnpm build` | Static export to `out/` and a service worker with a precache manifest |
+| `pnpm build:pages` | Typecheck, tests and build, as run before deploy |
+| `pnpm preview` | Serves `out/` over HTTPS for testing on a phone |
+| `pnpm test` | Vitest |
 | `pnpm typecheck` | `tsc --noEmit` |
 | `pnpm lint` | ESLint |
+| `pnpm icons` | Regenerates icons and splash screens from `brand/icon.svg` |
+| `pnpm katex` | Regenerates KaTeX CSS and fonts from the `katex` package |
 
-## Struktura
+Internal project notes (architecture, sources, status) are in Czech in [`docs/`](docs).
 
-```
-brand/icon.svg          zdroj značky — výměna ikony = tenhle soubor + pnpm icons
-messages/               překlady (cs, sk); v komponentách nesmí být natvrdo text
-scripts/build-sw.mjs    sestaví out/sw.js z šablony a obsahu out/
-scripts/sw.template.js  service worker — edituj tady, ne v out/
-src/app/globals.css     designové tokeny (barvy, typografie, tvar, pohyb)
-src/app/katex.css       generovaný soubor — needituj ručně, spusť `pnpm katex`
-src/core/               výpočetní jádro: jednotky, vzorce, šablony, fond přípravků
-src/components/exercise/  obrazovka příkladu, klávesnice, krokové řešení
-src/components/ui/      odečty, stupnice, kruh cíle — stavebnice výrazu
-src/i18n/               volba jazyka a katalogy zpráv
-src/lib/db.ts           lokální databáze (Dexie); zdroj pravdy pro hraní
-src/lib/sync.ts         odesílání fronty událostí na server
-src/lib/stats.ts        statistika a výběr chyb k opakování
-supabase/migrations/    schéma a politiky serverové vrstvy
-src/lib/splashScreens.ts  generovaný soubor — needituj ručně
-```
+## How it was built
 
-## Rozhodnutí, která je dobré znát
+Miligram started because friends of mine studying medicine wanted a way to practise
+dosage calculations on realistic problems rather than made-up numbers. They use it
+for their studies and their feedback shaped the app.
 
-- **Statický export.** `output: "export"` drží aplikaci ve tvaru, který jde
-  bez přepisování zabalit Capacitorem a celý přednačíst do service workeru.
-- **Jazyk bez routingu.** Locale se drží v `localStorage` a přepíná na klientu,
-  takže přepnutí funguje offline a existuje jediná `start_url`.
-- **Červená je vyhrazená chybné odpovědi.** Správná odpověď se hlásí accentem.
-- **Čísla jsou tabulární.** Šířka číslic se nesmí měnit.
-- **Měřené hodnoty jsou strojopisem** (`.readout`). Rozdíl mezi „140“ v běžném
-  řezu a v IBM Plex Mono je rozdíl mezi textem a displejem. Ve strojopisu má
-  ale i desetinná čárka celou šířku znaku, takže oddělovač sází `<Numeral>`.
-- **Stav hry žije v zařízení.** Aplikace funguje offline a bez účtu; server
-  bude ve fázi 5 nadstavba, ne podmínka. Do fronty `outbox` se zapisuje, co se
-  stalo, ne jaký je stav — dvě zařízení offline by se stavem přepsala.
-- **Klávesnice je vlastní, ne systémová.** Systémová na iOS překryje spodní
-  třetinu i s tlačítkem odpovědi a nabízí znaky, které v odpovědi nedávají smysl.
-- **Ve výpočetním jádře není text v žádném jazyce.** Vzorce sázejí tokeny
-  (`\text{@dose}`) a jazyk se doplní až ve vrstvě zobrazení; test to hlídá
-  tím, že jádro smí vracet jen ASCII.
+I am not a clinician. I designed the product and directed the work, which was built
+with [Claude Code](https://claude.com/claude-code); `CLAUDE.md` holds the rules it works by.
+Drug data are not written from memory: they are looked up in SÚKL and SmPC documents
+with the scripts in `scripts/sukl/`, and tests keep every generated dose within the
+documented range. The content has not been reviewed by a medical professional.
+
+## Author
+
+Lukáš Gurecký · [LinkedIn](https://www.linkedin.com/in/lukasgur/) · [miligram@lukasgurecky.cz](mailto:miligram@lukasgurecky.cz)
+
+## License
+
+Copyright © 2026 Lukáš Gurecký. All rights reserved.
+The source is published for reading only; see [LICENSE](LICENSE).

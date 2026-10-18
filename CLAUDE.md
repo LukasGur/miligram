@@ -1,7 +1,9 @@
 # Miligram — poznámky pro práci na projektu
 
 PWA pro trénink výpočtů dávkování léků (ČR/SK). Next.js App Router, statický
-export, offline-first. Podrobnosti k příkazům a struktuře jsou v README.md.
+export, offline-first. Příkazy jsou v README.md, struktura a architektonická
+rozhodnutí v `docs/architektura.md`. Před pushem `pnpm build:pages`
+(typecheck, testy, build); push na master je nasazení.
 
 ## Pravidla, která platí bez výjimky
 
@@ -90,20 +92,6 @@ jen jako „bez bodu“. Server úspěšnost nikomu jinému nevydá (migrace 001
 ## Kde jsme
 
 Aktuální stav a co dělat dál je v `docs/stav.md`.
-
-## Fáze
-
-1. ✅ Základ — PWA, manifest, service worker, iOS onboarding, tokeny, i18n
-2. Výpočetní jádro — hotové `src/core` (jednotky, vzorce, tolerance,
-   generátor, 59 testů); šablony čekají na schválení seznamu
-3. Design systém — klávesnice, obrazovka příkladu, moment vyhodnocení
-4. Gamifikace lokálně — Dexie, pastilky, série, XP, nápovědy, odbytek
-5. Účet a sociální vrstva — Supabase, sync, přátelé, ligy, souboje
-6. Lokalizace — dokončení SK
-7. Statistiky a tréninkové režimy
-8. Leštění — přístupnost, výkon, Lighthouse, test na iPhonu a Androidu
-
-<!-- BEGIN:nextjs-agent-rules -->
 
 # This is NOT the Next.js you know
 
