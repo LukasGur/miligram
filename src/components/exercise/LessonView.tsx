@@ -29,6 +29,7 @@ import { Flyer, bump, reducedMotion, type Flight } from "@/components/ui/Flyer";
 import { Tally } from "@/components/ui/Tally";
 import { ExerciseView } from "./ExerciseView";
 import { requestPersistentStorage } from "@/lib/pwa";
+import { Button } from "@/components/ui/Button";
 
 /**
  * Nabídka připomínek se dotahuje až ve shrnutí. Je v ní stav přihlášení,
@@ -617,25 +618,23 @@ function LessonSummary({
         style={{ paddingBottom: "calc(var(--sa-b) + 0.75rem)" }}
       >
         <div className="mx-auto w-full max-w-md px-5 pt-3">
-          <button
-            type="button"
+          <Button
             onClick={onDuel ?? onExit}
-            className="bg-accent active:bg-accent-press flex min-h-14 w-full items-center justify-center gap-2 rounded-control text-body font-semibold text-on-accent transition-colors duration-75"
+            className="w-full"
           >
             {onDuel ? <VersusIcon className="size-5" /> : <HomeIcon className="size-5" />}
             {onDuel ? t("duelResult") : t("home")}
-          </button>
+          </Button>
 
           {/* Tichá volba. Po lekci další lekce (po splněném cíli je správné
               odejít, ne hrát dál), po souboji domů. */}
-          <button
-            type="button"
+          <Button
             onClick={onDuel ? onExit : onAgain}
-            className="text-ink-soft mt-1 flex min-h-11 w-full items-center justify-center gap-2 text-label"
+            variant="text" tone="muted" className="mt-1 w-full gap-2"
           >
             {onDuel ? <HomeIcon className="size-4" /> : <RepeatIcon className="size-4" />}
             {onDuel ? t("home") : t("again")}
-          </button>
+          </Button>
         </div>
       </footer>
     </div>

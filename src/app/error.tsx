@@ -2,6 +2,7 @@
 
 import { useEffect } from "react";
 import { useTranslations } from "next-intl";
+import { Button } from "@/components/ui/Button";
 
 /**
  * Záchrana pro jakýkoli pád obrazovky. Bez ní React po chybě zahodil celý
@@ -23,13 +24,12 @@ export default function Error({ error }: { error: Error & { digest?: string } })
       <div className="mx-auto flex w-full max-w-md flex-1 flex-col justify-end">
         <h1 className="text-heading font-semibold">{t("crashTitle")}</h1>
         <p className="text-ink-soft mt-1.5 text-label">{t("crashBody")}</p>
-        <button
-          type="button"
+        <Button
           onClick={() => window.location.replace("/")}
-          className="bg-accent active:bg-accent-press mt-6 min-h-12 w-full rounded-control text-body font-semibold text-on-accent"
+          className="mt-6 w-full"
         >
           {t("crashReload")}
-        </button>
+        </Button>
       </div>
     </div>
   );

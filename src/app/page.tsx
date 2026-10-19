@@ -30,6 +30,7 @@ import { PullToRefresh } from "@/components/PullToRefresh";
 import { usePulse } from "@/lib/pulse";
 import { Monogram } from "@/components/ui/Monogram";
 import type { AccountStart, PlayableDuel } from "@/components/account/AccountScreen";
+import { Button } from "@/components/ui/Button";
 
 const LESSON_MINUTES = "4–6";
 
@@ -525,13 +526,12 @@ function Home() {
               <span aria-hidden className="bg-accent mt-1.5 size-1.5 shrink-0 rounded-full" />
               <p>
                 {t("goalWaiting", { count: unsolved.length })}{" "}
-                <button
-                  type="button"
+                <Button
                   onClick={() => void startReview(unsolved as { templateId: string; difficulty: Difficulty }[])}
-                  className="text-accent -my-2 inline-flex min-h-11 items-center font-semibold"
+                  variant="text" className="-my-2"
                 >
                   {t("goalWaitingAction")}
-                </button>
+                </Button>
               </p>
             </div>
           ) : null}
@@ -612,29 +612,27 @@ function Home() {
             </button>
           ) : null}
 
-          <button
-            type="button"
+          <Button
             onClick={startDaily}
-            className="bg-accent active:bg-accent-press min-h-14 w-full rounded-control text-body font-semibold text-on-accent transition-colors duration-75"
+            className="w-full"
           >
             {unfinished
               ? t("resume", { done: unfinishedSolved, total: LESSON_LENGTH })
               : t("start")}
-          </button>
+          </Button>
 
           {/* Rozehranou lekci jde odložit stranou. Odpovědi z ní zůstávají
               uložené, jen se v ní už nepokračuje. */}
           {unfinished ? (
-            <button
-              type="button"
+            <Button
               onClick={() => {
                 void clearProgress();
                 startStage();
               }}
-              className="text-ink-soft min-h-11 w-full text-label"
+              variant="text" tone="muted" className="w-full"
             >
               {t("startFresh")}
-            </button>
+            </Button>
           ) : null}
         </footer>
       </div>

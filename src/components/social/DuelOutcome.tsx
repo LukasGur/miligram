@@ -13,7 +13,7 @@ import { db } from "@/lib/db";
 import type { Duel } from "@/lib/remote";
 import { outcomeFor } from "@/lib/social";
 import { useProfile } from "@/lib/useProfile";
-import { PrimaryButton, TextButton } from "./Screen";
+import { Button } from "@/components/ui/Button";
 
 /** Po kolika pastilkách letí jedna. Víc než pět letících působí jako roj. */
 const PER_FLYER = 5;
@@ -127,25 +127,25 @@ export function DuelOutcome({
       >
         {lost ? (
           <>
-            <PrimaryButton onClick={onClose}>{more ? closeLabel : t("outcomeOk")}</PrimaryButton>
+            <Button className="w-full" onClick={onClose}>{more ? closeLabel : t("outcomeOk")}</Button>
             <div className="mt-1 grid grid-cols-2">
-              {onRematch ? <TextButton onClick={onRematch}>{t("rematch")}</TextButton> : <span />}
-              <TextButton onClick={onDetail}>{t("outcomeDetail")}</TextButton>
+              {onRematch ? <Button variant="text" onClick={onRematch}>{t("rematch")}</Button> : <span />}
+              <Button variant="text" onClick={onDetail}>{t("outcomeDetail")}</Button>
             </div>
           </>
         ) : (
           <>
             {onRematch ? (
-              <PrimaryButton onClick={onRematch}>{t("outcomeRematch")}</PrimaryButton>
+              <Button className="w-full" onClick={onRematch}>{t("outcomeRematch")}</Button>
             ) : (
-              <PrimaryButton onClick={onClose}>{closeLabel}</PrimaryButton>
+              <Button className="w-full" onClick={onClose}>{closeLabel}</Button>
             )}
             <div className="mt-1 grid grid-cols-2">
-              <TextButton onClick={onDetail}>{t("outcomeDetail")}</TextButton>
+              <Button variant="text" onClick={onDetail}>{t("outcomeDetail")}</Button>
               {onRematch ? (
-                <TextButton tone="soft" onClick={onClose}>
+                <Button variant="text" tone="muted" onClick={onClose}>
                   {closeLabel}
-                </TextButton>
+                </Button>
               ) : (
                 <span />
               )}

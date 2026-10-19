@@ -25,8 +25,9 @@ import { useProfile } from "@/lib/useProfile";
 import { BadgeGlyph } from "./BadgeGlyph";
 import { BadgeSheet } from "./BadgeSheet";
 import type { Social } from "./data";
-import { PrimaryButton, Screen, SectionTitle } from "./Screen";
+import { Screen, SectionTitle } from "./Screen";
 import { StuckLoading } from "@/components/ui/StuckLoading";
+import { Button } from "@/components/ui/Button";
 
 /**
  * Profil přítele.
@@ -86,9 +87,9 @@ export function FriendProfile({
       onBack={onBack}
       footer={
         open ? (
-          <PrimaryButton onClick={onOpenDuels}>{t("duelRunningOpen")}</PrimaryButton>
+          <Button className="w-full" onClick={onOpenDuels}>{t("duelRunningOpen")}</Button>
         ) : (
-          <PrimaryButton onClick={onChallenge}>{t("challengeTitle", { handle: friend.handle })}</PrimaryButton>
+          <Button className="w-full" onClick={onChallenge}>{t("challengeTitle", { handle: friend.handle })}</Button>
         )
       }
     >
@@ -200,13 +201,12 @@ export function FriendProfile({
             ) : null}
           </div>
         ) : (
-          <button
-            type="button"
+          <Button
             onClick={() => setConfirmRemove(true)}
-            className="text-ink-soft min-h-11 text-label underline underline-offset-4"
+            variant="text" tone="muted" className="underline underline-offset-4"
           >
             {t("removeFriend")}
-          </button>
+          </Button>
         )}
       </div>
     </Screen>

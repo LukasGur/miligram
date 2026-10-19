@@ -1,14 +1,15 @@
 "use client";
 
-import { useEffect, useRef, useState } from "react";
+import { useRef, useState } from "react";
 import { useTranslations } from "next-intl";
-import { pressable } from "@/lib/press";
 import { detachPushDevice } from "@/lib/push";
 import { deleteAccount } from "@/lib/remote";
 import type { supabase } from "@/lib/supabase";
 import { withTimeout } from "@/lib/useAction";
 import { wipeDevice } from "@/lib/account";
 import { Field, Primary } from "./SignIn";
+import { Button } from "@/components/ui/Button";
+import { BottomSheet } from "@/components/ui/BottomSheet";
 
 type Client = ReturnType<typeof supabase> & object;
 
@@ -29,14 +30,12 @@ export function DeleteAccount({ client, handle }: { client: Client; handle: stri
 
   return (
     <div className="mt-3 flex justify-center">
-      <button
-        type="button"
-        {...pressable}
+      <Button
         onClick={() => setConfirming(true)}
-        className="text-ink-soft data-pressed:text-ink min-h-11 px-3 text-label font-medium"
+        variant="text" tone="muted" className="px-3"
       >
         {t("deleteAccount")}
-      </button>
+      </Button>
       {confirming ? <ConfirmSheet client={client} handle={handle} onClose={() => setConfirming(false)} /> : null}
     </div>
   );
@@ -48,15 +47,6 @@ function ConfirmSheet({ client, handle, onClose }: { client: Client; handle: str
   const [busy, setBusy] = useState(false);
   const [failed, setFailed] = useState(false);
   const cancelRef = useRef<HTMLButtonElement>(null);
-
-  useEffect(() => {
-    cancelRef.current?.focus();
-    const onKeyDown = (event: KeyboardEvent) => {
-      if (event.key === "Escape") onClose();
-    };
-    document.addEventListener("keydown", onKeyDown);
-    return () => document.removeEventListener("keydown", onKeyDown);
-  }, [onClose]);
 
   /**
    * Pořadí: odpojit upozornění, smazat na serveru, odhlásit, vyčistit.
@@ -79,48 +69,40 @@ function ConfirmSheet({ client, handle, onClose }: { client: Client; handle: str
   }
 
   return (
-    <div className="fixed inset-0 z-50 flex flex-col justify-end">
-      <button
-        type="button"
-        aria-label={t("deleteCancel")}
-        onClick={onClose}
-        className="animate-scrim bg-scrim absolute inset-0"
-      />
-      <div
-        role="dialog"
-        aria-modal="true"
-        aria-labelledby="delete-title"
-        aria-describedby="delete-body"
-        className="animate-sheet bg-paper relative mx-auto w-full max-w-md rounded-t-sheet px-5 pt-6"
-        style={{ paddingBottom: "calc(var(--sa-b) + 1rem)" }}
-      >
-        <h2 id="delete-title" className="text-heading font-semibold">
-          {t("deleteTitle")}
-        </h2>
-        <p id="delete-body" className="text-ink-soft mt-2 text-label">
-          {t("deleteBody")}
-        </p>
-        <div className="mt-4">
-          <Field label={t("deleteTypeHandle", { handle })} value={typed} onChange={setTyped} />
-        </div>
-        {failed ? (
-          <p role="alert" className="text-ink mt-3 text-label">
-            {t("deleteFailed")}
-          </p>
-        ) : null}
-
-        <Primary onClick={() => void remove()} busy={busy} disabled={!matches(typed, handle)}>
-          {t("deleteConfirm")}
-        </Primary>
-        <button
-          ref={cancelRef}
-          type="button"
-          onClick={onClose}
-          className="text-accent mt-1 min-h-12 w-full text-label font-medium"
-        >
-          {t("deleteCancel")}
-        </button>
+    <BottomSheet
+      onClose={onClose}
+      scrimLabel={t("deleteCancel")}
+      labelledBy="delete-title"
+      describedBy="delete-body"
+      initialFocus={cancelRef}
+      className="px-5 pt-6"
+      style={{ paddingBottom: "calc(var(--sa-b) + 1rem)" }}
+    >
+      <h2 id="delete-title" className="text-heading font-semibold">
+        {t("deleteTitle")}
+      </h2>
+      <p id="delete-body" className="text-ink-soft mt-2 text-label">
+        {t("deleteBody")}
+      </p>
+      <div className="mt-4">
+        <Field label={t("deleteTypeHandle", { handle })} value={typed} onChange={setTyped} />
       </div>
-    </div>
+      {failed ? (
+        <p role="alert" className="text-ink mt-3 text-label">
+          {t("deleteFailed")}
+        </p>
+      ) : null}
+
+      <Primary onClick={() => void remove()} busy={busy} disabled={!matches(typed, handle)}>
+        {t("deleteConfirm")}
+      </Primary>
+      <Button
+        ref={cancelRef}
+        onClick={onClose}
+        variant="text" className="mt-1 w-full"
+      >
+        {t("deleteCancel")}
+      </Button>
+    </BottomSheet>
   );
 }

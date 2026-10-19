@@ -24,6 +24,7 @@ import { HintSheet } from "./HintSheet";
 import { STORAGE_KEYS, writeLocal } from "@/lib/localStore";
 import { useLocalValue } from "@/lib/clientState";
 import { VerdictPanel } from "./Verdict";
+import { Button } from "@/components/ui/Button";
 
 /** Delší číslo než tohle už není odpověď, ale překlep. */
 const MAX_INPUT_LENGTH = 9;
@@ -415,12 +416,10 @@ export function ExerciseView({
           {/* Zatímco se počítá, není co kontrolovat — a tlačítko by z panelu
               udělalo čtyři řady pod sebou. */}
           {calculatorOpen && verdict === null ? null : (
-            <button
-              type="button"
+            <Button
               onClick={verdict === null ? check : () => onContinue({})}
-              {...pressable}
               disabled={verdict === null && !canCheck}
-              className="press press-wide bg-accent data-pressed:bg-accent-press mt-3 min-h-14 w-full rounded-control text-body font-semibold text-on-accent disabled:opacity-40"
+              className="mt-3 w-full"
             >
               {verdict === null
                 ? t("check")
@@ -431,7 +430,7 @@ export function ExerciseView({
                   : retryNext
                     ? t("retryLabel")
                     : t("nextLabel")}
-            </button>
+            </Button>
           )}
         </div>
       </footer>
@@ -587,16 +586,14 @@ function SecondaryAction({
   children: React.ReactNode;
 }) {
   return (
-    <button
-      type="button"
+    <Button
       onClick={onClick}
-      {...pressable}
       disabled={disabled}
       aria-expanded={expanded}
-      className="press press-wide border-line text-ink data-pressed:border-surface-press data-pressed:bg-surface-press flex min-h-11 items-center justify-center gap-2 rounded-control border px-3 text-label font-medium disabled:opacity-40"
+      variant="secondary" size="md" tone="muted"
     >
       {children}
-    </button>
+    </Button>
   );
 }
 

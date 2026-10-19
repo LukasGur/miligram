@@ -13,7 +13,8 @@ import { Field } from "@/components/account/SignIn";
 import type { Social } from "./data";
 import { QrCode } from "./QrCode";
 import { QrScanner } from "./QrScanner";
-import { Screen, SecondaryButton, SectionTitle, TextButton } from "./Screen";
+import { Screen, SectionTitle } from "./Screen";
+import { Button } from "@/components/ui/Button";
 
 /**
  * Přátelé: žádosti, seznam a přidání.
@@ -62,24 +63,22 @@ export function FriendsScreen({
               <li key={request.requester} className="border-line flex min-h-16 items-center gap-3 border-b py-2">
                 <Monogram handle={request.handle} size="sm" />
                 <span className="min-w-0 flex-1 truncate text-body font-semibold">{request.handle}</span>
-                <button
-                  type="button"
+                <Button
                   disabled={action.busy}
                   onClick={() => respond(request.requester, false)}
-                  className="border-line text-ink active:bg-surface flex min-h-11 items-center gap-2 rounded-control border px-3 text-label font-medium disabled:opacity-40"
+                  variant="secondary" size="md" tone="muted" className="gap-2"
                 >
                   {pending?.requester === request.requester && !pending.accept ? <Spinner className="size-4" /> : null}
                   {t("decline")}
-                </button>
-                <button
-                  type="button"
+                </Button>
+                <Button
                   disabled={action.busy}
                   onClick={() => respond(request.requester, true)}
-                  className="bg-accent active:bg-accent-press flex min-h-11 items-center gap-2 rounded-control px-4 text-label font-semibold text-on-accent disabled:opacity-40"
+                  size="md"
                 >
                   {pending?.requester === request.requester && pending.accept ? <Spinner className="size-4" /> : null}
                   {t("accept")}
-                </button>
+                </Button>
               </li>
             ))}
           </ul>
@@ -200,15 +199,15 @@ function AddFriend({ social, first }: { social: Social; first: boolean }) {
       ) : null}
 
       <div className="mt-3 flex flex-col gap-2">
-        <SecondaryButton onClick={() => setScanning(true)}>
+        <Button variant="secondary" tone="muted" size="md" className="w-full" onClick={() => setScanning(true)}>
           <ScanIcon className="size-5" />
           {t("scan")}
-        </SecondaryButton>
+        </Button>
         {handle ? (
-          <SecondaryButton onClick={() => void share()}>
+          <Button variant="secondary" tone="muted" size="md" className="w-full" onClick={() => void share()}>
             <ShareIcon className="size-5" />
             {t("sendLink")}
-          </SecondaryButton>
+          </Button>
         ) : null}
       </div>
 
@@ -219,23 +218,22 @@ function AddFriend({ social, first }: { social: Social; first: boolean }) {
         <div className="flex-1">
           <Field label={tAccount("friendHandle")} value={typed} onChange={setTyped} inputMode="text" />
         </div>
-        <button
-          type="button"
+        <Button
           onClick={() => {
             const target = parseInvite(typed);
             if (target) void add(target);
             else setNotice(tAccount("handleInvalid"));
           }}
           disabled={busy || typed.trim().length < 3}
-          className="bg-accent active:bg-accent-press flex min-h-12 shrink-0 items-center gap-2 rounded-control px-4 text-body font-semibold text-on-accent disabled:opacity-40"
+          size="md" className="shrink-0"
         >
           {busy ? <Spinner className="size-4" /> : null}
           {tAccount("friendAdd")}
-        </button>
+        </Button>
       </div>
-      <TextButton className="mt-1" onClick={() => void paste()}>
+      <Button variant="text" className="mt-1" onClick={() => void paste()}>
         {t("pasteInvite")}
-      </TextButton>
+      </Button>
       {notice ? (
         <p className="text-ink-soft mt-1 text-label" role="status">
           {notice}

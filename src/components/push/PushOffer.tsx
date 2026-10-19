@@ -8,6 +8,8 @@ import { useSession } from "@/lib/useSession";
 import { PushPromises } from "./PushPromises";
 import { ReminderPreview } from "./ReminderPreview";
 import { usePushPrompt } from "./usePushPrompt";
+import { Button } from "@/components/ui/Button";
+import { BottomSheet } from "@/components/ui/BottomSheet";
 
 /** Až doběhne odměna ve shrnutí — nabídka nesmí přebít radost z lekce. */
 const APPEAR_AFTER_MS = 1600;
@@ -47,20 +49,6 @@ export function PushOffer({ streak, facts }: { streak: number; facts: DeviceFact
     return () => window.clearTimeout(timer);
   }, []);
 
-  useEffect(() => {
-    if (!open) return;
-    primaryRef.current?.focus({ preventScroll: true });
-  }, [open]);
-
-  useEffect(() => {
-    if (!open) return;
-    const onKeyDown = (event: KeyboardEvent) => {
-      if (event.key === "Escape") later();
-    };
-    document.addEventListener("keydown", onKeyDown);
-    return () => document.removeEventListener("keydown", onKeyDown);
-  });
-
   if (!open) return null;
 
   async function enable() {
@@ -68,86 +56,75 @@ export function PushOffer({ streak, facts }: { streak: number; facts: DeviceFact
   }
 
   return (
-    <div className="fixed inset-0 z-50 flex flex-col justify-end">
-      <button
-        type="button"
-        aria-label={t("offerClose")}
-        onClick={later}
-        className="animate-scrim bg-scrim absolute inset-0"
+    <BottomSheet
+      onClose={later}
+      scrimLabel={t("offerClose")}
+      labelledBy="push-offer-title"
+      initialFocus={primaryRef}
+      className="px-5 pt-5"
+      style={{ paddingBottom: "calc(var(--sa-b) + 1rem)" }}
+    >
+      <ReminderPreview
+        time={time}
+        onTimeChange={phase === "offer" || phase === "failed" ? prompt.setTime : undefined}
+        streak={streak}
       />
 
-      <div
-        role="dialog"
-        aria-modal="true"
-        aria-labelledby="push-offer-title"
-        className="animate-sheet bg-paper scroll-y relative mx-auto max-h-[94dvh] w-full max-w-md rounded-t-sheet px-5 pt-5"
-        style={{ paddingBottom: "calc(var(--sa-b) + 1rem)" }}
-      >
-        <ReminderPreview
-          time={time}
-          onTimeChange={phase === "offer" || phase === "failed" ? prompt.setTime : undefined}
-          streak={streak}
-        />
-
-        {phase === "done" ? (
-          <div className="animate-tick flex min-h-40 flex-col items-center justify-center gap-3 text-center" role="status">
-            <span className="bg-accent flex size-12 items-center justify-center rounded-full text-on-accent">
-              <CheckIcon className="size-6" />
-            </span>
-            <p id="push-offer-title" className="text-heading font-semibold" data-numeric>
-              {t("offerDone", { time })}
+      {phase === "done" ? (
+        <div className="animate-tick flex min-h-40 flex-col items-center justify-center gap-3 text-center" role="status">
+          <span className="bg-accent flex size-12 items-center justify-center rounded-full text-on-accent">
+            <CheckIcon className="size-6" />
+          </span>
+          <p id="push-offer-title" className="text-heading font-semibold" data-numeric>
+            {t("offerDone", { time })}
+          </p>
+        </div>
+      ) : phase === "denied" ? (
+        <>
+          <h2 id="push-offer-title" className="mt-5 text-title font-semibold">
+            {t("deniedTitle")}
+          </h2>
+          <p className="text-ink-soft mt-2 text-label">{prompt.deniedHow}</p>
+          <Button
+            ref={primaryRef}
+            onClick={() => setClosed(true)}
+            className="mt-6 w-full"
+          >
+            {t("deniedOk")}
+          </Button>
+        </>
+      ) : (
+        <>
+          <p className="panel-label mt-5">{t("offerLabel")}</p>
+          <h2 id="push-offer-title" className="mt-1 text-title font-semibold">
+            {t("offerTitle")}
+          </h2>
+          <p className="text-ink-soft mt-2 text-label">{t("offerBody")}</p>
+          <PushPromises className="mt-4" />
+          {phase === "failed" ? (
+            <p role="alert" className="text-ink mt-3 text-label font-medium">
+              {t("failed")}
             </p>
-          </div>
-        ) : phase === "denied" ? (
-          <>
-            <h2 id="push-offer-title" className="mt-5 text-title font-semibold">
-              {t("deniedTitle")}
-            </h2>
-            <p className="text-ink-soft mt-2 text-label">{prompt.deniedHow}</p>
-            <button
-              ref={primaryRef}
-              type="button"
-              onClick={() => setClosed(true)}
-              className="bg-accent active:bg-accent-press mt-6 min-h-14 w-full rounded-control text-body font-semibold text-on-accent"
-            >
-              {t("deniedOk")}
-            </button>
-          </>
-        ) : (
-          <>
-            <p className="panel-label mt-5">{t("offerLabel")}</p>
-            <h2 id="push-offer-title" className="mt-1 text-title font-semibold">
-              {t("offerTitle")}
-            </h2>
-            <p className="text-ink-soft mt-2 text-label">{t("offerBody")}</p>
-            <PushPromises className="mt-4" />
-            {phase === "failed" ? (
-              <p role="alert" className="text-ink mt-3 text-label font-medium">
-                {t("failed")}
-              </p>
-            ) : null}
+          ) : null}
 
-            <button
-              ref={primaryRef}
-              type="button"
-              onClick={() => void enable()}
-              disabled={phase === "busy"}
-              aria-busy={phase === "busy"}
-              className="bg-accent active:bg-accent-press mt-6 flex min-h-14 w-full items-center justify-center rounded-control text-body font-semibold text-on-accent transition-opacity disabled:opacity-60"
-            >
-              {phase === "busy" ? t("enabling") : t("offerEnable")}
-            </button>
-            <button
-              type="button"
-              onClick={later}
-              disabled={phase === "busy"}
-              className="text-ink-soft mt-1 min-h-11 w-full text-label"
-            >
-              {t("offerLater")}
-            </button>
-          </>
-        )}
-      </div>
-    </div>
+          <Button
+            ref={primaryRef}
+            onClick={() => void enable()}
+            disabled={phase === "busy"}
+            aria-busy={phase === "busy"}
+            className="mt-6 w-full"
+          >
+            {phase === "busy" ? t("enabling") : t("offerEnable")}
+          </Button>
+          <Button
+            onClick={later}
+            disabled={phase === "busy"}
+            variant="text" tone="muted" className="mt-1 w-full"
+          >
+            {t("offerLater")}
+          </Button>
+        </>
+      )}
+    </BottomSheet>
   );
 }

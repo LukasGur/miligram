@@ -6,6 +6,7 @@ import { useHydrated, useLocalValue } from "@/lib/clientState";
 import { writeLocal, STORAGE_KEYS } from "@/lib/localStore";
 import { PrivacyLink } from "./PrivacySheet";
 import { Wordmark } from "./Wordmark";
+import { Button } from "@/components/ui/Button";
 
 export function DisclaimerGate({ children }: { children: ReactNode }) {
   const t = useTranslations("disclaimer");
@@ -48,14 +49,13 @@ export function DisclaimerGate({ children }: { children: ReactNode }) {
       </div>
 
       <div className="mx-auto w-full max-w-md px-6 pt-6">
-        <button
-          type="button"
+        <Button
           autoFocus
           onClick={() => writeLocal(STORAGE_KEYS.disclaimerAcceptedAt, new Date().toISOString())}
-          className="bg-accent active:bg-accent-press min-h-14 w-full rounded-control text-body font-semibold text-on-accent"
+          className="w-full"
         >
           {t("confirm")}
-        </button>
+        </Button>
       </div>
     </div>
   );

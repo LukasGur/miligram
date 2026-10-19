@@ -6,6 +6,7 @@ import { Spinner } from "@/components/ui/Spinner";
 import { RefreshIcon } from "@/components/icons";
 import { holdWaiting } from "@/lib/refresh";
 import { reloadTo } from "@/lib/screenLoad";
+import { Button } from "@/components/ui/Button";
 
 /**
  * „Načítám“, které nezůstane viset navždy.
@@ -74,14 +75,13 @@ export function StuckLoading({
     return (
       <div className="mt-2">
         {message}
-        <button
-          type="button"
+        <Button
           onClick={reload}
-          className="text-accent -ml-1 mt-2 flex min-h-11 items-center gap-2 px-1 text-label font-semibold"
+          variant="text" className="-ml-1 mt-2 gap-2 px-1"
         >
           <RefreshIcon className="size-4" />
           {t("stuckReload")}
-        </button>
+        </Button>
       </div>
     );
   }
@@ -97,22 +97,20 @@ export function StuckLoading({
         style={{ paddingBottom: "calc(var(--sa-b) + 0.75rem)" }}
       >
         <div className="mx-auto w-full max-w-md px-5 pt-3">
-          <button
-            type="button"
+          <Button
             onClick={reload}
-            className="bg-accent active:bg-accent-press flex min-h-14 w-full items-center justify-center gap-2 rounded-control text-body font-semibold text-on-accent transition-colors duration-75"
+            className="w-full"
           >
             <RefreshIcon className="size-5" />
             {t("stuckReload")}
-          </button>
+          </Button>
           {onBack ? (
-            <button
-              type="button"
+            <Button
               onClick={onBack}
-              className="text-ink-soft mt-1 flex min-h-11 w-full items-center justify-center text-label"
+              variant="text" tone="muted" className="mt-1 w-full"
             >
               {t("back")}
-            </button>
+            </Button>
           ) : null}
         </div>
       </footer>

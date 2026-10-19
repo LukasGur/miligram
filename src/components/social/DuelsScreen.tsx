@@ -11,8 +11,9 @@ import { Spinner } from "@/components/ui/Spinner";
 import { useAction } from "@/lib/useAction";
 import { DeadlineBar } from "./DeadlineBar";
 import { useNow } from "./data";
-import { PrimaryButton, Screen, SecondaryButton } from "./Screen";
+import { Screen } from "./Screen";
 import { StuckLoading } from "@/components/ui/StuckLoading";
+import { Button } from "@/components/ui/Button";
 
 export type DuelActions = {
   onPlay: (duel: Duel) => void;
@@ -68,7 +69,7 @@ export function DuelsScreen({
           </span>
         ) : null
       }
-      footer={<PrimaryButton onClick={actions.onNew}>{t("newDuel")}</PrimaryButton>}
+      footer={<Button className="w-full" onClick={actions.onNew}>{t("newDuel")}</Button>}
     >
       {loading && duels.length === 0 ? (
         <StuckLoading target="/?open=duels" compact />
@@ -201,48 +202,45 @@ function ActionCard({
       {phase === "incoming" ? (
         <>
           <div className="flex gap-2">
-            <SecondaryButton className="!w-auto flex-1" disabled={busy} onClick={() => run("decline", () => actions.onRespond(duel, false, false))}>
+            <Button variant="secondary" tone="muted" size="md" className="flex-1" disabled={busy} onClick={() => run("decline", () => actions.onRespond(duel, false, false))}>
               {pending === "decline" ? <Spinner /> : null}
               {t("decline")}
-            </SecondaryButton>
-            <button
-              type="button"
+            </Button>
+            <Button
               disabled={busy}
               onClick={() => run("accept", () => actions.onRespond(duel, true, true))}
-              className="bg-accent active:bg-accent-press flex min-h-12 flex-[2] items-center justify-center gap-2 rounded-control text-body font-semibold text-on-accent disabled:opacity-40"
+              size="md" className="flex-[2]"
             >
               {pending === "accept" ? <Spinner /> : null}
               {t("acceptAndPlay")}
-            </button>
+            </Button>
           </div>
-          <button
-            type="button"
+          <Button
             disabled={busy}
             onClick={() => run("later", () => actions.onRespond(duel, true, false))}
-            className="text-accent -my-2 flex min-h-11 items-center gap-2 self-center text-label font-medium disabled:opacity-40"
+            variant="text" className="-my-2 gap-2 self-center"
           >
             {pending === "later" ? <Spinner className="size-4" /> : null}
             {t("acceptLater")}
-          </button>
+          </Button>
         </>
       ) : canPlayDuel(duel) ? (
         <div className="flex items-center gap-2">
           {/* Stáhnout je orámované tlačítko, ne šedý text — ten vypadal
               jako poznámka a nikdo na něj neklepl. */}
           {phase === "outgoing" ? (
-            <SecondaryButton className="!w-auto flex-1" disabled={busy} onClick={() => run("withdraw", () => actions.onCancel(duel))}>
+            <Button variant="secondary" tone="muted" size="md" className="flex-1" disabled={busy} onClick={() => run("withdraw", () => actions.onCancel(duel))}>
               {pending === "withdraw" ? <Spinner /> : null}
               {t("withdraw")}
-            </SecondaryButton>
+            </Button>
           ) : null}
-          <button
-            type="button"
+          <Button
             disabled={busy}
             onClick={() => actions.onPlay(duel)}
-            className="bg-accent active:bg-accent-press min-h-12 flex-[2] rounded-control text-body font-semibold text-on-accent disabled:opacity-40"
+            size="md" className="flex-[2]"
           >
             {t("play")}
-          </button>
+          </Button>
         </div>
       ) : null}
 

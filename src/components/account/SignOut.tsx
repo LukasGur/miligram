@@ -1,9 +1,8 @@
 "use client";
 
-import { useEffect, useRef, useState } from "react";
+import { useRef, useState } from "react";
 import { useTranslations } from "next-intl";
 import { LogOutIcon } from "@/components/icons";
-import { pressable } from "@/lib/press";
 import { detachPushDevice } from "@/lib/push";
 import { withTimeout } from "@/lib/useAction";
 import { remoteGateway } from "@/lib/remote";
@@ -11,6 +10,8 @@ import type { supabase } from "@/lib/supabase";
 import { syncOutbox } from "@/lib/sync";
 import { wipeDevice } from "@/lib/account";
 import { Primary } from "./SignIn";
+import { Button } from "@/components/ui/Button";
+import { BottomSheet } from "@/components/ui/BottomSheet";
 
 type Client = ReturnType<typeof supabase> & object;
 
@@ -52,15 +53,13 @@ export function SignOut({ client, userId, email }: { client: Client; userId: str
 
   return (
     <div className="mt-10">
-      <button
-        type="button"
-        {...pressable}
+      <Button
         onClick={() => setConfirming(true)}
-        className="press press-wide border-line text-ink data-pressed:border-surface-press data-pressed:bg-surface-press flex min-h-12 w-full items-center justify-center gap-2 rounded-control border px-3 text-label font-medium"
+        variant="secondary" size="md" tone="muted" className="w-full"
       >
         <LogOutIcon className="text-ink-soft size-5" />
         {t("signOut")}
-      </button>
+      </Button>
       {email ? <p className="text-ink-soft mt-2 text-center text-micro">{t("signedInAs", { email })}</p> : null}
 
       {confirming ? <ConfirmSheet client={client} userId={userId} onClose={() => setConfirming(false)} /> : null}
@@ -85,15 +84,6 @@ function ConfirmSheet({ client, userId, onClose }: { client: Client; userId: str
   const [failed, setFailed] = useState(false);
   const cancelRef = useRef<HTMLButtonElement>(null);
 
-  useEffect(() => {
-    cancelRef.current?.focus();
-    const onKeyDown = (event: KeyboardEvent) => {
-      if (event.key === "Escape") onClose();
-    };
-    document.addEventListener("keydown", onKeyDown);
-    return () => document.removeEventListener("keydown", onKeyDown);
-  }, [onClose]);
-
   async function sendThenLeave() {
     setBusy(true);
     setFailed(false);
@@ -109,59 +99,49 @@ function ConfirmSheet({ client, userId, onClose }: { client: Client; userId: str
   }
 
   return (
-    <div className="fixed inset-0 z-50 flex flex-col justify-end">
-      <button
-        type="button"
-        aria-label={t("signOutCancel")}
-        onClick={onClose}
-        className="animate-scrim bg-scrim absolute inset-0"
-      />
-      <div
-        role="dialog"
-        aria-modal="true"
-        aria-labelledby="sign-out-title"
-        aria-describedby="sign-out-body"
-        className="animate-sheet bg-paper relative mx-auto w-full max-w-md rounded-t-sheet px-5 pt-6"
-        style={{ paddingBottom: "calc(var(--sa-b) + 1rem)" }}
-      >
-        <h2 id="sign-out-title" className="text-heading font-semibold">
-          {t("signOutTitle")}
-        </h2>
-        <p id="sign-out-body" className="text-ink-soft mt-2 text-label">
-          {t("signOutBody")}
+    <BottomSheet
+      onClose={onClose}
+      scrimLabel={t("signOutCancel")}
+      labelledBy="sign-out-title"
+      describedBy="sign-out-body"
+      initialFocus={cancelRef}
+      className="px-5 pt-6"
+      style={{ paddingBottom: "calc(var(--sa-b) + 1rem)" }}
+    >
+      <h2 id="sign-out-title" className="text-heading font-semibold">
+        {t("signOutTitle")}
+      </h2>
+      <p id="sign-out-body" className="text-ink-soft mt-2 text-label">
+        {t("signOutBody")}
+      </p>
+      {failed ? (
+        <p role="alert" className="text-ink mt-3 text-label">
+          {t("signOutSendFailed")}
         </p>
-        {failed ? (
-          <p role="alert" className="text-ink mt-3 text-label">
-            {t("signOutSendFailed")}
-          </p>
-        ) : null}
+      ) : null}
 
-        <Primary onClick={() => void sendThenLeave()} busy={busy && !failed}>
-          {t("signOutConfirm")}
-        </Primary>
-        {failed ? (
-          <button
-            type="button"
-            {...pressable}
-            onClick={() => {
-              setBusy(true);
-              void leave(client).finally(() => setBusy(false));
-            }}
-            disabled={busy}
-            className="press press-wide border-line text-ink data-pressed:border-surface-press data-pressed:bg-surface-press mt-2 flex min-h-12 w-full items-center justify-center rounded-control border px-3 text-label font-medium disabled:opacity-40"
-          >
-            {t("signOutAnyway")}
-          </button>
-        ) : null}
-        <button
-          ref={cancelRef}
-          type="button"
-          onClick={onClose}
-          className="text-accent mt-1 min-h-12 w-full text-label font-medium"
+      <Primary onClick={() => void sendThenLeave()} busy={busy && !failed}>
+        {t("signOutConfirm")}
+      </Primary>
+      {failed ? (
+        <Button
+          onClick={() => {
+            setBusy(true);
+            void leave(client).finally(() => setBusy(false));
+          }}
+          disabled={busy}
+          variant="secondary" size="md" tone="muted" className="mt-2 w-full"
         >
-          {t("signOutCancel")}
-        </button>
-      </div>
-    </div>
+          {t("signOutAnyway")}
+        </Button>
+      ) : null}
+      <Button
+        ref={cancelRef}
+        onClick={onClose}
+        variant="text" className="mt-1 w-full"
+      >
+        {t("signOutCancel")}
+      </Button>
+    </BottomSheet>
   );
 }

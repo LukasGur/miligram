@@ -11,6 +11,7 @@ import {
 import { clearInstallPrompt, type Platform } from "@/lib/pwa";
 import { writeLocal, STORAGE_KEYS } from "@/lib/localStore";
 import { AddToHomeIcon, CaretDownIcon, CloseIcon, MenuDotsIcon, ShareIosIcon } from "./icons";
+import { Button } from "@/components/ui/Button";
 
 /** Odmítnutí platí dva týdny — pak má smysl se zeptat znovu, ne dřív. */
 const SNOOZE_MS = 14 * 24 * 60 * 60 * 1000;
@@ -109,13 +110,12 @@ export function InstallBanner() {
         </div>
 
         {prompt ? (
-          <button
-            type="button"
+          <Button
             onClick={() => void install()}
-            className="bg-accent active:bg-accent-press min-h-11 shrink-0 rounded-control px-4 text-label font-semibold text-on-accent"
+            size="md" className="shrink-0"
           >
             {t("installAction")}
-          </button>
+          </Button>
         ) : null}
 
         <button

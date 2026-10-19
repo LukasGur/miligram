@@ -7,9 +7,9 @@ import { Pastille } from "@/components/ui/Pastille";
 import { localDay, REPAIR_COST } from "@/core/economy";
 import { useLocalValue } from "@/lib/clientState";
 import { STORAGE_KEYS, writeLocal } from "@/lib/localStore";
-import { pressable } from "@/lib/press";
 import { repairStreak, useRepairOffer } from "@/lib/repair";
 import { useProfile } from "@/lib/useProfile";
+import { Button } from "@/components/ui/Button";
 
 /** Jak dlouho zůstane potvrzení po obnovení, než karta zmizí. */
 const DONE_MS = 4000;
@@ -84,21 +84,21 @@ export function RepairCard() {
         </div>
       </div>
 
-      <button
-        type="button"
+      <Button
         onClick={() => void repair()}
         disabled={busy}
         aria-busy={busy}
-        {...pressable}
-        className="press press-wide bg-accent data-pressed:bg-accent-press mt-3.5 flex min-h-12 w-full items-center justify-between rounded-control px-4 text-body font-semibold text-on-accent disabled:opacity-60"
+        size="md" className="mt-3.5 w-full"
       >
-        <span>{t("repairAction")}</span>
-        <span className="readout inline-flex items-center gap-1.5" data-numeric>
-          <Pastille className="size-5 shrink-0" />
-          <span aria-hidden>{format.number(REPAIR_COST)}</span>
-          <span className="sr-only">{t("repairPrice", { cost: REPAIR_COST })}</span>
+        <span className="flex w-full items-center justify-between">
+          <span>{t("repairAction")}</span>
+          <span className="readout inline-flex items-center gap-1.5" data-numeric>
+            <Pastille className="size-5 shrink-0" />
+            <span aria-hidden>{format.number(REPAIR_COST)}</span>
+            <span className="sr-only">{t("repairPrice", { cost: REPAIR_COST })}</span>
+          </span>
         </span>
-      </button>
+      </Button>
 
       {poor ? (
         <p role="status" className="text-ink mt-2 text-label">
@@ -106,13 +106,12 @@ export function RepairCard() {
         </p>
       ) : null}
 
-      <button
-        type="button"
+      <Button
         onClick={() => writeLocal(STORAGE_KEYS.repairDismissed, offer.missing[0])}
-        className="text-ink-soft mt-1 min-h-11 w-full text-label"
+        variant="text" tone="muted" className="mt-1 w-full"
       >
         {t("repairDismiss")}
-      </button>
+      </Button>
     </section>
   );
 }

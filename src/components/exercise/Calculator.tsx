@@ -5,6 +5,7 @@ import { useTranslations } from "next-intl";
 import { BackspaceIcon, CloseIcon, PlusMinusIcon } from "@/components/icons";
 import { pressable } from "@/lib/press";
 import { evaluate, format, parse, render, type Operator, type Token } from "@/core/calculator";
+import { Button } from "@/components/ui/Button";
 
 /**
  * Kalkulačka uvnitř lekce.
@@ -213,17 +214,15 @@ export function Calculator({
         </Key>
       </div>
 
-      <button
-        type="button"
+      <Button
         onClick={() => {
           if (result === null) return;
           record();
           onUse(format(Math.abs(result)));
         }}
-        {...pressable}
         disabled={result === null}
         aria-label={negative ? t("useNegativeLabel", { value: format(-result) }) : undefined}
-        className="press press-wide bg-accent data-pressed:bg-accent-press mt-2 flex min-h-13 w-full items-center justify-center gap-2.5 rounded-control text-body font-semibold text-on-accent disabled:opacity-40"
+        size="md" className="mt-2 w-full"
       >
         {negative ? (
           <>
@@ -245,7 +244,7 @@ export function Calculator({
         ) : (
           t("use")
         )}
-      </button>
+      </Button>
     </section>
   );
 }

@@ -22,6 +22,7 @@ import {
 import { supabase } from "@/lib/supabase";
 import { streakFacts, useProfile } from "@/lib/useProfile";
 import { useSession } from "@/lib/useSession";
+import { Button } from "@/components/ui/Button";
 
 /**
  * Upozornění v Nastavení.
@@ -45,13 +46,12 @@ export function PushSettings({ onSignIn }: { onSignIn: () => void }) {
     return (
       <>
         <p className="text-ink-soft text-label">{t("settingsSignedOut")}</p>
-        <button
-          type="button"
+        <Button
           onClick={onSignIn}
-          className="border-line text-accent mt-3 min-h-11 rounded-control border px-4 text-label font-semibold"
+          variant="secondary" size="md" className="mt-3"
         >
           {t("settingsSignIn")}
-        </button>
+        </Button>
       </>
     );
   }

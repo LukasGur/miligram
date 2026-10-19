@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useRef, useState } from "react";
+import { useEffect, useState } from "react";
 import { useFormatter, useTranslations } from "next-intl";
 import { CloseIcon, PersonIcon } from "@/components/icons";
 import { Pastille } from "@/components/ui/Pastille";
@@ -8,13 +8,14 @@ import { Readout } from "@/components/ui/Readout";
 import { Spinner } from "@/components/ui/Spinner";
 import { adoptDevice, bindDecision, wipeDevice, type DeviceSummary } from "@/lib/account";
 import { dismissBonus, useBonus } from "@/lib/bonus";
-import { pressable } from "@/lib/press";
 import { accountHasHistory } from "@/lib/remote";
 import { supabase } from "@/lib/supabase";
 import { withTimeout } from "@/lib/useAction";
 import { useProfile } from "@/lib/useProfile";
 import { useSession } from "@/lib/useSession";
 import { Primary } from "./SignIn";
+import { Button } from "@/components/ui/Button";
+import { BottomSheet } from "@/components/ui/BottomSheet";
 
 type Pending = { userId: string; reason: "anonymous" | "otherAccount"; summary: DeviceSummary };
 
@@ -93,7 +94,6 @@ function BindSheet({ pending, onDone }: { pending: Pending; onDone: () => void }
   const format = useFormatter();
   const [busy, setBusy] = useState<"confirm" | "back" | null>(null);
   const [failed, setFailed] = useState(false);
-  const sheetRef = useRef<HTMLDivElement>(null);
   const { summary, reason } = pending;
   const anonymous = reason === "anonymous";
 
@@ -106,19 +106,6 @@ function BindSheet({ pending, onDone }: { pending: Pending; onDone: () => void }
     setBusy(null);
     onDone();
   }
-
-  useEffect(() => {
-    // Fokus na list, ne na tlačítko: odečítač začne nadpisem, Enter omylem
-    // nic nesmaže a na dotykovém displeji nesvítí rámeček kolem „Zpět“.
-    sheetRef.current?.focus();
-    const onKeyDown = (event: KeyboardEvent) => {
-      if (event.key === "Escape") void back();
-    };
-    document.addEventListener("keydown", onKeyDown);
-    return () => document.removeEventListener("keydown", onKeyDown);
-    // Posluchač stačí jeden na otevření listu.
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, []);
 
   async function confirm() {
     if (busy) return;
@@ -135,84 +122,77 @@ function BindSheet({ pending, onDone }: { pending: Pending; onDone: () => void }
   }
 
   return (
-    <div className="fixed inset-0 z-50 flex flex-col justify-end">
-      <div aria-hidden="true" className="animate-scrim bg-scrim absolute inset-0" />
-      <div
-        ref={sheetRef}
-        tabIndex={-1}
-        role="alertdialog"
-        aria-modal="true"
-        aria-labelledby="bind-title"
-        aria-describedby="bind-body"
-        className="animate-sheet bg-paper relative mx-auto w-full max-w-md rounded-t-sheet px-5 pt-6 outline-none"
-        style={{ paddingBottom: "calc(var(--sa-b) + 1rem)" }}
-      >
-        <span className="bg-accent-wash text-accent flex size-11 items-center justify-center rounded-full">
-          <PersonIcon className="size-6" />
-        </span>
-        <h2 id="bind-title" className="mt-4 text-heading font-semibold">
-          {anonymous ? t("bindTitleAnonymous") : t("bindTitleOther")}
-        </h2>
-        <p id="bind-body" className="text-ink-soft mt-1.5 text-label">
-          {anonymous ? t("bindBodyAnonymous") : t("bindBodyOther")}
-        </p>
+    <BottomSheet
+      onClose={() => void back()}
+      role="alertdialog"
+      labelledBy="bind-title"
+      describedBy="bind-body"
+      className="px-5 pt-6"
+      style={{ paddingBottom: "calc(var(--sa-b) + 1rem)" }}
+    >
+      <span className="bg-accent-wash text-accent flex size-11 items-center justify-center rounded-full">
+        <PersonIcon className="size-6" />
+      </span>
+      <h2 id="bind-title" className="mt-4 text-heading font-semibold">
+        {anonymous ? t("bindTitleAnonymous") : t("bindTitleOther")}
+      </h2>
+      <p id="bind-body" className="text-ink-soft mt-1.5 text-label">
+        {anonymous ? t("bindBodyAnonymous") : t("bindBodyOther")}
+      </p>
 
-        {/* Co zmizí, jako odečty: tři čísla, na která se kouká. */}
-        <section className="bg-surface rounded-panel mt-5 px-4 pt-3 pb-3.5" aria-label={t("bindLoses")}>
-          <h3 className="panel-label">{t("bindLoses")}</h3>
-          <div className="divide-line mt-2 grid grid-cols-3 divide-x">
-            <div className="pr-3">
-              <Readout label={t("bindLessons")} value={format.number(summary.lessons)} size="small" />
-            </div>
-            <div className="px-3">
-              <Readout
-                label={t("bindStreak")}
-                value={format.number(summary.streak)}
-                unit={t("bindStreakUnit", { days: summary.streak })}
-                size="small"
-              />
-            </div>
-            <div className="pl-3">
-              <p className="panel-label">{t("bindPills")}</p>
-              <p className="readout text-heading mt-0.5 flex items-center gap-1 font-semibold" data-numeric>
-                <Pastille className="size-4 shrink-0" />
-                {format.number(summary.pills)}
-              </p>
-            </div>
+      {/* Co zmizí, jako odečty: tři čísla, na která se kouká. */}
+      <section className="bg-surface rounded-panel mt-5 px-4 pt-3 pb-3.5" aria-label={t("bindLoses")}>
+        <h3 className="panel-label">{t("bindLoses")}</h3>
+        <div className="divide-line mt-2 grid grid-cols-3 divide-x">
+          <div className="pr-3">
+            <Readout label={t("bindLessons")} value={format.number(summary.lessons)} size="small" />
           </div>
-          {summary.unfinished ? <p className="text-ink-soft mt-2.5 text-micro">{t("bindUnfinished")}</p> : null}
-        </section>
-
-        {anonymous ? (
-          <p className="mt-4 text-label">
-            <strong className="font-semibold">{t("bindKeepTitle")}</strong>{" "}
-            <span className="text-ink-soft">{t("bindKeepBody")}</span>
-          </p>
-        ) : null}
-
-        {failed ? (
-          <p role="alert" className="text-ink mt-3 text-label">
-            {t("bindFailed")}
-          </p>
-        ) : null}
-
-        <div className="mt-2">
-          <Primary onClick={() => void confirm()} busy={busy === "confirm"} disabled={busy === "back"}>
-            {anonymous ? t("bindConfirm") : t("bindContinue")}
-          </Primary>
+          <div className="px-3">
+            <Readout
+              label={t("bindStreak")}
+              value={format.number(summary.streak)}
+              unit={t("bindStreakUnit", { days: summary.streak })}
+              size="small"
+            />
+          </div>
+          <div className="pl-3">
+            <p className="panel-label">{t("bindPills")}</p>
+            <p className="readout text-heading mt-0.5 flex items-center gap-1 font-semibold" data-numeric>
+              <Pastille className="size-4 shrink-0" />
+              {format.number(summary.pills)}
+            </p>
+          </div>
         </div>
-        <button
-          type="button"
-          {...pressable}
-          onClick={() => void back()}
-          disabled={busy !== null}
-          className="press press-wide text-accent mt-1 flex min-h-12 w-full items-center justify-center gap-2 rounded-control text-body font-medium disabled:opacity-40"
-        >
-          {busy === "back" ? <Spinner className="text-accent" /> : null}
-          {t("bindBack")}
-        </button>
+        {summary.unfinished ? <p className="text-ink-soft mt-2.5 text-micro">{t("bindUnfinished")}</p> : null}
+      </section>
+
+      {anonymous ? (
+        <p className="mt-4 text-label">
+          <strong className="font-semibold">{t("bindKeepTitle")}</strong>{" "}
+          <span className="text-ink-soft">{t("bindKeepBody")}</span>
+        </p>
+      ) : null}
+
+      {failed ? (
+        <p role="alert" className="text-ink mt-3 text-label">
+          {t("bindFailed")}
+        </p>
+      ) : null}
+
+      <div className="mt-2">
+        <Primary onClick={() => void confirm()} busy={busy === "confirm"} disabled={busy === "back"}>
+          {anonymous ? t("bindConfirm") : t("bindContinue")}
+        </Primary>
       </div>
-    </div>
+      <Button
+        onClick={() => void back()}
+        disabled={busy !== null}
+        variant="text" className="mt-1 w-full gap-2"
+      >
+        {busy === "back" ? <Spinner className="text-accent" /> : null}
+        {t("bindBack")}
+      </Button>
+    </BottomSheet>
   );
 }
 

@@ -7,6 +7,7 @@ import { PushPromises } from "./PushPromises";
 import type { DeviceFacts } from "@/lib/push";
 import { ReminderPreview } from "./ReminderPreview";
 import { usePushPrompt } from "./usePushPrompt";
+import { Button } from "@/components/ui/Button";
 
 /** Kroky registrace: e-mail, přezdívka, připomínky. Tohle je poslední. */
 const STEPS = 3;
@@ -111,33 +112,30 @@ export function PushOnboarding({
       >
         <div className="mx-auto w-full max-w-md px-5 pt-3">
           {done || denied ? (
-            <button
-              type="button"
+            <Button
               onClick={onDone}
-              className="bg-accent active:bg-accent-press flex min-h-14 w-full items-center justify-center gap-2 rounded-control text-body font-semibold text-on-accent transition-colors duration-75"
+              className="w-full"
             >
               {done ? <CheckIcon className="size-5" /> : null}
               {t("onboardingContinue")}
-            </button>
+            </Button>
           ) : (
             <>
-              <button
-                type="button"
+              <Button
                 onClick={() => void prompt.enable()}
                 disabled={phase === "busy"}
                 aria-busy={phase === "busy"}
-                className="bg-accent active:bg-accent-press flex min-h-14 w-full items-center justify-center rounded-control text-body font-semibold text-on-accent transition-colors duration-75 disabled:opacity-60"
+                className="w-full"
               >
                 {phase === "busy" ? t("enabling") : t("offerEnable")}
-              </button>
-              <button
-                type="button"
+              </Button>
+              <Button
                 onClick={skip}
                 disabled={phase === "busy"}
-                className="text-ink-soft mt-1 min-h-11 w-full text-label"
+                variant="text" tone="muted" className="mt-1 w-full"
               >
                 {t("offerLater")}
-              </button>
+              </Button>
             </>
           )}
         </div>

@@ -21,6 +21,7 @@ import { BadgeSheet } from "./BadgeSheet";
 import { friendsByDuelState, FriendDuelChip, InviteChip } from "./FriendDuelChip";
 import { splitDuration, useNow, type Social } from "./data";
 import { SectionTitle } from "./Screen";
+import { Button } from "@/components/ui/Button";
 
 export type ProfileRoute = "league" | "duels" | "friends" | "badges";
 
@@ -164,17 +165,16 @@ export function ProfileHome({
 
       <SectionTitle
         aside={
-          <button
-            type="button"
+          <Button
             onClick={() => onOpen("badges")}
             aria-label={t("badgesOpen")}
-            className="text-ink-soft active:text-ink -my-3 -mr-2 flex min-h-11 items-center gap-0.5 pl-3 transition-colors duration-75"
+            variant="text" tone="muted" className="-my-3 -mr-2 gap-0.5 pl-3"
           >
             <span className="readout text-label" data-numeric>
               {t("badgesCount", { unlocked, total: badges?.length ?? 10 })}
             </span>
             <ChevronRightIcon className="size-5" />
-          </button>
+          </Button>
         }
       >
         {t("badgesTitle")}

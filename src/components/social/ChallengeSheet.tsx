@@ -17,6 +17,8 @@ import { CATEGORIES, type Category } from "@/core/types";
 import { categoryScores, lastTrainedCategory } from "@/lib/curriculum";
 import { createDuel, type Duel, type FriendSummary } from "@/lib/remote";
 import { FriendDuelChip, friendsByDuelState } from "./FriendDuelChip";
+import { Button } from "@/components/ui/Button";
+import { BottomSheet } from "@/components/ui/BottomSheet";
 
 type Rate = { answered: number; correct: number };
 
@@ -85,16 +87,6 @@ export function ChallengeSheet({
   const open = friend ? duelOpenWith(duels, friend.userId) : false;
   const mine = useLiveQuery(() => categoryScores(), []);
 
-  const close = useEffectEvent(() => onClose());
-  useEffect(() => {
-    primaryRef.current?.focus({ preventScroll: true });
-    const onKeyDown = (event: KeyboardEvent) => {
-      if (event.key === "Escape") close();
-    };
-    document.addEventListener("keydown", onKeyDown);
-    return () => document.removeEventListener("keydown", onKeyDown);
-  }, []);
-
   async function create(playNow: boolean) {
     if (!friend || !topic || busy || open) return;
     setBusy(true);
@@ -117,94 +109,88 @@ export function ChallengeSheet({
   const status = error ?? (friend && open ? t("errorOpenDuel", { handle: friend.handle }) : null);
 
   return (
-    <div className="fixed inset-0 z-50 flex flex-col justify-end">
-      <button type="button" aria-label={t("close")} onClick={onClose} className="animate-scrim bg-scrim absolute inset-0" />
-
-      <div
-        role="dialog"
-        aria-modal="true"
-        aria-labelledby="challenge-title"
-        className="animate-sheet bg-paper relative mx-auto flex max-h-[92dvh] w-full max-w-md flex-col rounded-t-sheet"
-        style={{ paddingBottom: "calc(var(--sa-b) + 0.75rem)" }}
-      >
-        <div className="flex items-center justify-between px-5 pt-4">
-          <h2 id="challenge-title" className="text-heading font-semibold">
-            {friend && preset ? t("challengeTitle", { handle: friend.handle }) : t("newDuel")}
-          </h2>
-          <button type="button" onClick={onClose} aria-label={t("close")} className="text-ink-soft -mr-3 size-11 p-3">
-            <CloseIcon className="size-5" />
-          </button>
-        </div>
-
-        <div tabIndex={-1} className="scroll-y min-h-0 flex-1 px-5 pb-2">
-          {preset && friend ? (
-            <Versus me={myHandle} them={friend.handle} />
-          ) : (
-            <Opponents friends={friends} duels={duels} selected={friendId} onSelect={setFriendId} />
-          )}
-
-          <TopicField
-            topic={topic}
-            onSelect={setChosen}
-            rates={mine}
-          />
-
-          {/* Podmínky na jeden řádek, celé pod odkazem. */}
-          <div className="text-ink-soft mt-3 flex items-center gap-x-2 text-label">
-            <span className="readout min-w-0 flex-1 truncate" data-numeric>
-              {t("challengeSummary", { count: DIFFICULTY_RAMP.length })}
-            </span>
-            <span className="readout text-pill inline-flex shrink-0 items-center gap-1 font-semibold" data-numeric>
-              <Pastille className="size-4" />+{format.number(DUEL_WIN_PILLS)}
-            </span>
-            <button
-              type="button"
-              onClick={() => setRules((value) => !value)}
-              aria-expanded={rules}
-              className="text-accent -mr-2 min-h-11 shrink-0 px-2 font-medium"
-            >
-              {t("challengeRules")}
-            </button>
-          </div>
-          {rules ? <Terms /> : null}
-        </div>
-
-        <div className="px-5 pt-2">
-          {status ? (
-            <p className="text-ink-soft mb-2 text-center text-label" role="status">
-              {status}
-            </p>
-          ) : null}
-          <button
-            ref={primaryRef}
-            type="button"
-            onClick={() => void create(true)}
-            // Při odesílání zašedlé a se spinnerem: nejde na něj klepnout
-            // znovu a je vidět, že se pracuje.
-            disabled={!friend || !topic || busy || open}
-            aria-busy={busy}
-            className="bg-accent active:bg-accent-press flex min-h-14 w-full items-center justify-center gap-2 rounded-control text-body font-semibold text-on-accent transition-colors duration-75 disabled:opacity-40"
-          >
-            {busy ? <Spinner /> : <VersusIcon className="size-5 shrink-0" />}
-            <span className="truncate">
-              {busy
-                ? t("challengeSending")
-                : topic
-                  ? t("challengeTopic", { topic: topic === "mix" ? t("topicMix") : tCategory(topic) })
-                  : t("challengeAndPlay")}
-            </span>
-          </button>
-          <button
-            type="button"
-            onClick={() => void create(false)}
-            disabled={!friend || !topic || busy || open}
-            className="text-accent mt-1 min-h-11 w-full text-label font-medium disabled:opacity-40"
-          >
-            {t("challengeOnly")}
-          </button>
-        </div>
+    <BottomSheet
+      onClose={onClose}
+      scrimLabel={t("close")}
+      labelledBy="challenge-title"
+      initialFocus={primaryRef}
+      className="flex flex-col"
+      style={{ paddingBottom: "calc(var(--sa-b) + 0.75rem)" }}
+    >
+      <div className="flex items-center justify-between px-5 pt-4">
+        <h2 id="challenge-title" className="text-heading font-semibold">
+          {friend && preset ? t("challengeTitle", { handle: friend.handle }) : t("newDuel")}
+        </h2>
+        <button type="button" onClick={onClose} aria-label={t("close")} className="text-ink-soft -mr-3 size-11 p-3">
+          <CloseIcon className="size-5" />
+        </button>
       </div>
-    </div>
+
+      <div tabIndex={-1} className="scroll-y min-h-0 flex-1 px-5 pb-2">
+        {preset && friend ? (
+          <Versus me={myHandle} them={friend.handle} />
+        ) : (
+          <Opponents friends={friends} duels={duels} selected={friendId} onSelect={setFriendId} />
+        )}
+
+        <TopicField
+          topic={topic}
+          onSelect={setChosen}
+          rates={mine}
+        />
+
+        {/* Podmínky na jeden řádek, celé pod odkazem. */}
+        <div className="text-ink-soft mt-3 flex items-center gap-x-2 text-label">
+          <span className="readout min-w-0 flex-1 truncate" data-numeric>
+            {t("challengeSummary", { count: DIFFICULTY_RAMP.length })}
+          </span>
+          <span className="readout text-pill inline-flex shrink-0 items-center gap-1 font-semibold" data-numeric>
+            <Pastille className="size-4" />+{format.number(DUEL_WIN_PILLS)}
+          </span>
+          <Button
+            onClick={() => setRules((value) => !value)}
+            aria-expanded={rules}
+            variant="text" className="-mr-2 shrink-0 px-2"
+          >
+            {t("challengeRules")}
+          </Button>
+        </div>
+        {rules ? <Terms /> : null}
+      </div>
+
+      <div className="px-5 pt-2">
+        {status ? (
+          <p className="text-ink-soft mb-2 text-center text-label" role="status">
+            {status}
+          </p>
+        ) : null}
+        <Button
+          ref={primaryRef}
+          onClick={() => void create(true)}
+          // Při odesílání zašedlé a se spinnerem: nejde na něj klepnout
+          // znovu a je vidět, že se pracuje.
+          disabled={!friend || !topic || busy || open}
+          aria-busy={busy}
+          className="w-full"
+        >
+          {busy ? <Spinner /> : <VersusIcon className="size-5 shrink-0" />}
+          <span className="truncate">
+            {busy
+              ? t("challengeSending")
+              : topic
+                ? t("challengeTopic", { topic: topic === "mix" ? t("topicMix") : tCategory(topic) })
+                : t("challengeAndPlay")}
+          </span>
+        </Button>
+        <Button
+          onClick={() => void create(false)}
+          disabled={!friend || !topic || busy || open}
+          variant="text" className="mt-1 w-full"
+        >
+          {t("challengeOnly")}
+        </Button>
+      </div>
+    </BottomSheet>
   );
 }
 

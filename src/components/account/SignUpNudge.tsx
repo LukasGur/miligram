@@ -6,9 +6,9 @@ import { PersonIcon } from "@/components/icons";
 import { PillTag } from "@/components/ui/PillTag";
 import { SIGNUP_BONUS } from "@/core/economy";
 import { db } from "@/lib/db";
-import { pressable } from "@/lib/press";
 import { isRemoteConfigured } from "@/lib/supabase";
 import { useSession } from "@/lib/useSession";
+import { Button } from "@/components/ui/Button";
 
 /**
  * Po kolikáté dokončené lekci se výzva ukáže. Po první, dokud je radost
@@ -47,11 +47,9 @@ export function SignUpNudge({ onOpen }: { onOpen: () => void }) {
           <p className="text-ink-soft mt-0.5 text-label">{t("nudgeBody")}</p>
         </div>
       </div>
-      <button
-        type="button"
-        {...pressable}
+      <Button
         onClick={onOpen}
-        className="press press-wide bg-paper text-accent border-accent/20 data-pressed:bg-accent-wash-press mt-3 flex min-h-11 w-full items-center justify-center gap-2 rounded-control border text-label font-semibold"
+        variant="secondary" size="md" className="mt-3 w-full"
       >
         {t("nudgeAction")}
         <PillTag>
@@ -60,7 +58,7 @@ export function SignUpNudge({ onOpen }: { onOpen: () => void }) {
           </span>
           <span className="sr-only">{tAccount("perkBonusTitle", { count: SIGNUP_BONUS })}</span>
         </PillTag>
-      </button>
+      </Button>
     </section>
   );
 }

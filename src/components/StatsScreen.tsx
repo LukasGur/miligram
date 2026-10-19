@@ -9,6 +9,7 @@ import type { Category } from "@/core/types";
 import { LESSON_LENGTH } from "@/core/lessonPlan";
 import { Readout } from "@/components/ui/Readout";
 import { MEANINGFUL_SAMPLE, mistakesToRepeat, overview, type Mistake } from "@/lib/stats";
+import { Button } from "@/components/ui/Button";
 
 /**
  * Statistiky a tréninkové režimy.
@@ -91,13 +92,12 @@ export function StatsScreen({
               </div>
 
               {onStart ? (
-                <button
-                  type="button"
+                <Button
                   onClick={onStart}
-                  className="bg-accent active:bg-accent-press mt-8 min-h-14 w-full rounded-control text-body font-semibold text-on-accent"
+                  className="mt-8 w-full"
                 >
                   {t("emptyStart")}
-                </button>
+                </Button>
               ) : null}
             </div>
           ) : (
@@ -130,13 +130,12 @@ export function StatsScreen({
                 {mistakes.length === 0 ? (
                   <p className="text-ink-soft mt-3 text-label">{t("mistakesNone")}</p>
                 ) : (
-                  <button
-                    type="button"
+                  <Button
                     onClick={() => onTrain({ kind: "mistakes", items: mistakes })}
-                    className="bg-accent active:bg-accent-press mt-3 min-h-12 w-full rounded-control text-body font-semibold text-on-accent"
+                    size="md" className="mt-3 w-full"
                   >
                     {t("mistakesStart", { count: mistakes.length })}
-                  </button>
+                  </Button>
                 )}
               </section>
 

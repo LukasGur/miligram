@@ -14,6 +14,7 @@ import { reducedMotion } from "@/components/ui/Flyer";
 import { CodeInput } from "./CodeInput";
 import { Perks, riseDelay } from "./Perks";
 import { PrivacyLink } from "@/components/PrivacySheet";
+import { Button } from "@/components/ui/Button";
 
 /**
  * Délka a platnost kódu. Musí sedět s nastavením v Supabase, které nahrává
@@ -205,13 +206,12 @@ export function SignIn() {
             >
               {resendIn > 0 ? t("resendIn", { seconds: resendIn }) : t("resend")}
             </button>
-            <button
-              type="button"
+            <Button
               onClick={() => { setSent(false); setCode(""); setError(null); }}
-              className="text-accent min-h-11 text-label font-medium"
+              variant="text"
             >
               {t("otherEmail")}
-            </button>
+            </Button>
           </div>
         </form>
       ) : (
@@ -329,15 +329,14 @@ export function Primary({
   children: React.ReactNode;
 }) {
   return (
-    <button
-      type="button"
+    <Button
       onClick={onClick}
       disabled={disabled || busy}
       aria-busy={busy}
-      className="bg-accent active:bg-accent-press mt-4 flex min-h-12 w-full items-center justify-center gap-2 rounded-control text-body font-semibold text-on-accent transition-colors duration-75 disabled:opacity-40"
+      size="md" className="mt-4 w-full"
     >
       {busy ? <Spinner /> : null}
       {children}
-    </button>
+    </Button>
   );
 }

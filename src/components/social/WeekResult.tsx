@@ -4,7 +4,7 @@ import { useFormatter, useTranslations } from "next-intl";
 import { LeagueInsignia } from "@/components/ui/LeagueInsignia";
 import { displayTier, PROMOTED, RELEGATED, TOP_TIER, ZONES_FROM } from "@/core/league";
 import type { LeagueWeek } from "@/lib/remote";
-import { PrimaryButton } from "./Screen";
+import { Button } from "@/components/ui/Button";
 
 export type WeekMove = "up" | "down" | "stay";
 
@@ -60,7 +60,7 @@ export function WeekResult({
         </dl>
       </div>
       <div className="mx-auto w-full max-w-md px-5 pt-3" style={{ paddingBottom: "calc(var(--sa-b) + 0.75rem)" }}>
-        <PrimaryButton onClick={onClose}>{t("continue")}</PrimaryButton>
+        <Button className="w-full" onClick={onClose}>{t("continue")}</Button>
       </div>
     </div>
   );

@@ -3,11 +3,11 @@
 import { useTranslations } from "next-intl";
 import { reducedMotion } from "@/components/ui/Flyer";
 import { useExercisePrompt } from "@/i18n/exerciseText";
-import { pressable } from "@/lib/press";
 import type { Exercise } from "@/core/types";
 import { Formula } from "./Formula";
 import { Prompt } from "./Prompt";
 import { Sheet } from "./Sheet";
+import { Button } from "@/components/ui/Button";
 
 /**
  * Nápověda po krocích, v listu zespodu — stejně jako vzor.
@@ -64,14 +64,12 @@ export function HintSheet({
         done ? (
           <p className="text-ink-soft flex min-h-12 items-center text-label">{t("hintDone")}</p>
         ) : (
-          <button
-            type="button"
+          <Button
             onClick={onNext}
-            {...pressable}
-            className="press press-wide bg-accent data-pressed:bg-accent-press min-h-12 w-full rounded-control text-body font-semibold text-on-accent"
+            className="w-full"
           >
             {t("hintNext")}
-          </button>
+          </Button>
         )
       }
     >

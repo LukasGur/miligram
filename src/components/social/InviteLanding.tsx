@@ -4,7 +4,7 @@ import { useState } from "react";
 import { useTranslations } from "next-intl";
 import { Monogram } from "@/components/ui/Monogram";
 import { isStandalone } from "@/lib/pwa";
-import { PrimaryButton, TextButton } from "./Screen";
+import { Button } from "@/components/ui/Button";
 
 /**
  * Pozvánka z odkazu.
@@ -78,9 +78,9 @@ export function InviteLanding({
 
       <div className="mx-auto w-full max-w-md px-5 pt-3" style={{ paddingBottom: "calc(var(--sa-b) + 0.75rem)" }}>
         {signedIn && sent ? (
-          <PrimaryButton onClick={onDismiss}>{t("done")}</PrimaryButton>
+          <Button className="w-full" onClick={onDismiss}>{t("done")}</Button>
         ) : signedIn ? (
-          <PrimaryButton
+          <Button className="w-full"
             disabled={busy}
             onClick={async () => {
               setBusy(true);
@@ -94,15 +94,15 @@ export function InviteLanding({
             }}
           >
             {t("inviteAdd", { handle })}
-          </PrimaryButton>
+          </Button>
         ) : inBrowser ? (
-          <PrimaryButton onClick={() => void copy()}>{t("inviteCopy")}</PrimaryButton>
+          <Button className="w-full" onClick={() => void copy()}>{t("inviteCopy")}</Button>
         ) : (
-          <PrimaryButton onClick={onDismiss}>{t("inviteToSignIn")}</PrimaryButton>
+          <Button className="w-full" onClick={onDismiss}>{t("inviteToSignIn")}</Button>
         )}
-        <TextButton tone="soft" className="mt-1 w-full" onClick={onDismiss}>
+        <Button variant="text" tone="muted" className="mt-1 w-full" onClick={onDismiss}>
           {t("inviteLater")}
-        </TextButton>
+        </Button>
       </div>
     </div>
   );

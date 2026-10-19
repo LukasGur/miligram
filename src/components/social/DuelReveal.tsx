@@ -10,7 +10,8 @@ import type { Category } from "@/core/types";
 import { markDuelSeen } from "@/lib/duelSeen";
 import type { Duel } from "@/lib/remote";
 import { outcomeFor } from "@/lib/social";
-import { PrimaryButton, Screen, TextButton } from "./Screen";
+import { Screen } from "./Screen";
+import { Button } from "@/components/ui/Button";
 
 /**
  * Odhalení výsledku.
@@ -69,10 +70,10 @@ export function DuelReveal({
       footer={
         outcome !== null && onRematch ? (
           <>
-            <PrimaryButton onClick={onRematch}>{t("rematch")}</PrimaryButton>
-            <TextButton className="mt-1 w-full" onClick={onBack}>
+            <Button className="w-full" onClick={onRematch}>{t("rematch")}</Button>
+            <Button variant="text" className="mt-1 w-full" onClick={onBack}>
               {t("done")}
-            </TextButton>
+            </Button>
           </>
         ) : undefined
       }
